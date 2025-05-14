@@ -1,5 +1,11 @@
 export class Organ{
-    constructor(
-        private name:string,
-    ){}
+    public readonly label:string
+    public readonly key:string
+    constructor({
+        label,
+        key,
+    }:{label:string,key:string}){
+        this.label = label;
+        this.key = key
+    }
 }

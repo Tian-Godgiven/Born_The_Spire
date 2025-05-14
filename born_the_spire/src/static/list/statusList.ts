@@ -3,8 +3,9 @@ type Status = {
     key:string,
     valueType:"number"|"bool"|"max",
     hidden?:boolean//是否不显示在状态栏
+    allowOver?:boolean//是否允许超出上限，默认为否
 }
-//固有属性
+//属性列表
 export const statusList:Status[] = [
     {
         label:"生命",
@@ -16,6 +17,7 @@ export const statusList:Status[] = [
         label:"能量",
         key:"original_status_00002",
         valueType:"max",
-        hidden:true
+        hidden:true,
+        allowOver:true
     }
 ]

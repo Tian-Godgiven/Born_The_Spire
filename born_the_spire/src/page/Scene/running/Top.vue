@@ -1,7 +1,7 @@
 <template>
 <div class="top">
     <div class="playerData">
-        <div class="name">{{ nowPlayer.name }}</div>
+        <div class="name">{{ nowPlayer.label }}</div>
         <div class="health">
             生命：
             {{ health.now }} / 
@@ -68,7 +68,8 @@ import { showCardGroup } from '@/hooks/popUp';
 <style scoped lang='scss'>
 .top{
     display: grid;
-    height: 10vh;
+    min-height: 50px;
+    height: 8vh;
     align-items: center;
     grid-template-columns: 4fr 2fr 1fr;
     border-bottom: 2px solid black;

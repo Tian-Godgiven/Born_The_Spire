@@ -1,5 +1,5 @@
 export class Card{
-    constructor(){
-        
-    }
+    constructor(
+        public label:string,
+    ){}
 }

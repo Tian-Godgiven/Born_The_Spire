@@ -1,5 +1,5 @@
 <template>
-  <main class="container">
+  <main class="main">
     <RouterView></RouterView>
   </main>
 </template>
@@ -13,6 +13,15 @@ onMounted(()=>{
 })
 </script>
 
-<style scoped>
-
+<style>
+body{
+  margin: 0;
+}
+.main{
+  padding: 10px;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
 </style>

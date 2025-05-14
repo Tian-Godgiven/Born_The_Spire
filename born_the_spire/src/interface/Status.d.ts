@@ -2,7 +2,7 @@
 export type Status = {
     label:string,//属性名
     key:string,
-    
+    allowOver?:boolean
 } & ({
     valueType:"number"
     value:number,//纯数值类型

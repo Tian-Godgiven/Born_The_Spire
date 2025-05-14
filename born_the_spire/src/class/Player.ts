@@ -1,40 +1,41 @@
 import type { Card } from "./Card";
-import type { Organ } from "./Organ";
 import type { Potion } from "./Potion"
 import type { Relic } from "./Relic"
-import { Status } from "@/interface/Status";
-import { setMoney, setStatus } from "@/hooks/player";
+import { setMoney } from "@/hooks/player";
 import { Money } from "@/interface/Money";
 import { PlayerMap } from "@/static/list/playerList";
 import { getPotionByKey } from "@/static/list/potionList";
 import { nanoid } from "nanoid";
+import { Target } from "./Target";
 
 // 每一局游戏中，玩家扮演的角色
-export class Player{
-    private status:Record<string,Status> = {}
+export class Player extends Target{
+    //唯一键
+    public readonly __key:string = nanoid()
+    //药水的持有情况
     private potions:{max:number,now:Potion[]} = {
         max:0,
         now:[]
     }
-    public readonly __key:string = nanoid()
-    //当前的卡组的情况
-    public cardGroups = {
-        handGroup:[],
-        drawGroup:[],
-        discardGroup:[],
-        exhaustGroup:[]
+    //当前的各个卡组的情况
+    public cardPiles = {
+        handPile:[],
+        drawPile:[],
+        discardPile:[],
+        exhaustPile:[]
     }
     constructor(
-        public name:string,
         private cards:Card[],//卡组
-        private organs:Organ[],//持有的器官
         private relics:Relic[],//拥有的遗物
         private moneys:Money[],//资产
-    ){}
+    ){
+        super()
+    }
     //初始化对象
     initPlayer(playerMap:PlayerMap){
-        this.name = playerMap.label;
-        this.getStatus(playerMap.status)
+        this.label = playerMap.label;
+        this.initTarget(playerMap)
+        //玩家特有内容的初始化
         this.getMoney(playerMap.money)
         const potion = playerMap.potion
         //设定药水总数
@@ -44,16 +45,7 @@ export class Player{
             this.getPotion(key)
         }
     }
-    //获取属性值
-    getStatus(statusKeyMap:Record<string,number|boolean>){
-        //获得属性对象
-        for(let key in statusKeyMap){
-            const value = statusKeyMap[key]
-            const status = setStatus(key,value)
-            //添加到属性值中
-            this.status[key] = status
-        }
-    }
+    
     //获取金钱
     getMoney(moneyKeyMap:Record<string,number>){
         //获得金钱对象
@@ -96,14 +88,13 @@ export class Player{
     setPotionsMaxNum(maxNum:number){
         this.potions.max = maxNum
     }
-    //获取属性值
-    getStatusByKey(statusKey:string){
-        const target = this.status[statusKey]
-        if(!target)throw new Error("不存在的属性")
-        return target
-    }
+
     //获取当前持有的金钱
     getNowMoneys(){
         return this.moneys
+    }
+    //获取当前持有的卡牌
+    getCardGroup(){
+        return this.cards
     }
 }
