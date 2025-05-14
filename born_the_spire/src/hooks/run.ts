@@ -3,8 +3,9 @@ import { Player } from "@/class/Player";
 import router from "@/router";
 import { playerList } from "@/static/list/playerList";
 import { ref } from "vue";
+import { addToPlayerTeam } from "./battle";
 
-const defaultPlayer = new Player("默认玩家",[],[],[],[])
+const defaultPlayer = new Player([],[],[])
 const defaultGameRun = new GameRun()
 //当前的局 
 export const nowGameRun = ref<GameRun>(defaultGameRun)
@@ -17,11 +18,13 @@ export function startNewRun(){
     const gameRun = new GameRun()
     nowGameRun.value = gameRun
     //创建本局角色
-    const player = new Player("测试",[],[],[],[])
+    const player = new Player([],[],[])
     //初始化对象
     const map = playerList["default"]
     player.initPlayer(map)
     nowPlayer.value = player//应用该对象
+    //添加到队伍中
+    addToPlayerTeam(player)
     //跳转到游戏页面
     router.replace("running")
 }

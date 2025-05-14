@@ -7,21 +7,23 @@ export type PlayerMap = {
         max:number,
         now:string[]
     }
+    organ:string[]
 }
 export const playerList:Record<string,PlayerMap> = {
     "default":{
-        label:"默认角色",
+        label:"你",
         key:"original_chara_00001",
         money:{
             "original_money_00001":100,
         },
         status:{
-            "original_status_00001":50,
-            "original_status_00002":3
+            "original_status_00001":50,//生命
+            "original_status_00002":3//能量
         },
         potion:{
             max:3,
             now:["original_potion_00001"]
-        }
+        },
+        organ:["original_organ_00001"]
     }
 }
