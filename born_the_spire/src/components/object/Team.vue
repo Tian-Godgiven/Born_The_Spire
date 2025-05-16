@@ -6,7 +6,7 @@
 
 <script setup lang='ts'>
     import TargetVue from './Target.vue';
-    import { Target } from '@/class/Target';
+    import { Target } from '@/objects/Target';
     import { nowPlayer } from '@/hooks/run';
     const {team} = defineProps<{
         team:Target[],

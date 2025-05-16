@@ -19,10 +19,7 @@
         @click="showCardGroup('draw')">
         抽排堆
     </div>
-    <div class="handPile center">
-        手牌
-        <Card v-for="handCard in handPile" :card="handCard"></Card>
-    </div>
+    <HandPile></HandPile>
     <div class="discardPile center" 
         @click="showCardGroup('discard')">
         弃牌堆
@@ -35,14 +32,15 @@
 </template>
 
 <script setup lang='ts'>
-    import Card from '@/components/object/Card.vue';
+    
     import Relic from '@/components/object/Relic.vue';
     import { endTurn, nowBattle } from '@/hooks/battle';
     import { showCardGroup } from '@/hooks/popUp';
     import { nowPlayer } from '@/hooks/run';
-    import { Status } from '@/interface/Status';
     import { computed } from 'vue';
     import Team from '@/components/object/Team.vue';
+import HandPile from './HandPile.vue';
+import { Status } from '@/static/list/statusList';
     //遗物
     const relics = computed(()=>{
         return nowPlayer.value.getRelicsList()
@@ -52,10 +50,7 @@
         const status = nowPlayer.value.getStatusByKey("original_status_00002")
         return (status as Status & {valueType:"max"})
     })
-    //手牌
-    const handPile = computed(()=>{
-        return nowPlayer.value.cardPiles.handPile
-    })
+    
 </script>
 
 <style scoped lang='scss'>
@@ -94,9 +89,10 @@
     bottom: 120px;
 }
 .handPile{
+    z-index: 10;
     position: absolute;
     bottom: 0;
-    width: 100px;
+    gap: 15px;
     height: 300px;
     left: 50%;
     transform: translateX(-50%);

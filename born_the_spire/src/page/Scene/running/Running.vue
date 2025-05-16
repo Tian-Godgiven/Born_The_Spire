@@ -2,7 +2,11 @@
 <div class="running">    
     <Top></Top>
     <Battle></Battle>
-    <div @click="startBattle">开始战斗</div>
+    <div class="test" draggable="true">
+        测试工具
+        <div @click="startBattle">开始战斗</div>
+    </div>
+    <ConnectLine></ConnectLine>
 </div>
 </template>
 
@@ -11,6 +15,7 @@
     import Battle from "@/page/Scene/running/Battle.vue"
 import { addToEnemyTeam, nowEnemyTeam, nowPlayerTeam, startNewBattle } from "@/hooks/battle";
 import { getEnemyByKey } from "@/static/list/enemyList";
+import ConnectLine from "@/components/display/ConnectLine.vue";
     function startBattle(){
         const enemy = getEnemyByKey("original_enemy_00001")
         //添加一个敌人
@@ -29,6 +34,17 @@ import { getEnemyByKey } from "@/static/list/enemyList";
         position: relative;
         width: 100%;
         flex-grow: 1;
+    }
+    .test{
+        background-color: black;
+        color: white;
+        width: 100px;
+        height: 100px;
+        position: absolute;
+        top: 50%;
+        left: 0;
+        transform: translateY(-50%);
+        z-index: 10;
     }
 }
 </style>

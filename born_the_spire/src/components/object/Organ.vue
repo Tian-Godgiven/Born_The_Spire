@@ -1,12 +1,17 @@
 <template>
 <div class="organ">
-    {{ organ.label }}
+    {{ organ.label }}:{{ describe }}
 </div>
 </template>
 
 <script setup lang='ts'>
-    import { Organ } from '@/class/Organ';
+    import { getDescribe } from '@/hooks/express/describe';
+import { Organ } from '@/objects/Organ';
+import { computed } from 'vue';
     const {organ} = defineProps<{organ:Organ}>()
+    const describe = computed(()=>{
+        return getDescribe(organ.describe,organ)
+    })
 </script>
 
 <style scoped lang='scss'>

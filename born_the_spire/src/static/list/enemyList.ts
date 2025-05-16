@@ -1,4 +1,4 @@
-import { Enemy } from "@/class/Enemy"
+import { Enemy } from "@/objects/Enemy"
 
 export type EnemyMap = {
     label:string,

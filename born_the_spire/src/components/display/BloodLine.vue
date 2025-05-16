@@ -3,20 +3,36 @@
     <div class="white">
         <div>{{ blood.now +"/"+blood.max }}</div>
     </div>
-    <div class="black">
+    <div class="black" ref="blackRef">
         <div>{{ blood.now +"/"+blood.max }}</div>
     </div>
 </div>
 </template>
 
 <script setup lang='ts'>
-    import { Target } from '@/class/Target';
-import { computed } from 'vue';
+    import { Target } from '@/objects/Target';
+import gsap from 'gsap';
+import { toNumber } from 'lodash';
+import { computed, useTemplateRef } from 'vue';
     const {target} = defineProps<{target:Target}>()
     const blood = computed(()=>{
-        const health = target.getStatusByKey("original_status_00001")
-        return (health.value as {now:number,max:number})
+        const health = target.getStatusByKey("original_status_00001") as {value:{now:number,max:number}}
+        const percent = toNumber(((health.value.now/health.value.max)*100).toFixed(1))
+        animate(percent)
+        return health.value
     })
+    //动画
+    const blackRef = useTemplateRef("blackRef")
+    function animate(percent:number){
+        if(blackRef.value){
+            gsap.to(blackRef.value,{
+                width:(percent+"%"),
+                duration:0.8,
+                ease:'power1.inOut'
+            })
+        }
+        
+    }
 </script>
 
 <style scoped lang='scss'>

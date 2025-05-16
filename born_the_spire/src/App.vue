@@ -1,5 +1,5 @@
 <template>
-  <main class="main">
+  <main class="main" @mousemove="onMousemove">
     <RouterView></RouterView>
   </main>
 </template>
@@ -8,6 +8,7 @@
 import { onMounted } from 'vue';
 import { RouterView } from 'vue-router';
 import router from './router';
+import { onMousemove } from './hooks/global/mousePosition';
 onMounted(()=>{
   router.replace("/")
 })

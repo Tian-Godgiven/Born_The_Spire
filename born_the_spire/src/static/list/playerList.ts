@@ -8,6 +8,7 @@ export type PlayerMap = {
         now:string[]
     }
     organ:string[]
+    card:string[]
 }
 export const playerList:Record<string,PlayerMap> = {
     "default":{
@@ -24,6 +25,7 @@ export const playerList:Record<string,PlayerMap> = {
             max:3,
             now:["original_potion_00001"]
         },
-        organ:["original_organ_00001"]
+        organ:["original_organ_00001"],
+        card:["original_card_00001","original_card_00001","original_card_00001"]
     }
 }
