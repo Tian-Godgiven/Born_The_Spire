@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang='ts'>
-    import type { Card } from '@/class/Card';
+    import type { Card } from '@/objects/Card';
     import CardVue from '@/components/object/Card.vue';
     const {cardGroup} = defineProps<{cardGroup:Card[]}>()
 </script>

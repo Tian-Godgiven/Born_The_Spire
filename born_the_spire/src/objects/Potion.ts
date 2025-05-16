@@ -1,14 +1,22 @@
+import { PotionMap } from "@/static/list/potionList";
 import { Enemy } from "./Enemy";
 import { Player } from "./Player";
 
 export class Potion{
+    public readonly label:string
+    public readonly key:string
+    private use:(target:Player|Enemy)=>void
+    private targetType:"player"|"enemy"|"all"
+    private discard?:(player:Player,Enemy:Enemy)=>void = ()=>{}
     constructor(
-        public readonly label:string,
-        public readonly key:string,
-        private use:(target:Player|Enemy)=>void,
-        private targetType:"player"|"enemy"|"all",
-        private discard?:(player:Player,Enemy:Enemy)=>void,
-    ){}
+        map:PotionMap
+    ){
+        this.label = map.label;
+        this.key = map.key;
+        this.use = map.use;
+        this.targetType = map.targetType;
+        this.discard = map.disCard
+    }
     //选中某个目标
     focus(target:Player|Enemy){
         if(this.targetType == "player"){

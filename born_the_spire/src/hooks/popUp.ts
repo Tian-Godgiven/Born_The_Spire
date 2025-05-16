@@ -1,4 +1,4 @@
-import { Card } from "@/class/Card";
+import { Card } from "@/objects/Card";
 import { nowPlayer } from "./run";
 
 type defaultCardGroupName = "draw"//抽牌堆
