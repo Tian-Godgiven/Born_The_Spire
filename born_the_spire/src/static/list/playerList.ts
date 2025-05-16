@@ -1,0 +1,31 @@
+export type PlayerMap = {
+    label:string,
+    key:string
+    money:Record<string,number>,
+    status:Record<string,number|boolean>,
+    potion:{
+        max:number,
+        now:string[]
+    }
+    organ:string[]
+    card:string[]
+}
+export const playerList:Record<string,PlayerMap> = {
+    "default":{
+        label:"你",
+        key:"original_chara_00001",
+        money:{
+            "original_money_00001":100,
+        },
+        status:{
+            "original_status_00001":50,//生命
+            "original_status_00002":3//能量
+        },
+        potion:{
+            max:3,
+            now:["original_potion_00001"]
+        },
+        organ:["original_organ_00001"],
+        card:["original_card_00001","original_card_00001","original_card_00001"]
+    }
+}
