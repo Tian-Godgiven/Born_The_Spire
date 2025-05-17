@@ -4,7 +4,6 @@
         <div>{{ blood.now +"/"+blood.max }}</div>
     </div>
     <div class="black" ref="blackRef">
-        <div>{{ blood.now +"/"+blood.max }}</div>
     </div>
 </div>
 </template>
@@ -61,9 +60,8 @@ import { computed, useTemplateRef } from 'vue';
         }
     }
     .black{
-        overflow: hidden;
-        background-color: black;
-        color: white;
+        background-color: white;
+        mix-blend-mode: difference;
     }
     .white{
         background-color: white;
