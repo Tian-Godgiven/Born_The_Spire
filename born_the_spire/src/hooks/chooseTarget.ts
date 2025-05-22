@@ -1,6 +1,6 @@
 import { reactive, Reactive, ref } from "vue";
 import { eventBus } from "./global/eventBus";
-import { Target } from "@/objects/Target";
+import { Target } from "@/objects/target/Target";
 type Position = Reactive<{left:number,top:number}|null>
 export type ChooseSource = {
     //判断target是否符合条件
@@ -43,7 +43,6 @@ export function startChooseTarget(source:ChooseSource,position:Position){
     setTimeout(()=>{
         document.addEventListener("click",(event)=>{
             event.stopPropagation();
-            console.log("直接触发了")
             let target = event.target as HTMLElement
             if(!target.classList.contains('target')){
                 
@@ -64,7 +63,6 @@ export let startPosition = ref(reactive({left:0,top:0}))
 export function showConnectLine(start:Position){
     ifShowConnectLine.value = true;
     if(start){
-        console.log("应用了start",start)
         startPosition.value = start
     }
 }

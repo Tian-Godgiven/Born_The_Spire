@@ -1,4 +1,4 @@
-import { Card } from "@/objects/Card";
+import { Card } from "@/objects/item/Card";
 import { nowPlayer } from "./run";
 
 type defaultCardGroupName = "draw"//抽牌堆
@@ -8,13 +8,17 @@ type defaultCardGroupName = "draw"//抽牌堆
 
 //显示卡组弹窗
 export function showCardGroup(cardGroup?:Card[]|defaultCardGroupName){
-    let cardList :Card[] =[]
-    //默认情况显示角色持有的卡牌
-    if(!cardGroup){
-        cardList = nowPlayer.value.getCardGroup()
+    if(!nowPlayer.value){
+        console.error("当前没有玩家")
+        return false
     }
+    let cardList:Card[] =[]
+    //默认情况显示角色的卡组
+    if(!cardGroup){
+        cardList = nowPlayer.value?.getCardGroup()??[]
+    }
+    //其他情况显示对应的牌堆
     else{
-        //如果是名称
         switch(cardGroup){
             case "draw":
                 cardList = nowPlayer.value.cardPiles.drawPile;
@@ -30,6 +34,7 @@ export function showCardGroup(cardGroup?:Card[]|defaultCardGroupName){
                 break;
             default:
                 cardList = cardGroup
+                break;
         }
     }
     

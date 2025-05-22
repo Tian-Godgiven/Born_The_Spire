@@ -39,8 +39,8 @@
     import { nowPlayer } from '@/hooks/run';
     import { computed } from 'vue';
     import Team from '@/components/object/Team.vue';
-import HandPile from './HandPile.vue';
-import { Status } from '@/static/list/statusList';
+    import HandPile from './HandPile.vue';
+    import { Status } from '@/static/list/system/statusList';
     //遗物
     const relics = computed(()=>{
         return nowPlayer.value.getRelicsList()

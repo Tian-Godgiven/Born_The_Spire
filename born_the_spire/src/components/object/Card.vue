@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang='ts'>
-    import { Card } from '@/objects/Card';
+    import { Card } from '@/objects/item/Card';
     import { getDescribe } from '@/hooks/express/describe';
     import { computed } from 'vue';
     const {card} = defineProps<{card:Card}>()

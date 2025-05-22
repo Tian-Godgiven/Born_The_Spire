@@ -13,12 +13,12 @@
 </template>
 
 <script setup lang='ts'>
-    import { Target } from '@/objects/Target';
+    import { Chara } from '@/objects/target/Target';
 import Organ from './Organ.vue';
 import BloodLine from '../display/BloodLine.vue';
 import { eventBus } from '@/hooks/global/eventBus';
 import { ref } from 'vue';
-    const {target} = defineProps<{target:Target}>()
+    const {target} = defineProps<{target:Chara}>()
     const hovering = ref(false)
     function onEnter(){
         eventBus.emit("hoverTarget",{target,callBack:(bool)=>{

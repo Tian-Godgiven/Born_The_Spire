@@ -1,10 +1,9 @@
-import { Enemy } from "@/objects/Enemy"
+import { Enemy } from "@/objects/target/Enemy"
+import { CharaMap } from "@/objects/target/Target"
 
-export type EnemyMap = {
-    label:string,
+export type EnemyMap = CharaMap & {
     key:string
     status:Record<string,number|boolean>,
-    organ:string[]
 }
 
 export const enemyList:EnemyMap[] = [
@@ -14,14 +13,14 @@ export const enemyList:EnemyMap[] = [
         status:{
             "original_status_00001":5
         },
-        organ:["original_organ_00002","original_organ_00003"]
+        organ:["original_organ_00002","original_organ_00003"],
+        trigger:{}
     }
 ]
 
 export function getEnemyByKey(key:string){
     const data = enemyList.find(value=>value.key == key)
     if(!data)throw new Error("没有指定的敌人存在")
-    const enemy = new Enemy()
-    enemy.initEnemy(data)
+    const enemy = new Enemy(data)
     return enemy
 }

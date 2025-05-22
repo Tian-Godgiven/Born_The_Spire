@@ -1,4 +1,4 @@
-import { Target } from "@/objects/Target";
+import { Target } from "@/objects/target/Target";
 import mitt from "mitt";
 
 export const eventBus = mitt<Events>()

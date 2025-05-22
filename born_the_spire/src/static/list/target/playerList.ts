@@ -1,14 +1,15 @@
-export type PlayerMap = {
-    label:string,
+import { CharaMap } from "@/objects/target/Target"
+
+export type PlayerMap = CharaMap & {
     key:string
     money:Record<string,number>,
-    status:Record<string,number|boolean>,
     potion:{
         max:number,
         now:string[]
     }
     organ:string[]
-    card:string[]
+    card:string[],
+
 }
 export const playerList:Record<string,PlayerMap> = {
     "default":{
@@ -26,6 +27,7 @@ export const playerList:Record<string,PlayerMap> = {
             now:["original_potion_00001"]
         },
         organ:["original_organ_00001"],
-        card:["original_card_00001","original_card_00001","original_card_00001"]
+        card:["original_card_00001"],
+        trigger:{}
     }
 }

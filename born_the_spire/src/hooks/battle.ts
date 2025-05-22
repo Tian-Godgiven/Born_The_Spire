@@ -1,6 +1,6 @@
-import { Enemy } from "@/objects/Enemy"
-import { Player } from "@/objects/Player"
-import { Target } from "@/objects/Target"
+import { Enemy } from "@/objects/target/Enemy"
+import { Player } from "@/objects/target/Player"
+import { Chara, Target } from "@/objects/target/Target"
 import { nanoid } from "nanoid"
 import { ref } from "vue"
 import { nowPlayer } from "./run"
@@ -10,8 +10,8 @@ export class Battle {
     
     constructor(
         public turn:number,
-        private playerTeam:Target[],
-        private enemyTeam:Target[]
+        private playerTeam:Chara[],
+        private enemyTeam:Chara[]
     ){}
     getTeam(name:"player"|"enemey"){
         if(name == "player")
@@ -35,7 +35,7 @@ export function addToEnemyTeam(target:Enemy|Target){
 //当前的战斗
 export const nowBattle = ref<Battle|null>(null)
 //开始新的战斗
-export function startNewBattle(playerTeam:(Player|Target)[],enemyTeam:(Enemy|Target)[]):Battle{
+export function startNewBattle(playerTeam:(Player|Chara)[],enemyTeam:(Enemy|Chara)[]):Battle{
     const battle = new Battle(1,playerTeam,enemyTeam)
     nowBattle.value = battle   
     nowPlayer.value.startBattle()

@@ -2,7 +2,7 @@
 export type Status = {
     label:string,//属性名
     key:string,
-    allowOver?:boolean
+    allowOver?:boolean//允许超出上限
 } & ({
     valueType:"number"
     value:number,//纯数值类型
@@ -16,6 +16,9 @@ export type Status = {
 }|{
     valueType:"bool",
     value:boolean//布尔值
+}|{
+    valueType:null
+    value:number|boolean
 })
 
 type StatusMap = {
@@ -46,7 +49,16 @@ export const statusList:StatusMap[] = [
 export function getStatusByKey(statusKey:string,value:number|boolean):Status{
     //从列表中找到指定的属性
     const status = statusList.find(status=>status.key == statusKey)
-    if(!status)throw new Error("不存在的属性值")
+    //如果没找到，我们将其视作一个暂记属性
+    if(!status){
+        const status = {
+            label:statusKey,
+            key:statusKey,
+            value,
+            valueType:null
+        }
+        return status
+    }
     //根据类型设定其值
     const valueType = status.valueType
     switch(valueType){
@@ -83,3 +95,5 @@ export function getStatusByKey(statusKey:string,value:number|boolean):Status{
     }
     throw new Error("设置属性出错")
 }
+
+//尝试访问一个属性对象的值

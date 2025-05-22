@@ -1,10 +1,12 @@
-import { Target } from "@/objects/Target"
+import { ActionEvent } from "@/objects/system/ActionEvent"
+import { Entity } from "@/objects/system/Entity"
 import _, { isArray } from "lodash"
 
+//用来产生一个效果的map
 export type EffectMap = {
     key:string,
     value:number|[number,number],
-    targetType:"player"|"enemy"|"all"
+    targetType:"player"|"enemy"|"all"|"self"
 }
 
 //通过effectMap获取effect
@@ -58,8 +60,9 @@ export function getEffectByMap(map:EffectMap):Effect{
 export type Effect = {
     label:string,//效果名称
     key:string//效果关键词
-    targetType:"player"|"enemy"|"all"//效果作用对象
-    effect:(source:Target,target:Target,effect:Effect)=>void
+    targetType:"player"|"enemy"|"all"|"self"//效果作用对象
+    //效果事件
+    effect:(event:ActionEvent,effect:Effect)=>void
 }&({
     valueType:"range"//范围型
     value:{
@@ -69,42 +72,63 @@ export type Effect = {
     }//效果值
 }|{
     valueType:"number"//数值型
-    value:{now:number}//效果值
+    value:{now:any}//效果值
 })
-//触发效果
-export function makeEffect(source:Target,target:Target,effectMap:EffectMap){
+//通过map来创建一个效果
+export function makeEffectByMap(source:Entity,medium:Entity,target:Entity,effectMap:EffectMap){
+    //获取效果
     const effect = getEffectByMap(effectMap)
-    const effectFunc = effect.effect
     if(!effect)throw new Error("目标不存在")
-    //获取效果值
+    //创建效果事件
+    const event = new ActionEvent(effect.key,source,medium,target,effect)
+    //触发效果
+    makeEffect(event,effect)
+}
+//传入一个效果事件，触发指定的效果
+export function makeEffect(event:ActionEvent,effect:Effect){
+    const effectFunc = effect.effect
+    //获取效果的值
     getEffectValue(effect)
-    //造成效果前
-    source.makeEffect("before",target,effect)
-    target.takeEffect("before",source,effect)
+    event.triggerEvent("before")
     //造成效果
-    effectFunc(source,target,effect)
-    //造成效果后
-    source.makeEffect("after",target,effect)
-    target.takeEffect("after",source,effect)
+    effectFunc(event,effect)
+    event.triggerEvent("after")
 }
 
 type EffectData = {
     label:string,
     key:string,
-    effect:(source:Target,target:Target,effect:Effect)=>void
+    effect:(event:ActionEvent,effect:Effect)=>void
 }
 //效果表
 const effectList:EffectData[] = [{
     //造成伤害
     label:"造成伤害",
     key:"damage",
-    effect:(_source,target,effect)=>{
+    effect:({target},effect)=>{
         //目标的当前生命值减少value值
         const health = target.getStatusByKey("original_status_00001")
         if(health.valueType == "max"){
             health.value.now -= effect.value.now
         }
     },
+},{
+    //收到伤害时，减少受到的伤害
+    label:"减少受到的伤害",
+    key:"take_reduce_damage",   
+    effect:(event,effect)=>{
+        //为事件的效果目标添加受伤触发器
+        event.target.getTrigger({
+            when:"before",
+            how:"take",
+            key:"damage",
+            callBack:(damage)=>{
+                //使得触发其的伤害效果减少本效果的值
+                if(damage.effect)
+                damage.effect.value.now -= effect.value.now
+            }
+        })
+    }
 }]
 
 //获取效果值

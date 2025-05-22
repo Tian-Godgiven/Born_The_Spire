@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang='ts'>
-    import { Relic } from '@/objects/Relic';
+    import { Relic } from '@/objects/item/Relic';
     const {relic} = defineProps<{relic:Relic}>()
 </script>
 
