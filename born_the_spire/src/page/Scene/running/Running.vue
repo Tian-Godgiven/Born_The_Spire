@@ -14,7 +14,7 @@
     import Top from "./Top.vue";
     import Battle from "@/page/Scene/running/Battle.vue"
 import { addToEnemyTeam, nowEnemyTeam, nowPlayerTeam, startNewBattle } from "@/hooks/battle";
-import { getEnemyByKey } from "@/static/list/enemyList";
+import { getEnemyByKey } from "@/static/list/target/enemyList";
 import ConnectLine from "@/components/display/ConnectLine.vue";
     function startBattle(){
         const enemy = getEnemyByKey("original_enemy_00001")

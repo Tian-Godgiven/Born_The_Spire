@@ -6,7 +6,7 @@
 
 <script setup lang='ts'>
     import { getDescribe } from '@/hooks/express/describe';
-import { Organ } from '@/objects/Organ';
+import { Organ } from '@/objects/target/Organ';
 import { computed } from 'vue';
     const {organ} = defineProps<{organ:Organ}>()
     const describe = computed(()=>{

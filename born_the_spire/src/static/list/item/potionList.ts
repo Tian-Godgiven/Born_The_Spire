@@ -1,23 +1,27 @@
-import { Enemy } from "@/objects/Enemy";
-import { Player } from "@/objects/Player";
-import { Potion } from "@/objects/Potion";
+import { Potion } from "@/objects/item/Potion";
+import { ItemMap } from "@/objects/item/Item";
 
-export type PotionMap = {
-    label:string,
+export type PotionMap = ItemMap & {
     targetType:"player"|"enemy"|"all",
-    key:string,
-    use:(target:Player|Enemy)=>void;
-    disCard?:()=>void
 }
 
 const potionList:PotionMap[] = [
     {
         label:"生命药剂",
+        status:{
+            "original_status_00003":10
+        },
+        describe:["恢复",{key:["status","heal"]}],
         targetType:"player",
         key:"original_potion_00001",
-        use:(target)=>{
-            console.log(target,"恢复了10生命")
+        behavior:{
+            use:[{
+                "value":10,
+                "targetType":"player",
+                "key":"heal"
+            }]
         }
+        
     }
 ]
 

@@ -1,16 +1,16 @@
-import { Card } from "./Card";
-import type { Potion } from "./Potion"
-import type { Relic } from "./Relic"
-import { PlayerMap } from "@/static/list/playerList";
-import { getPotionByKey } from "@/static/list/potionList";
+import { Card } from "../item/Card";
+import type { Potion } from "../item/Potion"
+import type { Relic } from "../item/Relic"
+import { PlayerMap } from "@/static/list/target/playerList";
+import { getPotionByKey } from "@/static/list/item/potionList";
 import { nanoid } from "nanoid";
-import { Target } from "./Target";
+import { Chara } from "./Target";
 import {shuffle} from "lodash"
-import { getCardByKey } from "@/static/list/cardList";
-import { getMoneyByKey, Money } from "@/static/list/moneyList";
+import { getCardByKey } from "@/static/list/item/cardList";
+import { getMoneyByKey, Money } from "@/static/list/item/moneyList";
 
 // 每一局游戏中，玩家扮演的角色
-export class Player extends Target{
+export class Player extends Chara{
     //唯一键
     public readonly __key:string = nanoid()
     //药水的持有情况
@@ -29,14 +29,12 @@ export class Player extends Target{
     private relics:Relic[] = []//拥有的遗物
     private moneys:Money[] = []//资产
     constructor(
-        playerMap:PlayerMap
+        map:PlayerMap
     ){
-        super()
-        this.label = playerMap.label;
-        this.initTarget(playerMap)
+        super(map)
         //玩家特有内容的初始化
-        this.getMoney(playerMap.money)
-        const potion = playerMap.potion
+        this.getMoney(map.money)
+        const potion = map.potion
         //设定药水总数
         this.setPotionsMaxNum(potion.max)
         for(let key of potion.now){
@@ -44,7 +42,7 @@ export class Player extends Target{
             this.getPotion(key)
         }
         //获取初始拥有的卡组
-        for(let key of playerMap.card){
+        for(let key of map.card){
             this.getCard(key)
         }
     }
@@ -68,7 +66,6 @@ export class Player extends Target{
         const maxNum = this.potions.max
         const nowNum = this.potions.now.length
         if(nowNum==maxNum){
-            console.log("药水栏已满")
             return false
         }
         else{
@@ -107,8 +104,6 @@ export class Player extends Target{
                 this.cardPiles.handPile.push(card)
             })
         }
-        //当前的手牌为
-        console.log(this.cardPiles.handPile)
     }
     //从抽牌堆中抽牌
     drawCard(number:number){

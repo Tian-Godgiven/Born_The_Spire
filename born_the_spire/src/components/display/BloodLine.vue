@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang='ts'>
-    import { Target } from '@/objects/Target';
+    import { Target } from '@/objects/target/Target';
 import gsap from 'gsap';
 import { toNumber } from 'lodash';
 import { computed, useTemplateRef } from 'vue';

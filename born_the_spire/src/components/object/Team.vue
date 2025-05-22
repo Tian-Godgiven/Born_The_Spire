@@ -6,15 +6,14 @@
 
 <script setup lang='ts'>
     import TargetVue from './Target.vue';
-    import { Target } from '@/objects/Target';
+    import { Chara} from '@/objects/target/Target';
     import { nowPlayer } from '@/hooks/run';
     const {team} = defineProps<{
-        team:Target[],
+        team:Chara[],
     }>()
     //是否是当前的玩家角色,是则放在c位
-    const ifCenter = function(target:Target){
-        console.log(target,nowPlayer)
-        if(target.__key == nowPlayer.value.__key){
+    const ifCenter = function(target:Chara){
+        if(target.__key == nowPlayer.value?.__key){
             return true
         }
         return false

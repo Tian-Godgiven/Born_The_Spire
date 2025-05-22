@@ -12,19 +12,18 @@
     import { nowPlayer } from '@/hooks/run';
 import LineToTarget from '@/components/display/LineToTarget.vue';
 import { ChooseSource } from '@/hooks/chooseTarget';
-import { Card } from '@/objects/Card';
+import { Card } from '@/objects/item/Card';
     //手牌
     const handPile = computed(()=>{
-        return nowPlayer.value.cardPiles.handPile
+        return nowPlayer.value?.cardPiles.handPile
     })
     function getChooseSource(card:Card):ChooseSource{
         return {
             //触发卡牌效果
             "chooseTarget":(target)=>{
-                card.useTo(target)
+                card.useCard(nowPlayer.value.getSelf(),target)
             }
         }
-        
     }
     
 </script>

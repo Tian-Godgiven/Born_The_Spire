@@ -27,8 +27,8 @@ export function getDescribe(describe:Describe|undefined,target:{[key: string]: a
                             item = item[key]
                             continue
                         }
-                        console.log(describe,target,key,item)
-                        throw new Error("没有找到对应的属性")
+                        // console.log(describe,target,key,item)
+                        // throw new Error("没有找到对应的属性")
                     }
                 }
                 //遍历完了后，item即为想要的值
@@ -36,7 +36,7 @@ export function getDescribe(describe:Describe|undefined,target:{[key: string]: a
                     text+=item
                 }
                 else{
-                    console.log("未能获取指定值")
+                    // console.log("未能获取指定值")
                 }
             }
         }

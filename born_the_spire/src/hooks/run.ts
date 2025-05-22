@@ -1,7 +1,7 @@
-import { GameRun } from "@/objects/GameRun";
-import { Player } from "@/objects/Player";
+import { GameRun } from "@/objects/system/GameRun";
+import { Player } from "@/objects/target/Player";
 import router from "@/router";
-import { playerList } from "@/static/list/playerList";
+import { playerList } from "@/static/list/target/playerList";
 import { ref } from "vue";
 import { addToPlayerTeam } from "./battle";
 

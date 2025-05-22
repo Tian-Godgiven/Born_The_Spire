@@ -1,11 +1,15 @@
 import { Describe } from "@/hooks/express/describe"
-import { Organ } from "@/objects/Organ"
-import { Target } from "@/objects/Target"
-export type OrganMap = {
+import { Organ } from "@/objects/target/Organ"
+import { TargetMap } from "@/objects/target/Target"
+import { EffectMap } from "../system/effectList"
+import { ItemMap } from "@/objects/item/Item"
+export type OrganMap = ItemMap&TargetMap&{
     label:string,
     key:string,
     describe?:Describe,
-    onGet?:(who:Target)=>void
+    behavior?:{
+        getOrgan?:EffectMap[]
+    }
 }
 
 export const organList:OrganMap[] = [
@@ -19,12 +23,12 @@ export const organList:OrganMap[] = [
         label:"石肤",
         key:"original_organ_00003",
         describe:["受到的伤害值-1"],
-        onGet:(who)=>{
-            //受到伤害前，伤害值-1
-            who.getTrigger("before","take","damage",(_s,_t,e)=>{
-                console.log(e)
-                e.value.now -= 1
-            })
+        behavior:{
+            getOrgan:[{
+                key:"take_reduce_damage",
+                value:1,
+                targetType:"self"
+            }]
         }
     }
 ]
