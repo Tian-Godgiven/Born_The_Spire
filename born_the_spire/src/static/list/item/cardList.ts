@@ -12,7 +12,8 @@ export type CardMap = ItemMap & {
 const cardList:CardMap[] = [{
     label:"打击",
     status:{
-        damage:5
+        damage:5,
+        cost:1,
     },
     describe:[
         "造成",

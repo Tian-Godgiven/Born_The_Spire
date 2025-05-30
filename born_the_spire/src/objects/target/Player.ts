@@ -8,22 +8,26 @@ import { Chara } from "./Target";
 import {shuffle} from "lodash"
 import { getCardByKey } from "@/static/list/item/cardList";
 import { getMoneyByKey, Money } from "@/static/list/item/moneyList";
+import { Entity } from "../system/Entity";
+import { doBehavior } from "@/static/list/system/behaviorList";
+import { changeStatusValue, getStatusValue } from "../system/Status";
+import { showQuickInfo } from "@/hooks/global/quickInfo";
 
 // 每一局游戏中，玩家扮演的角色
 export class Player extends Chara{
     //唯一键
     public readonly __key:string = nanoid()
-    //药水的持有情况
-    private potions:{max:number,now:Potion[]} = {
-        max:0,
-        now:[]
-    }
     //当前的各个卡组的情况
     public cardPiles:Record<string,Card[]> = {
         handPile:[],
         drawPile:[],
         discardPile:[],
         exhaustPile:[]
+    }
+    //药水的持有情况
+    private potions:{max:number,now:Potion[]} = {
+        max:0,
+        now:[]
     }
     private cards:Card[] = []//卡组
     private relics:Relic[] = []//拥有的遗物
@@ -173,4 +177,29 @@ export class Player extends Chara{
     }
 }
 
+//消耗玩家的能量
+export function costEnergy(source:Entity,medium:Entity,target:Player,cost:number):boolean{
+    const ifEnough = checkEnergy(cost,target)
+    if(ifEnough){
+        //消耗能量
+        doBehavior("costEnergy",source,medium,target,{costNum:cost},()=>{
+            const energy = getStatusValue(target,"energy","now")
+            changeStatusValue(source,medium,target,"energy",energy-cost,"now")
+        })
+    }
+    else{
+        showQuickInfo("能量不足")
+    }
+    return ifEnough
+}
+
+//判断能量是否足够
+export function checkEnergy(cost:number,target:Player):boolean{
+    //判断目标的能量是否足够
+    const energy = getStatusValue(target,"energy","now")
+    if(energy >= cost){
+        return true
+    }
+    return false
+}
 

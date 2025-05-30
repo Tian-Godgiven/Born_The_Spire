@@ -9,7 +9,6 @@ export type PlayerMap = CharaMap & {
     }
     organ:string[]
     card:string[],
-
 }
 export const playerList:Record<string,PlayerMap> = {
     "default":{
@@ -19,8 +18,10 @@ export const playerList:Record<string,PlayerMap> = {
             "original_money_00001":100,
         },
         status:{
-            "original_status_00001":50,//生命
-            "original_status_00002":3//能量
+            //生命值
+            "health":50,
+            //能量
+            "energy":3
         },
         potion:{
             max:3,

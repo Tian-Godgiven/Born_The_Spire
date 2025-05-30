@@ -6,11 +6,14 @@ export function doBehavior(
     key:string,
     source:Entity,
     medium:Entity,
-    target:Entity
+    target:Entity,
+    info:Record<string,any>={},
+    doWhat:()=>void=()=>{}
 ){
     //创建行为事件
-    const event = new ActionEvent(key,source,medium,target)
+    const event = new ActionEvent(key,source,medium,target,info)
     //触发行为事件
     event.triggerEvent("before")
+    doWhat()
     event.triggerEvent("after")
 }

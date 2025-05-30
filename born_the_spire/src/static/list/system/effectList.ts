@@ -1,5 +1,7 @@
+import { newError } from "@/hooks/global/alert"
 import { ActionEvent } from "@/objects/system/ActionEvent"
 import { Entity } from "@/objects/system/Entity"
+import { getStatusByKey } from "@/objects/system/Status"
 import _, { isArray } from "lodash"
 
 //用来产生一个效果的map
@@ -7,6 +9,20 @@ export type EffectMap = {
     key:string,
     value:number|[number,number],
     targetType:"player"|"enemy"|"all"|"self"
+}
+
+//执行一个效果
+function doEffect(source:Entity,medium:Entity,target:Entity,effect:Effect){
+    //创建效果事件
+    const event = new ActionEvent(effect.key,source,medium,target,{},effect)
+    //效果函数
+    const effectFunc = effect.effect
+    //获取效果的值
+    getEffectValue(effect)
+    event.triggerEvent("before")
+    //执行效果函数
+    effectFunc(event,effect)
+    event.triggerEvent("after")
 }
 
 //通过effectMap获取effect
@@ -78,21 +94,11 @@ export type Effect = {
 export function makeEffectByMap(source:Entity,medium:Entity,target:Entity,effectMap:EffectMap){
     //获取效果
     const effect = getEffectByMap(effectMap)
-    if(!effect)throw new Error("目标不存在")
-    //创建效果事件
-    const event = new ActionEvent(effect.key,source,medium,target,effect)
+    if(!effect){
+        newError(["不存在指定的效果map",effectMap,effectList])
+    }
     //触发效果
-    makeEffect(event,effect)
-}
-//传入一个效果事件，触发指定的效果
-export function makeEffect(event:ActionEvent,effect:Effect){
-    const effectFunc = effect.effect
-    //获取效果的值
-    getEffectValue(effect)
-    event.triggerEvent("before")
-    //造成效果
-    effectFunc(event,effect)
-    event.triggerEvent("after")
+    doEffect(source,medium,target,effect)
 }
 
 type EffectData = {
@@ -107,10 +113,8 @@ const effectList:EffectData[] = [{
     key:"damage",
     effect:({target},effect)=>{
         //目标的当前生命值减少value值
-        const health = target.getStatusByKey("original_status_00001")
-        if(health.valueType == "max"){
-            health.value.now -= effect.value.now
-        }
+        const health = getStatusByKey(target,"health","max")
+        health.value.now -= effect.value.now
     },
 },{
     //收到伤害时，减少受到的伤害
@@ -123,9 +127,11 @@ const effectList:EffectData[] = [{
             how:"take",
             key:"damage",
             callBack:(damage)=>{
+                console.log("减少了造成的伤害",damage.effect)
                 //使得触发其的伤害效果减少本效果的值
                 if(damage.effect)
                 damage.effect.value.now -= effect.value.now
+                console.log("减少效果值",effect)
             }
         })
     }

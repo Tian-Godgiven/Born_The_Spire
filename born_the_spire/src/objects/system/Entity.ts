@@ -1,8 +1,9 @@
-import { getStatusByKey, Status } from "@/static/list/system/statusList";
+import { initStatusByMap, StatusMap } from "@/static/list/system/statusList";
 import { Trigger, TriggerFunc, TriggerMap } from "./Trigger";
 import { ActionEvent } from "./ActionEvent";
 import { Describe } from "@/hooks/express/describe";
 import { EffectMap, makeEffectByMap } from "@/static/list/system/effectList";
+import { Status } from "./Status";
 // 实体（entity）是Target和Item的基类
 export class Entity{
     //属性值
@@ -16,7 +17,7 @@ export class Entity{
         //初始化属性
         if(map.status){
             for(let [key,value] of Object.entries(map.status)){
-                const status = getStatusByKey(key,value)
+                const status = initStatusByMap(key,value)
                 this.getStatus(status)
             }
         }
@@ -37,7 +38,6 @@ export class Entity{
         key:string,
         callBack:TriggerFunc
     }){
-        console.log(this,"获得了触发器",triggerMap)
         this.trigger.getTrigger(triggerMap)
     }
     //对象造成了某个事件，且该事件被触发了
@@ -58,23 +58,16 @@ export class Entity{
         //添加到属性值中
         this.status[key] = status
     }
-    //获取对象的属性值
-    getStatusByKey(statusKey:string){
-        const target = this.status[statusKey]
-        if(!target)throw new Error("不存在的属性")
-        return target
-    }
 }
 
 export type EntityMap = {
-    status?:Record<string,number|boolean>;
+    status?:Record<string,StatusMap|number>;
     trigger?:TriggerMap;
     behavior?:Record<string,EffectMap[]>;
     describe?:Describe
 }
 
 function initBehavior(entity:Entity,map:Record<string,EffectMap[]>){
-    console.log(map)
     //每种行为都对应是一个on的触发器，在行为事件触发时产生效果
     for(let [key,effects] of Object.entries(map)){
         entity.getTrigger({
