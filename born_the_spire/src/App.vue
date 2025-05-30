@@ -1,6 +1,7 @@
 <template>
   <main class="main" @mousemove="onMousemove">
     <RouterView></RouterView>
+    <PopUpContainer></PopUpContainer>
   </main>
 </template>
 
@@ -9,6 +10,7 @@ import { onMounted } from 'vue';
 import { RouterView } from 'vue-router';
 import router from './router';
 import { onMousemove } from './hooks/global/mousePosition';
+import PopUpContainer from './page/popUp/PopUpContainer.vue';
 onMounted(()=>{
   router.replace("/")
 })

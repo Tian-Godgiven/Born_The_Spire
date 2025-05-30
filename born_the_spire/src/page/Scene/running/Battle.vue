@@ -5,7 +5,7 @@
     </div>
 
     <div class="energy center">
-       能量：{{ energys.value.now +"/"+energys.value.max }}
+       能量：{{ energys.now +"/"+energys.max }}
     </div>
 
     <div class="teams">
@@ -40,15 +40,16 @@
     import { computed } from 'vue';
     import Team from '@/components/object/Team.vue';
     import HandPile from './HandPile.vue';
-    import { Status } from '@/static/list/system/statusList';
+import { getStatusValue } from '@/objects/system/Status';
     //遗物
     const relics = computed(()=>{
         return nowPlayer.value.getRelicsList()
     })
     //能量
     const energys = computed(()=>{
-        const status = nowPlayer.value.getStatusByKey("original_status_00002")
-        return (status as Status & {valueType:"max"})
+        const now = getStatusValue(nowPlayer.value,"energy")
+        const max = getStatusValue(nowPlayer.value,"energy","max")
+        return {now,max}
     })
     
 </script>

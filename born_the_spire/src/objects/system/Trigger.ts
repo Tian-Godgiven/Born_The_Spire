@@ -44,6 +44,7 @@ export class Trigger{
     }
     //触发触发器
     onTrigger(when:"before"|"after",how:"take"|"make"|"on",event:ActionEvent){
+        console.log(event)
         //调用trigger
         const trigger = this[how][when][event.key]
         if(!trigger)return

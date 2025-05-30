@@ -13,6 +13,7 @@ export class ActionEvent{
         public source:Entity,//执行该事件的目标
         public medium:Entity,//
         public target:Entity,//接受该事件的目标
+        public info:Record<string,any>,//该事件执行全程的信息
         public effect?:Effect
     ){}
     //触发这个事件

@@ -1,99 +1,118 @@
-//属性根据其值分为3种类型：纯数值，范围值和布尔值
-export type Status = {
-    label:string,//属性名
-    key:string,
-    allowOver?:boolean//允许超出上限
-} & ({
+import { Status } from "@/objects/system/Status"
+import { isNumber, isObject } from "lodash"
+
+export type StatusMap = {
+    label:string,//显示的文本
+    notNegative?:boolean,//非负
+    unstackable?:boolean//不可堆叠，也不会显示层数
+}&(
+//仅数字
+{
+    value:number,
     valueType:"number"
-    value:number,//纯数值类型
-}|{
+}|
+//最大值
+{
+    allowOver?:boolean//是否允许超出上限，默认为否
+    value:number//默认为max的值
+    |{
+        min?:number|null
+        now?:number,//默认为max的值
+        max:number,
+    },
     valueType:"max"
-    value:{
-        now:number,//当前值
-        min?:number,
-        max?:number//最大值
-    }
-}|{
-    valueType:"bool",
-    value:boolean//布尔值
-}|{
-    valueType:null
-    value:number|boolean
 })
 
-type StatusMap = {
-    label:string,
-    key:string,
-    valueType:"number"|"bool"|"max",
-    hidden?:boolean//是否不显示在状态栏
-    allowOver?:boolean//是否允许超出上限，默认为否
-}
-//属性列表
-export const statusList:StatusMap[] = [
-    {
-        label:"生命",
-        key:"original_status_00001",
-        valueType:"max",
-        hidden:true
-    },
-    {
-        label:"能量",
-        key:"original_status_00002",
-        valueType:"max",
-        hidden:true,
-        allowOver:true
-    }
-]
-
-//设定指定属性的值，并返回设定后的属性对象
-export function getStatusByKey(statusKey:string,value:number|boolean):Status{
-    //从列表中找到指定的属性
-    const status = statusList.find(status=>status.key == statusKey)
-    //如果没找到，我们将其视作一个暂记属性
-    if(!status){
-        const status = {
-            label:statusKey,
-            key:statusKey,
-            value,
-            valueType:null
+//读取map获取Status对象
+export function initStatusByMap(key:string,map:StatusMap|Status["value"]):Status{
+    if(!isObject(map) || !("label" in map)){
+        let theMap:StatusMap
+        if(isStatusKey(key)){
+            theMap = statusMapList[key]
         }
-        return status
-    }
-    //根据类型设定其值
-    const valueType = status.valueType
-    switch(valueType){
-        case "number":
-            if(typeof value == "number")
-            return {
-                ...status,
-                valueType,
-                value
-            }
-            break;
-        case "bool":
-            if(typeof value == "boolean")
-            return {
-                ...status,
-                valueType,
-                value
-            }
-            break;
-        case "max":
-            if(typeof value == "number")
-            return {
-                ...status,
-                valueType,
-                value:{
-                    now:value,
-                    max:value
+        else{
+            if(isNumber(map)){
+                theMap = {
+                    label:key,
+                    valueType:"number",
+                    value:map
                 }
             }
-            break;
-        default:{
-            throw new Error("设置属性出错")
+            else{
+                theMap = {
+                    label:key,
+                    valueType:"max",
+                    value:map
+                }
+            }
+        }
+        theMap.value = map
+        const newStatus =  initStatusByMap(key,theMap)
+        return newStatus
+    }
+
+    //如果valueType为“max”，则会生成这个属性的值对象
+    if(map.valueType == "max"){
+        const theValue = map.value
+        let value:Status["value"]
+        if(isObject(theValue)){
+            value = {
+                min:theValue.min??null,
+                now:theValue.now??theValue.max,
+                max:theValue.max
+            }
+        }
+        else{
+            value = {
+                min:null,
+                now:theValue,
+                max:theValue
+            }
+        }
+        return {
+            ...map,
+            allowOver:map.allowOver??false,
+            value,
+            key
         }
     }
-    throw new Error("设置属性出错")
+    //否则直接返回就行
+    return {
+        ...map,
+        key
+    }
 }
 
-//尝试访问一个属性对象的值
+export function getMap(key:string){
+    if(isStatusKey(key)){
+        return statusMapList[key]
+    }
+    return false
+}
+
+export const statusMapList = {
+    "health":{
+        label:"生命",
+        value:0,
+        valueType:"max",
+    },
+    "energy":{
+        label:"能量",
+        value:0,
+        valueType:"max"
+    },
+    "cost":{
+        label:"消耗能量",
+        value:0,
+        valueType:"number",
+        notNegative:true
+    }
+} as const
+
+// 获取 statusMapList 中键的类型
+type StatusKey = keyof typeof statusMapList;
+
+// 自定义类型保护函数，验证 key 是否是 statusMapList 的有效键
+function isStatusKey(key: any): key is StatusKey {
+    return key in statusMapList;
+}

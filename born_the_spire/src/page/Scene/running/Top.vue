@@ -38,17 +38,12 @@
     import Button from "@/components/global/Button.vue"
     import { changeScene } from "@/hooks/changeScene";
 import { showCardGroup } from '@/hooks/popUp';
+import { getStatusByKey } from '@/objects/system/Status';
     const health = computed(()=>{
-        const status = nowPlayer.value.getStatusByKey("original_status_00001")
-        if(status&&status.valueType == "max"){
-            return {
-                now:status.value.now,
-                max:status.value.max
-            }
-        }
+        const status = getStatusByKey(nowPlayer.value,"health","max")
         return {
-            now:0,
-            max:0
+            now:status.value.now,
+            max:status.value.max
         }
     })
     const moneys = computed(()=>{

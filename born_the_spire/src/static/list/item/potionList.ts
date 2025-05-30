@@ -9,7 +9,7 @@ const potionList:PotionMap[] = [
     {
         label:"生命药剂",
         status:{
-            "original_status_00003":10
+            "heal":10
         },
         describe:["恢复",{key:["status","heal"]}],
         targetType:"player",

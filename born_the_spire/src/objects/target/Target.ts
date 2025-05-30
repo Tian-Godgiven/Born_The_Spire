@@ -8,7 +8,7 @@ import { doBehavior } from "@/static/list/system/behaviorList";
 export type TargetMap = EntityMap & {
     label:string,
 }
-
+//可被选中和作用的目标
 export class Target extends Entity{
     public label:string = "";//名称
     public readonly __key:string = nanoid() //唯一键
