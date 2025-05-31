@@ -13,7 +13,11 @@ import { ref } from 'vue';
 <style scoped lang='scss'>
 .popUpContainer{
     position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
+    z-index: 1;
+    pointer-events: none;
 }
 </style>

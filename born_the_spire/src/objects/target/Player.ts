@@ -13,12 +13,19 @@ import { doBehavior } from "@/static/list/system/behaviorList";
 import { changeStatusValue, getStatusValue } from "../system/Status";
 import { showQuickInfo } from "@/hooks/global/quickInfo";
 
+export type CardPiles = {
+    handPile:Card[],
+    drawPile:Card[],
+    discardPile:Card[],
+    exhaustPile:Card[]
+}
+
 // 每一局游戏中，玩家扮演的角色
 export class Player extends Chara{
     //唯一键
     public readonly __key:string = nanoid()
     //当前的各个卡组的情况
-    public cardPiles:Record<string,Card[]> = {
+    public cardPiles:CardPiles = {
         handPile:[],
         drawPile:[],
         discardPile:[],

@@ -5,14 +5,15 @@
 </template>
 
 <script setup lang='ts'>
-    import { ChooseSource, startChooseTarget } from '@/hooks/chooseTarget';
+    import { ChooseOption, startChooseTarget } from '@/hooks/chooseTarget';
     import { reactive, useTemplateRef } from 'vue';
-    const {chooseSource} = defineProps<{
-        chooseSource:ChooseSource
+    //点击该div即可开始选择一个target
+    const {chooseOption} = defineProps<{
+        chooseOption:ChooseOption
     }>()
     
-    const cardRef = useTemplateRef("target")
-    const cardPosition = reactive({
+    const targetRef = useTemplateRef("target")
+    const position = reactive({
         left:0,
         top:0
     })
@@ -20,18 +21,18 @@
         getPosition()
     });
     function getPosition(){
-        if(cardRef.value){
-            const {left,top} = cardRef.value.getBoundingClientRect()
-            cardPosition.left = left+(cardRef.value?.clientWidth/2);
-            cardPosition.top = top
+        if(targetRef.value){
+            const {left,top} = targetRef.value.getBoundingClientRect()
+            position.left = left+(targetRef.value?.clientWidth/2);
+            position.top = top
         }
     }
     //点击元素开始选择目标
     function onClick(){
-        if(cardRef.value){
+        if(targetRef.value){
             getPosition()
             //开始选择
-            startChooseTarget(chooseSource,cardPosition)
+            startChooseTarget(chooseOption,position)
         }
     }
 </script>
