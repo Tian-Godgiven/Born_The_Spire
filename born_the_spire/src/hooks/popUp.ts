@@ -37,5 +37,6 @@ export function showCardGroup(cardGroup?:Card[]|defaultCardGroupName){
                 break;
         }
     }
+    console.log(cardGroup,cardList)
     
 }

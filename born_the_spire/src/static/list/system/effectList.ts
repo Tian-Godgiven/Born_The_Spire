@@ -107,7 +107,8 @@ type EffectData = {
     effect:(event:ActionEvent,effect:Effect)=>void
 }
 //效果表
-const effectList:EffectData[] = [{
+const effectList:EffectData[] = [
+{
     //造成伤害
     label:"造成伤害",
     key:"damage",
@@ -116,7 +117,9 @@ const effectList:EffectData[] = [{
         const health = getStatusByKey(target,"health","max")
         health.value.now -= effect.value.now
     },
-},{
+},
+//收到伤害时，减少受到的伤害
+{
     //收到伤害时，减少受到的伤害
     label:"减少受到的伤害",
     key:"take_reduce_damage",   
@@ -127,11 +130,9 @@ const effectList:EffectData[] = [{
             how:"take",
             key:"damage",
             callBack:(damage)=>{
-                console.log("减少了造成的伤害",damage.effect)
                 //使得触发其的伤害效果减少本效果的值
                 if(damage.effect)
                 damage.effect.value.now -= effect.value.now
-                console.log("减少效果值",effect)
             }
         })
     }

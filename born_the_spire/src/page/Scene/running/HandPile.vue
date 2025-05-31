@@ -1,6 +1,6 @@
 <template>
 <div class="handPile center">
-    <LineToTarget v-for="handCard in handPile" :chooseSource="getChooseSource(handCard)">
+    <LineToTarget v-for="handCard in handPile" :chooseOption="getChooseOption(handCard)">
         <CardVue :card="handCard"/>
     </LineToTarget>
 </div>
@@ -11,17 +11,17 @@
     import CardVue from '@/components/object/Card.vue';
     import { nowPlayer } from '@/hooks/run';
 import LineToTarget from '@/components/display/LineToTarget.vue';
-import { ChooseSource } from '@/hooks/chooseTarget';
-import { Card } from '@/objects/item/Card';
-    //手牌
+import { ChooseOption } from '@/hooks/chooseTarget';
+import { Card, useCard } from '@/objects/item/Card';
+    //手牌堆
     const handPile = computed(()=>{
         return nowPlayer.value?.cardPiles.handPile
     })
-    function getChooseSource(card:Card):ChooseSource{
+    function getChooseOption(card:Card):ChooseOption{
         return {
-            //触发卡牌效果
+            //选择目标成功时，使用卡牌
             "chooseTarget":(target)=>{
-                card.useCard(nowPlayer.value.getSelf(),target)
+                useCard(card,handPile.value,nowPlayer.value.getSelf(),target)
             }
         }
     }

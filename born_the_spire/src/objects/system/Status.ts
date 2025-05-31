@@ -2,8 +2,8 @@ import { doBehavior } from "@/static/list/system/behaviorList"
 import { Entity } from "./Entity"
 import { newError } from "@/hooks/global/alert"
 
-export type StatusType = "number"|"max"|"bool"
-//属性根据其值分为3种类型：纯数值，范围值和布尔值
+export type StatusType = "number"|"max"
+//属性根据其值分为2种类型：纯数值，范围值
 export type Status = StatusNumber|StatusMax
 type StatusBase = {
     label?:string,//属性名
