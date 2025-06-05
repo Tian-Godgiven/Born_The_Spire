@@ -1,12 +1,12 @@
 
 import { Card } from "@/objects/item/Card"
 import { ItemMap } from "@/objects/item/Item"
-import { EffectMap } from "../system/effectList"
+import { EffectKeyMap } from "../system/effectList"
 
 export type CardMap = ItemMap & {
     entry?:string[],
     behavior:{
-        useCard:EffectMap[]
+        useCard:EffectKeyMap[]
     }
 }
 

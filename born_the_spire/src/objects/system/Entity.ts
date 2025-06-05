@@ -2,7 +2,7 @@ import { initStatusByMap, StatusMap } from "@/static/list/system/statusList";
 import { Trigger, TriggerFunc, TriggerMap } from "./Trigger";
 import { ActionEvent } from "./ActionEvent";
 import { Describe } from "@/hooks/express/describe";
-import { EffectMap, makeEffectByMap } from "@/static/list/system/effectList";
+import { EffectKeyMap, doEffectByKey } from "@/static/list/system/effectList";
 import { Status } from "./Status";
 // 实体（entity）是Target和Item的基类
 export class Entity{
@@ -63,11 +63,11 @@ export class Entity{
 export type EntityMap = {
     status?:Record<string,StatusMap|number>;
     trigger?:TriggerMap;
-    behavior?:Record<string,EffectMap[]>;
+    behavior?:Record<string,EffectKeyMap[]>;
     describe?:Describe
 }
 
-function initBehavior(entity:Entity,map:Record<string,EffectMap[]>){
+function initBehavior(entity:Entity,map:Record<string,EffectKeyMap[]>){
     //每种行为都对应是一个on的触发器，在行为事件触发时产生效果
     for(let [key,effects] of Object.entries(map)){
         entity.getTrigger({
@@ -76,7 +76,7 @@ function initBehavior(entity:Entity,map:Record<string,EffectMap[]>){
             key,
             callBack:({source,target})=>{
                 effects.forEach(map=>{
-                    makeEffectByMap(source,entity,target,map)
+                    doEffectByKey(source,entity,target,map)
                 })
             }
         })

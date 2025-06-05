@@ -1,17 +1,17 @@
-import { Card } from "../item/Card";
-import type { Potion } from "../item/Potion"
-import type { Relic } from "../item/Relic"
+import { Card, drawCardFromDrawPile } from "../../item/Card";
+import type { Potion } from "../../item/Potion"
+import type { Relic } from "../../item/Relic"
 import { PlayerMap } from "@/static/list/target/playerList";
 import { getPotionByKey } from "@/static/list/item/potionList";
 import { nanoid } from "nanoid";
-import { Chara } from "./Target";
+import { Chara } from "../Target";
 import {shuffle} from "lodash"
 import { getCardByKey } from "@/static/list/item/cardList";
 import { getMoneyByKey, Money } from "@/static/list/item/moneyList";
-import { Entity } from "../system/Entity";
-import { doBehavior } from "@/static/list/system/behaviorList";
-import { changeStatusValue, getStatusValue } from "../system/Status";
-import { showQuickInfo } from "@/hooks/global/quickInfo";
+import { Entity } from "../../system/Entity";
+import { Turn } from "./Turn";
+import { getEnergy } from "../../../static/list/system/behavior/energy";
+import { reactive } from "vue";
 
 export type CardPiles = {
     handPile:Card[],
@@ -31,18 +31,20 @@ export class Player extends Chara{
         discardPile:[],
         exhaustPile:[]
     }
+    //回合行为，用来统一执行回合事件
+    public turn:Turn
     //药水的持有情况
-    private potions:{max:number,now:Potion[]} = {
+    public potions:{max:number,now:Potion[]} = {
         max:0,
         now:[]
     }
-    private cards:Card[] = []//卡组
-    private relics:Relic[] = []//拥有的遗物
-    private moneys:Money[] = []//资产
-    constructor(
-        map:PlayerMap
-    ){
+    public cards:Card[] = []//卡组
+    public relics:Relic[] = []//拥有的遗物
+    public moneys:Money[] = []//资产
+    constructor(map:PlayerMap){
         super(map)
+        //回合行为初始化
+        this.turn = new Turn(map.turn)
         //玩家特有内容的初始化
         this.getMoney(map.money)
         const potion = map.potion
@@ -56,6 +58,7 @@ export class Player extends Chara{
         for(let key of map.card){
             this.getCard(key)
         }
+        reactive(this)
     }
     
     //获取自身
@@ -99,42 +102,9 @@ export class Player extends Chara{
         //初始化抽牌堆
         this.initDrawPile()
     }
-    //回合开始
-    startTurn(){
-        //抽牌
-        this.drawCard(5)
-    }
-
-    //将牌放入手牌中
-    getHandCard(card:Card|Card[]){
-        if(card instanceof Card){
-            this.cardPiles.handPile.push(card)
-        }
-        else{
-            card.forEach(card=>{
-                this.cardPiles.handPile.push(card)
-            })
-        }
-    }
     //从抽牌堆中抽牌
-    drawCard(number:number){
-        const drawPile = this.cardPiles.drawPile
-        const length = drawPile.length
-        //抽牌堆数量不足
-        if(length < number){
-            //先抽足够的数量放进手牌
-            const cards = drawPile.splice(0,length)
-            this.getHandCard(cards)
-            //弃牌堆填充抽牌堆
-            this.fullDrawPile()
-            //再抽剩余数量
-            const leftCards = drawPile.splice(0,(number-length))
-            this.getHandCard(leftCards)
-            return;
-        }
-        //抽n张牌
-        const cards = drawPile.splice(0,number)
-        this.getHandCard(cards)
+    drawCard(number:number,medium:Entity){
+        drawCardFromDrawPile(this,number,medium)
     }
     //抽牌堆洗牌
     washDrawPile(){
@@ -184,29 +154,5 @@ export class Player extends Chara{
     }
 }
 
-//消耗玩家的能量
-export function costEnergy(source:Entity,medium:Entity,target:Player,cost:number):boolean{
-    const ifEnough = checkEnergy(cost,target)
-    if(ifEnough){
-        //消耗能量
-        doBehavior("costEnergy",source,medium,target,{costNum:cost},()=>{
-            const energy = getStatusValue(target,"energy","now")
-            changeStatusValue(source,medium,target,"energy",energy-cost,"now")
-        })
-    }
-    else{
-        showQuickInfo("能量不足")
-    }
-    return ifEnough
-}
 
-//判断能量是否足够
-export function checkEnergy(cost:number,target:Player):boolean{
-    //判断目标的能量是否足够
-    const energy = getStatusValue(target,"energy","now")
-    if(energy >= cost){
-        return true
-    }
-    return false
-}
 

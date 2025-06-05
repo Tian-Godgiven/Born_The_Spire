@@ -1,8 +1,9 @@
 import { CardMap } from "@/static/list/item/cardList";
 import { Target } from "@/objects/target/Target";
 import { Item } from "./Item";
-import { doBehavior, doBehaviorGroup } from "@/static/list/system/behaviorList";
-import { CardPiles, costEnergy, Player } from "../target/Player";
+import { doBehavior, doBehaviorGroup } from "@/objects/system/Behavior";
+import { CardPiles, Player } from "../target/player/Player";
+import { costEnergy } from "../../static/list/system/behavior/energy";
 import { getStatusValue } from "../system/Status";
 import { isEqual } from "lodash";
 import { newError } from "@/hooks/global/alert";
@@ -34,7 +35,7 @@ export function useCard(card:Card,fromPile:Card[],source:Player,target:Target){
 }
 
 //处理使用后的卡牌,根据不同的词条执行不同行为
-export function afterUseCard(card:Card,fromPile:Card[],ownner:Player,target:Target){
+export function afterUseCard(card:Card,fromPile:Card[],ownner:Player,_target:Target){
     //消耗词条
     if(card.haveEntry("exhaust")){
         //将其消耗
@@ -44,6 +45,44 @@ export function afterUseCard(card:Card,fromPile:Card[],ownner:Player,target:Targ
         //移入弃牌堆
         discardCard(fromPile,card,ownner,card)
     }
+}
+
+//从抽牌堆中抽取n张卡牌,这是一个行为
+export function drawCardFromDrawPile(player:Player,number:number,medium:Entity){
+    const drawPile = player.cardPiles.drawPile
+    const length = drawPile.length
+    //抽牌堆数量不足
+    if(length < number){
+        //先抽足够的数量，将抽牌堆清空
+        drawBehavior(length)
+        //弃牌堆填充抽牌堆
+        player.fullDrawPile()
+        //再抽剩余数量
+        drawBehavior(number-length)
+    }
+    else{
+        drawBehavior(number)
+    }
+    
+    function drawBehavior(number:number){
+        //获得抽牌堆的前n张卡牌
+        const cards = drawPile.slice(0,number)
+        //进行一个行为，使得玩家获得这n张卡牌
+        doBehaviorGroup("drawFromDrawPile","drawCard",player,medium,cards,{drawNumber:number},(player,_medium,card)=>{
+            player.cardPiles.handPile.push(card)
+            console.log(player.cardPiles.handPile)
+            //将指定卡牌移动到手牌堆
+            // cardMove(drawPile,card,player.cardPiles.handPile)
+        })
+    }
+    
+}
+
+//抽取指定卡牌到手牌中
+export function drawCard(fromPile:Card[],card:Card,player:Player,medium:Entity){
+    doBehavior("drawCard",player,medium,card,{},()=>{
+        cardMove(fromPile,card,player.cardPiles.drawPile)
+    })
 }
 
 //丢弃卡牌，使得一张卡牌进入玩家的弃牌堆
@@ -75,6 +114,17 @@ export function discardAllPile(player:Player,pileName:keyof CardPiles,medium:Ent
         pile.splice(index,1)
     })
 }
+//因回合结束而丢弃卡牌
+export function turnEndDiscardCard(pile:Card[],card:Card,player:Player){
+    //如果卡牌具备虚无词条，则会进入消耗堆
+    if(card.haveEntry("void")){
+        exhaustCard(pile,card,player,card)
+    }
+    //否则进入弃牌堆
+    else{
+        discardCard(pile,card,player,player)
+    }
+}
 
 //消耗卡牌，使得一张卡牌进入玩家的消耗堆
 export function exhaustCard(fromPile:Card[],card:Card,player:Player,medium:Entity){
@@ -91,5 +141,16 @@ export function exhaustCard(fromPile:Card[],card:Card,player:Player,medium:Entit
     }
     else{
         newError(["没有在来源牌堆中找到这张卡牌",fromPile,card])
+    }
+}
+
+//将卡牌从一个牌堆放到另一个牌堆
+export function cardMove(from:Card[],card:Card,to:Card[]){
+    const index = from.findIndex(tmp=>tmp==card)
+    if(index >=0 ){
+        //进入手牌堆
+        to.push(card)
+        //从来源牌堆删除
+        from.splice(index,1)
     }
 }
