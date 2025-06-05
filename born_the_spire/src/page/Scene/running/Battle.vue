@@ -16,16 +16,16 @@
     <div class="endTurn center" @click="endTurn">结束回合</div>
 
     <div class="drawPile center" 
-        @click="showCardGroup('draw')">
+        @click="showCardPile('draw')">
         抽排堆
     </div>
     <HandPile></HandPile>
     <div class="discardPile center" 
-        @click="showCardGroup('discard')">
+        @click="showCardPile('discard')">
         弃牌堆
     </div>
     <div class="exhaustPile center" 
-        @click="showCardGroup('exhaust')">
+        @click="showCardPile('exhaust')">
         消耗堆
     </div>
 </div>
@@ -34,8 +34,8 @@
 <script setup lang='ts'>
     
     import Relic from '@/components/object/Relic.vue';
-    import { endTurn, nowBattle } from '@/hooks/battle';
-    import { showCardGroup } from '@/hooks/popUp';
+    import { nowBattle } from '@/hooks/battle';
+    import { showCardPile } from '@/hooks/showCardPile';
     import { nowPlayer } from '@/hooks/run';
     import { computed } from 'vue';
     import Team from '@/components/object/Team.vue';
@@ -43,19 +43,27 @@
 import { getStatusValue } from '@/objects/system/Status';
     //遗物
     const relics = computed(()=>{
-        return nowPlayer.value.getRelicsList()
+        return nowPlayer.getRelicsList()
     })
     //能量
     const energys = computed(()=>{
-        const now = getStatusValue(nowPlayer.value,"energy")
-        const max = getStatusValue(nowPlayer.value,"energy","max")
+        const now = getStatusValue(nowPlayer,"energy")
+        const max = getStatusValue(nowPlayer,"energy","max")
         return {now,max}
     })
+    //结束当前回合
+    function endTurn(){
+        nowBattle.value?.endTurn("player")
+    }
     
 </script>
 
 <style scoped lang='scss'>
 .battle{
+    position: relative;
+    height: 100%;
+    width: 100%;
+    flex-grow: 1;
     .center{
         display: flex;
         place-items: center;
