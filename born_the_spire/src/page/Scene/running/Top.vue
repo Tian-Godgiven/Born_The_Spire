@@ -37,24 +37,24 @@
     import { computed } from 'vue';
     import Button from "@/components/global/Button.vue"
     import { changeScene } from "@/hooks/changeScene";
-import { showCardGroup } from '@/hooks/popUp';
+import { showCardPile } from '@/hooks/showCardPile';
 import { getStatusByKey } from '@/objects/system/Status';
     const health = computed(()=>{
-        const status = getStatusByKey(nowPlayer.value,"health","max")
+        const status = getStatusByKey(nowPlayer,"health","max")
         return {
             now:status.value.now,
             max:status.value.max
         }
     })
     const moneys = computed(()=>{
-        return nowPlayer.value.getNowMoneys()
+        return nowPlayer.getNowMoneys()
     })
     const potions = computed(()=>{
-        return nowPlayer.value.getPotionList()
+        return nowPlayer.getPotionList()
     })
     const abilities = [
         {label:"地图",click:()=>changeScene("map")},
-        {label:"卡组",click:()=>showCardGroup()},
+        {label:"卡组",click:()=>showCardPile()},
         {label:"返回",click:()=>endRun()}
     ]
 
@@ -63,8 +63,6 @@ import { getStatusByKey } from '@/objects/system/Status';
 <style scoped lang='scss'>
 .top{
     display: grid;
-    min-height: 50px;
-    height: 8vh;
     align-items: center;
     grid-template-columns: 4fr 2fr 1fr;
     border-bottom: 2px solid black;

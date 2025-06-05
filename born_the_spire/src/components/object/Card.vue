@@ -28,6 +28,7 @@
 
 <style scoped lang='scss'>
 .card{
+    background-color:white;
     position: relative;
     flex-shrink: 0;
     width: 130px;
