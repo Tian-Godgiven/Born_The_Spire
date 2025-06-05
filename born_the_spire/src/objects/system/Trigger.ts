@@ -1,4 +1,4 @@
-import { EffectMap, makeEffectByMap } from "@/static/list/system/effectList";
+import { EffectKeyMap, doEffectByKey } from "@/static/list/system/effectList";
 import { isArray } from "lodash";
 import { ActionEvent } from "./ActionEvent";
 
@@ -9,10 +9,10 @@ export type EffectTrigger = {
 }
 
 //默认触发时机为"before"，优先级为0
-type TriggerItemMap = Record<string,EffectMap[]|{
+type TriggerItemMap = Record<string,EffectKeyMap[]|{
     when:"before"|"after",
     level:number//触发优先级
-    effects:EffectMap[]//该触发器会造成什么效果
+    effects:EffectKeyMap[]//该触发器会造成什么效果
 }> 
 
 export type TriggerMap = {
@@ -70,7 +70,7 @@ function readTriggerMap(trigger:Trigger,how:"take"|"make",map:TriggerItemMap|und
             const callBack = ({source,medium,target}:ActionEvent)=>{
                 //依次触发所有效果
                 item.effects.forEach(effect=>{
-                    makeEffectByMap(source,medium,target,effect)
+                    doEffectByKey(source,medium,target,effect)
                 })  
             }
             trigger.getTrigger({
@@ -84,7 +84,7 @@ function readTriggerMap(trigger:Trigger,how:"take"|"make",map:TriggerItemMap|und
             const callBack = ({source,medium,target}:ActionEvent)=>{
                 //依次触发所有效果
                 value.forEach(effect=>{
-                    makeEffectByMap(source,medium,target,effect)
+                    doEffectByKey(source,medium,target,effect)
                 })  
             }
             trigger.getTrigger({

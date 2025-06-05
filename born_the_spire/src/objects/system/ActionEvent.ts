@@ -1,5 +1,5 @@
 
-import { Effect } from "@/static/list/system/effectList";
+import { Effect } from "./Effect";
 import { Entity } from "./Entity";
 
 // 过程事件指的是游戏进程中发生的每一件事，包括某个对象的行为，以及这些行为产生效果的过程

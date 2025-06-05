@@ -1,12 +1,12 @@
 import { Describe } from "@/hooks/express/describe";
-import { EffectMap } from "@/static/list/system/effectList";
+import { EffectKeyMap } from "@/static/list/system/effectList";
 import { Entity, EntityMap } from "../system/Entity";
 
 export type ItemMap = EntityMap & {
     label:string,
     describe?:Describe,
     key:string,
-    behavior?:Record<string,EffectMap[]>
+    behavior?:Record<string,EffectKeyMap[]>
 }
 
 export class Item extends Entity{

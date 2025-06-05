@@ -1,4 +1,4 @@
-import { doBehavior } from "@/static/list/system/behaviorList"
+import { doBehavior } from "@/objects/system/Behavior"
 import { Entity } from "./Entity"
 import { newError } from "@/hooks/global/alert"
 
@@ -86,17 +86,19 @@ export function getStatusValue(target:Entity,statusKey:string,type:"now"|"min"|"
     }
 }
 
-//修改目标属性的值
+//修改目标属性的值,超过上限或下限的部分无效
 export function changeStatusValue(source:Entity,medium:Entity,target:Entity,statusKey:string,newValue:number,type:"now"|"min"|"max"="now"){
     const oldValue = getStatusValue(target,statusKey,type)
+    //找到属性对象
+    const status = target.status[statusKey]
+    //判断输入值
+    newValue = checkValue(status,newValue,type)
     //进行行为：修改属性,传入属性key和修改前后的值
     doBehavior("changeStatus",source,medium,target,{
         statusKey,
         oldValue,
         newValue
     },()=>{
-        //找到属性对象
-        const status = target.status[statusKey]
         //根据类型决定修改对象值
         switch(status.valueType){
             case "number":
@@ -124,4 +126,44 @@ export function changeStatusValue(source:Entity,medium:Entity,target:Entity,stat
         }
     })
 
+}
+
+//判断输入值是否合法
+function checkValue(status:Status,newValue:number,type:"now"|"min"|"max"){
+    //若属性为“非负”的
+    if(status.notNegative){
+        if(newValue < 0){
+            return 0
+        }
+    }
+    if(status.valueType == "max"){
+        switch(type){
+            case "now":
+                //不会超过上限，也不会低于下限
+                if(newValue > status.value.max){
+                    //不允许溢出
+                    if(!status.allowOver){
+                        newValue = status.value.max
+                    }
+                }
+                if(status.value.min && newValue < status.value.min){
+                    newValue = status.value.min
+                }
+                break;
+            case "max":
+                //不会低于下限值
+                if(status.value.min && newValue < status.value.min){
+                    newValue = status.value.min
+                }
+                status.value.max = newValue
+                break;
+            case "min":
+                //不会超过上限值
+                if(newValue > status.value.max){
+                    newValue = status.value.max
+                }
+                break;
+        }
+    }
+    return newValue           
 }

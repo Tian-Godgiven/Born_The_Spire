@@ -13,7 +13,7 @@
     }>()
     //是否是当前的玩家角色,是则放在c位
     const ifCenter = function(target:Chara){
-        if(target.__key == nowPlayer.value?.__key){
+        if(target.__key == nowPlayer?.__key){
             return true
         }
         return false
