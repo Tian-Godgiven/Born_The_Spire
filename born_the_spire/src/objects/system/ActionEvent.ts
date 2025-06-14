@@ -1,4 +1,3 @@
-
 import { Effect } from "./Effect";
 import { Entity } from "./Entity";
 
@@ -7,12 +6,15 @@ import { Entity } from "./Entity";
 // 而是记录这件事发生的过程中，涉及到的各个对象
 // 并且过程事件还用于触发对象的触发器
 // (1.执行行为，2.产生效果)时被构建，并传入触发器中
-export class ActionEvent{
+export class ActionEvent<
+    s extends Entity = Entity,
+    m extends Entity = Entity,
+    t extends Entity = Entity>{
     constructor(
         public key:string,//事件的触发key
-        public source:Entity,//执行该事件的目标
-        public medium:Entity,//
-        public target:Entity,//接受该事件的目标
+        public source:s,//执行该事件的目标
+        public medium:m,//
+        public target:t,//接受该事件的目标
         public info:Record<string,any>,//该事件执行全程的信息
         public effect?:Effect
     ){}
@@ -24,3 +26,8 @@ export class ActionEvent{
     }
 
 }
+
+//这是一个用来占位的实体对象
+//一部分过程事件中
+//我们不关心或者找不到特定的实体来参与过程事件的某个部分时，可以使用该对象
+export const systemEntity = new Entity({label:"系统对象"})

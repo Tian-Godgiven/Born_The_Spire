@@ -1,17 +1,19 @@
 import { initStatusByMap, StatusMap } from "@/static/list/system/statusList";
-import { Trigger, TriggerFunc, TriggerMap } from "./Trigger";
+import { Trigger, TriggerMap, TriggerObj } from "./Trigger";
 import { ActionEvent } from "./ActionEvent";
 import { Describe } from "@/hooks/express/describe";
 import { EffectKeyMap, doEffectByKey } from "@/static/list/system/effectList";
 import { Status } from "./Status";
 // 实体（entity）是Target和Item的基类
 export class Entity{
+    public label:string
     //属性值
     public status:Record<string,Status> = {}
     public describe:Describe = []
     //触发器
     public trigger:Trigger
     constructor(map:EntityMap){
+        this.label = map.label
         //初始化触发器
         this.trigger = new Trigger((map.trigger)??null)
         //初始化属性
@@ -26,19 +28,12 @@ export class Entity{
             initBehavior(this,map.behavior)
         }
         //初始化描述
-        if(map.describe){
-            this.describe = map.describe
-        }
+        this.describe = map.describe??[]
         
     }
     //获得一个触发器
-    getTrigger(triggerMap:{
-        when:"before"|"after",
-        how:"take"|"make"|"on",
-        key:string,
-        callBack:TriggerFunc
-    }){
-        this.trigger.getTrigger(triggerMap)
+    getTrigger(triggerObj:TriggerObj){
+        this.trigger.getTrigger(triggerObj)
     }
     //对象造成了某个事件，且该事件被触发了
     makeEvent(when:"before"|"after",event:ActionEvent){
@@ -61,6 +56,7 @@ export class Entity{
 }
 
 export type EntityMap = {
+    label:string
     status?:Record<string,StatusMap|number>;
     trigger?:TriggerMap;
     behavior?:Record<string,EffectKeyMap[]>;
@@ -74,7 +70,8 @@ function initBehavior(entity:Entity,map:Record<string,EffectKeyMap[]>){
             when:"before",
             how:"on",
             key,
-            callBack:({source,target})=>{
+            sourceKey:"self",
+            callback:({source,target})=>{
                 effects.forEach(map=>{
                     doEffectByKey(source,entity,target,map)
                 })
