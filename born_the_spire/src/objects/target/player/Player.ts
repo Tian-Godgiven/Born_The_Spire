@@ -10,8 +10,7 @@ import { getCardByKey } from "@/static/list/item/cardList";
 import { getMoneyByKey, Money } from "@/static/list/item/moneyList";
 import { Entity } from "../../system/Entity";
 import { Turn } from "./Turn";
-import { getEnergy } from "../../../static/list/system/behavior/energy";
-import { reactive } from "vue";
+import { reactive } from "vue"; 
 
 export type CardPiles = {
     handPile:Card[],

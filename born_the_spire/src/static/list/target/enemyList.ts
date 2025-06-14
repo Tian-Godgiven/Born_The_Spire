@@ -13,8 +13,7 @@ export const enemyList:EnemyMap[] = [
         status:{
             "health":5
         },
-        organ:["original_organ_00002","original_organ_00003"],
-        trigger:{}
+        organ:["original_organ_00002","original_organ_00003"]
     }
 ]
 

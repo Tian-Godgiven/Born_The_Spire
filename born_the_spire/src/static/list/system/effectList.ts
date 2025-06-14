@@ -99,7 +99,7 @@ const effectList:EffectData[] = [
             when:"before",
             how:"take",
             key:"damage",
-            callBack:(damage)=>{
+            callback:(damage)=>{
                 //使得触发其的伤害效果减少本效果的值
                 if(damage.effect)
                 damage.effect.value.now -= effect.value.now

@@ -42,6 +42,5 @@ export const playerList:Record<string,PlayerMap> = {
         },
         organ:["original_organ_00001"],
         card:["original_card_00001","original_card_00001","original_card_00001","original_card_00001","original_card_00001","original_card_00001","original_card_00001","original_card_00001","original_card_00002","original_card_00003"],
-        trigger:{}
     }
 }

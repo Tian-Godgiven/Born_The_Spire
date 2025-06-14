@@ -4,6 +4,7 @@ import { Organ } from "./Organ";
 import { getOrganByKey } from "@/static/list/target/organList";
 import { Entity, EntityMap } from "../system/Entity";
 import { doBehavior } from "@/objects/system/Behavior";
+import { State } from "./State";
 
 export type TargetMap = EntityMap & {
     label:string,
@@ -12,6 +13,7 @@ export type TargetMap = EntityMap & {
 export class Target extends Entity{
     public label:string = "";//名称
     public readonly __key:string = nanoid() //唯一键
+    public state:State[] = []//状态数组
     constructor(map:TargetMap){
         super(map)
         //名称

@@ -8,6 +8,7 @@
             {{ target.label }}
         </div>
         <BloodLine :target></BloodLine>
+        <State></State>
     </div>
 </div>
 </template>
