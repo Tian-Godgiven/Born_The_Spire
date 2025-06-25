@@ -6,6 +6,7 @@ import { stateList } from "@/static/list/target/stateList"
 import { newError } from "@/hooks/global/alert"
 import { doBehavior } from "../system/Behavior"
 import { ActionEvent } from "../system/ActionEvent"
+import { systemEntity } from "@/hooks/system"
 
 //状态的层数，一部分状态可能拥有多个层数
 type Stack = {
@@ -97,7 +98,11 @@ export function createStateByKey(key:string,stacks:Stack[]|number){
 }
 
 //为目标附加状态
-export function addStateToTarget(source:Entity,medium:Entity,target:Target,state:State){
+export function addStateToTarget(source:Entity,medium:Entity,target:Entity,state:State){
+    //要求目标具备state属性
+    if('state' !in target){
+        newError(["目标target不具备state属性，无法获得状态",target])
+    }
     const effect = createEffectByMap({
         label:"附加状态",
         key:"addState",
@@ -105,7 +110,7 @@ export function addStateToTarget(source:Entity,medium:Entity,target:Target,state
         value:0,
         effect:()=>{
             //目标会获得这个状态
-            getState(source,medium,target,state)
+            getState(source,medium,target as Target,state)
         }
     })
     doEffect(source,medium,target,effect)
@@ -209,7 +214,7 @@ export function changeStateStack(newValue:number,target:Target,stateKey:string,s
         }
         //目标失去该状态,因层数下降导致的失去状态的来源和媒介都会是系统对象
         else{
-            // lostState(systemEntity,systemEntity,target,state)
+            lostState(systemEntity,systemEntity,target,state)
         }
     }
     

@@ -125,7 +125,7 @@ const effectList:EffectData[] = [
         const stateInfo = effect.info.state
         const state = createStateByKey(stateInfo.key,stateInfo.stacks)
         //来源使得目标获得状态
-        if(state && target instanceof Target){
+        if(state){
             addStateToTarget(source,medium,target,state)
         }
     }
