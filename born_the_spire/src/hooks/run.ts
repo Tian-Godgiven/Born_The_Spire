@@ -21,7 +21,6 @@ export function startNewRun(){
     const map = playerList["default"]
     //创建本局角色
     const player = new Player(map)
-    console.log(player)
     Object.assign(nowPlayer,player)//应用该对象
     //添加到队伍中
     addToPlayerTeam(nowPlayer)

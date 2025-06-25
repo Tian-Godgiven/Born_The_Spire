@@ -17,16 +17,16 @@
 
     <div class="drawPile center" 
         @click="showCardPile('draw')">
-        抽排堆
+        抽排堆：{{ pileNum.draw }}
     </div>
     <HandPile></HandPile>
     <div class="discardPile center" 
         @click="showCardPile('discard')">
-        弃牌堆
+        弃牌堆: {{ pileNum.discard }}
     </div>
     <div class="exhaustPile center" 
         @click="showCardPile('exhaust')">
-        消耗堆
+        消耗堆: {{ pileNum.exhaust }}
     </div>
 </div>
 </template>
@@ -50,6 +50,15 @@ import { getStatusValue } from '@/objects/system/Status';
         const now = getStatusValue(nowPlayer,"energy")
         const max = getStatusValue(nowPlayer,"energy","max")
         return {now,max}
+    })
+    //牌堆数量
+    const pileNum = computed(()=>{
+        const piles = nowPlayer.cardPiles
+        return {
+            draw:piles.drawPile.length,
+            exhaust:piles.exhaustPile.length,
+            discard:piles.discardPile.length
+        }
     })
     //结束当前回合
     function endTurn(){

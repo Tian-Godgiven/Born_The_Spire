@@ -8,7 +8,9 @@
             {{ target.label }}
         </div>
         <BloodLine :target></BloodLine>
-        <State></State>
+        <div class="states" v-for="state in target.state" :key="state.key">
+            <State :state></State>
+        </div>
     </div>
 </div>
 </template>
@@ -19,9 +21,11 @@ import Organ from './Organ.vue';
 import BloodLine from '../display/BloodLine.vue';
 import { eventBus } from '@/hooks/global/eventBus';
 import { ref } from 'vue';
+import State from './State.vue';
     const {target} = defineProps<{target:Chara}>()
     const hovering = ref(false)
     function onEnter(){
+        console.log("enter乐target")
         eventBus.emit("hoverTarget",{target,callBack:(bool)=>{
             if(bool){
                 hovering.value = true

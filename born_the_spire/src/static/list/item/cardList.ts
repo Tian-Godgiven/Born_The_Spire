@@ -4,6 +4,9 @@ import { ItemMap } from "@/objects/item/Item"
 import { EffectKeyMap } from "../system/effectList"
 
 export type CardMap = ItemMap & {
+    status:{
+        cost:number|null
+    }
     entry?:string[],
     behavior:{
         useCard:EffectKeyMap[]
@@ -79,6 +82,7 @@ const cardList:CardMap[] = [{
     label:"肌肉强化",
     status:{
         power:1,
+        cost:0
     },
     entry:["exhaust"],
     describe:[
