@@ -75,6 +75,33 @@ const cardList:CardMap[] = [{
             targetType:"enemy"
         }]
     }
+},{
+    label:"肌肉强化",
+    status:{
+        power:1,
+    },
+    entry:["exhaust"],
+    describe:[
+        "获得",
+        {
+            key:["status","power"]
+        },
+        "层力量"
+    ],
+    key:"original_card_00004",
+    behavior:{
+        useCard:[{
+            key:"getState",
+            info:{
+                state:{
+                    key:"power",
+                    stacks:1
+                }
+            },
+            value:0,
+            targetType:"self"
+        }]
+    }
 }]
 
 export function getCardByKey(key:string){

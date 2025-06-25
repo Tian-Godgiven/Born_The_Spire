@@ -33,13 +33,13 @@ export class Entity{
     }
     //获得一个触发器
     getTrigger(triggerObj:TriggerObj){
-        this.trigger.getTrigger(triggerObj)
+        return this.trigger.getTrigger(triggerObj)
     }
     //对象造成了某个事件，且该事件被触发了
     makeEvent(when:"before"|"after",event:ActionEvent){
         this.trigger.onTrigger(when,"make",event)
     }
-    //对象参与了某个事件
+    //对象作为媒介参与了某个事件
     onEvent(when:"before"|"after",event:ActionEvent){
         this.trigger.onTrigger(when,"on",event)
     }
@@ -63,6 +63,7 @@ export type EntityMap = {
     describe?:Describe
 }
 
+//初始化行为
 function initBehavior(entity:Entity,map:Record<string,EffectKeyMap[]>){
     //每种行为都对应是一个on的触发器，在行为事件触发时产生效果
     for(let [key,effects] of Object.entries(map)){
@@ -70,7 +71,6 @@ function initBehavior(entity:Entity,map:Record<string,EffectKeyMap[]>){
             when:"before",
             how:"on",
             key,
-            sourceKey:"self",
             callback:({source,target})=>{
                 effects.forEach(map=>{
                     doEffectByKey(source,entity,target,map)

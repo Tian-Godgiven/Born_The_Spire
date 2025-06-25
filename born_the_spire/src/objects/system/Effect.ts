@@ -25,7 +25,8 @@ type EffectMap = {
     targetType:"player"|"enemy"|"all"|"self"|"any",
     //效果事件
     effect:(event:ActionEvent,effect:Effect)=>void,
-    value:number|[number,number]
+    value:number|[number,number],
+    info?:Record<string,any>//额外信息
 }
 //效果对象
 export type Effect = {
@@ -33,13 +34,18 @@ export type Effect = {
     key:string//效果关键词
     targetType:"player"|"enemy"|"all"|"self"|"any"//效果作用对象
     //效果事件
-    effect:(event:ActionEvent,effect:Effect)=>void
+    effect:(event:ActionEvent,effect:Effect)=>void,
+    //效果信息，与效果本身有关
+    info:Record<string,any>
 }&(EffectType)
 //通过map创建一个effect
-export function createEffectByMap({label,key,targetType,effect,value}:EffectMap):Effect{
+export function createEffectByMap(effectMap:EffectMap):Effect{
+    const value = effectMap.value
+    const info = effectMap.info??{}
     if(typeof value == "number"){
         return {
-            label,key,targetType,effect,
+            ...effectMap,
+            info,
             value:{
                 now:value
             },
@@ -48,7 +54,8 @@ export function createEffectByMap({label,key,targetType,effect,value}:EffectMap)
     }
     else if(isArray(value)){
         return {
-            label,key,targetType,effect,
+            ...effectMap,
+            info,
             valueType:"range",
             value:{
                 min:value[0],
@@ -58,7 +65,8 @@ export function createEffectByMap({label,key,targetType,effect,value}:EffectMap)
         }
     }
     return{
-        label,key,targetType,effect,
+        ...effectMap,
+        info,
         value:{
             now:value
         },
