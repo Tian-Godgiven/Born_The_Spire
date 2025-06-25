@@ -19,6 +19,7 @@ export function startChooseTarget(option:ChooseOption,position:Position){
     showConnectLine(position)
     //开始监听“鼠标移到target上”事件
     eventBus.on("hoverTarget",({target,callBack})=>{
+        console.log("移到target上")
         if(option.ifTarget){
             callBack(option.ifTarget(target))
         }

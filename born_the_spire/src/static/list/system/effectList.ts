@@ -5,7 +5,6 @@ import { getStatusByKey } from "@/objects/system/Status"
 import _, { isArray } from "lodash"
 import { doEffect, Effect } from "@/objects/system/Effect"
 import { addStateToTarget, createStateByKey } from "@/objects/target/State"
-import { Target } from "@/objects/target/Target"
 
 //这里存储的是效果映射表，将json中存储的效果map转化成效果对象
 
@@ -119,13 +118,14 @@ const effectList:EffectData[] = [
 //获得状态
 {
     label:"获得状态",
-    key:"get_state",
+    key:"getState",
     effect:({source,medium,target},effect)=>{
         //创建状态对象
         const stateInfo = effect.info.state
         const state = createStateByKey(stateInfo.key,stateInfo.stacks)
         //来源使得目标获得状态
         if(state){
+            console.log(target)
             addStateToTarget(source,medium,target,state)
         }
     }

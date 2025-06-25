@@ -30,7 +30,6 @@ export function showPopUp(popUp:PopUp){
 
 // 关闭弹窗
 export function closePopUp(popUp?:PopUp){
-	console.log(popUp)
 	// 未指定弹窗时，关闭最外层弹窗
 	if(!popUp){
 		popUp = popUpList.pop()
@@ -39,7 +38,6 @@ export function closePopUp(popUp?:PopUp){
 	else{
 		//找到指定的popUp的index
 		const index = popUpList.indexOf(popUp)
-		console.log(index)
 		if(index != -1){
 			popUpList.splice(index,1)
 		}

@@ -100,7 +100,7 @@ export function createStateByKey(key:string,stacks:Stack[]|number){
 //为目标附加状态
 export function addStateToTarget(source:Entity,medium:Entity,target:Entity,state:State){
     //要求目标具备state属性
-    if('state' !in target){
+    if(!('state' in target)){
         newError(["目标target不具备state属性，无法获得状态",target])
     }
     const effect = createEffectByMap({
@@ -212,9 +212,9 @@ export function changeStateStack(newValue:number,target:Target,stateKey:string,s
         if(state.checkExist(target,state)){
             return true
         }
-        //目标失去该状态,因层数下降导致的失去状态的来源和媒介都会是系统对象
+        //目标失去该状态,因层数下降导致的失去状态的来源和媒介都会是自身
         else{
-            lostState(systemEntity,systemEntity,target,state)
+            lostState(target,target,target,state)
         }
     }
     
