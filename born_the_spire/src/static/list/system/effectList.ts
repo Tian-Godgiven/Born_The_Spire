@@ -4,20 +4,26 @@ import { Entity } from "@/objects/system/Entity"
 import { getStatusByKey } from "@/objects/system/Status"
 import _, { isArray } from "lodash"
 import { doEffect, Effect } from "@/objects/system/Effect"
+import { addStateToTarget, createStateByKey } from "@/objects/target/State"
+import { Target } from "@/objects/target/Target"
+
+//这里存储的是效果映射表，将json中存储的效果map转化成效果对象
 
 //用来产生一个效果的map
 export type EffectKeyMap = {
     key:string,
+    info?:Record<string,any>,//用来存储其他信息
     value:number|[number,number],
     targetType:"player"|"enemy"|"all"|"self"
 }
 
-//通过effectMap获取effect
+//通过effectMap获取effect对象
 export function getEffectByKey(map:EffectKeyMap):Effect{
     const data = effectList.find(tmp=>tmp.key == map.key)
     if(!data)throw new Error("没有找到目标效果")
     let value:Effect["value"] = {now:0}
     let valueType:Effect["valueType"] = "number"
+    const info = map.info??{}
     if(typeof map.value == "number"){
         return numberType(data,map.value)
     }
@@ -27,6 +33,7 @@ export function getEffectByKey(map:EffectKeyMap):Effect{
     return {
         ...data,
         ...map,
+        info,
         value,
         valueType
     }
@@ -39,6 +46,7 @@ export function getEffectByKey(map:EffectKeyMap):Effect{
         return {
             ...data,
             ...map,
+            info,
             value,
             valueType
         }
@@ -53,6 +61,7 @@ export function getEffectByKey(map:EffectKeyMap):Effect{
         return {
             ...data,
             ...map,
+            info,
             value,
             valueType
         }
@@ -105,6 +114,20 @@ const effectList:EffectData[] = [
                 damage.effect.value.now -= effect.value.now
             }
         })
+    }
+},
+//获得状态
+{
+    label:"获得状态",
+    key:"get_state",
+    effect:({source,medium,target},effect)=>{
+        //创建状态对象
+        const stateInfo = effect.info.state
+        const state = createStateByKey(stateInfo.key,stateInfo.stacks)
+        //来源使得目标获得状态
+        if(state && target instanceof Target){
+            addStateToTarget(source,medium,target,state)
+        }
     }
 }]
 
