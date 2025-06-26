@@ -53,9 +53,14 @@ export const nowBattle = ref<Battle|null>(null)
 //开始新的战斗
 export function startNewBattle(playerTeam:(Player|Chara)[],enemyTeam:(Enemy|Chara)[]):Battle{
     const battle = new Battle(1,playerTeam,enemyTeam)
+    debugger
     nowBattle.value = battle   
     nowPlayer.startBattle()
     //玩家阵容开始回合
     battle.startTurn("player")
     return battle
+}
+//结束当前战斗
+export function endNowBattle(){
+    nowBattle.value = null
 }

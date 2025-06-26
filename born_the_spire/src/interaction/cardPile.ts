@@ -1,6 +1,6 @@
 import { Card } from "@/objects/item/Card";
-import { nowPlayer } from "./run";
-import { showPopUp } from "./global/popUp";
+import { nowPlayer } from "../objects/game/run";
+import { showPopUp } from "../hooks/global/popUp";
 import { shallowRef } from "vue";
 import CardPile from "@/page/popUp/CardPile.vue";
 

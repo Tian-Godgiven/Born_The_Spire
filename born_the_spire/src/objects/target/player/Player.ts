@@ -10,7 +10,6 @@ import { getCardByKey } from "@/static/list/item/cardList";
 import { getMoneyByKey, Money } from "@/static/list/item/moneyList";
 import { Entity } from "../../system/Entity";
 import { Turn } from "./Turn";
-import { reactive } from "vue"; 
 
 export type CardPiles = {
     handPile:Card[],
@@ -57,7 +56,6 @@ export class Player extends Chara{
         for(let key of map.card){
             this.getCard(key)
         }
-        reactive(this)
     }
     
     //获取自身
@@ -98,8 +96,10 @@ export class Player extends Chara{
 
     //战斗开始
     startBattle(){
-        //初始化抽牌堆
-        this.initDrawPile()
+        //初始化牌堆:洗牌+清空牌堆
+        this.initCardPile()
+        //初始化状态：清空状态栏
+        this.initState()
     }
     //从抽牌堆中抽牌
     drawCard(number:number,medium:Entity){
@@ -119,11 +119,20 @@ export class Player extends Chara{
         //洗牌
         this.washDrawPile()
     }
-    //初始化抽牌堆，将卡组内的卡牌洗进抽牌堆
-    initDrawPile(){
+    //初始化牌堆，将卡组内的卡牌洗进抽牌堆
+    initCardPile(){
+        //洗抽牌堆
         const cards = this.cards;
         this.cardPiles.drawPile = cards;
         this.washDrawPile()
+        //其他牌堆清空
+        this.cardPiles.discardPile = []
+        this.cardPiles.exhaustPile = []
+        this.cardPiles.handPile = []
+    }
+    //初始化状态
+    initState(){
+        this.state = []
     }
 
     //获取药水列表

@@ -4,6 +4,7 @@ import { ActionEvent } from "./ActionEvent";
 import { Describe } from "@/hooks/express/describe";
 import { EffectKeyMap, doEffectByKey } from "@/static/list/system/effectList";
 import { Status } from "./Status";
+import { reactive } from "vue";
 // 实体（entity）是Target和Item的基类
 export class Entity{
     public label:string
@@ -29,7 +30,8 @@ export class Entity{
         }
         //初始化描述
         this.describe = map.describe??[]
-        
+        //响应式代理
+        reactive(this)
     }
     //获得一个触发器
     getTrigger(triggerObj:TriggerObj){

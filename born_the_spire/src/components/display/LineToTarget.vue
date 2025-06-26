@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang='ts'>
-    import { ChooseOption, startChooseTarget } from '@/hooks/chooseTarget';
+    import { ChooseOption, startChooseTarget } from '@/interaction/target/chooseTarget';
     import { reactive, useTemplateRef } from 'vue';
     //点击该div即可开始选择一个target
     const {chooseOption} = defineProps<{
