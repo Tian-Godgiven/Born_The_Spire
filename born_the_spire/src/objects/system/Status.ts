@@ -1,6 +1,8 @@
 import { doBehavior } from "@/objects/system/Behavior"
 import { Entity } from "./Entity"
 import { newError } from "@/hooks/global/alert"
+import { Stats } from "fs"
+import { cloneDeep } from "lodash"
 
 export type StatusType = "number"|"max"
 //属性根据其值分为2种类型：纯数值，范围值
@@ -14,6 +16,7 @@ type StatusBase = {
 type StatusNumber = StatusBase&{
     valueType:"number"
     value:number,//纯数值类型
+    defaultValue:number|null//战斗开始时刷新所有属性值为该属性的默认值，若不具备默认值则删除该属性
 }
 type StatusMax = StatusBase&{
     valueType:"max"
@@ -23,6 +26,11 @@ type StatusMax = StatusBase&{
         min:number|null,
         max:number//最大值
     }
+    defaultValue:{
+        now:number,
+        min:number|null,
+        max:number
+    }|null
 }
 
 //根据key值获取目标对象中的属性对象
@@ -91,6 +99,7 @@ export function changeStatusValue(source:Entity,medium:Entity,target:Entity,stat
     const oldValue = getStatusValue(target,statusKey,type)
     //找到属性对象
     const status = target.status[statusKey]
+    //改变之前
     //判断输入值
     newValue = checkValue(status,newValue,type)
     //进行行为：修改属性,传入属性key和修改前后的值
@@ -125,7 +134,23 @@ export function changeStatusValue(source:Entity,medium:Entity,target:Entity,stat
                 throw new Error()
         }
     })
+    //改变之后
 
+}
+
+//初始化所有属性值
+export function defaultStatusValue(target:Entity){
+    for(let key in target.status){
+        const status = target.status[key]
+        //将其value设置成defaultValue
+        if(status.defaultValue){
+            target.status[key].value = cloneDeep(status.defaultValue)
+        }
+        //删除该属性
+        else{
+            delete target.status[key]
+        }
+    }
 }
 
 //判断输入值是否合法

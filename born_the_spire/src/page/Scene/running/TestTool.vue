@@ -12,15 +12,12 @@
     import { newError } from '@/hooks/global/alert';
     import { Player } from '@/objects/target/player/Player';
     import { getEnemyByKey } from '@/static/list/target/enemyList';
-import { nowPlayerMap } from '@/objects/game/run';
 import { nowPlayer } from '../../../objects/game/run';
     const tools = [{
         text:"开始/重启战斗",
         click:()=>{
-            const player = new Player(nowPlayerMap)
-            Object.assign(nowPlayer,player)//应用该对象
             const enemy = getEnemyByKey("original_enemy_00001")
-            startNewBattle([player],[enemy])
+            startNewBattle([nowPlayer],[enemy])
         }
     },{
         text:"开始回合",
