@@ -12,11 +12,15 @@
     import { newError } from '@/hooks/global/alert';
     import { Player } from '@/objects/target/player/Player';
     import { getEnemyByKey } from '@/static/list/target/enemyList';
+import { nowPlayerMap } from '@/objects/game/run';
+import { nowPlayer } from '../../../objects/game/run';
     const tools = [{
         text:"开始/重启战斗",
         click:()=>{
+            const player = new Player(nowPlayerMap)
+            Object.assign(nowPlayer,player)//应用该对象
             const enemy = getEnemyByKey("original_enemy_00001")
-            startNewBattle(nowPlayerTeam,[enemy])
+            startNewBattle([player],[enemy])
         }
     },{
         text:"开始回合",
@@ -27,6 +31,16 @@
                 return;
             }
             battle.startTurn("player")
+        }
+    },{
+        text:"结束回合",
+        click:()=>{
+            const battle = nowBattle.value
+            if(!battle){
+                newError(["尚未开始战斗"]);
+                return;
+            }
+            battle.endTurn("player")
         }
     },{
         text:"抽一张牌",
@@ -45,7 +59,7 @@
 .test{
     background-color: black;
     color: white;
-    width: 100px;
+    width: 150px;
     position: absolute;
     top: 50%;
     left: 0;
