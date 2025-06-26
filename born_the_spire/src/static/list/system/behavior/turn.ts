@@ -45,9 +45,11 @@ export function endPlayerTurn(player:Player,battle:Battle){
         switch(end.discard.type){
             //丢弃所有手牌
             case "all":{
-                handPile.forEach(card=>{
+                console.log("丢弃所有手牌")
+                for (let i = handPile.length - 1; i >= 0; i--) {
+                    const card = handPile[i];
                     turnEndDiscardCard(handPile,card,player)
-                })
+                }
                 break;
             }
             case "choose":{
