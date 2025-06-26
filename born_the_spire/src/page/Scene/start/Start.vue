@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang='ts'>
-    import { startNewRun } from '@/hooks/run';
+    import { startNewRun } from '@/objects/game/run';
 
     const buttonList:{label:string,click:()=>void}[] = [
         {label:"开始游戏",click:()=>startNewRun()}

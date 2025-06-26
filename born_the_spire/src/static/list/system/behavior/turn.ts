@@ -1,4 +1,4 @@
-import { Battle } from "@/hooks/battle";
+import { Battle } from "@/objects/game/battle";
 import { turnEndDiscardCard } from "@/objects/item/Card";
 import { doBehavior } from "@/objects/system/Behavior";
 import { emptyEnergy, getEnergy } from "@/static/list/system/behavior/energy";

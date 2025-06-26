@@ -10,7 +10,7 @@
 
     <div class="teams">
         <Team class="playerTeam" :team="nowBattle?.getTeam('player')??[]"></Team>
-        <Team class="enemyTeam" :team="nowBattle?.getTeam('enemey')??[]"></Team>
+        <Team class="enemyTeam" :team="enemyTeam"></Team>
     </div>
 
     <div class="endTurn center" @click="endTurn">结束回合</div>
@@ -34,13 +34,17 @@
 <script setup lang='ts'>
     
     import Relic from '@/components/object/Relic.vue';
-    import { nowBattle } from '@/hooks/battle';
-    import { showCardPile } from '@/hooks/showCardPile';
-    import { nowPlayer } from '@/hooks/run';
+    import { nowBattle } from '@/objects/game/battle';
+    import { showCardPile } from '@/interaction/cardPile';
+    import { nowPlayer } from '@/objects/game/run';
     import { computed } from 'vue';
     import Team from '@/components/object/Team.vue';
     import HandPile from './HandPile.vue';
 import { getStatusValue } from '@/objects/system/Status';
+    //敌人
+    const enemyTeam = computed(()=>{
+        return nowBattle.value?.getTeam("enemey")??[]
+    })
     //遗物
     const relics = computed(()=>{
         return nowPlayer.getRelicsList()

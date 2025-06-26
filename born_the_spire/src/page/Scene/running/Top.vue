@@ -33,11 +33,11 @@
 </template>
 
 <script setup lang='ts'>
-    import { endRun, nowGameRun, nowPlayer } from '@/hooks/run';
+    import { endRun, nowGameRun, nowPlayer } from '@/objects/game/run';
     import { computed } from 'vue';
     import Button from "@/components/global/Button.vue"
-    import { changeScene } from "@/hooks/changeScene";
-import { showCardPile } from '@/hooks/showCardPile';
+    import { changeScene } from "@/interaction/scene";
+import { showCardPile } from '@/interaction/cardPile';
 import { getStatusByKey } from '@/objects/system/Status';
     const health = computed(()=>{
         const status = getStatusByKey(nowPlayer,"health","max")

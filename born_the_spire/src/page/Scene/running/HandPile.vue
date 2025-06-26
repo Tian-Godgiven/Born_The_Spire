@@ -9,9 +9,9 @@
 <script setup lang='ts'>
     import { computed } from 'vue';
     import CardVue from '@/components/object/Card.vue';
-    import { nowPlayer } from '@/hooks/run';
+    import { nowPlayer } from '@/objects/game/run';
     import LineToTarget from '@/components/display/LineToTarget.vue';
-    import { ChooseOption } from '@/hooks/chooseTarget';
+    import { ChooseOption } from '@/interaction/target/chooseTarget';
     import { Card, useCard } from '@/objects/item/Card';
     //手牌堆
     const handPile = computed(()=>{

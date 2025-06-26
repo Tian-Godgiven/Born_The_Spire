@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang='ts'>
-    import { ifShowConnectLine, startPosition } from '@/hooks/chooseTarget';
+    import { ifShowConnectLine, startPosition } from '@/interaction/target/chooseTarget';
     import { computed } from 'vue';
     import { mousePosition } from '@/hooks/global/mousePosition';
     const start = computed(()=>{

@@ -53,14 +53,15 @@ export function drawCardFromDrawPile(player:Player,number:number,medium:Entity){
     const length = drawPile.length
     //抽牌堆数量不足
     if(length < number){
-        //先抽足够的数量，将抽牌堆清空
-        drawBehavior(length)
+        if(length>0){
+            //先抽足够的数量，将抽牌堆清空
+            drawBehavior(length)
+        }
         //弃牌堆填充抽牌堆
         player.fullDrawPile()
         //如果填充后还是不足，报一个信息
         if(drawPile.length < number-length){
             console.log("牌堆都抽空了")
-            return;
         }
         //再抽剩余数量
         drawBehavior(number-length)
@@ -75,7 +76,7 @@ export function drawCardFromDrawPile(player:Player,number:number,medium:Entity){
         //进行一个行为，使得玩家获得这n张卡牌
         doBehaviorGroup("drawFromDrawPile","drawCard",player,medium,cards,{drawNumber:number},(player,_medium,card)=>{
             //将指定卡牌移动到手牌堆
-            cardMove(drawPile,card,player.cardPiles.handPile)
+            cardMove(player.cardPiles.drawPile,card,player.cardPiles.handPile)
         })
     }
     

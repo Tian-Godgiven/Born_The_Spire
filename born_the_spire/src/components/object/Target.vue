@@ -1,5 +1,5 @@
 <template>
-<div class="target" :class="hovering?'hover':''" @mouseenter="onEnter" @mouseleave="onLeave" @click="onClick">
+<div class="target" :class="hovering?'hover':''" @mouseenter="onHover" @mouseleave="onLeave" @click="onClick">
     <div class="organs">
         <Organ :organ v-for="organ in target.getOrganList()"></Organ>
     </div>
@@ -24,13 +24,14 @@ import { ref } from 'vue';
 import State from './State.vue';
     const {target} = defineProps<{target:Chara}>()
     const hovering = ref(false)
-    function onEnter(){
-        console.log("enter乐target")
+    function onHover(){
+        //触发事件总线的“选中目标"
         eventBus.emit("hoverTarget",{target,callBack:(bool)=>{
             if(bool){
                 hovering.value = true
             }
         }})
+        //触发目标事件的“选中目标”
     }
     function onLeave(){
         hovering.value = false

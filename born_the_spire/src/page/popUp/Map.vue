@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang='ts'>
-import { changeScene } from '@/hooks/changeScene';
+import { changeScene } from '@/interaction/scene';
 
 </script>
 
