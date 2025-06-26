@@ -1,10 +1,11 @@
 import { Status } from "@/objects/system/Status"
-import { isNumber, isObject } from "lodash"
+import { cloneDeep, isNumber, isObject } from "lodash"
 
 export type StatusMap = {
     label:string,//显示的文本
     notNegative?:boolean,//非负
-    unstackable?:boolean//不可堆叠，也不会显示层数
+    unstackable?:boolean//不可堆叠
+    defaultValue?:boolean//是否启用默认值，为true时value就是默认值
 }&(
 //仅数字
 {
@@ -27,26 +28,35 @@ export type StatusMap = {
 export function initStatusByMap(key:string,map:StatusMap|Status["value"]):Status{
     if(!isObject(map) || !("label" in map)){
         let theMap:StatusMap
+        //已存在的属性
         if(isStatusKey(key)){
+            //基础map
             theMap = statusMapList[key]
+            //设置基础map的值
+            theMap.value = map
         }
+        //手工制作的简易属性map，这种情况下默认其为默认值
         else{
+            //纯数字默认为Number类型
             if(isNumber(map)){
                 theMap = {
                     label:key,
                     valueType:"number",
-                    value:map
+                    value:map,
+                    defaultValue:true,
                 }
             }
+            //否则为max类型
             else{
                 theMap = {
                     label:key,
                     valueType:"max",
-                    value:map
+                    value:map,
+                    defaultValue:true,
                 }
             }
         }
-        theMap.value = map
+        
         const newStatus =  initStatusByMap(key,theMap)
         return newStatus
     }
@@ -69,16 +79,21 @@ export function initStatusByMap(key:string,map:StatusMap|Status["value"]):Status
                 max:theValue
             }
         }
+        const defaultValue = map.defaultValue?cloneDeep(value):null
+        console.log(defaultValue,value)
         return {
             ...map,
             allowOver:map.allowOver??false,
             value,
+            //如果要求默认值则使用value作为默认值，否则默认值为null
+            defaultValue,
             key
         }
     }
-    //否则直接返回就行
+    //number类型可以直接返回就行
     return {
         ...map,
+        defaultValue:map.defaultValue?map.value:null,
         key
     }
 }
@@ -90,22 +105,25 @@ export function getMap(key:string){
     return false
 }
 
-export const statusMapList = {
+export const statusMapList:Record<string,StatusMap> = {
     "health":{
         label:"生命",
         value:0,
         valueType:"max",
+        defaultValue:true
     },
     "energy":{
         label:"能量",
         value:0,
-        valueType:"max"
+        valueType:"max",
+        defaultValue:true
     },
     "cost":{
         label:"消耗能量",
         value:0,
         valueType:"number",
-        notNegative:true
+        notNegative:true,
+        defaultValue:true
     }
 } as const
 

@@ -1,7 +1,7 @@
 import { newError } from "@/hooks/global/alert"
 import { ActionEvent } from "@/objects/system/ActionEvent"
 import { Entity } from "@/objects/system/Entity"
-import { getStatusByKey } from "@/objects/system/Status"
+import { changeStatusValue, getStatusByKey, getStatusValue } from "@/objects/system/Status"
 import _, { isArray } from "lodash"
 import { doEffect, Effect } from "@/objects/system/Effect"
 import { addStateToTarget, createStateByKey } from "@/objects/target/State"
@@ -90,10 +90,12 @@ const effectList:EffectData[] = [
     //造成伤害
     label:"造成伤害",
     key:"damage",
-    effect:({target},effect)=>{
+    effect:({source,medium,target},effect)=>{
         //目标的当前生命值减少value值
-        const health = getStatusByKey(target,"health","max")
-        health.value.now -= effect.value.now
+        const health = getStatusValue(target,"health","now")
+        const newValue = health - effect.value.now
+        changeStatusValue(source,medium,target,"health",newValue)
+        
     },
 },
 //收到伤害时，减少受到的伤害

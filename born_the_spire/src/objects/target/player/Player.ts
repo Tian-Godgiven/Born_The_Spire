@@ -10,6 +10,7 @@ import { getCardByKey } from "@/static/list/item/cardList";
 import { getMoneyByKey, Money } from "@/static/list/item/moneyList";
 import { Entity } from "../../system/Entity";
 import { Turn } from "./Turn";
+import { defaultStatusValue } from "@/objects/system/Status";
 
 export type CardPiles = {
     handPile:Card[],
@@ -98,6 +99,11 @@ export class Player extends Chara{
     startBattle(){
         //初始化牌堆:洗牌+清空牌堆
         this.initCardPile()
+        //初始化状态：清空状态栏
+        this.initState()
+        //初始化属性：所有属性变成默认值
+        defaultStatusValue(this)
+        console.log(this)
     }
     //从抽牌堆中抽牌
     drawCard(number:number,medium:Entity){
@@ -128,6 +134,10 @@ export class Player extends Chara{
         this.cardPiles.exhaustPile = []
         this.cardPiles.handPile = []
     }
+    //初始化状态
+    initState(){
+        this.state = []
+    }
 
     //获取药水列表
     getPotionList(){
@@ -155,5 +165,6 @@ export class Player extends Chara{
         return this.cards
     }
 }
+
 
 
