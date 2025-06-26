@@ -1,16 +1,19 @@
 import { GameRun } from "@/objects/system/GameRun";
 import { Player } from "@/objects/target/player/Player";
 import router from "@/router";
-import { playerList } from "@/static/list/target/playerList";
+import { playerList, PlayerMap } from "@/static/list/target/playerList";
 import { reactive, ref } from "vue";
 import { addToPlayerTeam } from "./battle";
 
-const defaultPlayer = new Player(playerList["default"])
+
 const defaultGameRun = new GameRun()
 //当前的局 
 export const nowGameRun = ref<GameRun>(defaultGameRun)
-//当前的玩家
-export const nowPlayer = reactive<Player>(defaultPlayer)
+//当前的玩家模板，使用这个模板在每一次战斗时创建新的玩家对象
+export let nowPlayerMap:PlayerMap = playerList["default"]
+
+//当前的玩家对象
+export const nowPlayer = reactive<Player>(new Player(nowPlayerMap))
 
 //开始一局新游戏
 export function startNewRun(){
@@ -18,12 +21,7 @@ export function startNewRun(){
     const gameRun = new GameRun()
     nowGameRun.value = gameRun
     //初始化对象
-    const map = playerList["default"]
-    //创建本局角色
-    const player = new Player(map)
-    Object.assign(nowPlayer,player)//应用该对象
-    //添加到队伍中
-    addToPlayerTeam(nowPlayer)
+    nowPlayerMap = playerList["default"]
     //跳转到游戏页面
     router.replace("running")
 }
