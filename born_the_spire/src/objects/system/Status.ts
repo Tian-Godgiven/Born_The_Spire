@@ -1,7 +1,6 @@
 import { doBehavior } from "@/objects/system/Behavior"
 import { Entity } from "./Entity"
 import { newError } from "@/hooks/global/alert"
-import { Stats } from "fs"
 import { cloneDeep } from "lodash"
 
 export type StatusType = "number"|"max"
