@@ -4,7 +4,7 @@ import { Organ } from "./Organ";
 import { getOrganByKey } from "@/static/list/target/organList";
 import { Entity, EntityMap } from "../system/Entity";
 import { doBehavior } from "@/objects/system/Behavior";
-import { State } from "./State";
+import { State } from "../system/State";
 
 export type TargetMap = EntityMap & {
     label:string,

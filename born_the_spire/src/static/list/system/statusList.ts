@@ -95,6 +95,9 @@ export const statusMapList = {
         label:"生命",
         value:0,
         valueType:"max",
+        trigger:[{
+            
+        }]
     },
     "energy":{
         label:"能量",

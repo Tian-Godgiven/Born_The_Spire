@@ -1,12 +1,11 @@
 import { Describe } from "@/hooks/express/describe"
-import { Target } from "./Target"
-import { Entity } from "../system/Entity"
-import { createEffectByMap, doEffect } from "../system/Effect"
+import { Target } from "../target/Target"
+import { Entity } from "./Entity"
+import { createEffectByMap, doEffect } from "./Effect"
 import { stateList } from "@/static/list/target/stateList"
 import { newError } from "@/hooks/global/alert"
-import { doBehavior } from "../system/Behavior"
-import { ActionEvent } from "../system/ActionEvent"
-import { systemEntity } from "@/hooks/system"
+import { doBehavior } from "./Behavior"
+import { ActionEvent } from "./ActionEvent"
 
 //状态的层数，一部分状态可能拥有多个层数
 type Stack = {
@@ -53,8 +52,8 @@ export class State{
     public stacks:Stack[]
     public checkExist:(getter:Target,state:State)=>boolean//对应的stack的层数均为0时，会失去该状态
     public repeate:"stack"|"refresh"|"none"="stack"//重复时的效果分别为叠加/覆盖/忽视 
-    //注册触发器数组
-    public behavior:{
+    //注册触发器数组，在获取状态时为获取目标注册这些触发器
+    public triggers:{
         when:"before"|"after",
         how:"take"|"make"|"on",
         key:string,
@@ -69,12 +68,37 @@ export class State{
         this.showType = map.showType ?? "number";
         this.repeate = map.repeate ?? "stack"
         this.checkExist = map.checkExist ?? defaultCheckExist
-        this.behavior = map.behavior ?? []
+        this.triggers = map.behavior ?? []
         if(typeof map.stacks == "number"){
             this.stacks = [{key:"default",stack:map.stacks}]
         }
         else{
             this.stacks = map.stacks
+        }
+    }
+    //获取该状态，令目标获得触发器
+    getState(target:Target){
+        const triggers = this.triggers
+        for(let item of triggers){
+            const {when,how,key,callback} = item
+            //添加行为触发器，触发器的作用目标是该状态对象
+            const result = target.getTrigger({
+                when,
+                how,
+                key,
+                callback:(event)=>{
+                    callback(target,this,event)
+                }
+            })
+            //将注销函数保存在this内
+            this.cleanTrigger.push(result.remove)
+        }
+    }
+    //失去该状态，移除获得的触发器
+    lostState(){
+        //移除所有触发器
+        for(let cleaner of this.cleanTrigger){
+            cleaner()
         }
     }
 }
@@ -130,22 +154,8 @@ function getState(source:Entity,medium:Entity,target:Target,state:State){
     //获得了新的状态
     function getNewState(){
         doBehavior("getState",source,medium,target,{state},()=>{
-            //使得目标获得状态的各个行为触发器
-            const behavior = state.behavior
-            for(let item of behavior){
-                const {when,how,key,callback} = item
-                //添加行为触发器，触发器的作用目标是该状态对象
-                const remover = target.getTrigger({
-                    when,
-                    how,
-                    key,
-                    callback:(event)=>{
-                        callback(target,state,event)
-                    }
-                })
-                //将注销函数保存在state内
-                state.cleanTrigger.push(remover.remove)
-            }
+            //状态被目标所获得，为目标注册触发器
+            state.getState(target)
             //将状态放入目标内
             target.state.push(state)
         })
@@ -179,10 +189,7 @@ function getState(source:Entity,medium:Entity,target:Target,state:State){
 //目标失去状态，同时会撤销该状态效果附加的触发器
 function lostState(source:Entity,medium:Entity,target:Target,state:State){
     doBehavior("lostState",source,medium,target,{state},()=>{
-        //移出所有触发器
-        for(let cleaner of state.cleanTrigger){
-            cleaner()
-        }
+        state.lostState()
         //目标失去该状态
         const index = target.state.indexOf(state)
         target.state.splice(index,1)

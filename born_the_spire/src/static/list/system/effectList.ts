@@ -1,10 +1,12 @@
 import { newError } from "@/hooks/global/alert"
 import { ActionEvent } from "@/objects/system/ActionEvent"
 import { Entity } from "@/objects/system/Entity"
-import { getStatusByKey } from "@/objects/system/Status"
 import _, { isArray } from "lodash"
 import { doEffect, Effect } from "@/objects/system/Effect"
-import { addStateToTarget, createStateByKey } from "@/objects/target/State"
+import {damageTo, reduceDamageFor} from "@/effects/health/damage"
+import { Target } from "@/objects/target/Target"
+import { getStateByEffect } from "@/effects/stateControl"
+import { healTo } from "@/effects/health/heal"
 
 //这里存储的是效果映射表，将json中存储的效果map转化成效果对象
 
@@ -86,20 +88,17 @@ type EffectData = {
 }
 //效果表
 const effectList:EffectData[] = [
+//对目标造成伤害
 {
-    //造成伤害
     label:"造成伤害",
     key:"damage",
-    effect:({target},effect)=>{
-        //目标的当前生命值减少value值
-        const health = getStatusByKey(target,"health","max")
-        health.value.now -= effect.value.now
+    effect:(event,effect)=>{
+        damageTo(event,effect.value.now)
     },
 },
 //收到伤害时，减少受到的伤害
 {
-    //收到伤害时，减少受到的伤害
-    label:"减少受到的伤害",
+    label:"受到伤害时，减少受到的伤害",
     key:"take_reduce_damage",   
     effect:(event,effect)=>{
         //为事件的效果目标添加受伤触发器
@@ -107,10 +106,8 @@ const effectList:EffectData[] = [
             when:"before",
             how:"take",
             key:"damage",
-            callback:(damage)=>{
-                //使得触发其的伤害效果减少本效果的值
-                if(damage.effect)
-                damage.effect.value.now -= effect.value.now
+            callback:(event)=>{
+                reduceDamageFor(event,effect.value.now)
             }
         })
     }
@@ -119,15 +116,16 @@ const effectList:EffectData[] = [
 {
     label:"获得状态",
     key:"getState",
-    effect:({source,medium,target},effect)=>{
-        //创建状态对象
-        const stateInfo = effect.info.state
-        const state = createStateByKey(stateInfo.key,stateInfo.stacks)
-        //来源使得目标获得状态
-        if(state){
-            console.log(target)
-            addStateToTarget(source,medium,target,state)
-        }
+    effect:(event,effect)=>{
+        getStateByEffect(event,effect)
+    }
+},
+//回复生命
+{
+    label:"回复生命",
+    key:"heal",
+    effect:(event,effect)=>{
+        healTo(event,effect.value.now)
     }
 }]
 
