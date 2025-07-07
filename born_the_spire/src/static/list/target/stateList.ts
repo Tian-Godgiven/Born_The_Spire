@@ -1,4 +1,4 @@
-import { changeStateStack, getStateStack,StateData} from "@/objects/target/State"
+import { changeStateStack, getStateStack,StateData} from "@/objects/system/State"
 
 export const stateList:StateData[] = [
 {
