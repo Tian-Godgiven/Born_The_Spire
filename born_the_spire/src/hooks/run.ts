@@ -1,5 +1,5 @@
 import { GameRun } from "@/objects/system/GameRun";
-import { Player } from "@/objects/target/player/Player";
+import { Player } from "@/objects/target/Player";
 import router from "@/router";
 import { playerList } from "@/static/list/target/playerList";
 import { reactive, ref } from "vue";

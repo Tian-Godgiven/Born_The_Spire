@@ -1,15 +1,14 @@
-import { Card, drawCardFromDrawPile } from "../../item/Card";
-import type { Potion } from "../../item/Potion"
-import type { Relic } from "../../item/Relic"
+import { Card, drawCardFromDrawPile } from "../item/Card";
+import type { Potion } from "../item/Potion"
+import type { Relic } from "../item/Relic"
 import { PlayerMap } from "@/static/list/target/playerList";
 import { getPotionByKey } from "@/static/list/item/potionList";
 import { nanoid } from "nanoid";
-import { Chara } from "../Target";
+import { Chara } from "./Target";
 import {shuffle} from "lodash"
 import { getCardByKey } from "@/static/list/item/cardList";
 import { getMoneyByKey, Money } from "@/static/list/item/moneyList";
-import { Entity } from "../../system/Entity";
-import { Turn } from "./Turn";
+import { Entity } from "../system/Entity";
 import { reactive } from "vue"; 
 
 export type CardPiles = {
@@ -30,8 +29,6 @@ export class Player extends Chara{
         discardPile:[],
         exhaustPile:[]
     }
-    //回合行为，用来统一执行回合事件
-    public turn:Turn
     //药水的持有情况
     public potions:{max:number,now:Potion[]} = {
         max:0,
@@ -42,8 +39,6 @@ export class Player extends Chara{
     public moneys:Money[] = []//资产
     constructor(map:PlayerMap){
         super(map)
-        //回合行为初始化
-        this.turn = new Turn(map.turn)
         //玩家特有内容的初始化
         this.getMoney(map.money)
         const potion = map.potion

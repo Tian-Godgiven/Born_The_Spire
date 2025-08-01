@@ -1,4 +1,3 @@
-import { TurnMap } from "@/objects/target/player/Turn"
 import { CharaMap } from "@/objects/target/Target"
 
 export type PlayerMap = CharaMap & {
@@ -10,7 +9,6 @@ export type PlayerMap = CharaMap & {
     }
     organ:string[]
     card:string[],
-    turn:TurnMap
 }
 export const playerList:Record<string,PlayerMap> = {
     "default":{
@@ -19,22 +17,9 @@ export const playerList:Record<string,PlayerMap> = {
         money:{
             "original_money_00001":100,
         },
-        turn:{
-            end:{
-                "discard":{
-                    type:"all"
-                }
-            },
-            start:{
-                "drawCard":5,
-                "getEnergy":3
-            }
-        },
         status:{
-            //生命值
-            "health":50,
-            //能量
-            "energy":3
+            "health":50,//生命值
+            "energy":3,//能量
         },
         potion:{
             max:3,
