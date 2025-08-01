@@ -1,9 +1,9 @@
 import { CardMap } from "@/static/list/item/cardList";
 import { Target } from "@/objects/target/Target";
 import { Item } from "./Item";
-import { doBehavior, doBehaviorGroup } from "@/objects/system/Behavior";
-import { CardPiles, Player } from "../target/player/Player";
-import { costEnergy } from "../../static/list/system/behavior/energy";
+import { doAction, doActionGroup } from "@/objects/system/ActionEvent";
+import { CardPiles, Player } from "../target/Player";
+import { costEnergy } from "../../effects/energy";
 import { getStatusValue } from "../system/Status";
 import { isEqual } from "lodash";
 import { newError } from "@/hooks/global/alert";
@@ -28,7 +28,7 @@ export function useCard(card:Card,fromPile:Card[],source:Player,target:Target){
     //消耗费用
     const cost = getStatusValue(card,"cost")
     if(costEnergy(card,card,source,cost)){
-        doBehavior("useCard",source,card,target,{fromPile})
+        doAction("useCard",source,card,target,{fromPile})
         //处理使用后的卡牌
         afterUseCard(card,fromPile,source,target)
     }
@@ -73,7 +73,7 @@ export function drawCardFromDrawPile(player:Player,number:number,medium:Entity){
         //获得抽牌堆的前n张卡牌
         const cards = drawPile.slice(0,number)
         //进行一个行为，使得玩家获得这n张卡牌
-        doBehaviorGroup("drawFromDrawPile","drawCard",player,medium,cards,{drawNumber:number},(player,_medium,card)=>{
+        doActionGroup("drawFromDrawPile","drawCard",player,medium,cards,{drawNumber:number},(player,_medium,card)=>{
             //将指定卡牌移动到手牌堆
             cardMove(drawPile,card,player.cardPiles.handPile)
         })
@@ -83,7 +83,7 @@ export function drawCardFromDrawPile(player:Player,number:number,medium:Entity){
 
 //抽取指定卡牌到手牌中
 export function drawCard(fromPile:Card[],card:Card,player:Player,medium:Entity){
-    doBehavior("drawCard",player,medium,card,{},()=>{
+    doAction("drawCard",player,medium,card,{},()=>{
         cardMove(fromPile,card,player.cardPiles.drawPile)
     })
 }
@@ -94,7 +94,7 @@ export function discardCard(fromPile:Card[],card:Card,player:Player,medium:Entit
     const index = fromPile.findIndex(tmp=>isEqual(card,tmp))
     if(index>=0){
         //进行丢弃卡牌行为
-        doBehavior("discard",player,medium,card,{},()=>{
+        doAction("discard",player,medium,card,{},()=>{
             //将其放进玩家对象的弃牌堆
             player.cardPiles.discardPile.push(card)
             //从牌堆中删除该卡牌
@@ -109,7 +109,7 @@ export function discardCard(fromPile:Card[],card:Card,player:Player,medium:Entit
 export function discardAllPile(player:Player,pileName:keyof CardPiles,medium:Entity){
     const pile = player.cardPiles[pileName]
     //仅触发一个行为，但会触发每个卡牌的过程事件
-    doBehaviorGroup("discardAllPile","discard",player,medium,pile,{pileName},(_source,_medium,card)=>{
+    doActionGroup("discardAllPile","discard",player,medium,pile,{pileName},(_source,_medium,card)=>{
         //进入弃牌堆
         player.cardPiles.discardPile.push(card)
         //从牌堆中删除卡牌
@@ -135,7 +135,7 @@ export function exhaustCard(fromPile:Card[],card:Card,player:Player,medium:Entit
     const index = fromPile.findIndex(tmp=>isEqual(card,tmp))
     if(index>=0){
         //进行丢弃卡牌行为
-        doBehavior("discard",player,medium,card,{},()=>{
+        doAction("discard",player,medium,card,{},()=>{
             //将其放进玩家对象的消耗堆
             player.cardPiles.exhaustPile.push(card)
             //从牌堆中删除该卡牌

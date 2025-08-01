@@ -95,14 +95,20 @@ export const statusMapList = {
         label:"生命",
         value:0,
         valueType:"max",
-        trigger:[{
-            
-        }]
     },
     "energy":{
         label:"能量",
         value:0,
-        valueType:"max"
+        valueType:"max",
+        trigger:[
+        //回合开始时获得最大能量
+        {
+            
+        },
+        // 回合结束时失去所有能量
+        {
+
+        }]
     },
     "cost":{
         label:"消耗能量",

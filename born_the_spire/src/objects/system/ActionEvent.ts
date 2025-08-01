@@ -1,11 +1,7 @@
+import { isArray } from "lodash";
 import { Effect } from "./Effect";
 import { Entity } from "./Entity";
 
-// 过程事件指的是游戏进程中发生的每一件事，包括某个对象的行为，以及这些行为产生效果的过程
-// 过程事件本身并不影响游戏进程（造成影响的是各个行为和效果）
-// 而是记录这件事发生的过程中，涉及到的各个对象
-// 并且过程事件还用于触发对象的触发器
-// (1.执行行为，2.产生效果)时被构建，并传入触发器中
 export class ActionEvent<
     s extends Entity = Entity,
     m extends Entity = Entity,
@@ -21,9 +17,63 @@ export class ActionEvent<
     //触发这个事件
     triggerEvent(when:"before"|"after"){
         this.source.makeEvent(when,this);
-        this.medium.onEvent(when,this)
+        this.medium.viaEvent(when,this)
         this.target.takeEvent(when,this)
     }
-
+    //发生这个事件，会调用触发器
+    happen(doEvent:()=>void){
+        this.triggerEvent("before")
+        doEvent()
+        this.triggerEvent("after")
+    }
 }
 
+// 进行一个行为，产生一个事件
+export function doAction(
+    key:string,
+    source:Entity,
+    medium:Entity,
+    target:Entity,
+    info:Record<string,any>={},
+    doWhat:()=>void=()=>{}
+){
+    //创建行为事件
+    const event = new ActionEvent(key,source,medium,target,info)
+    event.happen(()=>{doWhat()})
+}
+
+//进行一个批量行为，其可能涉及多个对象，每个对象都会进行一次事件
+export function doActionGroup<S extends Entity,M extends Entity,T extends Entity>(
+    key:string,//行为key
+    eventKey:string,//单独的行为事件key
+    source:S|S[],
+    medium:M|M[],
+    target:T|T[],
+    info:Record<string,any>={},
+    //对每个对象都会触发的回调函数
+    doWhat:(source:S,medium:M,target:T)=>void=()=>{}
+){
+    // 判断是否需要遍历数组，若是数组则遍历并创建多个事件
+    const sourceA = isArray(source) ? source : [source];
+    const mediumA = isArray(medium) ? medium : [medium];
+    const targetA = isArray(target) ? target : [target];
+    const events: ActionEvent[] = [];
+    // 使用三重循环来遍历source、medium和target数组
+    sourceA.forEach(s => {
+        mediumA.forEach(m => {
+            targetA.forEach(t => {
+                doOneEvent(s,m,t)
+            });
+        });
+    });
+    //分别进行一个行为事件
+    function doOneEvent(source:S,medium:M,target:T){
+        //创建行为事件
+        const event = new ActionEvent(eventKey,source,medium,target,info)
+        //添加到数组
+        events.push(event)
+        //触发行为事件
+        event.happen(()=>{doWhat(source,medium,target)})
+    }
+    
+}

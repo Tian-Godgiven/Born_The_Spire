@@ -10,7 +10,7 @@
 <script setup lang='ts'>
     import { addToEnemyTeam, nowBattle, nowEnemyTeam, nowPlayerTeam, startNewBattle } from '@/hooks/battle';
     import { newError } from '@/hooks/global/alert';
-    import { Player } from '@/objects/target/player/Player';
+    import { Player } from '@/objects/target/Player';
     import { getEnemyByKey } from '@/static/list/target/enemyList';
     function startBattle(){
         const enemy = getEnemyByKey("original_enemy_00001")

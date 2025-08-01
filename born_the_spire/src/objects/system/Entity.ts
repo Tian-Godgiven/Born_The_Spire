@@ -1,9 +1,10 @@
 import { initStatusByMap, StatusMap } from "@/static/list/system/statusList";
-import { Trigger, TriggerMap, TriggerObj } from "./Trigger";
+import { Trigger } from "./Trigger";
 import { ActionEvent } from "./ActionEvent";
 import { Describe } from "@/hooks/express/describe";
 import { EffectKeyMap, doEffectByKey } from "@/static/list/system/effectList";
 import { Status } from "./Status";
+import { TriggerMap, TriggerObj } from "@/typs/object/trigger";
 // 实体（entity）是Target和Item的基类
 export class Entity{
     public label:string
@@ -40,8 +41,8 @@ export class Entity{
         this.trigger.onTrigger(when,"make",event)
     }
     //对象作为媒介参与了某个事件
-    onEvent(when:"before"|"after",event:ActionEvent){
-        this.trigger.onTrigger(when,"on",event)
+    viaEvent(when:"before"|"after",event:ActionEvent){
+        this.trigger.onTrigger(when,"via",event)
     }
     //对象受到了某个事件
     takeEvent(when:"before"|"after",event:ActionEvent){
@@ -69,7 +70,7 @@ function initBehavior(entity:Entity,map:Record<string,EffectKeyMap[]>){
     for(let [key,effects] of Object.entries(map)){
         entity.getTrigger({
             when:"before",
-            how:"on",
+            how:"via",
             key,
             callback:({source,target})=>{
                 effects.forEach(map=>{

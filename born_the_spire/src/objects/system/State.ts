@@ -4,7 +4,7 @@ import { Entity } from "./Entity"
 import { createEffectByMap, doEffect } from "./Effect"
 import { stateList } from "@/static/list/target/stateList"
 import { newError } from "@/hooks/global/alert"
-import { doBehavior } from "./Behavior"
+import { doAction } from "./Behavior"
 import { ActionEvent } from "./ActionEvent"
 
 //状态的层数，一部分状态可能拥有多个层数
@@ -153,7 +153,7 @@ function getState(source:Entity,medium:Entity,target:Target,state:State){
     
     //获得了新的状态
     function getNewState(){
-        doBehavior("getState",source,medium,target,{state},()=>{
+        doAction("getState",source,medium,target,{state},()=>{
             //状态被目标所获得，为目标注册触发器
             state.getState(target)
             //将状态放入目标内
@@ -188,7 +188,7 @@ function getState(source:Entity,medium:Entity,target:Target,state:State){
 }
 //目标失去状态，同时会撤销该状态效果附加的触发器
 function lostState(source:Entity,medium:Entity,target:Target,state:State){
-    doBehavior("lostState",source,medium,target,{state},()=>{
+    doAction("lostState",source,medium,target,{state},()=>{
         state.lostState()
         //目标失去该状态
         const index = target.state.indexOf(state)

@@ -3,7 +3,7 @@ import { TriggerMap } from "../system/Trigger";
 import { Organ } from "./Organ";
 import { getOrganByKey } from "@/static/list/target/organList";
 import { Entity, EntityMap } from "../system/Entity";
-import { doBehavior } from "@/objects/system/Behavior";
+import { doAction } from "@/objects/system/ActionEvent";
 import { State } from "../system/State";
 
 export type TargetMap = EntityMap & {
@@ -38,7 +38,7 @@ export class Chara extends Target{
     }
     //获得器官
     getOrgan(source:Entity,organ:Organ){
-        doBehavior("getOrgan",source,organ,this)
+        doAction("getOrgan",source,organ,this)
         this.organs.push(organ)
     }
     //获取对象的器官列表

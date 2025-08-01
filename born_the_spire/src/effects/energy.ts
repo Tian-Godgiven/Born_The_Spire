@@ -1,7 +1,7 @@
 import { showQuickInfo } from "@/hooks/global/quickInfo"
 import { Entity } from "@/objects/system/Entity"
 import { changeStatusValue, getStatusValue } from "@/objects/system/Status"
-import { Player } from "../../../../objects/target/player/Player"
+import { Player } from "../objects/target/Player"
 import { createEffectByMap, doEffect } from "@/objects/system/Effect"
 
 //消耗玩家的能量
