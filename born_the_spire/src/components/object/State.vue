@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang='ts' generic="T extends readonly string[]">
-    import { State } from '@/objects/target/State';
+    import { State } from '@/objects/system/State';
     import { computed } from 'vue';
     const {state} = defineProps<{state:State}>()
     const string = computed(()=>{

@@ -1,8 +1,8 @@
 import { Battle } from "@/objects/game/battle";
 import { turnEndDiscardCard } from "@/objects/item/Card";
-import { doBehavior } from "@/objects/system/Behavior";
-import { emptyEnergy, getEnergy } from "@/static/list/system/behavior/energy";
-import { Player } from "@/objects/target/player/Player";
+import { doAction } from "@/objects/system/ActionEvent";
+import { emptyEnergy, getEnergy } from "@/effects/energy";
+import { Player } from "@/objects/target/Player";
 import { Chara } from "@/objects/target/Target";
 
 //角色开始回合
@@ -65,10 +65,10 @@ export function endPlayerTurn(player:Player,battle:Battle){
 
 //开始回合行为
 export function startTurn(chara:Chara,battle:Battle,doWhat?:()=>void){
-    doBehavior("turnStart",chara,chara,chara,{turn:battle.turnNumber},doWhat)
+    doAction("turnStart",chara,chara,chara,{turn:battle.turnNumber},doWhat)
 }
 //结束回合行为
 export function endTurn(chara:Chara,battle:Battle,doWhat?:()=>void){
-    doBehavior("turnEnd",chara,chara,chara,{turn:battle.turnNumber},doWhat)
+    doAction("turnEnd",chara,chara,chara,{turn:battle.turnNumber},doWhat)
 }
 

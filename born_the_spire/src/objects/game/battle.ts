@@ -1,10 +1,10 @@
 import { Enemy } from "@/objects/target/Enemy"
-import { Player } from "@/objects/target/player/Player"
+import { Player } from "@/objects/target/Player"
 import { Chara } from "@/objects/target/Target"
 import { nanoid } from "nanoid"
 import { ref } from "vue"
 import { nowPlayer } from "./run"
-import { endCharaTurn, startCharaTurn } from "@/static/list/system/behavior/turn"
+import { endCharaTurn, startCharaTurn } from "@/effects/turn"
 
 export class Battle {
     public readonly __key:string = nanoid()

@@ -10,7 +10,7 @@
 <script setup lang='ts'>
     import { nowBattle, nowPlayerTeam, startNewBattle } from '@/objects/game/battle';
     import { newError } from '@/hooks/global/alert';
-    import { Player } from '@/objects/target/player/Player';
+    import { Player } from '@/objects/target/Player';
     import { getEnemyByKey } from '@/static/list/target/enemyList';
 import { nowPlayer } from '../../../objects/game/run';
     const tools = [{

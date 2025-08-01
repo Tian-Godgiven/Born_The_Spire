@@ -1,4 +1,4 @@
-import { doBehavior } from "@/objects/system/Behavior"
+import { doAction } from "@/objects/system/ActionEvent"
 import { Entity } from "./Entity"
 import { newError } from "@/hooks/global/alert"
 import { cloneDeep } from "lodash"
@@ -102,7 +102,7 @@ export function changeStatusValue(source:Entity,medium:Entity,target:Entity,stat
     //判断输入值
     newValue = checkValue(status,newValue,type)
     //进行行为：修改属性,传入属性key和修改前后的值
-    doBehavior("changeStatus",source,medium,target,{
+    doAction("changeStatus",source,medium,target,{
         statusKey,
         oldValue,
         newValue

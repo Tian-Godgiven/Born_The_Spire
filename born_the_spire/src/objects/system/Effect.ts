@@ -82,12 +82,11 @@ export function doEffect(source: Entity, medium: Entity, target: Entity, effect:
     const effectFunc = effect.effect;
     //获取效果的值
     getEffectValue(effect);
-    event.triggerEvent("before");
-    //执行效果函数
-    effectFunc(event, effect);
-    event.triggerEvent("after");
+    event.happen(()=>{
+        //执行效果函数
+        effectFunc(event, effect);
+    })
 }
-
 //获取效果值
 export function getEffectValue(effect:Effect){
     //获取range类型的当前value
