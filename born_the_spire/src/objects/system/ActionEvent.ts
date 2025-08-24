@@ -1,6 +1,7 @@
 import { isArray } from "lodash";
 import { Effect } from "./Effect";
 import { Entity } from "./Entity";
+import { gatherToTransaction } from "../game/transaction";
 
 export class ActionEvent<
     s extends Entity = Entity,
@@ -9,22 +10,22 @@ export class ActionEvent<
     constructor(
         public key:string,//事件的触发key
         public source:s,//执行该事件的目标
-        public medium:m,//
+        public medium:m,//执行该事件的媒介
         public target:t,//接受该事件的目标
         public info:Record<string,any>,//该事件执行全程的信息
-        public effect?:Effect
+        public effect?:Effect,
+        public onExecute?:()=>void
     ){}
-    //触发这个事件
-    triggerEvent(when:"before"|"after"){
-        this.source.makeEvent(when,this);
-        this.medium.viaEvent(when,this)
-        this.target.takeEvent(when,this)
+    //触发这个事件某个阶段
+    triggerEvent(when:"before"|"after",triggerLevel:number){
+        this.source.makeEvent(when,this,triggerLevel);
+        this.medium.viaEvent(when,this,triggerLevel)
+        this.target.takeEvent(when,this,triggerLevel)
     }
-    //发生这个事件，会调用触发器
-    happen(doEvent:()=>void){
-        this.triggerEvent("before")
-        doEvent()
-        this.triggerEvent("after")
+    //发生这个事件,收集到当前事务中
+    happen(doEvent:()=>void,triggerLevel?:number){
+        this.onExecute = doEvent
+        gatherToTransaction(this,triggerLevel)
     }
 }
 

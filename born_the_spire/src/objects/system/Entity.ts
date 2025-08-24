@@ -5,6 +5,7 @@ import { Describe } from "@/hooks/express/describe";
 import { EffectKeyMap, doEffectByKey } from "@/static/list/system/effectList";
 import { Status } from "./Status";
 import { TriggerMap, TriggerObj } from "@/typs/object/trigger";
+import { reactive } from "vue";
 // 实体（entity）是Target和Item的基类
 export class Entity{
     public label:string
@@ -38,16 +39,16 @@ export class Entity{
         return this.trigger.getTrigger(triggerObj)
     }
     //对象造成了某个事件，且该事件被触发了
-    makeEvent(when:"before"|"after",event:ActionEvent){
-        this.trigger.onTrigger(when,"make",event)
+    makeEvent(when:"before"|"after",event:ActionEvent,triggerLevel:number){
+        this.trigger.onTrigger(when,"make",event,triggerLevel)
     }
     //对象作为媒介参与了某个事件
-    viaEvent(when:"before"|"after",event:ActionEvent){
-        this.trigger.onTrigger(when,"via",event)
+    viaEvent(when:"before"|"after",event:ActionEvent,triggerLevel:number){
+        this.trigger.onTrigger(when,"via",event,triggerLevel)
     }
     //对象受到了某个事件
-    takeEvent(when:"before"|"after",event:ActionEvent){
-        this.trigger.onTrigger(when,"take",event)
+    takeEvent(when:"before"|"after",event:ActionEvent,triggerLevel:number){
+        this.trigger.onTrigger(when,"take",event,triggerLevel)
     }
     //获得属性
     getStatus(status:Status){

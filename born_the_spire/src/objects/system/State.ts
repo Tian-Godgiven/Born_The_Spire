@@ -4,8 +4,7 @@ import { Entity } from "./Entity"
 import { createEffectByMap, doEffect } from "./Effect"
 import { stateList } from "@/static/list/target/stateList"
 import { newError } from "@/hooks/global/alert"
-import { doAction } from "./Behavior"
-import { ActionEvent } from "./ActionEvent"
+import { ActionEvent, doAction } from "./ActionEvent"
 
 //状态的层数，一部分状态可能拥有多个层数
 type Stack = {
@@ -34,7 +33,7 @@ export type StateData = {
     //状态的行为触发器，获取状态时会为getter添加对应的触发器但作用与state对象上
     behavior?:{
         when:"before"|"after",
-        how:"take"|"make"|"on",
+        how:"take"|"make"|"via",
         key:string,
         callback:(getter:Target,state:State,event:ActionEvent)=>void
     }[]
@@ -55,7 +54,7 @@ export class State{
     //注册触发器数组，在获取状态时为获取目标注册这些触发器
     public triggers:{
         when:"before"|"after",
-        how:"take"|"make"|"on",
+        how:"take"|"make"|"via",
         key:string,
         callback:(getter:Target,state:State,event:ActionEvent)=>void
     }[]

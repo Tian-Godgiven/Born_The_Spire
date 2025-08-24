@@ -3,7 +3,7 @@ export type TriggerFunc<
     s extends Entity = Entity,
     m extends Entity = Entity,
     t extends Entity = Entity
-> = (event:ActionEvent<s,m,t>)=>void
+> = (event:ActionEvent<s,m,t>,triggerLevel:number=0)=>void
 //触发器包含before和after两种类型
 export type TriggerType = {
     before:Record<string,TriggerUnit[]>,
