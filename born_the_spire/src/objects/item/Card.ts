@@ -78,8 +78,8 @@ export function drawCardFromDrawPile(player:Player,number:number,medium:Entity){
             //将指定卡牌移动到手牌堆
             cardMove(player.cardPiles.drawPile,card,player.cardPiles.handPile)
         })
+        
     }
-    
 }
 
 //抽取指定卡牌到手牌中

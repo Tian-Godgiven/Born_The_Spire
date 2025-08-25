@@ -80,7 +80,6 @@ export function initStatusByMap(key:string,map:StatusMap|Status["value"]):Status
             }
         }
         const defaultValue = map.defaultValue?cloneDeep(value):null
-        console.log(defaultValue,value)
         return {
             ...map,
             allowOver:map.allowOver??false,

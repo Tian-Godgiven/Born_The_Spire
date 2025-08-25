@@ -14,13 +14,21 @@ export class ActionEvent<
         public target:t,//接受该事件的目标
         public info:Record<string,any>,//该事件执行全程的信息
         public effect?:Effect,
-        public onExecute?:()=>void
+        public onExecute?:()=>void|Promise<void>
     ){}
     //触发这个事件某个阶段
-    triggerEvent(when:"before"|"after",triggerLevel:number){
-        this.source.makeEvent(when,this,triggerLevel);
-        this.medium.viaEvent(when,this,triggerLevel)
-        this.target.takeEvent(when,this,triggerLevel)
+    async triggerEvent(when:"before"|"after",triggerLevel:number){
+        await this.source.makeEvent(when,this,triggerLevel);
+        await this.medium.viaEvent(when,this,triggerLevel)
+        await this.target.takeEvent(when,this,triggerLevel)
+    }
+    //宣布这个事件将会发生
+    async announce(triggerLevel:number){
+        console.log(this)
+        //触发事件before，触发级-=1
+        await this.triggerEvent("before",triggerLevel+=1)
+        //触发事件的after，触发级+=1
+        await this.triggerEvent("after",triggerLevel-=1)
     }
     //发生这个事件,收集到当前事务中
     happen(doEvent:()=>void,triggerLevel?:number){
@@ -30,7 +38,7 @@ export class ActionEvent<
 }
 
 // 进行一个行为，产生一个事件
-export function doAction(
+export async function doAction(
     key:string,
     source:Entity,
     medium:Entity,

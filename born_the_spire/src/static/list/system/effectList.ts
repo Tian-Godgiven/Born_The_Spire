@@ -1,7 +1,6 @@
 import { newError } from "@/hooks/global/alert"
 import { ActionEvent } from "@/objects/system/ActionEvent"
 import { Entity } from "@/objects/system/Entity"
-import { changeStatusValue, getStatusByKey, getStatusValue } from "@/objects/system/Status"
 import _, { isArray } from "lodash"
 import { doEffect, Effect } from "@/objects/system/Effect"
 import {damageTo, reduceDamageFor} from "@/effects/health/damage"
@@ -72,7 +71,7 @@ export function getEffectByKey(map:EffectKeyMap):Effect{
 }
 
 //通过map来产生并触发一个效果
-export function doEffectByKey(source:Entity,medium:Entity,target:Entity,effectMap:EffectKeyMap){
+export async function doEffectByKey(source:Entity,medium:Entity,target:Entity,effectMap:EffectKeyMap){
     //获取效果
     const effect = getEffectByKey(effectMap)
     if(!effect){
@@ -95,12 +94,6 @@ const effectList:EffectData[] = [
     key:"damage",
     effect:(event,effect)=>{
         damageTo(event,effect.value.now)
-    effect:({source,medium,target},effect)=>{
-        //目标的当前生命值减少value值
-        const health = getStatusValue(target,"health","now")
-        const newValue = health - effect.value.now
-        changeStatusValue(source,medium,target,"health",newValue)
-        
     },
 },
 //收到伤害时，减少受到的伤害
@@ -113,7 +106,7 @@ const effectList:EffectData[] = [
             when:"before",
             how:"take",
             key:"damage",
-            callback:(event)=>{
+            callback:async (event)=>{
                 reduceDamageFor(event,effect.value.now)
             }
         })

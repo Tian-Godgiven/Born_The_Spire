@@ -9,7 +9,7 @@ import {shuffle} from "lodash"
 import { getCardByKey } from "@/static/list/item/cardList";
 import { getMoneyByKey, Money } from "@/static/list/item/moneyList";
 import { Entity } from "../system/Entity";
-import { reactive } from "vue"; 
+import { defaultStatusValue } from "../system/Status";
 
 export type CardPiles = {
     handPile:Card[],
@@ -98,10 +98,10 @@ export class Player extends Chara{
         this.initState()
         //初始化属性：所有属性变成默认值
         defaultStatusValue(this)
-        console.log(this)
     }
     //从抽牌堆中抽牌
     drawCard(number:number,medium:Entity){
+        console.log("进入了抽卡")
         drawCardFromDrawPile(this,number,medium)
     }
     //抽牌堆洗牌

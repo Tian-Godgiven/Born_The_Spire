@@ -26,6 +26,17 @@ export class Transaction{
         nowTransaction = this;
         this.state = "gathering"
     }
+    //整理事务
+    organize(){
+        this.state = "organizing"
+        this.eventStack.organizeEvents()
+        //整理完成后执行事件栈
+        this.do()
+    }
+    //执行事件栈
+    do(){
+        this.eventStack.doEvents()
+    }
     //中断一个事务
     async shutDown(source:Transaction){
         //事务被强制中断了,记录到日志中：未完成
@@ -39,16 +50,22 @@ export class Transaction{
         }
         nowTransaction = null
     }
+    
 }
 
 //当一个事件被执行时，其并不会直接执行，而是被收集到当前事务中
-export function gatherToTransaction(aE:ActionEvent,triggerLevel?:number){
+export async function gatherToTransaction(aE:ActionEvent,triggerLevel?:number){
     if(!nowTransaction){
         //不存在事务时，会自动创建一个事务
         const ts = createTransaction()
         nowTransaction = ts
     }
-    nowTransaction.eventStack.gatherEvents(aE,triggerLevel)
+    const list = await nowTransaction.eventStack.gatherEvents(aE,triggerLevel)
+    //如果返回的记录列表为空，则认为所有事件都已收集完毕
+    if(list && list.length == 0){
+        //开始整理
+        nowTransaction.organize()
+    }
 }
 
 //创建一个新事物

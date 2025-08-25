@@ -5,6 +5,7 @@ import { getOrganByKey } from "@/static/list/target/organList";
 import { Entity, EntityMap } from "../system/Entity";
 import { doAction } from "@/objects/system/ActionEvent";
 import { State } from "../system/State";
+import { newLog } from "@/hooks/global/log";
 
 export type TargetMap = EntityMap & {
     label:string,
@@ -31,14 +32,15 @@ export class Chara extends Target{
     constructor(map:CharaMap){
         super(map)
         //获得器官
-        map.organ.forEach(key=>{
+        map.organ.forEach(async key=>{
             const organ = getOrganByKey(key)
-            this.getOrgan(this,organ)
+            await this.getOrgan(this,organ)
         })
     }
     //获得器官
-    getOrgan(source:Entity,organ:Organ){
-        doAction("getOrgan",source,organ,this)
+    async getOrgan(source:Entity,organ:Organ){
+        newLog([this,"获得了器官",organ])
+        await doAction("getOrgan",source,organ,this)
         this.organs.push(organ)
     }
     //获取对象的器官列表

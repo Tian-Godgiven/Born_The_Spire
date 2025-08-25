@@ -94,7 +94,7 @@ export function getStatusValue(target:Entity,statusKey:string,type:"now"|"min"|"
 }
 
 //修改目标属性的值,超过上限或下限的部分无效
-export function changeStatusValue(source:Entity,medium:Entity,target:Entity,statusKey:string,newValue:number,type:"now"|"min"|"max"="now"){
+export async function changeStatusValue(source:Entity,medium:Entity,target:Entity,statusKey:string,newValue:number,type:"now"|"min"|"max"="now"){
     const oldValue = getStatusValue(target,statusKey,type)
     //找到属性对象
     const status = target.status[statusKey]
@@ -102,7 +102,7 @@ export function changeStatusValue(source:Entity,medium:Entity,target:Entity,stat
     //判断输入值
     newValue = checkValue(status,newValue,type)
     //进行行为：修改属性,传入属性key和修改前后的值
-    doAction("changeStatus",source,medium,target,{
+    await doAction("changeStatus",source,medium,target,{
         statusKey,
         oldValue,
         newValue
