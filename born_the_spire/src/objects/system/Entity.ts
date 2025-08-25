@@ -6,6 +6,7 @@ import { EffectKeyMap, doEffectByKey } from "@/static/list/system/effectList";
 import { Status } from "./Status";
 import { TriggerMap, TriggerObj } from "@/typs/object/trigger";
 import { reactive } from "vue";
+import { newLog } from "@/hooks/global/log";
 // 实体（entity）是Target和Item的基类
 export class Entity{
     public label:string
@@ -39,16 +40,19 @@ export class Entity{
         return this.trigger.getTrigger(triggerObj)
     }
     //对象造成了某个事件，且该事件被触发了
-    makeEvent(when:"before"|"after",event:ActionEvent,triggerLevel:number){
-        this.trigger.onTrigger(when,"make",event,triggerLevel)
+    async makeEvent(when:"before"|"after",event:ActionEvent,triggerLevel:number){
+        newLog([this,"造成了事件",event,"触发级",triggerLevel])
+        await this.trigger.onTrigger(when,"make",event,triggerLevel)
     }
     //对象作为媒介参与了某个事件
-    viaEvent(when:"before"|"after",event:ActionEvent,triggerLevel:number){
-        this.trigger.onTrigger(when,"via",event,triggerLevel)
+    async viaEvent(when:"before"|"after",event:ActionEvent,triggerLevel:number){
+        newLog([this,"参与了事件",event,"触发级",triggerLevel])
+        await this.trigger.onTrigger(when,"via",event,triggerLevel)
     }
     //对象受到了某个事件
-    takeEvent(when:"before"|"after",event:ActionEvent,triggerLevel:number){
-        this.trigger.onTrigger(when,"take",event,triggerLevel)
+    async takeEvent(when:"before"|"after",event:ActionEvent,triggerLevel:number){
+        newLog([this,"遭受了事件",event,"触发级",triggerLevel])
+       await this.trigger.onTrigger(when,"take",event,triggerLevel)
     }
     //获得属性
     getStatus(status:Status){
@@ -74,9 +78,9 @@ function initBehavior(entity:Entity,map:Record<string,EffectKeyMap[]>){
             when:"before",
             how:"via",
             key,
-            callback:({source,target})=>{
-                effects.forEach(map=>{
-                    doEffectByKey(source,entity,target,map)
+            callback:async({source,target})=>{
+                effects.forEach(async map=>{
+                    await doEffectByKey(source,entity,target,map)
                 })
             }
         })

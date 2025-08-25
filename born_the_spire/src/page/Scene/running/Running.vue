@@ -5,6 +5,7 @@
         <Battle></Battle>
         <TestTool></TestTool>
         <ConnectLine></ConnectLine>
+        <LogPane></LogPane>
         <PopUpContainer></PopUpContainer>
     </div>
 </div>
@@ -16,6 +17,7 @@
 import ConnectLine from "@/components/display/ConnectLine.vue";
 import TestTool from "./TestTool.vue";
 import PopUpContainer from '@/components/global/PopUpContainer.vue';
+import LogPane from "./LogPane.vue";
 
 </script>
 

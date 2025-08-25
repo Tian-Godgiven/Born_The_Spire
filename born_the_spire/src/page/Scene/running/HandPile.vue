@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang='ts'>
-    import { computed } from 'vue';
+    import { computed, watch } from 'vue';
     import CardVue from '@/components/object/Card.vue';
     import { nowPlayer } from '@/objects/game/run';
     import LineToTarget from '@/components/display/LineToTarget.vue';
@@ -15,6 +15,7 @@
     import { Card, useCard } from '@/objects/item/Card';
     //手牌堆
     const handPile = computed(()=>{
+        console.log(nowPlayer.cardPiles)
         return nowPlayer.cardPiles.handPile
     })
     function getChooseOption(card:Card):ChooseOption{

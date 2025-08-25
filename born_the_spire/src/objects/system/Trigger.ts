@@ -41,13 +41,13 @@ export class Trigger{
         }
     }
     //触发触发器
-    onTrigger(when:"before"|"after",how:"take"|"make"|"via",event:ActionEvent,triggerLevel?:number){
+    async onTrigger(when:"before"|"after",how:"take"|"make"|"via",event:ActionEvent,triggerLevel?:number){
         //获取相应的trigger
         const trigger = this[how][when][event.key]
         if(!trigger)return
         //依次触发所有trigger unit
-        trigger.forEach(tmp=>{
-            tmp.callback(event,triggerLevel)
+        trigger.forEach(async(tmp)=>{
+            await tmp.callback(event,triggerLevel)
         })
     }
 }
@@ -62,10 +62,10 @@ function readTriggerMap(trigger:Trigger,map:TriggerMap|null){
         for(let [key,value] of Object.entries(mapItem)){
             const item = value
             if("when" in item){
-                const callback = ({source,medium,target}:ActionEvent)=>{
+                const callback = async({source,medium,target}:ActionEvent)=>{
                     //依次触发所有效果
-                    item.effects.forEach(effect=>{
-                        doEffectByKey(source,medium,target,effect)
+                    item.effects.forEach(async effect=>{
+                        await doEffectByKey(source,medium,target,effect)
                     })  
                 }
                 trigger.getTrigger({
@@ -76,10 +76,10 @@ function readTriggerMap(trigger:Trigger,map:TriggerMap|null){
                 })
             }
             else if(isArray(value)){
-                const callback = ({source,medium,target}:ActionEvent)=>{
+                const callback = async({source,medium,target}:ActionEvent)=>{
                     //依次触发所有效果
-                    value.forEach(effect=>{
-                        doEffectByKey(source,medium,target,effect)
+                    value.forEach(async effect=>{
+                        await doEffectByKey(source,medium,target,effect)
                     })  
                 }
                 trigger.getTrigger({when:"before",how:type,key,callback})

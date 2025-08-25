@@ -11,7 +11,6 @@ export type Describe = (
 //将描述对象翻译为文本
 export function getDescribe(describe:Describe|undefined,target:Object){
     let text = "";
-    console.log(target)
     if(!describe)return text
     describe.forEach(value=>{
         //纯字符串直接添加

@@ -1,7 +1,7 @@
 <template>
 <div class="test" draggable="true">
     测试工具
-    <div v-for="item,index in tools" @click="item.click" :key="index">
+    <div class="item" v-for="item,index in tools" @click="item.click" :key="index">
         {{ item.text }}
     </div>
 </div>
@@ -62,5 +62,8 @@ import { nowPlayer } from '../../../objects/game/run';
     left: 0;
     transform: translateY(-50%);
     z-index: 10;
+    .item{
+        cursor: pointer;
+    }
 }
 </style>

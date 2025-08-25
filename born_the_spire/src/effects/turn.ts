@@ -64,11 +64,11 @@ export function endPlayerTurn(player:Player,battle:Battle){
 }
 
 //开始回合行为
-export function startTurn(chara:Chara,battle:Battle,doWhat?:()=>void){
-    doAction("turnStart",chara,chara,chara,{turn:battle.turnNumber},doWhat)
+export async function startTurn(chara:Chara,battle:Battle,doWhat?:()=>void){
+    await doAction("turnStart",chara,chara,chara,{turn:battle.turnNumber},doWhat)
 }
 //结束回合行为
-export function endTurn(chara:Chara,battle:Battle,doWhat?:()=>void){
-    doAction("turnEnd",chara,chara,chara,{turn:battle.turnNumber},doWhat)
+export async function endTurn(chara:Chara,battle:Battle,doWhat?:()=>void){
+    await doAction("turnEnd",chara,chara,chara,{turn:battle.turnNumber},doWhat)
 }
 

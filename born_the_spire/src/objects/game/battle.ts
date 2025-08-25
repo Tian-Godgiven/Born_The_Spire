@@ -55,9 +55,9 @@ export function startNewBattle(playerTeam:(Player|Chara)[],enemyTeam:(Enemy|Char
     const battle = new Battle(1,playerTeam,enemyTeam)
     nowBattle.value = battle   
     //当前玩家开始回合
-    nowPlayer.startBattle()
+    // nowPlayer.startBattle()
     //玩家阵容开始回合
-    battle.startTurn("player")
+    // battle.startTurn("player")
     return battle
 }
 //结束当前战斗
