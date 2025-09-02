@@ -24,7 +24,6 @@ export class ActionEvent<
     }
     //宣布这个事件将会发生
     async announce(triggerLevel:number){
-        console.log(this)
         //触发事件before，触发级-=1
         await this.triggerEvent("before",triggerLevel+=1)
         //触发事件的after，触发级+=1

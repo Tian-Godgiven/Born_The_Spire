@@ -32,10 +32,10 @@ export class Chara extends Target{
     constructor(map:CharaMap){
         super(map)
         //获得器官
-        map.organ.forEach(async key=>{
+        for(let key of map.organ){
             const organ = getOrganByKey(key)
-            await this.getOrgan(this,organ)
-        })
+            this.getOrgan(this,organ)
+        }
     }
     //获得器官
     async getOrgan(source:Entity,organ:Organ){

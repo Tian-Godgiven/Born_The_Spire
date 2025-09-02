@@ -27,7 +27,6 @@ export class EventStack{
         }
         //记录该事件
         this.recordList.push(unit.__key)
-        console.log(unit.__key)
         //宣布该事件，等待宣布结束
         await actionEvent.announce(triggerLevel)
         //宣布结束，尝试进行核销
