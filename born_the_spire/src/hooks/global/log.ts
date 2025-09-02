@@ -7,7 +7,7 @@ export function newLog(logData:any[]){
     let logString = ""
     for(let i of logData){
         if(i.label || i.key){
-            logString += i.label ?? i.key
+            logString += i?.label ?? i.key
         }
         else if(isString(i)){
             logString += i

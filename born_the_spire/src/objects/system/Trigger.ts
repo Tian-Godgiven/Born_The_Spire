@@ -46,9 +46,9 @@ export class Trigger{
         const trigger = this[how][when][event.key]
         if(!trigger)return
         //依次触发所有trigger unit
-        trigger.forEach(async(tmp)=>{
+        for(let tmp of trigger){
             await tmp.callback(event,triggerLevel)
-        })
+        }
     }
 }
 
@@ -64,9 +64,9 @@ function readTriggerMap(trigger:Trigger,map:TriggerMap|null){
             if("when" in item){
                 const callback = async({source,medium,target}:ActionEvent)=>{
                     //依次触发所有效果
-                    item.effects.forEach(async effect=>{
+                    for(let effect of item.effects){
                         await doEffectByKey(source,medium,target,effect)
-                    })  
+                    }
                 }
                 trigger.getTrigger({
                     when:item.when,
@@ -78,9 +78,10 @@ function readTriggerMap(trigger:Trigger,map:TriggerMap|null){
             else if(isArray(value)){
                 const callback = async({source,medium,target}:ActionEvent)=>{
                     //依次触发所有效果
-                    value.forEach(async effect=>{
+                    //依次触发所有效果
+                    for(let effect of value){
                         await doEffectByKey(source,medium,target,effect)
-                    })  
+                    }
                 }
                 trigger.getTrigger({when:"before",how:type,key,callback})
             }

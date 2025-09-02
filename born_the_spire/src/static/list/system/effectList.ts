@@ -7,6 +7,7 @@ import {damageTo, reduceDamageFor} from "@/effects/health/damage"
 import { Target } from "@/objects/target/Target"
 import { getStateByEffect } from "@/effects/stateControl"
 import { healTo } from "@/effects/health/heal"
+import { newLog } from "@/hooks/global/log"
 
 //这里存储的是效果映射表，将json中存储的效果map转化成效果对象
 
@@ -21,7 +22,10 @@ export type EffectKeyMap = {
 //通过effectMap获取effect对象
 export function getEffectByKey(map:EffectKeyMap):Effect{
     const data = effectList.find(tmp=>tmp.key == map.key)
-    if(!data)throw new Error("没有找到目标效果")
+    if(!data){
+        newLog(["错误:没有找到目标效果",map.key]);
+        // throw new Error()
+    ;}
     let value:Effect["value"] = {now:0}
     let valueType:Effect["valueType"] = "number"
     const info = map.info??{}

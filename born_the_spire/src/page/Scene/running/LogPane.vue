@@ -2,6 +2,7 @@
   <div class="logPane" ref="logPaneRef">
     <div class="title">
         <div @click="switchShow">{{ nowState ? "←":"→" }}</div>
+        <div @click="clear">[清空]</div>
     </div>
     <template v-for="log in logList">
         <div class="log">{{ log }}</div>
@@ -30,6 +31,9 @@ function switchShow(){
         nowState.value = true
     }
 }
+function clear(){
+    logList.value = []
+}
 </script>
 
 <style scoped lang="scss">
@@ -41,6 +45,10 @@ function switchShow(){
     padding: 10px;
     width: 300px;
     height: 60%;
+    .title{
+        display: flex;
+        justify-content: space-between;
+    }
     .log{
         width: 100%;
     }

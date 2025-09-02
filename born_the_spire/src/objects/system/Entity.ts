@@ -79,9 +79,9 @@ function initBehavior(entity:Entity,map:Record<string,EffectKeyMap[]>){
             how:"via",
             key,
             callback:async({source,target})=>{
-                effects.forEach(async map=>{
+                for(let map in effects){
                     await doEffectByKey(source,entity,target,map)
-                })
+                }
             }
         })
     }
