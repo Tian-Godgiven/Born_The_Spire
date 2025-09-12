@@ -33,7 +33,14 @@ export class ActionEvent<
     //发生这个事件,收集到当前事务中
     happen(doEvent:()=>void,triggerLevel?:number){
         this.onExecute = doEvent
-        newLog(["发生了事件",this,"/n"])
+        newLog({
+            main:["发生了事件",this],
+            detail:[
+                "来源:",this.source," | ",
+                "媒介:",this.medium," | ",
+                "目标:",this.target," | "
+            ]
+        })
         gatherToTransaction(this,triggerLevel)
     }
 }

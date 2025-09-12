@@ -20,8 +20,8 @@ export class EventStack{
         }
         //收集到收集堆栈中
         this.gatherStack.push(unit)
-        //宣布该事件，等待宣布结束
-        await actionEvent.announce(triggerLevel)
+        //宣布该事件
+        actionEvent.announce(triggerLevel)
     }
     //整理事件
     organizeEvents(){
