@@ -17,7 +17,7 @@
 import ConnectLine from "@/components/display/ConnectLine.vue";
 import TestTool from "./TestTool.vue";
 import PopUpContainer from '@/components/global/PopUpContainer.vue';
-import LogPane from "./LogPane.vue";
+import LogPane from "@/page/tool/logPane/LogPane.vue"
 
 </script>
 

@@ -1,27 +1,34 @@
 import { isNumber, isString } from "lodash";
 import { ref } from "vue";
 
-export const logList = ref<string[]>([])
+export const logList = ref<LogUnit[]>([])
 
-type LogUnit = {
+export type LogUnit = {
     text:string,//直接在日志栏中输出的内容
     detail:string,//在日志栏中作为上述内容的折叠内容，点一下才会显示(再点一下收起)
 }
 
 //在日志栏打印内容
-export function newLog(logData:any[]){
+export function newLog(logData:{main:any[],detail:any[]}|any[]){
     const logUnit = {
         text:"",
         detail:""
     }
-    let logString = ""
-    for(let i of logData){
-        logUnit.text = handleLogData(i)
-        if(i.detail){
-            logUnit.detail = handleLogData(i.detail)
+    if("main" in logData){
+        for(let i of logData.main){
+            logUnit.text += handleLogData(i)
+        }
+        for(let j of logData.detail){
+            logUnit.detail += handleLogData(j)
         }
     }
-    logList.value.push(logString)
+    else{
+        for(let i of logData){
+            logUnit.text += handleLogData(i)
+        }
+    }
+    
+    logList.value.push(logUnit)
 }
 
 //处理得到的日志数据，返回赋给日志单元的值

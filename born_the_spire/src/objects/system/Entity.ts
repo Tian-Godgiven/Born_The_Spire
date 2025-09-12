@@ -6,7 +6,6 @@ import { EffectKeyMap, doEffectByKey } from "@/static/list/system/effectList";
 import { Status } from "./Status";
 import { TriggerMap, TriggerObj } from "@/typs/object/trigger";
 import { reactive } from "vue";
-import { newLog } from "@/hooks/global/log";
 // 实体（entity）是Target和Item的基类
 export class Entity{
     public label:string

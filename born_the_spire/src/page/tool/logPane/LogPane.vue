@@ -5,7 +5,7 @@
         <div @click="clear">[清空]</div>
     </div>
     <template v-for="log in logList">
-        <div class="log">{{ log }}</div>
+        <LogUnit :log></LogUnit>
     </template>
   </div>
 </template>
@@ -14,6 +14,7 @@
 import { logList } from '@/hooks/global/log';
 import gsap from 'gsap';
 import { onMounted, ref, useTemplateRef } from 'vue';
+import LogUnit from './LogUnit.vue';
 
 const logPaneRef = useTemplateRef("logPaneRef")
 let nowState = ref<boolean>(false)
