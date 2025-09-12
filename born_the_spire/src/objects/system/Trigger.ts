@@ -41,13 +41,13 @@ export class Trigger{
         }
     }
     //触发触发器
-    async onTrigger(when:"before"|"after",how:"take"|"make"|"via",event:ActionEvent,triggerLevel?:number){
+    onTrigger(when:"before"|"after",how:"take"|"make"|"via",event:ActionEvent,triggerLevel?:number){
         //获取相应的trigger
         const trigger = this[how][when][event.key]
-        if(!trigger)return
+        if(!trigger)return;
         //依次触发所有trigger unit
         for(let tmp of trigger){
-            await tmp.callback(event,triggerLevel)
+            tmp.callback(event,triggerLevel)
         }
     }
 }

@@ -40,19 +40,16 @@ export class Entity{
         return this.trigger.getTrigger(triggerObj)
     }
     //对象造成了某个事件，且该事件被触发了
-    async makeEvent(when:"before"|"after",event:ActionEvent,triggerLevel:number){
-        newLog([this,"造成了事件",event,"触发级",triggerLevel])
-        await this.trigger.onTrigger(when,"make",event,triggerLevel)
+    makeEvent(when:"before"|"after",event:ActionEvent,triggerLevel:number){
+        this.trigger.onTrigger(when,"make",event,triggerLevel)
     }
     //对象作为媒介参与了某个事件
-    async viaEvent(when:"before"|"after",event:ActionEvent,triggerLevel:number){
-        newLog([this,"参与了事件",event,"触发级",triggerLevel])
-        await this.trigger.onTrigger(when,"via",event,triggerLevel)
+    viaEvent(when:"before"|"after",event:ActionEvent,triggerLevel:number){
+        this.trigger.onTrigger(when,"via",event,triggerLevel)
     }
     //对象受到了某个事件
-    async takeEvent(when:"before"|"after",event:ActionEvent,triggerLevel:number){
-        newLog([this,"遭受了事件",event,"触发级",triggerLevel])
-       await this.trigger.onTrigger(when,"take",event,triggerLevel)
+    takeEvent(when:"before"|"after",event:ActionEvent,triggerLevel:number){
+        this.trigger.onTrigger(when,"take",event,triggerLevel)
     }
     //获得属性
     getStatus(status:Status){
