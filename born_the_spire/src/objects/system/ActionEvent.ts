@@ -2,6 +2,7 @@ import { isArray } from "lodash";
 import { Effect } from "./Effect";
 import { Entity } from "./Entity";
 import { gatherToTransaction } from "../game/transaction";
+import { newLog } from "@/hooks/global/log";
 
 export class ActionEvent<
     s extends Entity = Entity,
@@ -17,21 +18,22 @@ export class ActionEvent<
         public onExecute?:()=>void|Promise<void>
     ){}
     //触发这个事件某个阶段
-    async triggerEvent(when:"before"|"after",triggerLevel:number){
-        await this.source.makeEvent(when,this,triggerLevel);
-        await this.medium.viaEvent(when,this,triggerLevel)
-        await this.target.takeEvent(when,this,triggerLevel)
+    triggerEvent(when:"before"|"after",triggerLevel:number){
+        this.source.makeEvent(when,this,triggerLevel);
+        this.medium.viaEvent(when,this,triggerLevel)
+        this.target.takeEvent(when,this,triggerLevel)
     }
     //宣布这个事件将会发生
-    async announce(triggerLevel:number){
-        //触发事件before，触发级-=1
-        await this.triggerEvent("before",triggerLevel+=1)
-        //触发事件的after，触发级+=1
-        await this.triggerEvent("after",triggerLevel-=1)
+    announce(triggerLevel:number){
+        //触发事件before，触发级+=1
+        this.triggerEvent("before",triggerLevel+=1)
+        //触发事件的after，触发级-=1
+        this.triggerEvent("after",triggerLevel-=1)
     }
     //发生这个事件,收集到当前事务中
     happen(doEvent:()=>void,triggerLevel?:number){
         this.onExecute = doEvent
+        newLog(["发生了事件",this,"/n"])
         gatherToTransaction(this,triggerLevel)
     }
 }
