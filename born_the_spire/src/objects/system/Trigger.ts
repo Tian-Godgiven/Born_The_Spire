@@ -1,4 +1,4 @@
-import { doEffectByKey } from "@/static/list/system/effectList";
+import { doEffectByKey } from "@/static/list/system/effectMap";
 import { isArray } from "lodash";
 import { ActionEvent } from "./ActionEvent";
 import { nanoid } from "nanoid";

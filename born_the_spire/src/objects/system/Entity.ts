@@ -2,7 +2,7 @@ import { initStatusByMap, StatusMap } from "@/static/list/system/statusList";
 import { Trigger } from "./Trigger";
 import { ActionEvent } from "./ActionEvent";
 import { Describe } from "@/hooks/express/describe";
-import { EffectKeyMap, doEffectByKey } from "@/static/list/system/effectList";
+import { EffectUnit, doEffectByKey } from "@/static/list/system/effectMap";
 import { Status } from "./Status";
 import { TriggerMap, TriggerObj } from "@/typs/object/trigger";
 import { reactive } from "vue";
@@ -62,12 +62,12 @@ export type EntityMap = {
     label:string
     status?:Record<string,StatusMap|number>;
     trigger?:TriggerMap;
-    behavior?:Record<string,EffectKeyMap[]>;
+    behavior?:Record<string,EffectUnit[]>;
     describe?:Describe
 }
 
 //初始化行为
-function initBehavior(entity:Entity,map:Record<string,EffectKeyMap[]>){
+function initBehavior(entity:Entity,map:Record<string,EffectUnit[]>){
     //每种行为都对应是一个on的触发器，在行为事件触发时产生效果
     for(let [key,effects] of Object.entries(map)){
         entity.getTrigger({

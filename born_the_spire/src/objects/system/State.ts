@@ -1,7 +1,7 @@
 import { Describe } from "@/hooks/express/describe"
 import { Target } from "../target/Target"
 import { Entity } from "./Entity"
-import { createEffectByMap, doEffect } from "./Effect"
+import { createEffectByMap, doEffect } from "./effect/Effect"
 import { stateList } from "@/static/list/target/stateList"
 import { newError } from "@/hooks/global/alert"
 import { ActionEvent, doAction } from "./ActionEvent"

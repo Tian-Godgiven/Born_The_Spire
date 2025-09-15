@@ -1,7 +1,7 @@
 
 import { Card } from "@/objects/item/Card"
 import { ItemMap } from "@/objects/item/Item"
-import { EffectKeyMap } from "../system/effectList"
+import { EffectUnit } from "../system/effectMap"
 
 export type CardMap = ItemMap & {
     status:{
@@ -9,7 +9,7 @@ export type CardMap = ItemMap & {
     }
     entry?:string[],
     behavior:{
-        useCard:EffectKeyMap[]
+        useCard:EffectUnit[]
     }
 }
 

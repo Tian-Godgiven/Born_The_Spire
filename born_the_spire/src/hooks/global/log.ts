@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { isNumber, isString } from "lodash";
 import { ref } from "vue";
 
@@ -6,13 +7,19 @@ export const logList = ref<LogUnit[]>([])
 export type LogUnit = {
     text:string,//直接在日志栏中输出的内容
     detail:string,//在日志栏中作为上述内容的折叠内容，点一下才会显示(再点一下收起)
+    time:number
 }
 
+export type LogData = {
+    main:any[],//主內容
+    detail:any[]//详情內容
+}
 //在日志栏打印内容
-export function newLog(logData:{main:any[],detail:any[]}|any[]){
-    const logUnit = {
+export function newLog(logData:LogData|any[]){
+    const logUnit:LogUnit = {
         text:"",
-        detail:""
+        detail:"",
+        time:dayjs().valueOf()
     }
     if("main" in logData){
         for(let i of logData.main){

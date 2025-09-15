@@ -2,10 +2,17 @@
   <div class="logPane" ref="logPaneRef">
     <div class="title">
         <div @click="switchShow">{{ nowState ? "→":"←" }}</div>
-        <div @click="clear">[清空]</div>
+        <div class="control">
+            <div>
+                <input type="checkbox" v-model="showTime">
+                <span>时间</span>
+            </div>
+            <div @click="clear">[清空]</div>
+        </div>
+        
     </div>
     <template v-for="log in logList">
-        <LogUnit :log></LogUnit>
+        <LogUnit :log :showTime></LogUnit>
     </template>
   </div>
 </template>
@@ -38,6 +45,10 @@ function switchShow(){
         nowState.value = true
     }
 }
+
+//显示日志打印时间
+const showTime = ref(false)
+
 function clear(){
     logList.value = []
 }
@@ -52,11 +63,16 @@ function clear(){
     padding: 10px;
     width: 400px;
     height: 60%;
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: visible;
     background-color: white;
     .title{
         display: flex;
         justify-content: space-between;
+        .control{
+            display: flex;
+            gap: 15px;
+        }
     }
     .log{
         width: 100%;
