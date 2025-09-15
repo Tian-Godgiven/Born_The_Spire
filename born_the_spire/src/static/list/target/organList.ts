@@ -1,14 +1,14 @@
 import { Describe } from "@/hooks/express/describe"
 import { Organ } from "@/objects/target/Organ"
 import { TargetMap } from "@/objects/target/Target"
-import { EffectKeyMap } from "../system/effectList"
+import { EffectUnit } from "../system/effectMap"
 import { ItemMap } from "@/objects/item/Item"
 export type OrganMap = ItemMap&TargetMap&{
     label:string,
     key:string,
     describe?:Describe,
     behavior?:{
-        getOrgan?:EffectKeyMap[]
+        getOrgan?:EffectUnit[]
     }
 }
 

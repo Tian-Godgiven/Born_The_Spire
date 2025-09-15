@@ -1,5 +1,5 @@
 import { isArray } from "lodash";
-import { Effect } from "./Effect";
+import { Effect } from "./effect/Effect";
 import { Entity } from "./Entity";
 import { gatherToTransaction } from "../game/transaction";
 import { newLog } from "@/hooks/global/log";
