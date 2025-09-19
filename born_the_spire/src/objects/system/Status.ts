@@ -1,4 +1,4 @@
-import { doAction } from "@/objects/system/ActionEvent"
+import { doEvent } from "@/objects/system/ActionEvent"
 import { Entity } from "./Entity"
 import { newError } from "@/hooks/global/alert"
 import { cloneDeep } from "lodash"
@@ -102,7 +102,7 @@ export async function changeStatusValue(source:Entity,medium:Entity,target:Entit
     //判断输入值
     newValue = checkValue(status,newValue,type)
     //进行行为：修改属性,传入属性key和修改前后的值
-    await doAction("changeStatus",source,medium,target,{
+    await doEvent("changeStatus",source,medium,target,{
         statusKey,
         oldValue,
         newValue

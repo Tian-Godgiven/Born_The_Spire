@@ -1,11 +1,12 @@
 import { initStatusByMap, StatusMap } from "@/static/list/system/statusList";
-import { Trigger } from "./Trigger";
+import { Trigger } from "./trigger/Trigger";
 import { ActionEvent } from "./ActionEvent";
 import { Describe } from "@/hooks/express/describe";
-import { EffectUnit, doEffectByKey } from "@/static/list/system/effectMap";
 import { Status } from "./Status";
 import { TriggerMap, TriggerObj } from "@/typs/object/trigger";
 import { reactive } from "vue";
+import { EffectUnit } from "./effect/EffectUnit";
+import { Effect } from "./effect/Effect";
 // 实体（entity）是Target和Item的基类
 export class Entity{
     public label:string
@@ -16,7 +17,7 @@ export class Entity{
     public trigger:Trigger
     constructor(map:EntityMap){
         this.label = map.label
-        //初始化触发器
+        //初始化实体自带的触发器
         this.trigger = new Trigger((map.trigger)??null)
         //初始化属性
         if(map.status){
@@ -24,10 +25,6 @@ export class Entity{
                 const status = initStatusByMap(key,value)
                 this.getStatus(status)
             }
-        }
-        //初始化行为
-        if(map.behavior){
-            initBehavior(this,map.behavior)
         }
         //初始化描述
         this.describe = map.describe??[]
@@ -38,17 +35,17 @@ export class Entity{
     getTrigger(triggerObj:TriggerObj){
         return this.trigger.getTrigger(triggerObj)
     }
-    //对象造成了某个事件，且该事件被触发了
-    makeEvent(when:"before"|"after",event:ActionEvent,triggerLevel:number){
-        this.trigger.onTrigger(when,"make",event,triggerLevel)
+    //对象的“造成”触发器被触发
+    makeEvent(when:"before"|"after",triggerKey:string,event:ActionEvent,effect:Effect|null,triggerLevel:number){
+        this.trigger.onTrigger(when,"make",triggerKey,{actionEvent:event,effect},triggerLevel)
     }
     //对象作为媒介参与了某个事件
-    viaEvent(when:"before"|"after",event:ActionEvent,triggerLevel:number){
-        this.trigger.onTrigger(when,"via",event,triggerLevel)
+    viaEvent(when:"before"|"after",triggerKey:string,event:ActionEvent,effect:Effect|null,triggerLevel:number){
+        this.trigger.onTrigger(when,"via",triggerKey,{actionEvent:event,effect},triggerLevel)
     }
     //对象受到了某个事件
-    takeEvent(when:"before"|"after",event:ActionEvent,triggerLevel:number){
-        this.trigger.onTrigger(when,"take",event,triggerLevel)
+    takeEvent(when:"before"|"after",triggerKey:string,event:ActionEvent,effect:Effect|null,triggerLevel:number){
+        this.trigger.onTrigger(when,"take",triggerKey,{actionEvent:event,effect},triggerLevel)
     }
     //获得属性
     getStatus(status:Status){
@@ -67,18 +64,19 @@ export type EntityMap = {
 }
 
 //初始化行为
-function initBehavior(entity:Entity,map:Record<string,EffectUnit[]>){
-    //每种行为都对应是一个on的触发器，在行为事件触发时产生效果
-    for(let [key,effects] of Object.entries(map)){
-        entity.getTrigger({
-            when:"before",
-            how:"via",
-            key,
-            callback:async({source,target})=>{
-                for(let map in effects){
-                    await doEffectByKey(source,entity,target,map)
-                }
-            }
-        })
-    }
-}
+//未完成
+// function initBehavior(entity:Entity,map:Record<string,EffectUnit[]>){
+//     //每种行为都对应是一个on的触发器，在行为事件触发时产生效果
+//     for(let [key,effects] of Object.entries(map)){
+//         entity.getTrigger({
+//             when:"before",
+//             how:"via",
+//             key,
+//             callback:async({source,target})=>{
+//                 for(let map in effects){
+//                     await doEffectByKey(source,entity,target,map)
+//                 }
+//             }
+//         })
+//     }
+// }
