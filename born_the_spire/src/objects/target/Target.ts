@@ -1,9 +1,9 @@
 import { nanoid } from "nanoid";
-import { TriggerMap } from "../system/Trigger";
+import { TriggerMap } from "../system/trigger/Trigger";
 import { Organ } from "./Organ";
 import { getOrganByKey } from "@/static/list/target/organList";
 import { Entity, EntityMap } from "../system/Entity";
-import { doAction } from "@/objects/system/ActionEvent";
+import { doEvent } from "@/objects/system/ActionEvent";
 import { State } from "../system/State";
 import { newLog } from "@/hooks/global/log";
 
@@ -40,7 +40,7 @@ export class Chara extends Target{
     //获得器官
     async getOrgan(source:Entity,organ:Organ){
         newLog([this,"获得了器官",organ])
-        await doAction("getOrgan",source,organ,this)
+        await doEvent("getOrgan",source,organ,this)
         this.organs.push(organ)
     }
     //获取对象的器官列表

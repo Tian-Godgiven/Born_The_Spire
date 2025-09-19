@@ -1,8 +1,8 @@
-import { doEffectByKey } from "@/static/list/system/effectMap";
 import { isArray } from "lodash";
-import { ActionEvent } from "./ActionEvent";
+import { ActionEvent } from "../ActionEvent";
 import { nanoid } from "nanoid";
 import { TriggerMap, TriggerObj, TriggerType, TriggerUnit } from "@/typs/object/trigger";
+import { Effect } from "../effect/Effect";
 
 // 触发器是基于事件总线的，一系列在个体上的回调函数
 // 触发器的实现原理是：在某一个时刻(trigger_key)执行对应时刻的回调函数
@@ -41,20 +41,24 @@ export class Trigger{
         }
     }
     //触发触发器
-    onTrigger(when:"before"|"after",how:"take"|"make"|"via",event:ActionEvent,triggerLevel?:number){
+    onTrigger(when:"before"|"after",
+        how:"take"|"make"|"via",
+        triggerKey:string,
+        {actionEvent,effect}:{actionEvent:ActionEvent,effect:Effect|null},
+        triggerLevel?:number
+    ){
         //获取相应的trigger
-        const trigger = this[how][when][event.key]
+        const trigger = this[how][when][triggerKey]
         if(!trigger)return;
         //依次触发所有trigger unit
         for(let tmp of trigger){
-            tmp.callback(event,triggerLevel)
+            tmp.callback(actionEvent,effect,triggerLevel)
         }
     }
 }
 
-//读取triggerMap生成触发器
-function readTriggerMap(trigger:Trigger,map:TriggerMap|null){
-    if(!map)return;
+//通过triggerMap生成触发器
+function createTriggerByTriggerMap(trigger:Trigger,map:TriggerMap|null){
     for(let mapKey in map){
         const type = mapKey as keyof TriggerMap;
         const mapItem = map[type]
@@ -63,10 +67,7 @@ function readTriggerMap(trigger:Trigger,map:TriggerMap|null){
             const item = value
             if("when" in item){
                 const callback = async({source,medium,target}:ActionEvent)=>{
-                    //依次触发所有效果
-                    for(let effect of item.effects){
-                        await doEffectByKey(source,medium,target,effect)
-                    }
+                    
                 }
                 trigger.getTrigger({
                     when:item.when,
@@ -78,9 +79,8 @@ function readTriggerMap(trigger:Trigger,map:TriggerMap|null){
             else if(isArray(value)){
                 const callback = async({source,medium,target}:ActionEvent)=>{
                     //依次触发所有效果
-                    //依次触发所有效果
                     for(let effect of value){
-                        await doEffectByKey(source,medium,target,effect)
+                        
                     }
                 }
                 trigger.getTrigger({when:"before",how:type,key,callback})
@@ -89,7 +89,7 @@ function readTriggerMap(trigger:Trigger,map:TriggerMap|null){
     }
 }
 
-//返回一个触发器对象，通过getTrigger方法导入到实体内
+//创建触发器，通过实体的getTrigger方法挂载到实体上
 export function createTrigger({when,how,key,callback}:TriggerObj):TriggerObj{
     return {
         when,how,key,callback

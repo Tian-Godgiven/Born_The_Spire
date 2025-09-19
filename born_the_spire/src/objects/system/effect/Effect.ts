@@ -1,96 +1,72 @@
-import { isArray, random } from "lodash";
 import { ActionEvent } from "../ActionEvent";
-import { Entity } from "../Entity";
 import { EffectUnit } from "./EffectUnit";
-import { EffectFunc, EffectParams } from "./EffectFunc";
-
-//效果对象
-export type Effect = {
-    label:string,//效果名称
-    key:string//效果关键词
-    targetType:"player"|"enemy"|"all"|"self"|"any"//效果作用对象
-    //效果事件
-    effect:(event:ActionEvent,effect:Effect)=>void,
-    params:Record<string,any>,
-    describe?:string[]
+import { doEffectFunc, EffectFunc, EffectParams } from "./EffectFunc";
+import { newLog } from "@/hooks/global/log";
+type EffectConstructor = {
+    label?:string,
+    key:string,
+    effectFunc:EffectFunc,
+    params:EffectParams,
+    describe?:string[],
+    triggerEvent:ActionEvent
 }
 
 export class Effect{
     public key:string;//关键字
     public effectFunc:EffectFunc;
-    public params:GamepadEffectParameters;
+    public params:EffectParams;
     public label?:string = "";//效果的名称
-    public describe?:string[] = []
-    constructor({label="",key,effect,params,describe=[]}:{label:?string,key:string,effect:EffectFunc,params:EffectParams,describe?:string[]}){
+    public describe?:string[] = [];
+    public actionEvent:ActionEvent;//引发这个效果的事件
+    constructor({label="",key,effectFunc,params,describe=[],triggerEvent}:EffectConstructor){
         this.label = label;
         this.key = key;
-        this.effect = effect;
+        this.effectFunc = effectFunc;
         this.params = params;
-        this.describe = describe
+        this.describe = describe;
+        this.actionEvent = triggerEvent
+    }
+    //启用这个效果
+    apply(){
+        //执行效果函数
+        const event = this.actionEvent
+        newLog({
+            main:[event.source,"对",event.target,"造成了效果",this],
+            detail:[
+                "媒介:",event.medium," | ",
+                "效果参数",this.params,
+                "效果解释",this.describe,
+            ]
+        })
+        doEffectFunc(this)
+    }
+    //宣布这个效果，触发参与事件的对象的触发器
+    announce(triggerLevel:number){
+        //触发事件before，触发级+=1
+        this.trigger("before",triggerLevel+=1)
+        //触发事件的after，触发级-=1
+        this.trigger("after",triggerLevel-=1)
+    }
+    //触发效果对象所在的事件的参与者的触发器
+    trigger(when:"before"|"after",triggerLevel:number){
+        const event = this.actionEvent
+        event.source.makeEvent(when,event,this,triggerLevel);
+        event.medium.viaEvent(when,event,this,triggerLevel)
+        event.target.takeEvent(when,event,this,triggerLevel)
     }
 }
 
 //通过效果unit创建效果对象
-export function createEffectByUnit(unit:EffectUnit,effectFunc:EffectFunc,effectLabel?:string):Effect{
+export function createEffectByUnit(triggerEvent:ActionEvent,unit:EffectUnit,effectFunc:EffectFunc,effectLabel?:string):Effect{
     //组合得到效果对象
     const {key,params,describe} = unit
-    const effectObj = new Effect(effectLabel,key,effectFunc,params,describe)
-}
-
-//通过map创建一个effect
-export function createEffectByMap(effectMap:EffectMap):Effect{
-    const value = effectMap.value
-    const info = effectMap.info??{}
-    if(typeof value == "number"){
-        return {
-            ...effectMap,
-            info,
-            value:{
-                now:value
-            },
-            valueType:"number"
-        }
-    }
-    else if(isArray(value)){
-        return {
-            ...effectMap,
-            info,
-            valueType:"range",
-            value:{
-                min:value[0],
-                now:0,
-                max:value[1]
-            },
-        }
-    }
-    return{
-        ...effectMap,
-        info,
-        value:{
-            now:value
-        },
-        valueType:"number"
-    }
-}
-
-//执行一个效果
-export function doEffect(source: Entity, medium: Entity, target: Entity, effect: Effect) {
-    //效果函数
-    const effectFunc = effect.effect;
-    //获取效果的值
-    getEffectValue(effect);
-    event.happen(()=>{
-        //执行效果函数
-        effectFunc(event, effect);
+    const effectObj = new Effect({
+        label:effectLabel,
+        key,
+        effectFunc,
+        params,
+        describe,
+        triggerEvent
     })
-}
-//获取效果值
-export function getEffectValue(effect:Effect){
-    //获取range类型的当前value
-    let value:number
-    if(effect.valueType=="range"){
-        value = random(effect.value.min,effect.value.max)
-        effect.value.now = value
-    }
-    return effect
+    return effectObj
 }
