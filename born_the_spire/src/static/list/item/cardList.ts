@@ -1,15 +1,16 @@
 
 import { Card } from "@/objects/item/Card"
 import { ItemMap } from "@/objects/item/Item"
-import { EffectUnit } from "../system/effectMap"
+import { EffectUnit } from "@/objects/system/effect/EffectUnit"
 
 export type CardMap = ItemMap & {
     status:{
         cost:number|null
     }
     entry?:string[],
-    behavior:{
-        useCard:EffectUnit[]
+    useCard:{
+        target:"enemy"|"player"
+        effect:EffectUnit[]//使用卡牌将会造成的效果
     }
 }
 
@@ -27,13 +28,11 @@ const cardList:CardMap[] = [{
         "点伤害"
     ],
     key:"original_card_00001",
-    behavior:{
-        useCard:[{
-            key:"damage",
-            value:5,
-            targetType:"enemy"
-        }]
-    }
+    useCard:[{
+        key:"damage",
+        params:{value:5}
+        targetType:"enemy"
+    }]
 },{
     label:"消耗打击",
     status:{

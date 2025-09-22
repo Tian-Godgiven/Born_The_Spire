@@ -1,6 +1,6 @@
 import { ActionEvent } from "../ActionEvent";
 import { nanoid } from "nanoid";
-import { TriggerEventConfig, TriggerFunc, TriggerMap, TriggerObj, TriggerType, TriggerUnit } from "@/typs/object/trigger";
+import { TriggerEventConfig, TriggerFunc, TriggerMap, TriggerObj, TriggerType, TriggerUnit } from "@/types/object/trigger";
 import { Effect } from "../effect/Effect";
 import { Entity } from "../Entity";
 
