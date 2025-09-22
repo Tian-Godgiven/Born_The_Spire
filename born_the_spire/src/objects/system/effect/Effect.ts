@@ -50,9 +50,9 @@ export class Effect{
     //触发效果对象所在的事件的参与者的触发器
     trigger(when:"before"|"after",triggerLevel:number){
         const event = this.actionEvent
-        event.source.makeEvent(when,event,this,triggerLevel);
-        event.medium.viaEvent(when,event,this,triggerLevel)
-        event.target.takeEvent(when,event,this,triggerLevel)
+        event.source.makeEvent(when,this.key,event,this,triggerLevel);
+        event.medium.viaEvent(when,this.key,event,this,triggerLevel)
+        event.target.takeEvent(when,this.key,event,this,triggerLevel)
     }
 }
 

@@ -5,7 +5,6 @@ import { Describe } from "@/hooks/express/describe";
 import { Status } from "./Status";
 import { TriggerMap, TriggerObj } from "@/typs/object/trigger";
 import { reactive } from "vue";
-import { EffectUnit } from "./effect/EffectUnit";
 import { Effect } from "./effect/Effect";
 // 实体（entity）是Target和Item的基类
 export class Entity{
@@ -17,8 +16,13 @@ export class Entity{
     public trigger:Trigger
     constructor(map:EntityMap){
         this.label = map.label
-        //初始化实体自带的触发器
-        this.trigger = new Trigger((map.trigger)??null)
+        //初始化实体自带的触发器,并创建自带的触发器
+        this.trigger = new Trigger()
+        if(map.trigger){
+            //自带的触发器，其来源和目标都是自身
+            this.trigger.initTriggerByMap(this,this,map.trigger)
+        }
+
         //初始化属性
         if(map.status){
             for(let [key,value] of Object.entries(map.status)){
@@ -57,9 +61,9 @@ export class Entity{
 
 export type EntityMap = {
     label:string
+    key:string,//唯一识别码，决定这个对象是什么对象/哪种对象（同一种对象可以有多个）
     status?:Record<string,StatusMap|number>;
     trigger?:TriggerMap;
-    behavior?:Record<string,EffectUnit[]>;
     describe?:Describe
 }
 

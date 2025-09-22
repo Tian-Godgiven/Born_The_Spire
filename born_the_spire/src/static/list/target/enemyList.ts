@@ -14,7 +14,7 @@ export const enemyList:EnemyMap[] = [
             "health":5
         },
         organ:[
-            // "original_organ_00002",
+            "original_organ_00002",
             "original_organ_00003"
         ]
     }
