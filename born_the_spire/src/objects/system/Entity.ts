@@ -3,8 +3,9 @@ import { Trigger } from "./trigger/Trigger";
 import { ActionEvent } from "./ActionEvent";
 import { Describe } from "@/hooks/express/describe";
 import { Status } from "./Status";
-import { TriggerMap, TriggerObj } from "@/typs/object/trigger";
+import { TriggerMap, TriggerObj } from "@/types/object/trigger";
 import { reactive } from "vue";
+
 import { Effect } from "./effect/Effect";
 // 实体（entity）是Target和Item的基类
 export class Entity{

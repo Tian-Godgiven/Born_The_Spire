@@ -26,13 +26,13 @@ export const organList:OrganMap[] = [
         describe:["受到的伤害值-1"],
         trigger:[{
             how:"via",
-            triggerKey:"getOragn",
+            key:"getOragn",
             event:[{
                 key:"protect",
                 label:"石肤防护",
                 targetType:"eventTarget",
                 effect:[
-                    {key:"take_reduce_damage",params:1}
+                    {key:"take_reduce_damage",params:{value:1}}
                 ]
             }]
         }]

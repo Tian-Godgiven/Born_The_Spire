@@ -4,9 +4,8 @@ import { Effect } from "./Effect";
 
 //效果参数
 export type EffectParams = Record<string,{
-    value:any,
     [key:string]:any
-}>
+}|any>
 
 export type EffectFunc = (
     event:ActionEvent,//引发这个效果的事件对象
