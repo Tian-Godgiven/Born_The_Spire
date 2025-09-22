@@ -1,17 +1,22 @@
-import { isArray } from "lodash";
 import { ActionEvent } from "../ActionEvent";
 import { nanoid } from "nanoid";
-import { TriggerMap, TriggerObj, TriggerType, TriggerUnit } from "@/typs/object/trigger";
+import { TriggerEventConfig, TriggerFunc, TriggerMap, TriggerObj, TriggerType, TriggerUnit } from "@/typs/object/trigger";
 import { Effect } from "../effect/Effect";
+import { Entity } from "../Entity";
 
-// 触发器是基于事件总线的，一系列在个体上的回调函数
+// 触发器是基于事件总线的，一系列在个体上的响应器
 // 触发器的实现原理是：在某一个时刻(trigger_key)执行对应时刻的回调函数
 export class Trigger{
     public take:TriggerType = {before:{},after:{}}
     public make:TriggerType = {before:{},after:{}}
     public via:TriggerType = {before:{},after:{}}
-    constructor(map:TriggerMap|null){
-        readTriggerMap(this,map)
+    constructor(){}
+    //通过map来初始化trigger
+    initTriggerByMap(source:Entity,target:Entity,map:TriggerMap){
+        for(let triggerItem of map){
+            const trigger = createTriggerByTriggerMap(source,target,triggerItem)
+            this.getTrigger(trigger)
+        }
     }
     //获得新的触发器，返回销毁该触发器的方法
     getTrigger(obj:TriggerObj){
@@ -24,6 +29,7 @@ export class Trigger{
         const unit:TriggerUnit = {
             callback: obj.callback,
             __key,
+            level:obj?.level??0
         }
         this[how][when][key].push(unit)
         return {
@@ -58,55 +64,83 @@ export class Trigger{
 }
 
 //通过triggerMap生成触发器
-function createTriggerByTriggerMap(trigger:Trigger,map:TriggerMap|null){
-    for(let mapKey in map){
-        const type = mapKey as keyof TriggerMap;
-        const mapItem = map[type]
-        if(!mapItem)return;
-        for(let [key,value] of Object.entries(mapItem)){
-            const item = value
-            if("when" in item){
-                const callback = async({source,medium,target}:ActionEvent)=>{
-                    
-                }
-                trigger.getTrigger({
-                    when:item.when,
-                    how:type,
-                    key,
-                    callback,
-                })
-            }
-            else if(isArray(value)){
-                const callback = async({source,medium,target}:ActionEvent)=>{
-                    //依次触发所有效果
-                    for(let effect of value){
-                        
-                    }
-                }
-                trigger.getTrigger({when:"before",how:type,key,callback})
-            }
+function createTriggerByTriggerMap(source:Entity,target:Entity, item:TriggerMap[number]){
+    const when = item?.when??'before';
+    const how = item.how;
+    const key = item.key
+    const level = item.level
+    
+    const callback:TriggerFunc = async(triggerEvent,_effect,triggerLevel)=>{
+        //回调函数将会创建并发生n个事件
+        for(let eventConfig of item.event){
+            const event = createEventFromTrigger({source,target,triggerEvent},eventConfig)
+            event.happen(()=>{},triggerLevel)
         }
     }
+    const trigger = createTrigger({
+        when,how,key,callback,level
+    })
+    return trigger
 }
 
 //创建触发器，通过实体的getTrigger方法挂载到实体上
-export function createTrigger({when,how,key,callback}:TriggerObj):TriggerObj{
+export function createTrigger({when,how,key,callback,level}:TriggerObj):TriggerObj{
     return {
-        when,how,key,callback
+        when,how,key,callback,level
+    }
+}
+
+//工具函数，用于创建触发器事件
+function createEventFromTrigger(
+    {source,target,triggerEvent}:{source:Entity,target:Entity,triggerEvent:ActionEvent},
+    eventConfig:TriggerEventConfig
+){
+    const {key:eventKey,info={},targetType,effect:effectUnit} = eventConfig
+    //获取目标
+    const eventTarget = getTriggerEventTarget(targetType)
+    
+    const newEvent = new ActionEvent(
+        eventKey,
+        source,//触发器来源
+        target,//触发器挂载者
+        eventTarget,
+        info,
+        effectUnit
+    )
+    return newEvent
+
+    function getTriggerEventTarget(targetType:TriggerEventConfig["targetType"]):Entity{
+        switch(targetType){
+            case "eventSource":
+                return triggerEvent.source
+            case "eventMedium":
+                return triggerEvent.medium;
+            case "eventTarget":
+                return triggerEvent.target;
+            case "triggerSource":
+                return source;
+            case "triggerHover":
+                return target;
+            default:
+                if (targetType instanceof Entity) {
+                    return targetType;
+                }
+                throw new Error("不被支持的目标类型:"+targetType)
+        }
     }
 }
 
 //遍历所有触发器单元
-function mapTriggerUnit(trigger:Trigger,func:(from:TriggerUnit[],unit:TriggerUnit)=>void){
-    const how = trigger
-    searchFunc(how.take)
-    searchFunc(how.via)
-    searchFunc(how.make)
-    function searchFunc(how:TriggerType){
-        for(let when of Object.values(how)){
-            for(let units of Object.values(when)){
-                units.forEach(unit=>func(units,unit))
-            }
-        }
-    }
-}
+// function mapTriggerUnit(trigger:Trigger,func:(from:TriggerUnit[],unit:TriggerUnit)=>void){
+//     const how = trigger
+//     searchFunc(how.take)
+//     searchFunc(how.via)
+//     searchFunc(how.make)
+//     function searchFunc(how:TriggerType){
+//         for(let when of Object.values(how)){
+//             for(let units of Object.values(when)){
+//                 units.forEach(unit=>func(units,unit))
+//             }
+//         }
+//     }
+// }

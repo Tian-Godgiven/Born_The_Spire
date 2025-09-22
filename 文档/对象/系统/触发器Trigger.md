@@ -10,20 +10,21 @@
 1.主动获得：在对象创建的过程中，会通过其数据文件中的trigger关键字生成触发器，这些触发器会自动绑定到该对象上
 2.被动获得：通过“附加触发器”效果，在事件中为目标添加效果指定的触发器对象
 
-# 起效
+## 起效
 
-触发器在响应时，会创建一个触发事件，这个事件……
+触发器在响应时，会创建一个这样的触发事件
 
-key：在触发器创建时设置
-source: 持有该触发器的对象
-medium：为对象绑定触发器的来源
+source: 为对象绑定触发器的来源
+medium：持有该触发器的对象
 target：在触发器创建时设置，包含以下选项
-    "eventSource"：触发器响应的事件的source对象
-    "eventMedium"：触发器响应的事件的medium对象
-    "eventTarget"：触发器响应的事件的target对象
+    "eventSource"：响应的事件的source对象
+    "eventMedium"：响应的事件的medium对象
+    "eventTarget"：响应的事件的target对象
     "triggerHover"：持有该触发器的对象
     "triggerSource"：为对象绑定触发器的来源对象
-    Entity：某个设定的对象
+    Entity：某个设定的对象，这通常需要你直接创建一个触发器，而不是通过triggerMap来实现
+
+事件的其他属性均可以在触发器被创建时设置，例如key,label等
 
 ## 结构
 

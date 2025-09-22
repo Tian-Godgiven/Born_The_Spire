@@ -15,6 +15,7 @@ export class ActionEvent<
     public source:s;//执行该事件的目标
     public medium:m;//执行该事件的媒介
     public target:t;//接受该事件的目标
+    public triggerLevel:number|null=null//事件的触发等级
     public info:Record<string,any>;//该事件执行全程的信息
     public effects:Effect[] = [];
     public onExecute?:()=>void|Promise<void>
@@ -38,6 +39,7 @@ export class ActionEvent<
     }
     //触发事件
     trigger(when:"before"|"after",triggerLevel:number){
+        this.triggerLevel = triggerLevel
         this.source.makeEvent(when,this.key,this,null,triggerLevel);
         this.medium.viaEvent(when,this.key,this,null,triggerLevel)
         this.target.takeEvent(when,this.key,this,null,triggerLevel)
