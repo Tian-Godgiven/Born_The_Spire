@@ -4,6 +4,7 @@ import { gatherToTransaction } from "../game/transaction";
 import { newLog } from "@/hooks/global/log";
 import { EffectUnit, getEffectByUnit } from "./effect/EffectUnit";
 import { nanoid } from "nanoid";
+import { event } from "@tauri-apps/api";
 
 export class ActionEvent<
     s extends Entity = Entity,
@@ -67,9 +68,20 @@ export class ActionEvent<
         })
         gatherToTransaction(this,triggerLevel)
     }
+    //发生一个亲事件，先收集亲事件，再依次收集子事件
+
 }
 
 // 使得一个事件产生并发生
+type EventProp = {
+    key:string,
+    source:Entity,
+    medium:Entity,
+    target:Entity,
+    info:Record<string,any>,
+    effectUnits:EffectUnit[],
+    doWhat:()=>void,//可选，在事件执行时进行的函数
+}
 export async function doEvent(
     key:string,
     source:Entity,
@@ -82,4 +94,27 @@ export async function doEvent(
     //创建行为事件
     const event = new ActionEvent(key,source,medium,target,info,effectUnits)
     event.happen(()=>{doWhat()})
+}
+
+// 使得一个批量事件产生并另其中的子事件依次发生
+export function doMultiEvent(
+    key:string,
+    source:Entity,
+    medium:Entity,
+    target:Entity,
+    info:Record<string,any> = [],
+    effectUnit:EffectUnit[],
+    genericChildKey?:string,//通用子事件key
+    childEvents:{
+        childKey:string,
+        source?:Entity,
+        medium?:Entity,
+        target?:Entity,
+        effectUnit:EffectUnit[]
+    }[]
+){
+    //创建一个亲事件，这个事件仍然会正确地发生
+    const parentEvent = new ActionEvent(key,source,medium,target,info,effectUnit)
+    //发生这个事件时，会让子事件也发生
+    parentEvent.happen()
 }

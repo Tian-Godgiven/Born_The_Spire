@@ -28,6 +28,7 @@ export function useCard(card:Card,fromPile:Card[],source:Player,target:Target){
     //消耗费用
     const cost = getStatusValue(card,"cost")
     if(costEnergy(card,card,source,cost)){
+        //创建使用卡牌事件，未完成
         doEvent("useCard",source,card,target,{fromPile})
         //处理使用后的卡牌
         afterUseCard(card,fromPile,source,target)

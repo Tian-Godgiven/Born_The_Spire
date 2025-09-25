@@ -1,35 +1,57 @@
-import { doEvent } from "@/objects/system/ActionEvent"
 import { Entity } from "./Entity"
 import { newError } from "@/hooks/global/alert"
-import { cloneDeep } from "lodash"
+import { createStatusModifier, StatusModifier } from "./modifier/Modifier"
 
 export type StatusType = "number"|"max"
+export type StatusOptions = {
+    notNegative?:boolean//非负
+    unstackable?:boolean//不可堆叠
+    allowOver?:boolean//是否允许超出上限
+}
+
+
 //属性根据其值分为2种类型：纯数值，范围值
-export type Status = StatusNumber|StatusMax
-type StatusBase = {
-    label?:string,//属性名
-    notNegative?:boolean,//非负
-    unstackable?:boolean,//不可堆叠
-    key:string,
-}
-type StatusNumber = StatusBase&{
-    valueType:"number"
-    value:number,//纯数值类型
-    defaultValue:number|null//战斗开始时刷新所有属性值为该属性的默认值，若不具备默认值则删除该属性
-}
-type StatusMax = StatusBase&{
-    valueType:"max"
-    allowOver:boolean//是否允许超出上限
-    value:{
-        now:number,//当前值
-        min:number|null,
-        max:number//最大值
+export class Status{
+    public label?:string//属性名
+    public key:string
+    public _modifier?:StatusModifier[]//修饰器
+    public valueType:StatusType
+    public value:number
+    public options:StatusOptions
+    constructor(source:any,key:string,defaultValue:number,valueType:StatusType = "number",options?:StatusOptions){
+        this.key = key;
+        this.valueType = valueType
+        //创建属性时，使用默认值构建修饰器
+        const modifier = createStatusModifier(source,key,defaultValue)
+        this.addModifier(modifier)
+        //使用默认值为初值
+        this.value = defaultValue
+        //设置
+        if(!options){
+            this.options = {}
+        }
+        else{
+            this.options = options
+        }
     }
-    defaultValue:{
-        now:number,
-        min:number|null,
-        max:number
-    }|null
+    //使用当前修饰器更新数值
+    refresh(){
+
+    }
+    //添加修饰器
+    addModifier(modifier:StatusModifier){
+        this._modifier?.push(modifier)
+        this.refresh()
+    }
+    //移除修饰器
+    removeModifier(modifier:StatusModifier){
+        const tmp = this._modifier?.findIndex(item=>item.uuId == modifier.uuId)
+        if(tmp != undefined){
+            this._modifier?.splice(tmp,1)
+            return true
+        }
+        return false
+    }
 }
 
 //根据key值获取目标对象中的属性对象
@@ -73,20 +95,21 @@ export function getStatusValue(target:Entity,statusKey:string,type:"now"|"min"|"
         case "number":
             return status.value
         case "max":
-            switch(type){
-                case "now":
-                    return status.value.now
-                case "max":
-                    return status.value.max;
-                case "min":
-                    if(!status.value.min){
-                        newError(["该属性不存在min值",status,"将会返回0"])
-                        return 0
-                    }
-                    return status.value.min;
-                default:
-                    return status.value.now
-            }
+            //未完成，没有数值类型差分
+            // switch(type){
+            //     case "now":
+            //         return status.value.now
+            //     case "max":
+            //         return status.value.max;
+            //     case "min":
+            //         if(!status.value.min){
+            //             newError(["该属性不存在min值",status,"将会返回0"])
+            //             return 0
+            //         }
+            //         return status.value.min;
+            //     default:
+            //         return status.value.now
+            // }
         default:
             newError(["无法识别的属性类型",target,statusKey,status])
             throw new Error()
@@ -98,96 +121,63 @@ export async function changeStatusValue(source:Entity,medium:Entity,target:Entit
     const oldValue = getStatusValue(target,statusKey,type)
     //找到属性对象
     const status = target.status[statusKey]
-    //改变之前
-    //判断输入值
-    newValue = checkValue(status,newValue,type)
-    //进行行为：修改属性,传入属性key和修改前后的值
-    await doEvent("changeStatus",source,medium,target,{
-        statusKey,
-        oldValue,
-        newValue
-    },()=>{
-        //根据类型决定修改对象值
-        switch(status.valueType){
-            case "number":
-                status.value = newValue
-                break;
-            case "max":
-                switch(type){
-                    case "now":
-                        status.value.now = newValue
-                        break;
-                    case "max":
-                        status.value.max = newValue
-                        break;
-                    case "min":
-                        status.value.min = newValue
-                        break;
-                    default:
-                        status.value.now = newValue
-                        break;
-                }
-                break;
-            default:
-                newError(["无法识别的属性类型",target,statusKey,status])
-                throw new Error()
-        }
-    })
+    //判断输入值是否合法
+    // newValue = checkValue(status,newValue,type)
+    //进行事件：修改属性,传入属性key和修改前后的值
+    //未完成 属性修改事件
+    // await doEvent("changeStatus",source,medium,target,{
+    //     statusKey,
+    //     oldValue,
+    //     newValue
+    // },[])
     //改变之后
 
 }
 
 //初始化所有属性值
-export function defaultStatusValue(target:Entity){
+export function refreshAllStatus(target:Entity){
     for(let key in target.status){
         const status = target.status[key]
-        //将其value设置成defaultValue
-        if(status.defaultValue){
-            target.status[key].value = cloneDeep(status.defaultValue)
-        }
-        //删除该属性
-        else{
-            delete target.status[key]
-        }
+        status.refresh()
     }
 }
 
-//判断输入值是否合法
+//判断属性当前值合法
 function checkValue(status:Status,newValue:number,type:"now"|"min"|"max"){
     //若属性为“非负”的
-    if(status.notNegative){
+    if(status.options.notNegative){
         if(newValue < 0){
-            return 0
+            return false
         }
     }
     if(status.valueType == "max"){
-        switch(type){
-            case "now":
-                //不会超过上限，也不会低于下限
-                if(newValue > status.value.max){
-                    //不允许溢出
-                    if(!status.allowOver){
-                        newValue = status.value.max
-                    }
-                }
-                if(status.value.min && newValue < status.value.min){
-                    newValue = status.value.min
-                }
-                break;
-            case "max":
-                //不会低于下限值
-                if(status.value.min && newValue < status.value.min){
-                    newValue = status.value.min
-                }
-                status.value.max = newValue
-                break;
-            case "min":
-                //不会超过上限值
-                if(newValue > status.value.max){
-                    newValue = status.value.max
-                }
-                break;
-        }
+        // switch(type){
+        //     case "now":
+        //         //不会超过上限，也不会低于下限
+        //         if(newValue > status.value.max){
+        //             //不允许溢出
+        //             if(!status.options.allowOver){
+        //                 newValue = status.value.max
+        //             }
+        //         }
+        //         if(status.value.min && newValue < status.value.min){
+        //             newValue = status.value.min
+        //         }
+        //         break;
+        //     case "max":
+        //         //不会低于下限值
+        //         if(status.value.min && newValue < status.value.min){
+        //             newValue = status.value.min
+        //         }
+        //         status.value.max = newValue
+        //         break;
+        //     case "min":
+        //         //不会超过上限值
+        //         if(newValue > status.value.max){
+        //             newValue = status.value.max
+        //         }
+        //         break;
+        // }
     }
     return newValue           
 }
