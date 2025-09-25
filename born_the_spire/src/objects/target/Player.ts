@@ -9,7 +9,7 @@ import {shuffle} from "lodash"
 import { getCardByKey } from "@/static/list/item/cardList";
 import { getMoneyByKey, Money } from "@/static/list/item/moneyList";
 import { Entity } from "../system/Entity";
-import { defaultStatusValue } from "../system/Status";
+import { refreshAllStatus } from "../system/Status";
 
 export type CardPiles = {
     handPile:Card[],
@@ -97,7 +97,7 @@ export class Player extends Chara{
         //初始化状态：清空状态栏
         this.initState()
         //初始化属性：所有属性变成默认值
-        defaultStatusValue(this)
+        refreshAllStatus(this)
     }
     //从抽牌堆中抽牌
     drawCard(number:number,medium:Entity){
