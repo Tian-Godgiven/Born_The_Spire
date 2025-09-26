@@ -28,10 +28,9 @@ export function useCard(card:Card,fromPile:Card[],source:Player,target:Target){
     //消耗费用
     const cost = getStatusValue(card,"cost")
     if(costEnergy(card,card,source,cost)){
-        //创建使用卡牌事件，未完成
-        doEvent("useCard",source,card,target,{fromPile})
-        //处理使用后的卡牌
-        afterUseCard(card,fromPile,source,target)
+        //创建使用卡牌事件
+        const effectUnit = card.onUse
+        doEvent("useCard",source,card,target,{fromPile},effectUnit)
     }
 }
 
@@ -84,40 +83,30 @@ export function drawCardFromDrawPile(player:Player,number:number,medium:Entity){
 }
 
 //抽取指定卡牌到手牌中
-export function drawCard(fromPile:Card[],card:Card,player:Player,medium:Entity){
-    doEvent("drawCard",player,medium,card,{},()=>{
-        cardMove(fromPile,card,player.cardPiles.drawPile)
-    })
+export function drawCard(sourcePileName:keyof CardPiles,card:Card,player:Player,medium:Entity){
+    doEvent("drawCard",player,medium,card,{},[{
+        key:"drawCard",
+        params:{sourcePileName,card},
+    }])
 }
 
 //丢弃卡牌，使得一张卡牌进入玩家的弃牌堆
-export function discardCard(fromPile:Card[],card:Card,player:Player,medium:Entity){
-    //从来源牌堆删除该卡牌
-    const index = fromPile.findIndex(tmp=>isEqual(card,tmp))
-    if(index>=0){
-        //进行丢弃卡牌行为
-        doEvent("discard",player,medium,card,{},()=>{
-            //将其放进玩家对象的弃牌堆
-            player.cardPiles.discardPile.push(card)
-            //从牌堆中删除该卡牌
-            fromPile.splice(index,1)
-        })
-    }
-    else{
-        newError(["没有在来源牌堆中找到这张卡牌",fromPile,card])
-    }
+export function discardCard(sourcePileName:keyof CardPiles,card:Card,player:Player,medium:Entity){
+    doEvent("discard",player,medium,card,{},[{
+        key:"discard",
+        params:{sourcePileName,card},
+    }])
 }
 //丢弃玩家指定的牌堆中的所有牌
 export function discardAllPile(player:Player,pileName:keyof CardPiles,medium:Entity){
     const pile = player.cardPiles[pileName]
-    //仅触发一个行为，但会触发每个卡牌的过程事件
-    doActionGroup("discardAllPile","discard",player,medium,pile,{pileName},(_source,_medium,card)=>{
-        //进入弃牌堆
-        player.cardPiles.discardPile.push(card)
-        //从牌堆中删除卡牌
-        const index = pile.findIndex(tmp=>isEqual(tmp,card))
-        pile.splice(index,1)
-    })
+    //创建一个事件，效果是丢弃所有卡牌
+    doEvent("discardAllPile",player,medium,pile,{},[{
+            key:"discardAll",
+            describe:["丢弃所有卡牌"],
+            params:{pileName},
+        }
+    ])
 }
 //因回合结束而丢弃卡牌
 export function turnEndDiscardCard(pile:Card[],card:Card,player:Player){
@@ -146,16 +135,5 @@ export function exhaustCard(fromPile:Card[],card:Card,player:Player,medium:Entit
     }
     else{
         newError(["没有在来源牌堆中找到这张卡牌",fromPile,card])
-    }
-}
-
-//将卡牌从一个牌堆放到另一个牌堆
-export function cardMove(from:Card[],card:Card,to:Card[]){
-    const index = from.findIndex(tmp=>tmp==card)
-    if(index >=0 ){
-        //进入手牌堆
-        to.push(card)
-        //从来源牌堆删除
-        from.splice(index,1)
     }
 }

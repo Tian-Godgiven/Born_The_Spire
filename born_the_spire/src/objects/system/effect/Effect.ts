@@ -1,4 +1,4 @@
-import { ActionEvent } from "../ActionEvent";
+import { ActionEvent, handleEventEntity } from "../ActionEvent";
 import { EffectUnit } from "./EffectUnit";
 import { doEffectFunc, EffectFunc, EffectParams } from "./EffectFunc";
 import { newLog } from "@/hooks/global/log";
@@ -52,7 +52,9 @@ export class Effect{
         const event = this.actionEvent
         event.source.makeEvent(when,this.key,event,this,triggerLevel);
         event.medium.viaEvent(when,this.key,event,this,triggerLevel)
-        event.target.takeEvent(when,this.key,event,this,triggerLevel)
+        handleEventEntity(event.target,(e)=>{
+            e.takeEvent(when,this.key,event,this,triggerLevel)
+        })
     }
 }
 

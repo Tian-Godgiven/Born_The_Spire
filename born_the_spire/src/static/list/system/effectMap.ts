@@ -5,6 +5,7 @@ import { healTo } from "@/effects/health/heal"
 import { EffectUnit } from "@/objects/system/effect/EffectUnit"
 import { newLog } from "@/hooks/global/log"
 import { EffectFunc } from "@/objects/system/effect/EffectFunc"
+import { handleEventEntity } from "@/objects/system/ActionEvent"
 
 type EffectData = {
     label?:string,
@@ -34,14 +35,15 @@ const effectMap:EffectData[] = [
     label:"受到伤害时，减少受到的伤害",
     key:"take_reduce_damage",   
     effect:(event,effect)=>{
-        //为事件的效果目标添加受伤触发器
-        event.target.getTrigger({
-            when:"before",
-            how:"take",
-            key:"damage",
-            callback:async (event)=>{
-                reduceDamageFor(event,effect)
-            }
+        handleEventEntity(event.target,(e)=>{
+            e.getTrigger({
+                when:"before",
+                how:"take",
+                key:"damage",
+                callback:async (event)=>{
+                    reduceDamageFor(event,effect)
+                }
+            })
         })
     }
 },

@@ -10,6 +10,7 @@ export class Trigger{
     public take:TriggerType = {before:{},after:{}}
     public make:TriggerType = {before:{},after:{}}
     public via:TriggerType = {before:{},after:{}}
+    public _defaultTrigger = []
     constructor(){}
     //通过map来初始化trigger
     initTriggerByMap(source:Entity,target:Entity,map:TriggerMap){
@@ -109,7 +110,7 @@ function createEventFromTrigger(
     )
     return newEvent
 
-    function getTriggerEventTarget(targetType:TriggerEventConfig["targetType"]):Entity{
+    function getTriggerEventTarget(targetType:TriggerEventConfig["targetType"]):Entity|Entity[]{
         switch(targetType){
             case "eventSource":
                 return triggerEvent.source
