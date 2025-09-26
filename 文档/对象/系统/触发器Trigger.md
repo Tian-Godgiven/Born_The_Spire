@@ -161,3 +161,51 @@ eg:发生了如下事件
 
 -条件触发：blockCondition(triggerItem,actionEvent)=>bool 
 仅在返回true时拦截该触发器对象，不会调用其回调函数，默认返回true -->
+
+
+# 默认触发器
+
+一部分实体会携带默认的触发器，有些是在实体数据内定义的，有些则是为某一类实体供应的
+
+例如卡牌对象，其会在创建时默认地获得一个“after via useCard => 丢弃到弃牌堆”的触发器
+
+这些默认触发器的id和卸载方法会被记录在触发器的挂载对象的非可见属性_defaultTrigger中，同时我们建议给这些默认触发器一个描述值，以便操作者知晓这些触发器的作用
+
+_defaultTrigger:[
+    {
+        triggerWay:"when_how_key",//例如 after_via_useCard
+        id:string,
+        remove:()=>void,
+        info:string
+    }
+]
+
+我们只推荐您移除那些您知道的触发器，所以triggerWay是一个有必要的筛选条件
+
+## 关键触发器
+
+有一些触发器可能与对象身上当前的某些触发器相互冲突，对于这类触发器，我们强烈建议您在挂载时将其添加到非可见属性_importantTrigger中
+
+关键触发器属性是一个快捷查询方法，以便您在尝试删除某个与您想要添加的触发器相互冲突的旧触发器时快速获取目标，其结构与默认触发器的单元结构是相同的，但要多加一个importantKey和一个可能的onlyKey
+
+{
+    importantKey:string,
+    onlyKey?:string
+    triggerWay:"when_how_key",//例如 after_via_useCard
+    id:string,
+    remove:()=>void,
+    info:string
+}
+
+importantKey可以理解为是对这个触发器的更精确的描述，我们强烈建议您使用这个键来尝试获取期望的触发器
+
+onlyKey则更进一步，其在关键触发器中是唯一的，其对应地限制了某些不可重复的触发器操作
+例如我们上面举例的的“使用完卡牌后，丢弃到弃牌堆”，如果为这种卡牌添加【消耗】词条，那么【消耗】词条将会为卡牌添加“使用完卡牌后，移动到消耗堆”的触发器
+很明显前后两个触发器的相互冲突的，这种时候就需要将
+1.将“丢弃到弃牌堆”的触发器记录到关键触发器中，为其添加onlyKey:"afterUseCard"
+2.在【消耗】词条的效果中，将添加“移动到消耗堆”的触发器，修改为替代关键触发器onlyKey = "afterUseCard"
+
+相关的函数为
+card._importantTrigger.swapOnlyTrigger()
+
+这个方法会1.移除旧的触发器，2.在同样的位置添加新的触发器，3.修改关键触发器的信息
