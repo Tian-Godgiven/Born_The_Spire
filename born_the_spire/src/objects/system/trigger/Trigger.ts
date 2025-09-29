@@ -3,6 +3,8 @@ import { nanoid } from "nanoid";
 import { TriggerEventConfig, TriggerFunc, TriggerMap, TriggerObj, TriggerType, TriggerUnit } from "@/types/object/trigger";
 import { Effect } from "../effect/Effect";
 import { Entity } from "../Entity";
+import { DefaultTrigger, getDefaultTrigger } from "./defaultTrigger";
+import { getImportantTrigger, ImportantTrigger } from "./importantTrigger";
 
 // 触发器是基于事件总线的，一系列在个体上的响应器
 // 触发器的实现原理是：在某一个时刻(trigger_key)执行对应时刻的回调函数
@@ -10,13 +12,20 @@ export class Trigger{
     public take:TriggerType = {before:{},after:{}}
     public make:TriggerType = {before:{},after:{}}
     public via:TriggerType = {before:{},after:{}}
-    public _defaultTrigger = []
+    public _defaultTrigger:DefaultTrigger[] = []
+    public _importantTriggr:ImportantTrigger[] = []
     constructor(){}
     //通过map来初始化trigger
     initTriggerByMap(source:Entity,target:Entity,map:TriggerMap){
         for(let triggerItem of map){
-            const trigger = createTriggerByTriggerMap(source,target,triggerItem)
-            this.getTrigger(trigger)
+            const triggerObj = createTriggerByTriggerMap(source,target,triggerItem)
+            const {remove,id} = this.getTrigger(triggerObj)
+            //初始化过程中创建的都是默认触发器
+            getDefaultTrigger(this,triggerObj,id,remove,triggerItem.info)
+            //关键触发器
+            if(triggerItem.importantKey){
+                getImportantTrigger(this,triggerObj,triggerItem.importantKey,id,remove,triggerItem.info,triggerItem.onlyKey)
+            }
         }
     }
     //获得新的触发器，返回销毁该触发器的方法
@@ -26,15 +35,15 @@ export class Trigger{
             this[how][when][key] = []
         }
         //获得触发器单元，分配随机key并返回
-        const __key = nanoid()
+        const id = nanoid()
         const unit:TriggerUnit = {
             callback: obj.callback,
-            __key,
+            id,
             level:obj?.level??0
         }
         this[how][when][key].push(unit)
         return {
-            key:__key,
+            id,
             remove:()=>this.removeTrigger(obj,unit)
         }
     }

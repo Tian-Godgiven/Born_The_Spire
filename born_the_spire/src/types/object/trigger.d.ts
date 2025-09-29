@@ -24,7 +24,7 @@ export type TriggerUnit<
     t extends Entity = Entity
 > = {
     callback:TriggerFunc<s,m,t>,
-    __key:string,//单元被分配的随机key，用于移除或修改指定的触发器
+    id:string,//单元被分配的随机id，用于移除或修改指定的触发器
     level?:number,//触发优先级
 }
 
@@ -43,7 +43,7 @@ export type TriggerObj<
 }
 
 
-//触发器的数据存储map，默认触发时机为"before"，优先级为0
+//触发器的数据存储对象，默认触发时机为"before"，优先级为0
 export interface TriggerEventConfig{
     key:string,
     label?:string,
@@ -58,13 +58,25 @@ export interface TriggerEventConfig{
     effect:EffectUnit[]
 }
 
-export interface TriggerMapItem{
-    when?:"before"|"after"="before",//触发时机
-    how:"make"|"via"|"take",
-    key:string,//触发关键字triggerKey
-    level?:number=0//触发优先级
-    //触发器所产生的事件
-    event:TriggerEventConfig[]
+// 基础接口
+export interface TriggerMapItemBase {
+    when?: "before" | "after";  // 触发时机
+    how: "make" | "via" | "take";
+    key: string;  // 触发关键字 triggerKey
+    level?: number;  // 触发优先级
+    event: TriggerEventConfig[];  // 触发器所产生的事件
+    info?: string;
 }
 
-export type TriggerMap = TriggerMapItem[]
+// 没有 importantKey 的接口
+export interface TriggerMapItem extends TriggerMapItemBase {
+    importantKey?: never;
+}
+
+// 有 importantKey 的接口
+export interface ImportantTriggerMapItem extends TriggerMapItemBase {
+    importantKey: string;  // 关键触发器
+    onlyKey?: string;
+}
+
+export type TriggerMap = (TriggerMapItem|ImportantTriggerMapItem)[]
