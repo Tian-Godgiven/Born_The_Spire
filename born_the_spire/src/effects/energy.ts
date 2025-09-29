@@ -2,7 +2,6 @@ import { showQuickInfo } from "@/hooks/global/quickInfo"
 import { Entity } from "@/objects/system/Entity"
 import { changeStatusValue, getStatusValue } from "@/objects/system/Status"
 import { Player } from "../objects/target/Player"
-import { createEffectByMap, doEffect } from "@/objects/system/effect/Effect"
 
 //消耗玩家的能量
 export function costEnergy(source:Entity,medium:Entity,target:Player,cost:number):boolean{
@@ -24,7 +23,9 @@ export function costEnergy(source:Entity,medium:Entity,target:Player,cost:number
     else{
         showQuickInfo("能量不足")
     }
+    return true
     return ifEnough
+
 }
 
 //判断能量是否足够

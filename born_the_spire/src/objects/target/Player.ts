@@ -101,7 +101,6 @@ export class Player extends Chara{
     }
     //从抽牌堆中抽牌
     drawCard(number:number,medium:Entity){
-        console.log("进入了抽卡")
         drawCardFromDrawPile(this,number,medium)
     }
     //抽牌堆洗牌

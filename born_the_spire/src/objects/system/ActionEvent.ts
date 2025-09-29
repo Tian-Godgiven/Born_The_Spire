@@ -19,7 +19,8 @@ export class ActionEvent<
     public triggerLevel:number|null=null//事件的触发等级
     public info:Record<string,any>;//该事件执行全程的信息
     public effects:Effect[] = [];
-    public onExecute?:()=>void|Promise<void>
+    public onExecute?:(actionEvent:ActionEvent)=>void|Promise<void>//事件执行时，执行的函数
+    public callMap:{key:string,onCall:(res:any)=>void}[] = []//事件执行结束时，可能返回内容的函数
     constructor(
         key:string,//触发key
         source:s,medium:m,target:t|t[],
@@ -76,8 +77,24 @@ export class ActionEvent<
         })
         gatherToTransaction(this,triggerLevel)
     }
-    //发生一个亲事件，先收集亲事件，再依次收集子事件
-
+    //执行这个事件
+    async excute(){
+        //触发事件的执行时函数
+        if(this.onExecute){
+            this.onExecute(this)
+        }
+        //触发事件的各个效果
+        for(let effect of this.effects){
+            effect.apply()
+        }
+    }
+    //返回效果消息
+    call(effectKey:string,res:any){
+        const callItem = this.callMap.find(c=>c.key == effectKey)
+        if(callItem){
+            callItem.onCall(res)
+        }
+    }
 }
 
 // 使得一个事件产生并发生
@@ -89,10 +106,15 @@ export async function doEvent(
     info:Record<string,any>={},
     effectUnits:EffectUnit[],
     doWhat:()=>void=()=>{},//可选，在事件执行时进行的函数
+    listenCall?:{effectKey:string,onCall:(res:any)=>void}//效果函数中可能调用的函数
 ){
     //创建行为事件
     const event = new ActionEvent(key,source,medium,target,info,effectUnits)
     event.happen(()=>{doWhat()})
+    if(listenCall){
+        event.callMap.push({key:listenCall.effectKey,onCall:listenCall.onCall})
+    }
+    
 }
 
 //处理事件对象

@@ -21,3 +21,9 @@ export function getImportantTrigger(trigger:Trigger,triggerObj:TriggerObj,import
     }
     trigger._importantTriggr.push(importantTrigger)
 }
+
+//替换唯一关键触发器中的信息
+export function swapImportantTrigger(important:ImportantTrigger,id:string,remove:()=>any){
+    important.remove = remove;
+    important.id = id
+}

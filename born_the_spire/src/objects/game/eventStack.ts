@@ -51,10 +51,8 @@ export class EventStack{
     async doEvents(){
         // 按排序后的键获取事件数组
         for (let triggerArray of this.stack) {
-            for( let eventUnit of triggerArray){
-                if(eventUnit.actionEvent.onExecute){
-                    await eventUnit.actionEvent.onExecute()
-                }
+            for( let event of triggerArray){
+                await event.actionEvent.excute()
             }
         }
     }
