@@ -4,7 +4,7 @@ import { TriggerEventConfig, TriggerFunc, TriggerMap, TriggerObj, TriggerType, T
 import { Effect } from "../effect/Effect";
 import { Entity } from "../Entity";
 import { DefaultTrigger, getDefaultTrigger } from "./defaultTrigger";
-import { getImportantTrigger, ImportantTrigger } from "./importantTrigger";
+import { getImportantTrigger, ImportantTrigger, swapImportantTrigger } from "./importantTrigger";
 
 // 触发器是基于事件总线的，一系列在个体上的响应器
 // 触发器的实现原理是：在某一个时刻(trigger_key)执行对应时刻的回调函数
@@ -31,6 +31,7 @@ export class Trigger{
     //获得新的触发器，返回销毁该触发器的方法
     getTrigger(obj:TriggerObj){
         const {when,how,key} = obj
+
         if(!this[how][when][key]){
             this[how][when][key] = []
         }
@@ -42,6 +43,15 @@ export class Trigger{
             level:obj?.level??0
         }
         this[how][when][key].push(unit)
+
+        //判断该触发器是否在关键触发器中唯一存在
+        const triggerWay = `${when}_${how}_${key}`
+        const important = this._importantTriggr.find(item=>item.triggerWay === triggerWay)
+        if(important && important.onlyKey){
+            swapImportantTrigger(important,id,()=>this.removeTrigger(obj,unit))
+        }
+
+
         return {
             id,
             remove:()=>this.removeTrigger(obj,unit)

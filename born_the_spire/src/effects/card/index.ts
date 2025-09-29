@@ -15,3 +15,8 @@ export function cardMove(from:Card[],card:Card,to:Card[]){
     throw new Error("没有在来源牌堆找到目标卡牌！")
     return false
 }
+
+//打乱牌堆
+export function washPile(pile:Card[]){
+    
+}

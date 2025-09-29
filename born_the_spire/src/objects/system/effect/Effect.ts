@@ -26,10 +26,13 @@ export class Effect{
         this.describe = describe;
         this.actionEvent = triggerEvent
     }
-    //启用这个效果
-    apply(){
+    //启用这个效果,效果的事件对象可以被覆盖
+    apply(override_event?:ActionEvent){
         //执行效果函数
-        const event = this.actionEvent
+        let event:ActionEvent = this.actionEvent
+        if(override_event){
+            event = override_event
+        }
         newLog({
             main:[event.source,"对",event.target,"造成了效果",this],
             detail:[
@@ -38,7 +41,7 @@ export class Effect{
                 "效果解释",this.describe,
             ]
         })
-        doEffectFunc(this)
+        return doEffectFunc(this)
     }
     //宣布这个效果，触发参与事件的对象的触发器
     announce(triggerLevel:number){
