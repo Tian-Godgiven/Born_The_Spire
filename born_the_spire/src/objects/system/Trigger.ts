@@ -3,6 +3,7 @@ import { isArray } from "lodash";
 import { ActionEvent } from "./ActionEvent";
 import { nanoid } from "nanoid";
 import { TriggerMap, TriggerObj, TriggerType, TriggerUnit } from "@/typs/object/trigger";
+import { newLog } from "@/hooks/global/log";
 
 // 触发器是基于事件总线的，一系列在个体上的回调函数
 // 触发器的实现原理是：在某一个时刻(trigger_key)执行对应时刻的回调函数
@@ -43,12 +44,12 @@ export class Trigger{
     //触发触发器
     async onTrigger(when:"before"|"after",how:"take"|"make"|"via",event:ActionEvent,triggerLevel?:number){
         //获取相应的trigger
+        // newLog(["触发了触发器：",event.key,"时机:",when,"方式:",how,"触发级:",triggerLevel])
         const trigger = this[how][when][event.key]
         if(!trigger)return
-        //依次触发所有trigger unit
-        trigger.forEach(async(tmp)=>{
+        for(let tmp of trigger){
             await tmp.callback(event,triggerLevel)
-        })
+        }
     }
 }
 

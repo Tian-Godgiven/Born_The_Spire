@@ -2,6 +2,7 @@ import { isArray } from "lodash";
 import { Effect } from "./Effect";
 import { Entity } from "./Entity";
 import { gatherToTransaction } from "../game/transaction";
+import { newLog } from "@/hooks/global/log";
 
 export class ActionEvent<
     s extends Entity = Entity,
@@ -18,13 +19,15 @@ export class ActionEvent<
     ){}
     //触发这个事件某个阶段
     async triggerEvent(when:"before"|"after",triggerLevel:number){
+        newLog([this,"的触发阶段:make"])
         await this.source.makeEvent(when,this,triggerLevel);
+        newLog([this,"的触发阶段:via"])
         await this.medium.viaEvent(when,this,triggerLevel)
+        newLog([this,"的触发阶段:take"])
         await this.target.takeEvent(when,this,triggerLevel)
     }
     //宣布这个事件将会发生
     async announce(triggerLevel:number){
-        console.log(this)
         //触发事件before，触发级-=1
         await this.triggerEvent("before",triggerLevel+=1)
         //触发事件的after，触发级+=1
