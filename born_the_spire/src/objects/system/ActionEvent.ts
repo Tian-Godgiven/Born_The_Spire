@@ -6,6 +6,15 @@ import { EffectUnit, getEffectByUnit } from "./effect/EffectUnit";
 import { nanoid } from "nanoid";
 import { isArray } from "lodash";
 
+//事件阶段，一部分事件会按阶段进行
+interface EventPhase{
+    key:string,//阶段的关键字，通过其查询阶段返回的结果
+    effects:Effect[],//该阶段中将会启用的效果
+    //该过程在进行前的判断效果，返回true时进行该进程
+    condition?:(event:ActionEvent)=>boolean,
+    onFalse?:()=>any,//该过程未能正确进行时的回调函数
+}
+
 export class ActionEvent<
     s extends Entity = Entity,
     m extends Entity = Entity,
@@ -20,12 +29,19 @@ export class ActionEvent<
     public info:Record<string,any>;//该事件执行全程的信息
     public effects:Effect[] = [];
     public onExecute?:(actionEvent:ActionEvent)=>void|Promise<void>//事件执行时，执行的函数
-    public callMap:{key:string,onCall:(res:any)=>void}[] = []//事件执行结束时，可能返回内容的函数
+    public eventPhase:EventPhase[] = []
+    private _phaseResult:Record<string,any> = {}//阶段的返回值 
     constructor(
         key:string,//触发key
         source:s,medium:m,target:t|t[],
         info:Record<string,any>,
-        effectUnits:EffectUnit[]
+        effectUnits:EffectUnit[],
+        eventPhase:{
+            key:string,
+            effectUnits:EffectUnit[],
+            condition?:(event:ActionEvent)=>boolean,
+            onFalse?:()=>any,
+        }[]
     ){
         this.key = key;
         this.uuId = nanoid()
@@ -37,6 +53,21 @@ export class ActionEvent<
         for(let effectUnit of effectUnits){
             const effect = getEffectByUnit(this,effectUnit)
             this.effects.push(effect)
+        }
+        //构建该事件的各个阶段
+        for(let {key,effectUnits:effectUnits2,onFalse,condition} of eventPhase){
+            const effects:Effect[] = []
+            for(let effectUnit of effectUnits2){
+                const effect = getEffectByUnit(this,effectUnit)
+                effects.push(effect)
+            }
+            const phaseItem:EventPhase = {
+                key,
+                onFalse,
+                condition,
+                effects
+            }
+            this.eventPhase.push(phaseItem)
         }
     }
     //触发事件
@@ -85,14 +116,41 @@ export class ActionEvent<
         }
         //触发事件的各个效果
         for(let effect of this.effects){
-            effect.apply()
+            await effect.apply()
+        }
+        //按顺序执行阶段
+        for(let phase of this.eventPhase){
+            //判断条件
+            if(phase.condition){
+                const res = phase.condition(this)
+                if(!res){
+                    //返回false
+                    this.setPhaseResult(phase.key,false)
+                    return;
+                }
+            }
+            //执行阶段效果
+            for(let effect of phase.effects){
+                const res = await effect.apply()
+                //存储阶段结果
+                this.setPhaseResult(phase.key,res)
+            }
         }
     }
-    //返回效果消息
-    call(effectKey:string,res:any){
-        const callItem = this.callMap.find(c=>c.key == effectKey)
-        if(callItem){
-            callItem.onCall(res)
+    //设置事件的阶段返回结果
+    setPhaseResult(phaseKey:string,res:any){
+        this._phaseResult[phaseKey] = res;
+    }
+    //获取阶段的返回结果
+    getPhaseResult(phaseKey:string){
+        const res = this._phaseResult[phaseKey]
+        if(res != null){
+            return res
+        }
+        else{
+            newLog([
+                "错误：尝试获取的阶段结果不存在，可能是1.阶段尚未完成，2.压根就没有这阶段。",
+            ])
         }
     }
 }
@@ -105,16 +163,17 @@ export async function doEvent(
     target:Entity|Entity[],
     info:Record<string,any>={},
     effectUnits:EffectUnit[],
+    eventPhase:{
+        key:string,
+        effectUnits:EffectUnit[],
+        condition?:(event:ActionEvent)=>boolean,
+        onFalse?:()=>any,
+    }[]=[],
     doWhat:()=>void=()=>{},//可选，在事件执行时进行的函数
-    listenCall?:{effectKey:string,onCall:(res:any)=>void}//效果函数中可能调用的函数
 ){
     //创建行为事件
-    const event = new ActionEvent(key,source,medium,target,info,effectUnits)
+    const event = new ActionEvent(key,source,medium,target,info,effectUnits,eventPhase)
     event.happen(()=>{doWhat()})
-    if(listenCall){
-        event.callMap.push({key:listenCall.effectKey,onCall:listenCall.onCall})
-    }
-    
 }
 
 //处理事件对象
