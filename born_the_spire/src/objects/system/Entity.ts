@@ -7,6 +7,7 @@ import { Status } from "./Status";
 import { TriggerMap, TriggerObj } from "@/typs/object/trigger";
 import { reactive } from "vue";
 import { newLog } from "@/hooks/global/log";
+
 // 实体（entity）是Target和Item的基类
 export class Entity{
     public label:string
@@ -26,10 +27,8 @@ export class Entity{
                 this.getStatus(status)
             }
         }
-        //初始化行为
-        if(map.behavior){
-            initBehavior(this,map.behavior)
-        }
+        //未完成：初始化对象效果
+
         //初始化描述
         this.describe = map.describe??[]
         //响应式代理
