@@ -1,6 +1,6 @@
 import { Battle } from "@/objects/game/battle";
 import { turnEndDiscardCard } from "@/objects/item/Card";
-import { doAction } from "@/objects/system/ActionEvent";
+import { doEvent } from "@/objects/system/ActionEvent";
 import { emptyEnergy, getEnergy } from "@/effects/energy";
 import { Player } from "@/objects/target/Player";
 import { Chara } from "@/objects/target/Target";
@@ -65,10 +65,10 @@ export function endPlayerTurn(player:Player,battle:Battle){
 
 //开始回合行为
 export async function startTurn(chara:Chara,battle:Battle,doWhat?:()=>void){
-    await doAction("turnStart",chara,chara,chara,{turn:battle.turnNumber},doWhat)
+    await doEvent("turnStart",chara,chara,chara,{turn:battle.turnNumber},doWhat)
 }
 //结束回合行为
 export async function endTurn(chara:Chara,battle:Battle,doWhat?:()=>void){
-    await doAction("turnEnd",chara,chara,chara,{turn:battle.turnNumber},doWhat)
+    await doEvent("turnEnd",chara,chara,chara,{turn:battle.turnNumber},doWhat)
 }
 

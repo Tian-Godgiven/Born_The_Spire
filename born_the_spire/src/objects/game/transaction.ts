@@ -4,7 +4,7 @@ import { EventStack } from "./eventStack";
 //当前事务
 let nowTransaction:null|Transaction = null
 
-//事务：由1次行为引发的一连串的事件即为一个事务
+//事务：由1次操作引发的一连串的事件都受一个事务管理
 export class Transaction{
     //事件栈
     public eventStack:EventStack = new EventStack()
@@ -34,8 +34,9 @@ export class Transaction{
         this.do()
     }
     //执行事件栈
-    do(){
-        this.eventStack.doEvents()
+    async do(){
+        this.state = "doing"
+        await this.eventStack.doEvents()
     }
     //中断一个事务
     async shutDown(source:Transaction){
@@ -60,15 +61,13 @@ export async function gatherToTransaction(aE:ActionEvent,triggerLevel?:number){
         const ts = createTransaction()
         nowTransaction = ts
     }
-    const list = await nowTransaction.eventStack.gatherEvents(aE,triggerLevel)
-    //如果返回的记录列表为空，则认为所有事件都已收集完毕
-    if(list && list.length == 0){
-        //开始整理
-        nowTransaction.organize()
-    }
+    //收集这个事件，如果这个事件会触发其他事件，其会在收集函数内执行，我们只需要等待就可以了
+    await nowTransaction.eventStack.gatherEvents(aE,triggerLevel)
+    //开始整理
+    nowTransaction.organize()
 }
 
-//创建一个新事物
+//创建一个新事务
 export function createTransaction(maxLength?:number){
     return new Transaction(maxLength)
 }
