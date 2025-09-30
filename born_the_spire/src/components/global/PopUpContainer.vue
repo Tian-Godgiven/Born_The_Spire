@@ -1,12 +1,15 @@
 <template>
-<div class="popUpContainer" >
+<div id="popUpContainer" class="popUpContainer" >
     <PopUp :key="popUp.id" v-for="popUp in popUpList" :popUp="popUp"/>
 </div>
+<Teleport to="body">
+	<div id="hoverShowContainer"></div>
+</Teleport>
 </template>
 
 <script setup lang='ts'>
-    import { popUpList } from '@/hooks/global/popUp';
-    import PopUp from './PopUp.vue';
+import { popUpList } from '@/hooks/global/popUp';
+import PopUp from './PopUp.vue';
 
 </script>
 
@@ -26,6 +29,18 @@
 		left:0;
 		height: 100%;
 		width: 100%;
+		pointer-events: auto;
+	}
+}
+//hover弹窗容器
+#hoverShowContainer{
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	left: 0;
+	top: 0;
+	pointer-events: none;
+	>*{
 		pointer-events: auto;
 	}
 }

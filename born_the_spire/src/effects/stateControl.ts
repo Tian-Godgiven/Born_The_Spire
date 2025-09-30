@@ -1,8 +1,7 @@
-import { ActionEvent } from "@/objects/system/ActionEvent";
-import { Effect } from "@/objects/system/Effect";
+import { EffectFunc } from "@/objects/system/effect/EffectFunc";
 import { addStateToTarget, createStateByKey } from "@/objects/system/State";
 
-export function getStateByEffect(event:ActionEvent,effect:Effect){
+export const getStateByEffect:EffectFunc = (event,effect)=>{
     const {source,medium,target} = event
     //创建状态对象
     const stateInfo = effect.info.state
