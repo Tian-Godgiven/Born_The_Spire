@@ -48,13 +48,11 @@ const cardList:CardMap[] = [{
         "点伤害"
     ],
     key:"original_card_00002",
-    behavior:{
-        useCard:[{
-            key:"damage",
-            value:5,
-            targetType:"enemy"
-        }]
-    }
+    useCard:[{
+        key:"damage",
+        value:5,
+        targetType:"enemy"
+    }]
 },{
     label:"虚无打击",
     status:{
