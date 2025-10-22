@@ -13,10 +13,10 @@ export class Battle {
         private playerTeam:Chara[],
         private enemyTeam:Chara[]
     ){}
-    getTeam(name:"player"|"enemey"){
+    getTeam(name:"player"|"enemy"){
         if(name == "player")
         return this.playerTeam
-        else if(name == "enemey")
+        else if(name == "enemy")
         return this.enemyTeam
     }
     getSelf(){
