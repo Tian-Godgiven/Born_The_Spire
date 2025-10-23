@@ -1,8 +1,8 @@
-import { Describe } from "@/hooks/express/describe"
-import { Organ } from "@/objects/target/Organ"
-import { TargetMap } from "@/objects/target/Target"
-import { ItemMap } from "@/objects/item/Item"
-import { EffectUnit } from "@/objects/system/effect/EffectUnit"
+import { Describe } from "@/ui/hooks/express/describe"
+import { Organ } from "@/core/objects/target/Organ"
+import { TargetMap } from "@/core/objects/target/Target"
+import { ItemMap } from "@/core/objects/item/Item"
+import { EffectUnit } from "@/core/objects/system/effect/EffectUnit"
 
 export type OrganMap = ItemMap&TargetMap&{
     label:string,

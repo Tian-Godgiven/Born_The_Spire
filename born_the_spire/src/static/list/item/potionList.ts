@@ -1,5 +1,5 @@
-import { Potion } from "@/objects/item/Potion";
-import { ItemMap } from "@/objects/item/Item";
+import { Potion } from "@/core/objects/item/Potion";
+import { ItemMap } from "@/core/objects/item/Item";
 
 export type PotionMap = ItemMap & {
     targetType:"player"|"enemy"|"all",

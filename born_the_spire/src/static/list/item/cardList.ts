@@ -1,6 +1,6 @@
 
-import { Card } from "@/objects/item/Card"
-import { ItemMap } from "@/objects/item/Item"
+import { Card } from "@/core/objects/item/Card"
+import { ItemMap } from "@/core/objects/item/Item"
 
 export type CardMap = ItemMap & {
     status:{

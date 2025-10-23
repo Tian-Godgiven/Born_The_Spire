@@ -1,4 +1,4 @@
-import { Describe } from "@/hooks/express/describe"
+import { Describe } from "@/ui/hooks/express/describe"
 
 type Entry = {
     describe:Describe
