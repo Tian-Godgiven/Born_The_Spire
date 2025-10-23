@@ -1,4 +1,4 @@
-import { Status } from "@/objects/system/Status"
+import { Status } from "@/core/objects/system/Status"
 import { cloneDeep, isNumber, isObject } from "lodash"
 
 export type StatusMap = {

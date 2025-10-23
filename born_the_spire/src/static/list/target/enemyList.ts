@@ -1,5 +1,5 @@
-import { Enemy } from "@/objects/target/Enemy"
-import { CharaMap } from "@/objects/target/Target"
+import { Enemy } from "@/core/objects/target/Enemy"
+import { CharaMap } from "@/core/objects/target/Target"
 
 export type EnemyMap = CharaMap & {
     key:string

@@ -1,11 +1,12 @@
 import _ from "lodash"
-import {damageTo, reduceDamageFor} from "@/effects/health/damage"
-import { getStateByEffect } from "@/effects/stateControl"
-import { healTo } from "@/effects/health/heal"
-import { EffectUnit } from "@/objects/system/effect/EffectUnit"
-import { newLog } from "@/hooks/global/log"
-import { EffectFunc } from "@/objects/system/effect/EffectFunc"
-import { handleEventEntity } from "@/objects/system/ActionEvent"
+import {damageTo, reduceDamageFor} from "@/core/effects/health/damage"
+import { getStateByEffect } from "@/core/effects/stateControl"
+import { healTo } from "@/core/effects/health/heal"
+import { EffectUnit } from "@/core/objects/system/effect/EffectUnit"
+import { newLog } from "@/ui/hooks/global/log"
+import { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
+import { ActionEvent, handleEventEntity } from "@/core/objects/system/ActionEvent"
+import { drawFromDrawPile } from "@/core/effects/card/drawCard"
 
 type EffectData = {
     label?:string,
@@ -40,7 +41,7 @@ const effectMap:EffectData[] = [
                 when:"before",
                 how:"take",
                 key:"damage",
-                callback:async (event)=>{
+                callback:async (event:ActionEvent)=>{
                     reduceDamageFor(event,effect)
                 }
             })
@@ -62,5 +63,9 @@ const effectMap:EffectData[] = [
     effect:(event,effect)=>{
         healTo(event,effect)
     }
+},{
+    label:"从牌堆中抽牌",
+    key:"drawFromDrawPile",
+    effect:drawFromDrawPile
 }]
 

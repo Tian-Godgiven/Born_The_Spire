@@ -1,4 +1,4 @@
-import { CharaMap } from "@/objects/target/Target"
+import { CharaMap } from "@/core/objects/target/Target"
 
 export type PlayerMap = CharaMap & {
     key:string

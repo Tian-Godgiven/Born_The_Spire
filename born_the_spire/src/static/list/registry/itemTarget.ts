@@ -1,7 +1,7 @@
-import { nowPlayer } from "@/objects/game/run";
-import { Entity } from "@/objects/system/Entity";
+import { nowPlayer } from "@/core/objects/game/run";
+import { Entity } from "@/core/objects/system/Entity";
 
-type RegistryItem = (target:Entity[])=>boolean
+// type RegistryItem = (target:Entity[])=>boolean
 
 //选择目标的约束函数注册表
 const itemTargetMap = {
