@@ -1,6 +1,7 @@
 import { reactive, Reactive, ref } from "vue";
 import { eventBus } from "../../hooks/global/eventBus";
 import { Target } from "@/core/objects/target/Target";
+import { getSpecificTargetsByTargetType, TargetType } from "@/static/list/registry/chooseTargetType";
 
 type Position = Reactive<{left:number,top:number}|null>
 export type ChooseOption = {
@@ -9,11 +10,32 @@ export type ChooseOption = {
     //判断target是否符合条件
     ifTarget?:(target:Target)=>boolean;
     //选中了合适的target时
-    hoverTarget?:(target:Target)=>void;
-    //选择了这个target时
-    chooseTarget:(target:Target)=>void;
-    faction:"player"|"enemy"|null//可选对象的阵营
-    number:number|"all"//可选对象的数量
+    onHover?:(target:Target)=>void;
+    //成功选择了某个target时
+    onSuccess:(target:Target)=>void;
+}
+
+type ChooseRule = {
+    faction:"enemy"|"player"|"all",//1.可选目标的阵营：敌人or玩家or不限
+    chooseAll:boolean//2.是否为全选
+    specificTargets:Target[]//3.是否为特定的某几个目标为可选
+    noNeedChoose:boolean//4.当前场上是否可以直接使用卡牌而不需要选中目标
+    noValidTargets:boolean//5.当前是否没有可选目标
+    chooseNum:number//6.需要进行的选择数量/次数
+}
+
+//根据targetType计算当前场上对某次选择行为的规则影响，选择行为会使用这些规则来生成规则框和判断可选对象
+export function resolveTargetTypeRules(targetType:TargetType):ChooseRule{
+    //特定规则下的目标
+    let specificTargets:Target[] = []
+    if(targetType.key){
+        specificTargets = getSpecificTargetsByTargetType(targetType as Required<TargetType>)
+    }
+    return {
+        faction:targetType?.faction??"all",
+        chooseAll:targetType?.number?false:true,
+        specificTargets
+    }
 }
 
 //开始选择目标,同一时间仅允许一个选择源,重复触发将会覆盖
@@ -37,16 +59,18 @@ export function startChooseTarget(option:ChooseOption,position:Position,onStop:(
     eventBus.on("clickTarget",({target})=>{
         if(option.ifTarget){
             if(option.ifTarget(target)){
-                option.chooseTarget(target)
+                option.onSuccess(target)
                 endChooseTarget()
             }
         }
         else{
-            option.chooseTarget(target)
+            option.onSuccess(target)
             endChooseTarget()
         }
     })
 
+
+    //监听器，结束选择
     function handleClick(event:MouseEvent){
         event.stopPropagation();
         let target = event.target as HTMLElement
