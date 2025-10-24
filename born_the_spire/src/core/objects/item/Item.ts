@@ -1,7 +1,7 @@
 import { Describe } from "@/ui/hooks/express/describe";
 import { Entity, EntityMap } from "../system/Entity";
 import { EffectUnit } from "../system/effect/EffectUnit";
-import { ItemTarget } from "@/static/list/registry/itemTarget";
+import { TargetType } from "@/static/list/registry/chooseTargetType";
 import { nowBattle } from "../game/battle";
 import { newLog } from "@/ui/hooks/global/log";
 
@@ -9,7 +9,7 @@ export type ItemMap = EntityMap & {
     label:string,
     describe?:Describe,
     key:string,
-    interaction:Record<string,{target:ItemTarget,effects:EffectUnit[]}>
+    interaction:Record<string,{target:TargetType,effects:EffectUnit[]}>
 }
 
 export class Item extends Entity{
@@ -58,6 +58,6 @@ export class Item extends Entity{
 //交互
 export interface Interaction{
     key:string,
-    target:ItemTarget,
+    target:TargetType,
     effects:EffectUnit[]
 }
