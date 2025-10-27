@@ -15,7 +15,13 @@
     //点击开始选择
     function startChoose(){
         if(!chooseSourceRef.value)return;
+        const interaction = card.getInteraction("use")
+        if(!interaction){
+            //未完成，无法使用的卡牌的效果
+            return 
+        }
         chooseSourceRef.value.startChoose({
+            targetType:interaction,
             "onSuccess":(target)=>useCard(card,
                                         nowPlayer.cardPiles.handPile,
                                         nowPlayer.getSelf(),

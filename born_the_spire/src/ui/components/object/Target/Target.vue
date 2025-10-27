@@ -1,68 +1,58 @@
 <template>
-<div class="target" :class="hovering?'hover':''" @mouseenter="onHover" @mouseleave="onLeave" @click="onClick">
-    <div class="organs">
-        <Organ :organ v-for="organ in target.getOrganList()"></Organ>
-    </div>
-    <div class="bottom">
-        <div class="name">
-            {{ target.label }}
-        </div>
-        <BloodLine :target></BloodLine>
-        <div class="states" v-for="state in target.state" :key="state.key">
-            <State :state></State>
-        </div>
-    </div>
+<div class="target" 
+    :class="{
+        hovering: hovering,
+        selectable: targetState?.chooseState.isSelectable,
+        selected: targetState?.chooseState.isSelected,}" 
+    @mouseenter="onHover" @mouseleave="onLeave" @click="onClick">
+    <slot></slot>
 </div>
 </template>
 
 <script setup lang='ts'>
-    import { Chara } from '@/core/objects/target/Target';
-import Organ from '@/ui/components/object/Organ.vue';
-import BloodLine from '@/ui/components/object/Target/BloodLine.vue';
-import { eventBus } from '@/ui/hooks/global/eventBus';
-import { ref } from 'vue';
-import State from '@/ui/components/object/State.vue';
+    import { Chara, Target } from '@/core/objects/target/Target';
+import { onMounted, ref } from 'vue';
+import { TargetChooseState, targetManager } from '@/ui/interaction/target/targetManager';
     const {target} = defineProps<{target:Chara}>()
+    const targetState = ref<{target:Target,chooseState:TargetChooseState}>()
+    onMounted(()=>{
+        //为target添加状态管理
+        targetState.value = targetManager.addTarget(target)
+    })
     const hovering = ref(false)
     function onHover(){
-        //触发事件总线的“选中目标"
-        eventBus.emit("hoverTarget",{target,callBack:(bool)=>{
-            if(bool){
-                hovering.value = true
-            }
-        }})
-        //触发目标事件的“选中目标”
+        hovering.value = true
+        targetManager.setTargetState(target,"isHovered",true)
     }
     function onLeave(){
         hovering.value = false
+        targetManager.setTargetState(target,"isHovered",false)
     }
     function onClick(){
-        console.log("点击了")
-        //选择了一个target单位
-        eventBus.emit("clickTarget",{target})
+        //已选中则取消
+        if(targetState.value?.chooseState.isSelected){
+            targetManager.setTargetState(target,"isSelected",false)
+        }
+        else{
+            targetManager.setTargetState(target,"isSelected",true)
+        }
     }
 </script>
 
 <style scoped lang='scss'>
 .target{
-    width: 200px;
-    height: 300px;
-    overflow: visible;
-    display: flex;
-    flex-direction: column;
-    &.hover{
-        outline: 2px solid black;
-    }
-    .organs{
-        flex-grow: 1;
-    }
-    .bottom{
-        .name{
-            text-align: center;
+    &.selectable{
+        outline: 2px dashed grey;
+        &.hovering{
+            outline: 2px solid grey;
         }
-        flex-shrink: 0;
-        position: relative;
-        bottom: 0;
+        &.selected{
+            outline: 2px solid black;
+            &.hovering{
+                outline: 2px solid black;
+            }
+        }
     }
+    
 }
 </style>

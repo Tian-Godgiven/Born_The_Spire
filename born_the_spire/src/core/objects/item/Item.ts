@@ -42,6 +42,14 @@ export class Item extends Entity{
         //可以选择任意阵营
 
     }
+    //获取指定的交互
+    getInteraction(key:string){
+        const i = this.interaction.find(i=>i.key == key)
+        if(!i){
+            return false
+        }
+        return i
+    }   
     //使用item
     use(targets:Entity[],){
         //调用对象的use交互

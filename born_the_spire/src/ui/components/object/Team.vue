@@ -1,13 +1,13 @@
 <template>
 <div class="team">
-    <TargetVue :class="ifCenter(target)?'center':''" v-for="target in team" :target></TargetVue>
+    <CharaVue :class="ifCenter(target)?'center':''" v-for="target in team" :target />
 </div>
 </template>
 
 <script setup lang='ts'>
-    import { Chara} from '@/core/objects/target/Target';
+    import {type Chara} from '@/core/objects/target/Target';
     import { nowPlayer } from '@/core/objects/game/run';
-    import TargetVue from './Target/Target.vue';
+    import CharaVue from './Target/Chara.vue';
     const {team} = defineProps<{
         team:Chara[],
     }>()
