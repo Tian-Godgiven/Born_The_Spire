@@ -1,11 +1,12 @@
 import { nanoid } from "nanoid";
-import { TriggerMap } from "../system/trigger/Trigger";
 import { Organ } from "./Organ";
 import { getOrganByKey } from "@/static/list/target/organList";
 import { Entity, EntityMap } from "../system/Entity";
 import { doEvent } from "@/core/objects/system/ActionEvent";
 import { State } from "../system/State";
 import { newLog } from "@/ui/hooks/global/log";
+import { TriggerMap } from "@/core/types/object/trigger";
+import { reactive } from "vue";
 
 export type TargetMap = EntityMap & {
     label:string,
@@ -28,7 +29,7 @@ export type CharaMap = TargetMap & {
 }
 //用于角色和敌人
 export class Chara extends Target{
-    public organs:Organ[] = []
+    public organs:Organ[] = reactive([])
     constructor(map:CharaMap){
         super(map)
         //获得器官

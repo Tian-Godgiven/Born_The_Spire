@@ -1,6 +1,6 @@
 <template>
 <ChooseSource :key="card.__id" ref="chooseSource" @click="startChoose">
-    <CardVue :card="card"/>
+    <CardVue :class="{useAble}" :card="card"/>
 </ChooseSource>
 </template>
 
@@ -8,10 +8,13 @@
     import { Card, useCard } from '@/core/objects/item/Card';
     import CardVue from '@/ui/components/object/Card.vue';
     import ChooseSource from '@/ui/components/interaction/chooseTarget/ChooseSource.vue';
-    import { useTemplateRef } from 'vue';
+    import { computed, useTemplateRef } from 'vue';
     import { nowPlayer } from '@/core/objects/game/run';
     const {card} = defineProps<{card:Card}>()
     const chooseSourceRef = useTemplateRef("chooseSource")
+    const useAble = computed(()=>{
+        return card.getInteraction("use")?true:false
+    })
     //点击开始选择
     function startChoose(){
         if(!chooseSourceRef.value)return;
@@ -21,7 +24,7 @@
             return 
         }
         chooseSourceRef.value.startChoose({
-            targetType:interaction,
+            targetType:interaction.target,
             "onSuccess":(target)=>useCard(card,
                                         nowPlayer.cardPiles.handPile,
                                         nowPlayer.getSelf(),
@@ -31,5 +34,7 @@
 </script>
 
 <style scoped lang='scss'>
-
+.useAble{
+    box-shadow: 0px 0px 8px rgb(0, 0, 0);
+}
 </style>

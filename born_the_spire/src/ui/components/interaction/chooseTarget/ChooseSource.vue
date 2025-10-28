@@ -12,6 +12,8 @@
     import { ChooseOption, startChooseTarget } from '@/ui/interaction/target/chooseTarget';
     import { reactive, ref, useTemplateRef } from 'vue';
 
+    const {onStop,onHover} = defineProps<{onStop?:()=>void,onHover?:()=>{}}>()
+
     defineExpose({
         startChoose:startChoose
     })
@@ -40,17 +42,21 @@
         getPosition()
         startChooseTarget(option,position,()=>{
             state.value = "none"
+            onStop?.()
         })
     }
     //hover状态
     function handlePointerEnter(){
-        state.value = "hovering"
+        //当前不在选择状态
+        if(state.value == 'none'){
+            state.value = "hovering"
+            onHover?.()
+        }
     }
     function handlePointerLeave(){
         if(state.value == 'hovering'){
             state.value = "none"
         }
-        
     }
 </script>
 

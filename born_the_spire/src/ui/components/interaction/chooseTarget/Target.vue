@@ -13,6 +13,7 @@
     import { Chara, Target } from '@/core/objects/target/Target';
 import { onMounted, ref } from 'vue';
 import { TargetChooseState, targetManager } from '@/ui/interaction/target/targetManager';
+import { chooseATarget } from '@/ui/interaction/target/chooseTarget';
     const {target} = defineProps<{target:Chara}>()
     const targetState = ref<{target:Target,chooseState:TargetChooseState}>()
     onMounted(()=>{
@@ -35,16 +36,19 @@ import { TargetChooseState, targetManager } from '@/ui/interaction/target/target
         }
         else{
             targetManager.setTargetState(target,"isSelected",true)
+            chooseATarget(target)
         }
     }
 </script>
 
 <style scoped lang='scss'>
 .target{
+    outline-offset: 5px;
+    border-radius: 1px;
     &.selectable{
-        outline: 2px dashed grey;
+        outline: 2px dashed rgb(184, 184, 184);
         &.hovering{
-            outline: 2px solid grey;
+            outline: 2px solid rgb(184, 184, 184);
         }
         &.selected{
             outline: 2px solid black;
