@@ -6,6 +6,13 @@ import { EffectUnit, getEffectByUnit } from "./effect/EffectUnit";
 import { nanoid } from "nanoid";
 import { isArray } from "lodash";
 
+// 使得一个阶段事件产生并发生:阶段事件是指单个事件过程中的多个效果会分阶段执行，在每个阶段开始时判断条件后记录效果的返回值。每个效果都对应一个阶段
+type EventPhase = {
+    effectUnits:EffectUnit[],//该阶段中将会启用的效果单元
+    condition?:(event:ActionEvent)=>boolean,//该阶段在进行前的判断效果，返回true时进行该阶段
+    onFalse?:()=>any,//该阶段未能正确进行时的回调函数
+}
+
 export class ActionEvent<
     s extends Entity = Entity,
     m extends Entity = Entity,
@@ -20,12 +27,18 @@ export class ActionEvent<
     public info:Record<string,any>;//该事件执行全程的信息
     public effects:Effect[] = [];
     public onExecute?:(actionEvent:ActionEvent)=>void|Promise<void>//事件执行时，执行的函数
+    public phase:{
+        effects:Effect[],
+        conditions?:(event:ActionEvent)=>boolean,
+        onFalse?:()=>any
+    }[];
     private _result:Record<string,any> = {}//阶段的返回值 
     constructor(
         key:string,//触发key
         source:s,medium:m,target:t|t[],
         info:Record<string,any>,
         effectUnits:EffectUnit[],
+        phase:EventPhase[]
     ){
         this.key = key;
         this.uuId = nanoid()
@@ -38,6 +51,16 @@ export class ActionEvent<
             const effect = getEffectByUnit(this,effectUnit)
             this.effects.push(effect)
         }
+        //构建各个阶段包含的效果
+        this.phase = phase.map(p=>{
+            return {
+                effects:p.effectUnits.map(eu=>{
+                    return getEffectByUnit(this,eu)
+                }),
+                conditions:p.condition,
+                onFalse:p.onFalse
+            }
+        })
     }
     //触发事件
     trigger(when:"before"|"after",triggerLevel:number){
@@ -87,6 +110,20 @@ export class ActionEvent<
         for(let effect of this.effects){
             await effect.apply()
         }
+        //依次执行事件的各个阶段
+        for(let p of this.phase){
+            //验证条件
+            if(p.conditions ? p.conditions(this):true){
+                //宣布并执行该阶段的效果
+                for(let effect of p.effects){
+                    effect.announce(this.triggerLevel??0)
+                    await effect.apply()
+                }
+            }
+            else{
+                p.onFalse?.()
+            }
+        }
     }
     //设置事件的阶段返回结果
     setEventResult(key:string,res:any){
@@ -113,21 +150,16 @@ export async function doEvent(
     medium:Entity,
     target:Entity|Entity[],
     info:Record<string,any>={},
-    effectUnits?:EffectUnit[],
+    effectUnits:EffectUnit[] = [],
+    phase:EventPhase[] = [],
     doWhat:()=>void=()=>{},//可选，在事件执行时进行的函数
 ){
     //创建行为事件
-    const event = new ActionEvent(key,source,medium,target,info,effectUnits??[])
+    const event = new ActionEvent(key,source,medium,target,info,effectUnits??[],phase)
     event.happen(()=>{doWhat()})
 }
 
-// 使得一个阶段事件产生并发生:阶段事件是指单个事件过程中的多个效果会分阶段执行，在每个阶段开始时判断条件后记录效果的返回值。每个效果都对应一个阶段
-type EventPhase = {
-    
-}
-export async function doPhaseEvent(key:string,source:Entity,medium:Entity,target:Entity|Entity[],info:Record<string,any>={},phase:EventPhase[]){
 
-}
 
 //处理事件对象
 export function handleEventEntity<T extends Entity>(entity:T|T[],callback:(e:T)=>void){

@@ -18,6 +18,7 @@ export class Effect{
     public label?:string = "";//效果的名称
     public describe?:string[] = [];
     public actionEvent:ActionEvent;//引发这个效果的事件
+    public resultStoreAs?:string
     constructor({label="",key,effectFunc,params,describe=[],triggerEvent}:EffectConstructor){
         this.label = label;
         this.key = key;
@@ -27,7 +28,7 @@ export class Effect{
         this.actionEvent = triggerEvent
     }
     //启用这个效果,效果的事件对象可以被覆盖
-    apply(override_event?:ActionEvent){
+    async apply(override_event?:ActionEvent){
         //执行效果函数
         let event:ActionEvent = this.actionEvent
         if(override_event){
@@ -41,7 +42,12 @@ export class Effect{
                 "效果解释",this.describe,
             ]
         })
-        return doEffectFunc(this)
+        const result = await doEffectFunc(this)
+        //记录值到事件中
+        if(this.resultStoreAs){
+            event.setEventResult(this.resultStoreAs,result)
+        }
+        return result
     }
     //宣布这个效果，触发参与事件的对象的触发器
     announce(triggerLevel:number){

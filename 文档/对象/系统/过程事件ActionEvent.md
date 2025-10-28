@@ -44,7 +44,7 @@
 
 {
     effectUnits:EffectUnit[],//该阶段中将会启用的效果单元
-    condition?:(event:ActionEvent)=>result,//该阶段在进行前的判断效果，返回true时进行该阶段
+    condition?:(event:ActionEvent)=>bool,//该阶段在进行前的判断效果，返回true时进行该阶段
     onFalse?:()=>any,//该阶段未能正确进行时的回调函数
 }
 
