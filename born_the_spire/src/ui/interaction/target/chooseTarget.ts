@@ -1,22 +1,22 @@
 import { reactive, Reactive, ref } from "vue";
-import { eventBus } from "../../hooks/global/eventBus";
 import { Target } from "@/core/objects/target/Target";
 import { getSpecificTargetsByTargetType, TargetType } from "@/static/list/registry/chooseTargetType";
 import { nowBattle } from "@/core/objects/game/battle";
 import { targetManager } from "./targetManager";
+import { newError } from "@/ui/hooks/global/alert";
 
 type Position = Reactive<{left:number,top:number}|null>
 export type ChooseOption = {
     //本次选择行为的交互要求
     targetType:TargetType,
-    //显示连接线条，默认为true
+    //是否显示连接线条，默认为true
     ifShowConnectLine?:boolean;
-    //判断target是否符合条件
-    ifTarget?:(target:Target)=>boolean;
     //选中了合适的target时
     onHover?:(target:Target)=>void;
-    //成功选择了某个target时
-    onSuccess:(target:Target)=>void;
+    //成功完成某次选择时
+    onSuccess:(targets:Target[])=>void;
+    //无论成功与否结束某次选择时
+    onStop?:(targets:Target[])=>void
 }
 
 type ChooseRule = {
@@ -93,40 +93,96 @@ function checkChooseNum(targetType:TargetType,specificTargets:Target[]|null){
 }
 
 //开始选择目标,同一时间仅允许一个选择源,重复触发将会覆盖
-export const choosingTarget = ref<boolean>(false)//正在选择目标
-export function startChooseTarget(option:ChooseOption,position:Position,onStop:()=>void){
-    const {targetType,ifShowConnectLine} = option
+const initChooseAction = {
+    chosenTargets:[],
+    chooseRule:null,
+    onSuccess:null,
+    onStop:null
+}
+export const nowChooseAction = ref<{
+    chosenTargets:Target[],
+    chooseRule:ChooseRule|null,
+    onSuccess:null|((targets:Target[])=>void);
+    onStop:null|((targets:Target[])=>void)
+}>({...initChooseAction})
+export const choosingTarget = ref<boolean>(false)//当前的选择状态
+function initStartChooseTarget(){
+    choosingTarget.value = true;
+    nowChooseAction.value = {...initChooseAction}
+}
+
+export function startChooseTarget(option:ChooseOption,position:Position){
+    //初始化开始选择状态
+    initStartChooseTarget()
+    const {targetType,onSuccess,onStop=()=>{},ifShowConnectLine} = option
     //解析选择规则
     const rule = resolveTargetTypeRules(targetType)
+    //按规则设置可选框
     setChooseAbleBlock(rule)
+    nowChooseAction.value = {
+        chosenTargets:[],
+        chooseRule:rule,
+        onSuccess,
+        onStop:onStop,
+    }
 
-    choosingTarget.value = true
     //显示连接线条，起点是传入的位置
     if(ifShowConnectLine != false){
         showConnectLine(position)
     }
-    //开始监听“点击Target”事件
-    eventBus.on("clickTarget",({target})=>{
-        if(option.ifTarget){
-            if(option.ifTarget(target)){
-                option.onSuccess(target)
-                endChooseTarget()
-            }
-        }
-        else{
-            option.onSuccess(target)
-            endChooseTarget()
-        }
-    })
 
     //开始监听局外点击事件
     startListenClick(onStop)
-    
 }
+//选择完成
+export function successChooseTarget(){
+    //触发选择成功回调函数
+    if(nowChooseAction.value.onSuccess){
+        nowChooseAction.value.onSuccess([...nowChooseAction.value.chosenTargets])
+    };
+    //结束选择
+    endChooseTarget()
+}
+//结束or取消选择
 export function endChooseTarget(){
-    ifShowConnectLine.value = false
-    eventBus.off("hoverTarget")
-    eventBus.off("clickTarget")
+    //触发结束回调
+    if(nowChooseAction.value.onStop){
+        nowChooseAction.value.onStop([...nowChooseAction.value.chosenTargets])
+    }
+    initStartChooseTarget()
+}
+
+//在本次选择中选中了一个目标
+export function chooseATarget(target:Target){
+    const nowChooseRule = nowChooseAction.value.chooseRule;
+    const chosenTargets = nowChooseAction.value.chosenTargets
+    if(!nowChooseRule){
+        newError(["当前不处于选择状态中，无法选择目标。"])
+        return;
+    }
+    chosenTargets.push(target)
+    //判断是否继续选择:选择数量是否达标
+    const chosenNum = chosenTargets.length;
+    const needNum = nowChooseRule.needChooseNum;
+    if(chosenNum == needNum){
+        successChooseTarget()
+    }
+}
+//在本次选中选中了一个阵营(其中的所有目标)
+export function chooseAFaction(targets:Target[]){
+    const nowChooseRule = nowChooseAction.value.chooseRule;
+    const chosenTargets = nowChooseAction.value.chosenTargets
+    if(!nowChooseRule){
+        newError(["当前不处于选择状态中，无法选择目标。"])
+        return;
+    }
+    chosenTargets.push(...targets)
+    //判断是否继续选择:选择数量是否达标
+    const chosenNum = chosenTargets.length;
+    const needNum = nowChooseRule.needChooseNum;
+    if(chosenNum == needNum){
+        successChooseTarget()
+    }
 }
 
 
@@ -174,21 +230,21 @@ function setChooseAbleBlock(rule:ChooseRule){
     }
 }
 //开始监听点击事件以取消选择状态
-function startListenClick(onStop:()=>void){
+function startListenClick(onStop:(targets:Target[])=>void){
     //监听器，结束选择
     function handleClick(event:MouseEvent){
         event.stopPropagation();
         let target = event.target as HTMLElement
         if(!target.classList.contains('target') || event.button == 2){
             endChooseTarget()
-            onStop()
+            onStop([...nowChooseAction.value.chosenTargets])
             removeListeners()
         }
     }
     function handleContextMenu(event:MouseEvent){
         event.preventDefault()
         endChooseTarget()
-        onStop()
+        onStop([...nowChooseAction.value.chosenTargets])
         removeListeners()
     }
     

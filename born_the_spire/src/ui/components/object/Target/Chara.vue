@@ -1,7 +1,7 @@
 <template>
 <Target :target>
     <div class="organs">
-        <Organ :organ v-for="organ in target.getOrganList()"></Organ>
+        <Organ :organ v-for="organ in organList" :key="organ.__id"></Organ>
     </div>
     <div class="bottom">
         <div class="name">
@@ -17,12 +17,15 @@
 
 <script setup lang='ts'>
     import { Chara } from '@/core/objects/target/Target';
-import Organ from '@/ui/components/object/Organ.vue';
-import Target from './Target.vue';
-import BloodLine from '@/ui/components/object/Target/BloodLine.vue';
-import State from '@/ui/components/object/State.vue';
+    import Organ from '@/ui/components/object/Organ.vue';
+    import Target from "@/ui/components/interaction/chooseTarget/Target.vue";
+    import BloodLine from '@/ui/components/object/Target/BloodLine.vue';
+    import State from '@/ui/components/object/State.vue';
+    import { computed,toRef } from 'vue';
     const {target} = defineProps<{target:Chara}>()
-    
+    const organList = computed(()=>{
+        return toRef(()=>target.organs).value;
+    })
 </script>
 
 <style scoped lang='scss'>

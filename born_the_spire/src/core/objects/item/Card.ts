@@ -24,12 +24,14 @@ export class Card extends Item{
 //对目标使用卡牌
 export function useCard(card:Card,fromPile:Card[],source:Player,target:Target){
     const cardCost = getStatusValue(card,"cost")
-    //消耗卡牌对应的费用，事件成功时才会触发卡牌效果
-    doEvent("costEnergy",source,card,source,{},[{
+    //消耗能量
+    const costEffect = {
             key:"costEnergy",
             describe:[`消耗${getStatusValue(card,"cost")}点能量`],
             params:{value:cardCost},
-    },],()=>{},{
+    }
+    //卡牌效果
+    const cardEffect = {
         effectKey:"costEnergy",
         onCall:(res:any)=>{
             //能量不足
@@ -43,7 +45,9 @@ export function useCard(card:Card,fromPile:Card[],source:Player,target:Target){
                 doEvent("useCard",source,card,target,{},effectUnits,()=>{})
             }
         }
-    })
+    }
+    //消耗卡牌对应的费用，事件成功时才会触发卡牌效果
+    doEvent("costEnergy",source,card,source,{},[costEffect,cardEffect],()=>{})
 }
 
 //从抽牌堆中抽取n张卡牌,这是一个行为
