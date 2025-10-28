@@ -53,7 +53,6 @@ export const drawFromDrawPile:EffectFunc = (event,effect)=>{
 
     function drawBehavior(num:number){
         const cards = sourcePile.slice(0,num)
-        console.log(cards)
         handleEventEntity(cards,(e)=>{
             //移动到手牌堆
             cardMove(sourcePile,e,player.cardPiles.handPile)

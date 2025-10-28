@@ -7,6 +7,7 @@ import { newLog } from "@/ui/hooks/global/log"
 import { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import { ActionEvent, handleEventEntity } from "@/core/objects/system/ActionEvent"
 import { drawFromDrawPile } from "@/core/effects/card/drawCard"
+import { costEnergy, emptyEnergy, getEnergy } from "@/core/effects/energy"
 
 type EffectData = {
     label?:string,
@@ -67,5 +68,17 @@ const effectMap:EffectData[] = [
     label:"从牌堆中抽牌",
     key:"drawFromDrawPile",
     effect:drawFromDrawPile
+},{
+    label:"消耗能量",
+    key:"costEnergy",
+    effect:costEnergy
+},{
+    label:"获得能量",
+    key:"getEnergy",
+    effect:getEnergy,
+},{
+    label:"清空能量",
+    key:"emptyEnergy",
+    effect:emptyEnergy
 }]
 

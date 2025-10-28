@@ -121,6 +121,14 @@ export async function doEvent(
     event.happen(()=>{doWhat()})
 }
 
+// 使得一个阶段事件产生并发生:阶段事件是指单个事件过程中的多个效果会分阶段执行，在每个阶段开始时判断条件后记录效果的返回值。每个效果都对应一个阶段
+type EventPhase = {
+    
+}
+export async function doPhaseEvent(key:string,source:Entity,medium:Entity,target:Entity|Entity[],info:Record<string,any>={},phase:EventPhase[]){
+
+}
+
 //处理事件对象
 export function handleEventEntity<T extends Entity>(entity:T|T[],callback:(e:T)=>void){
     if(isArray(entity)){

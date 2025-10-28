@@ -6,6 +6,7 @@ import { CardPiles, Player } from "../target/Player";
 import { costEnergy } from "../../effects/energy";
 import { getStatusValue } from "../system/Status";
 import { Entity } from "../system/Entity";
+import { EffectUnit } from "../system/effect/EffectUnit";
 
 export class Card extends Item{
     public entry:string[] = []
@@ -22,17 +23,17 @@ export class Card extends Item{
 }
 
 //对目标使用卡牌
-export function useCard(card:Card,fromPile:Card[],source:Player,target:Target){
+export function useCard(card:Card,fromPile:Card[],source:Player,targets:Target[]){
     const cardCost = getStatusValue(card,"cost")
     //消耗能量
     const costEffect = {
-            key:"costEnergy",
-            describe:[`消耗${getStatusValue(card,"cost")}点能量`],
-            params:{value:cardCost},
+        key:"costEnergy",
+        describe:[`消耗${getStatusValue(card,"cost")}点能量`],
+        params:{cost:cardCost},
     }
     //卡牌效果
-    const cardEffect = {
-        effectKey:"costEnergy",
+    const cardEffect:EffectUnit = {
+        key:"useCard",
         onCall:(res:any)=>{
             //能量不足
             if(res == false){
@@ -46,8 +47,17 @@ export function useCard(card:Card,fromPile:Card[],source:Player,target:Target){
             }
         }
     }
+    //移入弃牌堆
+    const discardEffect = {
+        key:"discard",
+        
+    }
     //消耗卡牌对应的费用，事件成功时才会触发卡牌效果
-    doEvent("costEnergy",source,card,source,{},[costEffect,cardEffect],()=>{})
+    doEvent("useCard",source,card,targets,{},[
+        costEffect,//消耗费用
+        cardEffect,//触发卡牌效果
+        discardEffect,//丢弃卡牌
+    ],()=>{})
 }
 
 //从抽牌堆中抽取n张卡牌,这是一个行为
