@@ -1,5 +1,5 @@
 <template>
-<ChooseSource :key="card.__id" ref="chooseSource" @click="startChoose">
+<ChooseSource :onSuccess :key="card.__id" ref="chooseSource" @click="startChoose">
     <CardVue :class="{useAble}" :card="card"/>
 </ChooseSource>
 </template>
@@ -10,6 +10,7 @@
     import ChooseSource from '@/ui/components/interaction/chooseTarget/ChooseSource.vue';
     import { computed, useTemplateRef } from 'vue';
     import { nowPlayer } from '@/core/objects/game/run';
+    import { Target } from '@/core/objects/target/Target';
     const {card} = defineProps<{card:Card}>()
     const chooseSourceRef = useTemplateRef("chooseSource")
     const useAble = computed(()=>{
@@ -20,16 +21,15 @@
         if(!chooseSourceRef.value)return;
         const interaction = card.getInteraction("use")
         if(!interaction){
-            //未完成，无法使用的卡牌的效果
+            //未完成，无法使用的卡牌的提示效果
             return 
         }
         chooseSourceRef.value.startChoose({
             targetType:interaction.target,
-            "onSuccess":(target)=>useCard(card,
-                                        nowPlayer.cardPiles.handPile,
-                                        nowPlayer.getSelf(),
-                                        target)
         })
+    }
+    function onSuccess(targets:Target[]){
+        useCard(card,nowPlayer.cardPiles.handPile,nowPlayer.getSelf(),targets);
     }
 </script>
 

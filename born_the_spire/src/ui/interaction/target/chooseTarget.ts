@@ -1,9 +1,11 @@
-import { reactive, Reactive, ref } from "vue";
+import { Reactive, ref } from "vue";
 import { Target } from "@/core/objects/target/Target";
 import { getSpecificTargetsByTargetType, TargetType } from "@/static/list/registry/chooseTargetType";
 import { nowBattle } from "@/core/objects/game/battle";
 import { targetManager } from "./targetManager";
 import { newError } from "@/ui/hooks/global/alert";
+import { nanoid } from "nanoid";
+import { mousePosition } from "@/ui/hooks/global/mousePosition";
 
 type Position = Reactive<{left:number,top:number}|null>
 export type ChooseOption = {
@@ -107,6 +109,7 @@ export const nowChooseAction = ref<{
 }>({...initChooseAction})
 export const choosingTarget = ref<boolean>(false)//当前的选择状态
 function initStartChooseTarget(){
+    ifShowConnectLine.value = false
     choosingTarget.value = true;
     nowChooseAction.value = {...initChooseAction}
 }
@@ -149,6 +152,8 @@ export function endChooseTarget(){
     if(nowChooseAction.value.onStop){
         nowChooseAction.value.onStop([...nowChooseAction.value.chosenTargets])
     }
+    //清除选择框
+    targetManager.stopSelection()
     initStartChooseTarget()
 }
 
@@ -167,6 +172,10 @@ export function chooseATarget(target:Target){
     if(chosenNum == needNum){
         successChooseTarget()
     }
+    else{
+        //固定当前选择
+        staticConnectLine()
+    }
 }
 //在本次选中选中了一个阵营(其中的所有目标)
 export function chooseAFaction(targets:Target[]){
@@ -183,18 +192,66 @@ export function chooseAFaction(targets:Target[]){
     if(chosenNum == needNum){
         successChooseTarget()
     }
+    else{
+        //固定当前选择
+        staticConnectLine()
+    }
+}
+//自动选择目标
+function autoChooseTarget(){
+    //自动获取场上的对象
+    tmp()
+    //完成选择
+    successChooseTarget()
+    function tmp(){
+        //获取当前规则指定的可选对象
+        const rule = nowChooseAction.value.chooseRule;
+        if(!rule){
+            newError(["当前没有指定的选择规则"])
+            return;
+        }
+        const specificTargets = rule.specificTargets;
+        if(specificTargets){
+            nowChooseAction.value.chosenTargets = [...specificTargets]
+            return;
+        }
+        //否则根据当前阵营获得可选对象
+        const faction = rule.faction;
+        if(faction == "all"){
+            const e = nowBattle.value?.getTeam("enemy") ?? [];
+            const p = nowBattle.value?.getTeam("player") ?? []
+            nowChooseAction.value.chosenTargets = [...e,...p]
+            return;
+        }
+        const targets = nowBattle.value?.getTeam(faction) ?? [];
+        nowChooseAction.value.chosenTargets = [...targets]
+        return
+    }
+    
+
 }
 
 
 //显示连接线条相关
+
 export const ifShowConnectLine = ref(false)
-export let startPosition = ref(reactive({left:0,top:0}))
+export let startPosition = ref({left:0,top:0})// 当前的链接线条
+export const staticLines = ref<{id:string,start:Position,end:Position}[]>([])// 固定的链接线条列表
 //显示连接线条,起点是选择源
 export function showConnectLine(start:Position){
     ifShowConnectLine.value = true;
     if(start){
         startPosition.value = start
     }
+}
+//固定当前链接线条
+function staticConnectLine(){
+    const nowLine = {
+        id:nanoid(),
+        start:{...startPosition.value},
+        end:{...mousePosition}
+    }
+    staticLines.value.push(nowLine)
 }
 
 
@@ -231,11 +288,16 @@ function setChooseAbleBlock(rule:ChooseRule){
 }
 //开始监听点击事件以取消选择状态
 function startListenClick(onStop:(targets:Target[])=>void){
-    //监听器，结束选择
+    //左键点击
     function handleClick(event:MouseEvent){
         event.stopPropagation();
         let target = event.target as HTMLElement
+        //点击到了非目标元素时
         if(!target.classList.contains('target') || event.button == 2){
+            //如果不需要选择目标的话
+            if(nowChooseAction.value.chooseRule?.noNeedChoose){
+                autoChooseTarget()
+            }
             endChooseTarget()
             onStop([...nowChooseAction.value.chosenTargets])
             removeListeners()

@@ -9,10 +9,12 @@
 </template>
 
 <script setup lang='ts'>
-    import { ChooseOption, startChooseTarget } from '@/ui/interaction/target/chooseTarget';
+    import { Target } from '@/core/objects/target/Target';
+import { TargetType } from '@/static/list/registry/chooseTargetType';
+import { startChooseTarget } from '@/ui/interaction/target/chooseTarget';
     import { reactive, ref, useTemplateRef } from 'vue';
 
-    const {onStop,onHover} = defineProps<{onStop?:()=>void,onHover?:()=>{}}>()
+    const {onStop,onHover,onSuccess} = defineProps<{onStop?:()=>void,onHover?:()=>{},onSuccess:(targets:Target[])=>void}>()
 
     defineExpose({
         startChoose:startChoose
@@ -37,13 +39,21 @@
         }
     }
     //开始选择目标
-    function startChoose(option:ChooseOption){
+    function startChoose({targetType,ifShowConnectLine}:{targetType:TargetType,ifShowConnectLine?:boolean}){
         state.value = "choosing"
         getPosition()
-        startChooseTarget(option,position,()=>{
-            state.value = "none"
-            onStop?.()
-        })
+        startChooseTarget({
+            ifShowConnectLine,
+            targetType,
+            onSuccess:(targets)=>{
+                onSuccess(targets)
+                state.value = "none"
+            },
+            onStop:()=>{
+                onStop?.()
+                state.value = "none"
+            }
+        },position)
     }
     //hover状态
     function handlePointerEnter(){
