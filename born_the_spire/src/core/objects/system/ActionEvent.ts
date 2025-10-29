@@ -5,10 +5,12 @@ import { newLog } from "@/ui/hooks/global/log";
 import { EffectUnit, getEffectByUnit } from "./effect/EffectUnit";
 import { nanoid } from "nanoid";
 import { isArray } from "lodash";
+import { newError } from "@/ui/hooks/global/alert";
 
 // 使得一个阶段事件产生并发生:阶段事件是指单个事件过程中的多个效果会分阶段执行，在每个阶段开始时判断条件后记录效果的返回值。每个效果都对应一个阶段
 type EventPhase = {
     effectUnits:EffectUnit[],//该阶段中将会启用的效果单元
+    target?:Entity[],
     condition?:(event:ActionEvent)=>boolean,//该阶段在进行前的判断效果，返回true时进行该阶段
     onFalse?:()=>any,//该阶段未能正确进行时的回调函数
 }
@@ -131,12 +133,13 @@ export class ActionEvent<
     }
     //获取阶段的返回结果
     getEventResult(key:string){
+        console.log(key,this._result)
         const res = this._result[key]
         if(res !== undefined){
             return res
         }
         else{
-            newLog([
+            newError([
                 "错误：尝试获取的结果不存在，可能是1.前一个效果没有异步标识，2.前一个效果设定的key和当前效果获取的key不一致。",
             ])
         }
@@ -144,18 +147,21 @@ export class ActionEvent<
 }
 
 // 使得一个事件产生并发生
-export async function doEvent(
+type DoEventType = {
     key:string,
     source:Entity,
     medium:Entity,
     target:Entity|Entity[],
-    info:Record<string,any>={},
-    effectUnits:EffectUnit[] = [],
-    phase:EventPhase[] = [],
-    doWhat:()=>void=()=>{},//可选，在事件执行时进行的函数
+    info?:Record<string,any>,
+    effectUnits?:EffectUnit[]
+    phase?:EventPhase[]
+    doWhat?:()=>void,//可选，在事件执行时进行的函数
+}
+export async function doEvent(
+    {key,source,medium,target,info={},effectUnits=[],phase=[],doWhat=()=>{}}:DoEventType
 ){
     //创建行为事件
-    const event = new ActionEvent(key,source,medium,target,info,effectUnits??[],phase)
+    const event = new ActionEvent(key,source,medium,target,info,effectUnits,phase)
     event.happen(()=>{doWhat()})
 }
 

@@ -12,7 +12,7 @@ export type EffectParams = {
         |`$r.${string}` //表示从event._result中取string的值作为该paramKey的值
 }
 
-// 解析效果参数
+// 解析效果参数:未完成
 export function resolveEffectParams(param: EffectParams[string],event:ActionEvent,effect:Effect){
     if(typeof param == "string" && param.startsWith("$")){
         const value = param.split(".")[1]
@@ -22,18 +22,26 @@ export function resolveEffectParams(param: EffectParams[string],event:ActionEven
     }
 }
 
-export type EffectFunc = (
+export type EffectFunc<R=any> = (
     event:ActionEvent,//引发这个效果的事件对象
     effectObj:Effect,//这个效果的效果对象
-)=>any
+)=>R
 
 //执行一个效果函数
-export async function doEffectFunc(effect: Effect,override_event?:ActionEvent) {
+export async function doEffectFunc(effect: Effect,overwrite_event?:ActionEvent) {
     //效果所属的事件
     let event = effect.actionEvent;
-    if(override_event){
-        event = override_event
+    if(overwrite_event){
+        event = overwrite_event
     }
+    newLog({
+        main:[event.source,"对",event.target,"造成了效果",effect],
+        detail:[
+            "媒介:",event.medium," | ",
+            "效果参数",effect.params,
+            "效果解释",effect.describe,
+        ]
+    })
     //效果函数
     const effectFunc = effect.effectFunc;
     //计算效果此时的参数应用值
