@@ -41,7 +41,12 @@ export class Chara extends Target{
     //获得器官
     async getOrgan(source:Entity,organ:Organ){
         newLog([this,"获得了器官",organ])
-        await doEvent("getOrgan",source,organ,this)
+        await doEvent({
+            key:"getOrgan",
+            source,
+            medium:organ,
+            target:this
+        })
         this.organs.push(organ)
     }
     //获取对象的器官列表

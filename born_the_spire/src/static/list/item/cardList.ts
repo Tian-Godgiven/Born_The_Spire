@@ -44,7 +44,7 @@ const cardList:CardMap[] = [{
             target:{faction:"enemy"},
             effects:[{
                 key:"damage",
-                params:{value:5},
+                params:{value:15},
             }]
         }
     }
@@ -64,7 +64,7 @@ const cardList:CardMap[] = [{
             target:{faction:"enemy"},
             effects:[{
                 key:"damage",
-                params:{value:5},
+                params:{value:15},
             }]
         }
     }
@@ -83,6 +83,40 @@ const cardList:CardMap[] = [{
             effects:[{
                 key:"getStatus",
                 params:{statusKey:"power",stacks:1},
+            }]
+        }
+    }
+},{
+    label:"旋风斩",
+    status:{
+        cost:1,
+        damage:3
+    },
+    describe:["对敌方全体造成",{key:["status","damage"]},"点伤害"],
+    key:"original_card_00005",
+    interaction:{
+        use:{
+            target:{number:"all"},
+            effects:[{
+                key:"damage",
+                params:{value:3},
+            }]
+        }
+    }
+},{
+    label:"末日",
+    status:{
+        cost:3,
+        damage:999,
+    },
+    describe:["对所有人造成",{key:["status","damage"]},"点伤害"],
+    key:"original_card_00006",
+    interaction:{
+        use:{
+            target:{faction:"all"},
+            effects:[{
+                key:"damage",
+                params:{value:999},
             }]
         }
     }

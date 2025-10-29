@@ -37,10 +37,8 @@ export function resolveTargetTypeRules(targetType:TargetType):ChooseRule{
     if(targetType?.key){
         specificTargets = getSpecificTargetsByTargetType(targetType as Required<TargetType>)
     }
-    //是否无需选中目标
+    //是否无需选中目标,没有可选目标,需要选择的次数
     const {noNeedChoose,noValidTargets,needChooseNum} = checkChooseNum(targetType,specificTargets)
-    //是否没有可选目标
-    
     return {
         faction:targetType?.faction??"all",
         chooseAll:targetType?.number == "all"?true:false,
@@ -68,9 +66,9 @@ function checkChooseNum(targetType:TargetType,specificTargets:Target[]|null){
     
     
     let needChooseNum = 0
-    let noNeedChoose = false
+    let noNeedChoose = false//分为3种情况1.指定数量=可选数量=1，2.指定数量为"all" 3.指定阵营为"all"
     //选中所有目标
-    if(targetType.number === "all"){
+    if(targetType.number === "all" || targetType.faction === "all"){
         noNeedChoose = true
         needChooseNum = 1
     }
@@ -266,7 +264,7 @@ function setChooseAbleBlock(rule:ChooseRule){
     //全选：可选对象为阵营框
     else if(rule.chooseAll){
         //根据阵营，设定阵营为可选状态
-        targetManager.setFactionState(rule.faction,"isSelected",true)
+        targetManager.setFactionState(rule.faction,"isSelectable",true)
     }
     //最低优先度：阵营的所有对象为可选对象
     else{

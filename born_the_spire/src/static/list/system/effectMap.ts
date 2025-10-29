@@ -3,11 +3,12 @@ import {damageTo, reduceDamageFor} from "@/core/effects/health/damage"
 import { getStateByEffect } from "@/core/effects/stateControl"
 import { healTo } from "@/core/effects/health/heal"
 import { EffectUnit } from "@/core/objects/system/effect/EffectUnit"
-import { newLog } from "@/ui/hooks/global/log"
 import { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import { ActionEvent, handleEventEntity } from "@/core/objects/system/ActionEvent"
 import { drawFromDrawPile } from "@/core/effects/card/drawCard"
-import { costEnergy, emptyEnergy, getEnergy } from "@/core/effects/energy"
+import { costEnergy, emptyEnergy, getEnergy, pay_costEnergy } from "@/core/effects/energy"
+import { newError } from "@/ui/hooks/global/alert"
+import { discardCard, pay_discardCard } from "@/core/effects/card/discard"
 
 type EffectData = {
     label?:string,
@@ -18,7 +19,7 @@ type EffectData = {
 export function getFromEffectMap(unit:EffectUnit){
     const data = effectMap.find(tmp=>tmp.key == unit.key)
     if(!data){
-        newLog(["错误:没有找到目标效果",unit.key]);
+        newError(["错误:没有找到目标效果",unit.key])
         throw new Error()
     ;}
     return data
@@ -69,9 +70,13 @@ const effectMap:EffectData[] = [
     key:"drawFromDrawPile",
     effect:drawFromDrawPile
 },{
-    label:"消耗能量",
+    label:"削减能量",
     key:"costEnergy",
     effect:costEnergy
+},{
+    label:"消耗能量",
+    key:"pay_costEnergy",
+    effect:pay_costEnergy
 },{
     label:"获得能量",
     key:"getEnergy",
@@ -80,5 +85,13 @@ const effectMap:EffectData[] = [
     label:"清空能量",
     key:"emptyEnergy",
     effect:emptyEnergy
+},{
+    label:"丢弃卡牌",
+    key:"discard",
+    effect:discardCard
+},{
+    label:"用尽卡牌",
+    key:"pay_discard",
+    effect:pay_discardCard
 }]
 

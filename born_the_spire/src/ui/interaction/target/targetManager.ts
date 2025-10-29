@@ -109,10 +109,19 @@ class TargetManager {
   
   // 停止选择,清空所有已选择对象的状态
   stopSelection(): Target[] {
+    //已选择的对象
     const selectedEntities = this.getSelectedEntities()
-    this.targets.forEach(target => {
-      target.chooseState = {...initState}
-    })
+    //清空状态
+    for(let [,value] of this.targets){
+      if(value.chooseState.isSelected){
+        value.chooseState = {...initState}
+      }
+    }
+    for(let [,value] of this.factions){
+      if(value.chooseState.isSelected){
+        value.chooseState = {...initState}
+      }
+    }
     return selectedEntities
   }
   

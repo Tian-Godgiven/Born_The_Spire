@@ -1,14 +1,14 @@
 import { ActionEvent, handleEventEntity } from "../ActionEvent";
 import { EffectUnit } from "./EffectUnit";
 import { doEffectFunc, EffectFunc, EffectParams } from "./EffectFunc";
-import { newLog } from "@/ui/hooks/global/log";
 type EffectConstructor = {
     label?:string,
     key:string,
     effectFunc:EffectFunc,
     params:EffectParams,
     describe?:string[],
-    triggerEvent:ActionEvent
+    triggerEvent:ActionEvent,
+    resultStoreAs?:string
 }
 
 export class Effect{
@@ -19,13 +19,14 @@ export class Effect{
     public describe?:string[] = [];
     public actionEvent:ActionEvent;//引发这个效果的事件
     public resultStoreAs?:string
-    constructor({label="",key,effectFunc,params,describe=[],triggerEvent}:EffectConstructor){
+    constructor({label="",key,effectFunc,params,describe=[],resultStoreAs,triggerEvent}:EffectConstructor){
         this.label = label;
         this.key = key;
         this.effectFunc = effectFunc;
         this.params = params;
         this.describe = describe;
         this.actionEvent = triggerEvent
+        this.resultStoreAs = resultStoreAs
     }
     //启用这个效果,效果的事件对象可以被覆盖
     async apply(override_event?:ActionEvent){
@@ -34,17 +35,9 @@ export class Effect{
         if(override_event){
             event = override_event
         }
-        newLog({
-            main:[event.source,"对",event.target,"造成了效果",this],
-            detail:[
-                "媒介:",event.medium," | ",
-                "效果参数",this.params,
-                "效果解释",this.describe,
-            ]
-        })
         const result = await doEffectFunc(this)
         //记录值到事件中
-        if(this.resultStoreAs){
+        if(this.resultStoreAs != null){
             event.setEventResult(this.resultStoreAs,result)
         }
         return result
@@ -70,14 +63,15 @@ export class Effect{
 //通过效果unit创建效果对象
 export function createEffectByUnit(triggerEvent:ActionEvent,unit:EffectUnit,effectFunc:EffectFunc,effectLabel?:string):Effect{
     //组合得到效果对象
-    const {key,params,describe} = unit
+    const {key,params,describe,resultStoreAs} = unit
     const effectObj = new Effect({
         label:effectLabel,
         key,
         effectFunc,
         params,
         describe,
-        triggerEvent
+        triggerEvent,
+        resultStoreAs
     })
     return effectObj
 }

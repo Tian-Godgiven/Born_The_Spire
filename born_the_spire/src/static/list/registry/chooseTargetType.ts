@@ -14,9 +14,7 @@ interface RegistryValue{
 const chooseTargetType:Record<string,(targets:Target[],ifFilter:boolean)=>boolean|Target[]> = {
     "self":(targets:Target[],ifFilter:boolean)=>{
         const func = (t:Target)=>t === nowPlayer.getSelf()
-        console.log(targets,ifFilter)
         if(ifFilter){
-            console.log(targets)
             return targets.filter(t=>func(t))
         }
         return selectTarget(targets,func,1)
@@ -68,12 +66,10 @@ export function getSpecificTargetsByTargetType(targetType:TargetType&{key:string
     //过滤约束函数
     if(targetType?.key){
         const func = chooseTargetType[targetType.key] as RegistryValue
-        console.log(func)
         if(!func){
             newError(["选择目标类型注册表中不存在指定key对应的约束函数",targetType.key])
         }
         //过滤可选目标
-        console.log(nowTargetArr)
         nowTargetArr = func(nowTargetArr,true)
     }
     return nowTargetArr

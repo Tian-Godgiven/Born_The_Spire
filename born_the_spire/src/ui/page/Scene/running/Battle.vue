@@ -8,9 +8,9 @@
        能量：{{ energys.now +"/"+energys.max }}
     </div>
 
-    <div class="teams">
-        <Team class="playerTeam" :team="nowBattle?.getTeam('player')??[]"></Team>
-        <Team class="enemyTeam" :team="enemyTeam"></Team>
+    <div class="factions">
+        <Faction class="playerTeam" factionName="player" :charas="nowBattle?.getTeam('player')??[]"/>
+        <Faction class="enemyTeam" faction-name="enemy" :charas="enemyTeam"/>
     </div>
 
     <div class="endTurn center" @click="endTurn">结束回合</div>
@@ -38,9 +38,9 @@
     import { showCardPile } from '@/ui/interaction/cardPile';
     import { nowPlayer } from '@/core/objects/game/run';
     import { computed } from 'vue';
-    import Team from '@/ui/components/object/Team.vue';
     import HandPile from './HandPile.vue';
-import { getStatusValue } from '@/core/objects/system/Status';
+    import { getStatusValue } from '@/core/objects/system/Status';
+    import Faction from '@/ui/components/object/Target/Faction.vue';
     //敌人
     const enemyTeam = computed(()=>{
         return nowBattle.value?.getTeam("enemy")??[]
@@ -94,7 +94,7 @@ import { getStatusValue } from '@/core/objects/system/Status';
     width: 100%;
     height: 100px;
 }
-.teams{
+.factions{
     width: 100%;
     height: 70%;
     position: relative;

@@ -4,9 +4,9 @@ import { Player } from "../objects/target/Player"
 import { EffectFunc } from "../objects/system/effect/EffectFunc"
 
 //消耗玩家的能量
-export const costEnergy:EffectFunc = (event,effect)=>{
+export const costEnergy:EffectFunc<boolean> = (event,effect)=>{
     const {source,medium,target} = event
-    if(target instanceof Player == false) return;
+    if(target instanceof Player == false) return false;
     const cost = effect.params.cost as number
     //只有玩家对象具备卡牌
     const ifEnough = checkEnergy(cost,target)
@@ -14,6 +14,25 @@ export const costEnergy:EffectFunc = (event,effect)=>{
         const energy = getStatusValue(target,"energy","now")
         const newEnergy = energy - cost
         changeStatusValue(source,medium,target,"energy",newEnergy,"now")
+    }
+    else{
+        showQuickInfo("能量不足")
+        return false
+    }
+    return true
+}
+
+//玩家支付费用：事件的来源扣除费用
+export const pay_costEnergy:EffectFunc<boolean> = (event,effect)=>{
+    const {source,medium} = event
+    if(source instanceof Player == false) return false;
+    const cost = effect.params.cost as number
+    //只有玩家对象具备卡牌
+    const ifEnough = checkEnergy(cost,source)
+    if(ifEnough){
+        const energy = getStatusValue(source,"energy","now")
+        const newEnergy = energy - cost
+        changeStatusValue(source,medium,source,"energy",newEnergy,"now")
     }
     else{
         showQuickInfo("能量不足")

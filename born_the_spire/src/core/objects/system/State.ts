@@ -3,8 +3,7 @@ import { Target } from "../target/Target"
 import { Entity } from "./Entity"
 import { stateList } from "@/static/list/target/stateList"
 import { newError } from "@/ui/hooks/global/alert"
-import { ActionEvent, doEvent } from "./ActionEvent"
-import { createEffectByUnit } from "./effect/Effect"
+import { ActionEvent } from "./ActionEvent"
 
 //状态的层数，一部分状态可能拥有多个层数
 type Stack = {

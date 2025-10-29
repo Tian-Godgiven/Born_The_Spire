@@ -1,8 +1,8 @@
 import { Battle } from "@/core/objects/game/battle";
 import { doEvent } from "@/core/objects/system/ActionEvent";
-import { emptyEnergy, getEnergy } from "@/core/effects/energy";
 import { Player } from "@/core/objects/target/Player";
 import { Chara } from "@/core/objects/target/Target";
+import { EffectUnit } from "../objects/system/effect/EffectUnit";
 
 //角色开始回合
 export function startCharaTurn(chara:Chara,battle:Battle){
@@ -25,21 +25,28 @@ export function endCharaTurn(chara:Chara,battle:Battle){
 
 //玩家开始回合
 export function startPlayerTurn(player:Player,battle:Battle){
-    startTurn(player,battle,()=>{
-        //恢复能量
-        getEnergy(player,player,player,3)
-        //抽牌
-        player.drawCard(5,player)
-    })
+    const getEnergyEffect:EffectUnit = {
+        key:"getEnergy",
+        describe:["恢复3点能量"],
+        params:{value:3}
+    }
+    const drawCardEffect:EffectUnit = {
+        key:"drawFromDrawPile",
+        describe:["抽5张手牌"],
+        params:{value:5}
+    }
+    startTurn(player,battle,[getEnergyEffect,drawCardEffect])
 }
 //结束玩家的回合
 export function endPlayerTurn(player:Player,battle:Battle){
-    endTurn(player,battle,()=>{
-        // const end = player.turn.status.end
-        //清空能量
-        emptyEnergy(player,player,player)
-        //丢弃手牌
-        const handPile = player.cardPiles.handPile
+    //清空能量
+    const emptyEnergyEffect:EffectUnit = {
+        key:"emptyEnergy",
+        describe:["清空能量"],
+        params:{}
+    }
+    //丢弃手牌
+        // const handPile = player.cardPiles.handPile
         // switch(end.discard.type){
         //     //丢弃所有手牌
         //     case "all":{
@@ -58,15 +65,33 @@ export function endPlayerTurn(player:Player,battle:Battle){
         //         break
         //     }
         // }
+    endTurn(player,battle,[emptyEnergyEffect],()=>{
     })
 }
 
 //开始回合行为
-export async function startTurn(chara:Chara,battle:Battle,doWhat?:()=>void){
-    await doEvent("turnStart",chara,chara,chara,{turn:battle.turnNumber},[])
+export async function startTurn(chara:Chara,battle:Battle,effectUnits:EffectUnit[]=[],doWhat?:()=>void){
+    await doEvent({
+        key:"turnStart",
+        source:chara,
+        medium:chara,
+        target:chara,
+        info:{turn:battle.turnNumber},  
+        doWhat,
+        effectUnits
+    })
 }
 //结束回合行为
-export async function endTurn(chara:Chara,battle:Battle,doWhat?:()=>void){
-    await doEvent("turnEnd",chara,chara,chara,{turn:battle.turnNumber},[])
+export async function endTurn(chara:Chara,battle:Battle,effectUnits:EffectUnit[]=[],doWhat?:()=>void){
+    await doEvent({
+        key:"turnEnd",
+        source:chara,
+        medium:chara,
+        target:chara,
+        info:{turn:battle.turnNumber},  
+        doWhat,
+        effectUnits
+    })
 }
+
 

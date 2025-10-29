@@ -28,6 +28,7 @@
             targetType:interaction.target,
         })
     }
+    //选择完成时使用卡牌效果
     function onSuccess(targets:Target[]){
         useCard(card,nowPlayer.cardPiles.handPile,nowPlayer.getSelf(),targets);
     }
