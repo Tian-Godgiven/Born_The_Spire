@@ -1,7 +1,7 @@
 import { isString } from "lodash";
 
 //报错
-export function newError(info:(string|Object|undefined)[]){
+export function newError(info:(string|Object|undefined)[]):never{
     console.group("报错：");
     for(let i of info){
         if(isString(info)){

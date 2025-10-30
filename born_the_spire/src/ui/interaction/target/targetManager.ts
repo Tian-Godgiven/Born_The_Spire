@@ -4,6 +4,7 @@ import { newLog } from '@/ui/hooks/global/log'
 import { reactive, readonly } from 'vue'
 import { choosingTarget } from './chooseTarget'
 import { nowBattle } from '@/core/objects/game/battle'
+import { newError } from '@/ui/hooks/global/alert'
 
 export interface TargetChooseState {
   isSelectable: boolean,//可选：会为其生成一个选择框
@@ -73,15 +74,18 @@ class TargetManager {
     return null
   }
   getFaction(name:string){
-    return this.factions.get(name)
+    const faction = this.factions.get(name)
+    if(!faction){
+      newError(["不存在指定阵营",name])
+    }
+    return faction
   }
   
   // 设置目标为可选状态
   setSelectableTargets(targets:Target[]) {
     //要求当前处于选择状态
     if(choosingTarget.value == false){
-        console.error("当前未处于选择状态")
-        return
+        throw new Error("当前未处于选择状态")
     }
     this.clearAllSelection()
     targets.forEach(target => {
@@ -113,14 +117,10 @@ class TargetManager {
     const selectedEntities = this.getSelectedEntities()
     //清空状态
     for(let [,value] of this.targets){
-      if(value.chooseState.isSelected){
-        value.chooseState = {...initState}
-      }
+      value.chooseState = {...initState}
     }
     for(let [,value] of this.factions){
-      if(value.chooseState.isSelected){
-        value.chooseState = {...initState}
-      }
+      value.chooseState = {...initState}
     }
     return selectedEntities
   }

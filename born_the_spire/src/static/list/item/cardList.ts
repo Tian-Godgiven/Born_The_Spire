@@ -96,7 +96,7 @@ const cardList:CardMap[] = [{
     key:"original_card_00005",
     interaction:{
         use:{
-            target:{number:"all"},
+            target:{number:"all"},//阵营默认为敌人
             effects:[{
                 key:"damage",
                 params:{value:3},
@@ -113,7 +113,7 @@ const cardList:CardMap[] = [{
     key:"original_card_00006",
     interaction:{
         use:{
-            target:{faction:"all"},
+            target:{faction:"all",number:"all"},
             effects:[{
                 key:"damage",
                 params:{value:999},
