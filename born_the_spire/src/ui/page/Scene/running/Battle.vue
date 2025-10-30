@@ -8,10 +8,10 @@
        能量：{{ energys.now +"/"+energys.max }}
     </div>
 
-    <div class="factions">
+    <AllFactions>
         <Faction class="playerTeam" factionName="player" :charas="nowBattle?.getTeam('player')??[]"/>
         <Faction class="enemyTeam" faction-name="enemy" :charas="enemyTeam"/>
-    </div>
+    </AllFactions>
 
     <div class="endTurn center" @click="endTurn">结束回合</div>
 
@@ -41,6 +41,8 @@
     import HandPile from './HandPile.vue';
     import { getStatusValue } from '@/core/objects/system/Status';
     import Faction from '@/ui/components/object/Target/Faction.vue';
+import All from '@/ui/components/object/Target/All.vue';
+import AllFactions from '@/ui/components/object/Target/AllFactions.vue';
     //敌人
     const enemyTeam = computed(()=>{
         return nowBattle.value?.getTeam("enemy")??[]
@@ -94,14 +96,7 @@
     width: 100%;
     height: 100px;
 }
-.factions{
-    width: 100%;
-    height: 70%;
-    position: relative;
-    z-index: 10;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-}
+
 .energy{
     width: 100px;
     height: 100px;

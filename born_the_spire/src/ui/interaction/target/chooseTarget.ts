@@ -40,7 +40,7 @@ export function resolveTargetTypeRules(targetType:TargetType):ChooseRule{
     //是否无需选中目标,没有可选目标,需要选择的次数
     const {noNeedChoose,noValidTargets,needChooseNum} = checkChooseNum(targetType,specificTargets)
     return {
-        faction:targetType?.faction??"all",
+        faction:targetType?.faction??"enemy",//默认为enemy
         chooseAll:targetType?.number == "all"?true:false,
         specificTargets: specificTargets,
         noNeedChoose,
@@ -73,6 +73,7 @@ function checkChooseNum(targetType:TargetType,specificTargets:Target[]|null){
         needChooseNum = 1
     }
     else{
+        //默认数量为1
         let targetChooseNum = targetType.number ?? 1
         //目标数量=可选数量=1时，无需选中这一个目标
         if(chooseAbleNum == 1 && targetChooseNum == chooseAbleNum){
@@ -107,7 +108,7 @@ export const nowChooseAction = ref<{
 }>({...initChooseAction})
 export const choosingTarget = ref<boolean>(false)//当前的选择状态
 function initStartChooseTarget(){
-    ifShowConnectLine.value = false
+    clearConnectLine()
     choosingTarget.value = true;
     nowChooseAction.value = {...initChooseAction}
 }
@@ -152,6 +153,8 @@ export function endChooseTarget(){
     }
     //清除选择框
     targetManager.stopSelection()
+    //清除选择链条
+    clearConnectLine()
     initStartChooseTarget()
 }
 
@@ -250,6 +253,11 @@ function staticConnectLine(){
         end:{...mousePosition}
     }
     staticLines.value.push(nowLine)
+}
+//清空链接线条
+function clearConnectLine(){
+    staticLines.value = []
+    ifShowConnectLine.value = false
 }
 
 

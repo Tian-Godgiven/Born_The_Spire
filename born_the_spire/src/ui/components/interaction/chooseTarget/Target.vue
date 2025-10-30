@@ -1,25 +1,19 @@
 <template>
 <div class="target" 
-    :class="{
-        hovering: hovering,
-        selectable: targetState?.chooseState.isSelectable,
-        selected: targetState?.chooseState.isSelected,}" 
     @mouseenter="onHover" @mouseleave="onLeave" @click="onClick">
+    <ChooseBox class="chooseBox" :chooseState="targetState.chooseState"></ChooseBox>
     <slot></slot>
 </div>
 </template>
 
 <script setup lang='ts'>
     import { Chara, Target } from '@/core/objects/target/Target';
-import { onMounted, ref } from 'vue';
+import { ref } from 'vue';
 import { TargetChooseState, targetManager } from '@/ui/interaction/target/targetManager';
 import { chooseATarget } from '@/ui/interaction/target/chooseTarget';
+import ChooseBox from './ChooseBox.vue';
     const {target} = defineProps<{target:Chara}>()
-    const targetState = ref<{target:Target,chooseState:TargetChooseState}>()
-    onMounted(()=>{
-        //为target添加状态管理
-        targetState.value = targetManager.addTarget(target)
-    })
+    const targetState = ref<{target:Target,chooseState:TargetChooseState}>(targetManager.addTarget(target))
     const hovering = ref(false)
     function onHover(){
         hovering.value = true
@@ -30,6 +24,7 @@ import { chooseATarget } from '@/ui/interaction/target/chooseTarget';
         targetManager.setTargetState(target,"isHovered",false)
     }
     function onClick(){
+        if(!targetState.value?.chooseState.isSelectable)return;
         //已选中则取消
         if(targetState.value?.chooseState.isSelected){
             targetManager.setTargetState(target,"isSelected",false)
@@ -43,19 +38,9 @@ import { chooseATarget } from '@/ui/interaction/target/chooseTarget';
 
 <style scoped lang='scss'>
 .target{
-    outline-offset: 5px;
-    border-radius: 1px;
-    &.selectable{
-        outline: 2px dashed rgb(184, 184, 184);
-        &.hovering{
-            outline: 2px solid rgb(184, 184, 184);
-        }
-        &.selected{
-            outline: 2px solid black;
-            &.hovering{
-                outline: 2px solid black;
-            }
-        }
+    .chooseBox{
+        width: 100%;
+        height: 100%;
     }
     
 }

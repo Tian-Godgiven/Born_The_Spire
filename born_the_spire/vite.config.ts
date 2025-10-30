@@ -34,6 +34,7 @@ export default defineConfig(async () => ({
         // 配置路径别名
         alias: {
             '@': path.resolve(__dirname, './src'),
+            '@scss': path.resolve(__dirname, './src/ui/styles'),
         },
     },
   envPrefix: ['VITE_', 'TAURI_ENV_*'],
