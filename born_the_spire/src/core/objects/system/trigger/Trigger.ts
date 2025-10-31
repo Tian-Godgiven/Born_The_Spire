@@ -94,6 +94,8 @@ function createTriggerByTriggerMap(source:Entity,target:Entity, item:TriggerMap[
         //回调函数将会创建并发生n个事件
         for(let eventConfig of item.event){
             const event = createEventFromTrigger({source,target,triggerEvent},eventConfig)
+            //这个事件会继承触发事件的收集函数
+            triggerEvent.spawnEvent(event)
             event.happen(()=>{},triggerLevel)
         }
     }

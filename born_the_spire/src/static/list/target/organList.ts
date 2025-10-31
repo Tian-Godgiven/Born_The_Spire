@@ -17,13 +17,16 @@ export const organList:OrganMap[] = [
     {
         label:"心脏",
         key:"original_organ_00001",
+        interaction:{}
     },{
         label:"石芯",
         key:"original_organ_00002",
+        interaction:{}
     },{
         label:"石肤",
         key:"original_organ_00003",
         describe:["受到的伤害值-1"],
+        interaction:{},
         trigger:[{
             how:"via",
             key:"getOragn",

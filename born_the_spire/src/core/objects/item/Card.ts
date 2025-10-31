@@ -23,7 +23,7 @@ export class Card extends Item{
 }
 
 //对目标使用卡牌
-export function useCard(card:Card,fromPile:Card[],source:Player,targets:Target[]){
+export async function useCard(card:Card,fromPile:Card[],source:Player,targets:Target[]){
     const cardCost = getStatusValue(card,"cost")
     //消耗能量
     const costEffect:EffectUnit = {
@@ -56,7 +56,6 @@ export function useCard(card:Card,fromPile:Card[],source:Player,targets:Target[]
         },{
             effectUnits:[...cardEffects],
             condition:(e)=>{
-                console.log("尝试获取存储的结果",e.getEventResult("costEnergyResult"))
                 return e.getEventResult("costEnergyResult") == true
             }
         },{
@@ -65,8 +64,8 @@ export function useCard(card:Card,fromPile:Card[],source:Player,targets:Target[]
     })
 }
 
-//从抽牌堆中抽取n张卡牌,这是一个行为
-export function drawCardFromDrawPile(player:Player,number:number,medium:Entity){
+//从抽牌堆中抽取n张卡牌,这是一个事件
+export async function drawCardFromDrawPile(player:Player,number:number,medium:Entity){
     doEvent({
         key:"drawFromDrawPile",
         source:player,
@@ -81,7 +80,7 @@ export function drawCardFromDrawPile(player:Player,number:number,medium:Entity){
 }
 
 //抽取指定卡牌到手牌中
-export function drawCard(sourcePileName:keyof CardPiles,card:Card,player:Player,medium:Entity){
+export async function drawCard(sourcePileName:keyof CardPiles,card:Card,player:Player,medium:Entity){
     doEvent({
         key:"drawCard",
         source:player,
@@ -95,7 +94,7 @@ export function drawCard(sourcePileName:keyof CardPiles,card:Card,player:Player,
 }
 
 //丢弃卡牌，使得一张卡牌进入玩家的弃牌堆
-export function discardCard(sourcePileName:keyof CardPiles,card:Card,player:Player,medium:Entity){
+export async function discardCard(sourcePileName:keyof CardPiles,card:Card,player:Player,medium:Entity){
     doEvent({
         key:"discard",
         source:player,medium,
@@ -107,7 +106,7 @@ export function discardCard(sourcePileName:keyof CardPiles,card:Card,player:Play
     })
 }
 //丢弃玩家指定的牌堆中的所有牌
-export function discardAllPile(player:Player,pileName:keyof CardPiles,medium:Entity){
+export async function discardAllPile(player:Player,pileName:keyof CardPiles,medium:Entity){
     const pile = player.cardPiles[pileName]
     //创建一个事件，效果是丢弃所有卡牌
     doEvent({

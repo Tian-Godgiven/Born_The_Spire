@@ -22,18 +22,17 @@ export class Battle {
     getSelf(){
         return this
     }
-    startTurn(team:"player"|"enemy"){
+    async startTurn(team:"player"|"enemy"){
         const theTeam = team=="player"?this.playerTeam:this.enemyTeam
-        theTeam.forEach(chara=>{
-            //开始对象的回合
+        for(let chara of theTeam){
             startCharaTurn(chara,this)
-        })
+        }
     }
-    endTurn(team:"player"|"enemy"){
+    async endTurn(team:"player"|"enemy"){
         const theTeam = team=="player"?this.playerTeam:this.enemyTeam
-        theTeam.forEach(chara=>{
+        for(let chara of theTeam){
             endCharaTurn(chara,this)
-        })
+        }
     }
 }
 
@@ -51,10 +50,10 @@ export function addToEnemyTeam(target:Enemy|Chara){
 //当前的战斗
 export const nowBattle = ref<Battle|null>(null)
 //开始新的战斗
-export function startNewBattle(playerTeam:(Player|Chara)[],enemyTeam:(Enemy|Chara)[]):Battle{
+export async function startNewBattle(playerTeam:(Player|Chara)[],enemyTeam:(Enemy|Chara)[]):Promise<Battle>{
     const battle = new Battle(1,playerTeam,enemyTeam)
     nowBattle.value = battle   
-    //当前玩家开始回合
+    //当前玩家开始战斗
     nowPlayer.startBattle()
     //玩家阵容开始回合
     battle.startTurn("player")

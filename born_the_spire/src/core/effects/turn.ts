@@ -5,7 +5,7 @@ import { Chara } from "@/core/objects/target/Target";
 import { EffectUnit } from "../objects/system/effect/EffectUnit";
 
 //角色开始回合
-export function startCharaTurn(chara:Chara,battle:Battle){
+export async function startCharaTurn(chara:Chara,battle:Battle){
     //如果是玩家
     if(chara instanceof Player){
         startPlayerTurn(chara,battle)
@@ -24,7 +24,7 @@ export function endCharaTurn(chara:Chara,battle:Battle){
 }
 
 //玩家开始回合
-export function startPlayerTurn(player:Player,battle:Battle){
+export async function startPlayerTurn(player:Player,battle:Battle){
     const getEnergyEffect:EffectUnit = {
         key:"getEnergy",
         describe:["恢复3点能量"],
@@ -71,7 +71,7 @@ export function endPlayerTurn(player:Player,battle:Battle){
 
 //开始回合行为
 export async function startTurn(chara:Chara,battle:Battle,effectUnits:EffectUnit[]=[],doWhat?:()=>void){
-    await doEvent({
+    doEvent({
         key:"turnStart",
         source:chara,
         medium:chara,
@@ -80,10 +80,11 @@ export async function startTurn(chara:Chara,battle:Battle,effectUnits:EffectUnit
         doWhat,
         effectUnits
     })
+    
 }
 //结束回合行为
 export async function endTurn(chara:Chara,battle:Battle,effectUnits:EffectUnit[]=[],doWhat?:()=>void){
-    await doEvent({
+    doEvent({
         key:"turnEnd",
         source:chara,
         medium:chara,

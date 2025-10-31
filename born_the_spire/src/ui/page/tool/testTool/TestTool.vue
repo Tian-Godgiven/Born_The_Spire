@@ -15,7 +15,7 @@
     import { nowPlayer } from '@/core/objects/game/run';
     const tools = [{
         text:"开始/重启战斗",
-        click:()=>{
+        click:async()=>{
             const enemy = getEnemyByKey("original_enemy_00001")
             startNewBattle([nowPlayer],[enemy])
         }

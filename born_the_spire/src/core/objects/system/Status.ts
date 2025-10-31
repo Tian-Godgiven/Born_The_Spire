@@ -125,7 +125,7 @@ export async function changeStatusValue(source:Entity,medium:Entity,target:Entit
     // newValue = checkValue(status,newValue,type)
     //进行事件：修改属性,传入属性key和修改前后的值
     //未完成 属性修改事件
-    // await doEvent("changeStatus",source,medium,target,{
+    // doEvent("changeStatus",source,medium,target,{
     //     statusKey,
     //     oldValue,
     //     newValue
