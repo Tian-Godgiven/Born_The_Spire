@@ -1,6 +1,5 @@
 import _ from "lodash"
 import {damageTo, reduceDamageFor} from "@/core/effects/health/damage"
-import { getStateByEffect } from "@/core/effects/stateControl"
 import { healTo } from "@/core/effects/health/heal"
 import { EffectUnit } from "@/core/objects/system/effect/EffectUnit"
 import { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
@@ -9,6 +8,7 @@ import { drawFromDrawPile } from "@/core/effects/card/drawCard"
 import { costEnergy, emptyEnergy, getEnergy, pay_costEnergy } from "@/core/effects/energy"
 import { newError } from "@/ui/hooks/global/alert"
 import { discardCard, pay_discardCard } from "@/core/effects/card/discard"
+import { getState } from "@/core/effects/state/stateControl"
 
 type EffectData = {
     label?:string,
@@ -55,7 +55,7 @@ const effectMap:EffectData[] = [
     label:"获得状态",
     key:"getState",
     effect:(event,effect)=>{
-        getStateByEffect(event,effect)
+        getState(event,effect)
     }
 },
 //回复生命

@@ -29,7 +29,7 @@ export const drawFromDrawPile:EffectFunc = (event,effect)=>{
     if(target instanceof Player == false) return;
     const player = target
     const sourcePile = target.cardPiles['drawPile']
-    const length = sourcePile.length
+    const length = sourcePile.length//还剩多少牌
     //抽取数量
     const number = effect.params.value as number;
     //牌堆数量不足：先洗牌
@@ -38,7 +38,7 @@ export const drawFromDrawPile:EffectFunc = (event,effect)=>{
             //先抽足够的数量，将抽牌堆清空
             drawBehavior(length)
         }
-        //弃牌堆填充抽牌堆
+        //用弃牌堆填充抽牌堆
         player.fullDrawPile()
         //如果填充后还是不足，报一个信息
         if(sourcePile.length < number-length){
@@ -53,10 +53,12 @@ export const drawFromDrawPile:EffectFunc = (event,effect)=>{
 
     function drawBehavior(num:number){
         const cards = sourcePile.slice(0,num)
-        handleEventEntity(cards,(e)=>{
+        console.log(sourcePile === player.hand)
+        handleEventEntity(cards,(card)=>{
             //移动到手牌堆
-            cardMove(sourcePile,e,player.cardPiles.handPile)
+            cardMove(sourcePile,card,player.cardPiles.handPile)
         })
+        console.log("抽牌后的来源牌堆和要抽的卡牌",sourcePile,cards)
     }
 }
 

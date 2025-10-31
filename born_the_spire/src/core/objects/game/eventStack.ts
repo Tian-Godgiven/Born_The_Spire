@@ -10,7 +10,7 @@ export class EventStack{
     constructor(){}
     
     //收集事件
-    async gatherEvents(actionEvent:ActionEvent,triggerLevel:number=0){
+    gatherEvents(actionEvent:ActionEvent,triggerLevel:number=0){
         //创建事件栈单元
         const unit:EventUnit = {
             __key:nanoid(),
@@ -25,6 +25,7 @@ export class EventStack{
     }
     //整理事件
     organizeEvents(){
+        this.stack = []
         //将各个事件先按triggerlevel分成n组
         const triggerLevelMap:Record<number,EventUnit[]> = {}
         for(let unit of this.gatherStack){

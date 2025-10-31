@@ -35,12 +35,13 @@ export class ActionEvent<
         onFalse?:()=>any
     }[];
     private _result:Record<string,any> = {}//阶段的返回值 
+    private transactionCollector?:(e:ActionEvent,triggerLevel?:number)=>void//该事件所属的事务的收集器，通过该收集器可以将任意事件添加到该事务中，从而完成事件的内部收集
     constructor(
         key:string,//触发key
         source:s,medium:m,target:t|t[],
         info:Record<string,any>,
         effectUnits:EffectUnit[],
-        phase:EventPhase[]
+        phase:EventPhase[] = []
     ){
         this.key = key;
         this.uuId = nanoid()
@@ -92,6 +93,17 @@ export class ActionEvent<
     //发生这个事件,收集到当前事务中
     happen(doEvent:()=>void,triggerLevel?:number){
         this.onExecute = doEvent
+        //判断这个事件是否具备事务收集器
+        const transactionCollector = this.transactionCollector
+        if(transactionCollector){
+            //收集到收集器中
+            this.innerGatherToSameTransaction(this,triggerLevel)
+        }
+        //否则，收集到事务队列中
+        else{
+            gatherToTransaction(this,triggerLevel)
+        }
+        
         newLog({
             main:["发生了事件",this],
             detail:[
@@ -100,7 +112,7 @@ export class ActionEvent<
                 "目标:",this.target," | "
             ]
         })
-        gatherToTransaction(this,triggerLevel)
+        
     }
     //执行这个事件
     async excute(){
@@ -133,7 +145,6 @@ export class ActionEvent<
     }
     //获取阶段的返回结果
     getEventResult(key:string){
-        console.log(key,this._result)
         const res = this._result[key]
         if(res !== undefined){
             return res
@@ -143,6 +154,20 @@ export class ActionEvent<
                 "错误：尝试获取的结果不存在，可能是1.前一个效果没有异步标识，2.前一个效果设定的key和当前效果获取的key不一致。",
             ])
         }
+    }
+    //触发了另一个事件，这会使得另一个事件得到一些关键属性，以使得这两个事件进入同一个事务中
+    spawnEvent(event:ActionEvent){
+        if(this.transactionCollector){
+            event.setTransactionCollector(this.transactionCollector)
+        }
+    }
+    //设置事件的所属事务收集器
+    setTransactionCollector(collector:(e:ActionEvent,triggerLevel?:number)=>void){
+        this.transactionCollector = collector
+    }
+    //收集到同一事务中
+    innerGatherToSameTransaction(e:ActionEvent,triggerLevel?:number){
+        this.transactionCollector?.(e,triggerLevel)
     }
 }
 
@@ -157,7 +182,7 @@ type DoEventType = {
     phase?:EventPhase[]
     doWhat?:()=>void,//可选，在事件执行时进行的函数
 }
-export async function doEvent(
+export function doEvent(
     {key,source,medium,target,info={},effectUnits=[],phase=[],doWhat=()=>{}}:DoEventType
 ){
     //创建行为事件

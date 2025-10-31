@@ -81,7 +81,7 @@ const cardList:CardMap[] = [{
         use:{
             target:{faction:"player",key:"self"},
             effects:[{
-                key:"getStatus",
+                key:"getState",
                 params:{statusKey:"power",stacks:1},
             }]
         }

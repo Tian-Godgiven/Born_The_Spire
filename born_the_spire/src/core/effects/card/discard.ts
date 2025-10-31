@@ -41,7 +41,7 @@ export const pay_discardCard:EffectFunc = (event,effect)=>{
 
 
 //丢弃目标的所有卡牌
-export const discardAllCard:EffectFunc = (event,effect)=>{
+export const discardAllCard:EffectFunc = async(event,effect)=>{
     const {source,medium,target} = event
     //只有玩家对象具备卡牌
     if(target instanceof Player == false) return;
