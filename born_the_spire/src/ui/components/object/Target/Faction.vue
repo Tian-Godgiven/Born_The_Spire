@@ -45,7 +45,9 @@
         targetManager.setFactionState(factionName,"isHovered",false)
     }
     function onClick(){
-        if(!state.value?.chooseState.isSelectable)return;
+        if(!state.value?.chooseState.isSelectable){
+            return
+        }
         //已选中则取消
         if(state.value?.chooseState.isSelected){
             targetManager.setFactionState(factionName,"isSelected",false)

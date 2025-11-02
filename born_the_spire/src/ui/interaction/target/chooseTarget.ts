@@ -85,7 +85,6 @@ function checkChooseNum(targetType:TargetType,specificTargets:Target[]|null){
             needChooseNum = targetChooseNum >= chooseAbleNum ? chooseAbleNum:targetChooseNum
         }
     }
-
     return {
         noNeedChoose,
         noValidTargets:chooseAbleNum == 0,
@@ -98,13 +97,15 @@ const initChooseAction = {
     chosenTargets:[],
     chooseRule:null,
     onSuccess:null,
-    onStop:null
+    onStop:null,
+    removeListener:()=>{}
 }
 export const nowChooseAction = ref<{
     chosenTargets:Target[],
     chooseRule:ChooseRule|null,
     onSuccess:null|((targets:Target[])=>void);
-    onStop:null|((targets:Target[])=>void)
+    onStop:null|((targets:Target[])=>void),
+    removeListener:()=>void;
 }>({...initChooseAction})
 export const choosingTarget = ref<boolean>(false)//当前的选择状态
 function initStartChooseTarget(){
@@ -126,18 +127,17 @@ export function startChooseTarget(option:ChooseOption,position:Position){
         chooseRule:rule,
         onSuccess,
         onStop:onStop,
+        removeListener:startListenClick(onStop)
     }
 
     //显示连接线条，起点是传入的位置
     if(ifShowConnectLine != false){
         showConnectLine(position)
     }
-
-    //开始监听局外点击事件
-    startListenClick(onStop)
 }
 //选择完成
 export function successChooseTarget(){
+    console.log(nowChooseAction.value.chosenTargets)
     //触发选择成功回调函数
     if(nowChooseAction.value.onSuccess){
         nowChooseAction.value.onSuccess([...nowChooseAction.value.chosenTargets])
@@ -151,11 +151,14 @@ export function endChooseTarget(){
     if(nowChooseAction.value.onStop){
         nowChooseAction.value.onStop([...nowChooseAction.value.chosenTargets])
     }
+    //清除监听器
+    nowChooseAction.value.removeListener()
     //清除选择框
     targetManager.stopSelection()
     //清除选择链条
     clearConnectLine()
     initStartChooseTarget()
+    
 }
 
 //在本次选择中选中了一个目标
@@ -164,7 +167,6 @@ export function chooseATarget(target:Target){
     const chosenTargets = nowChooseAction.value.chosenTargets
     if(!nowChooseRule){
         newError(["当前不处于选择状态中，无法选择目标。"])
-        return;
     }
     chosenTargets.push(target)
     //判断是否继续选择:选择数量是否达标
@@ -174,7 +176,7 @@ export function chooseATarget(target:Target){
         successChooseTarget()
     }
     else{
-        //固定当前选择
+        //固定当前选择线条
         staticConnectLine()
     }
 }
@@ -197,6 +199,19 @@ export function chooseAFaction(targets:Target[]){
         //固定当前选择
         staticConnectLine()
     }
+}
+//选择了一个错误的目标or阵营
+export function chooseWrongTarget(){
+    //如果不需要选择目标的话
+    // if(nowChooseAction.value.chooseRule?.noNeedChoose){
+    //     autoChooseTarget()
+    //     return;
+    // }
+    const onStop = nowChooseAction.value?.onStop
+    //结束选择
+    endChooseTarget()
+    //执行结束回调
+    onStop?.([...nowChooseAction.value.chosenTargets])
 }
 //自动选择目标
 function autoChooseTarget(){
@@ -234,7 +249,6 @@ function autoChooseTarget(){
 
 
 //显示连接线条相关
-
 export const ifShowConnectLine = ref(false)
 export let startPosition = ref({left:0,top:0})// 当前的链接线条
 export const staticLines = ref<{id:string,start:Position,end:Position}[]>([])// 固定的链接线条列表
@@ -292,22 +306,27 @@ function setChooseAbleBlock(rule:ChooseRule){
         targetManager.setSelectableTargets(targets)
     }
 }
+
 //开始监听点击事件以取消选择状态
 function startListenClick(onStop:(targets:Target[])=>void){
     //左键点击
     function handleClick(event:MouseEvent){
         event.stopPropagation();
-        let target = event.target as HTMLElement
-        //点击到了非目标元素时
-        if(!target.classList.contains('target') || event.button == 2){
+        //左键点击时，如果不需要选择目标则自动选择
+        if(event.button == 0 ){
             //如果不需要选择目标的话
             if(nowChooseAction.value.chooseRule?.noNeedChoose){
                 autoChooseTarget()
+                removeListeners()
             }
+        }
+        //右键点击时结束选择
+        else if(event.button == 2){
             endChooseTarget()
             onStop([...nowChooseAction.value.chosenTargets])
             removeListeners()
         }
+        
     }
     function handleContextMenu(event:MouseEvent){
         event.preventDefault()
@@ -326,4 +345,6 @@ function startListenClick(onStop:(targets:Target[])=>void){
         document.addEventListener("click", handleClick)
         document.addEventListener("contextmenu", handleContextMenu)
     },0)
+
+    return removeListeners
 }

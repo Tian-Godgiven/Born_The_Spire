@@ -120,6 +120,23 @@ const cardList:CardMap[] = [{
             }]
         }
     }
+},{
+    label:"接二连三",
+    status:{
+        cost:1,
+        damage:2,
+    },
+    describe:["对至多3个敌人造成",{key:["status","damage"]},"点伤害"],
+    key:"original_card_00007",
+    interaction:{
+        use:{
+            target:{faction:"enemy",number:3},
+            effects:[{
+                key:"damage",
+                params:{value:2},
+            }]
+        }
+    }
 }]
 
 export function getCardByKey(key:string){

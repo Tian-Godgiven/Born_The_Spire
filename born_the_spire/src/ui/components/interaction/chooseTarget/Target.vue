@@ -24,7 +24,10 @@ import ChooseBox from './ChooseBox.vue';
         targetManager.setTargetState(target,"isHovered",false)
     }
     function onClick(){
-        if(!targetState.value?.chooseState.isSelectable)return;
+        //选中不可选择的目标时结束
+        if(!targetState.value?.chooseState.isSelectable){
+            return
+        }
         //已选中则取消
         if(targetState.value?.chooseState.isSelected){
             targetManager.setTargetState(target,"isSelected",false)
