@@ -9,6 +9,7 @@ import {shuffle} from "lodash"
 import { getCardByKey } from "@/static/list/item/cardList";
 import { getMoneyByKey, Money } from "@/static/list/item/moneyList";
 import { Entity } from "../system/Entity"; 
+import { washPile } from "@/core/effects/card";
 
 export type CardPiles = {
     handPile:Card[],
@@ -102,26 +103,25 @@ export class Player extends Chara{
     drawCard(number:number,medium:Entity){
         drawCardFromDrawPile(this,number,medium)
     }
-    //抽牌堆洗牌
-    washDrawPile(){
-        const cards = this.cardPiles.drawPile
-        const newCards = shuffle(cards)
-        this.cardPiles.drawPile = newCards
+    //指定的牌堆洗牌
+    washCardPile(pileName:keyof CardPiles){
+        const cardPiles = this.cardPiles[pileName];
+        washPile(cardPiles)
     }
     //填充弃牌堆全部进入抽牌堆
-    fullDrawPile(){
+    fillDrawPile(){
         const cards = this.cardPiles.discardPile;
         this.cardPiles.drawPile.push(...cards)
-        this.cardPiles.discardPile = []
+        this.cardPiles.discardPile.length = 0
         //洗牌
-        this.washDrawPile()
+        this.washCardPile("drawPile")
     }
     //初始化牌堆，将卡组内的卡牌洗进抽牌堆
     initCardPile(){
         //洗抽牌堆
         const cards = this.cards;
         this.cardPiles.drawPile = cards;
-        this.washDrawPile()
+        this.washCardPile("drawPile")
         //其他牌堆清空
         this.cardPiles.discardPile = []
         this.cardPiles.exhaustPile = []

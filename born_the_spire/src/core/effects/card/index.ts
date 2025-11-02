@@ -1,5 +1,6 @@
 import { Card } from "@/core/objects/item/Card"
 import { newError } from "@/ui/hooks/global/alert"
+import {shuffle} from "lodash"
 
 //将卡牌从一个牌堆放到另一个牌堆
 export function cardMove(from:Card[],card:Card,to:Card[]){
@@ -11,7 +12,6 @@ export function cardMove(from:Card[],card:Card,to:Card[]){
         to.push(card)
         //从来源牌堆删除
         from.splice(index,1)
-        console.log("移动卡牌后的来源数量和目标数量",from.length,to.length)
         return true
     }
     
@@ -20,5 +20,7 @@ export function cardMove(from:Card[],card:Card,to:Card[]){
 
 //打乱牌堆
 export function washPile(pile:Card[]){
-    
+    const newPiles = shuffle(pile);
+    pile.length = 0;
+    pile.push(...newPiles)
 }

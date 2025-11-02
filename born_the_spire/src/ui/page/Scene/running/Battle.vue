@@ -41,7 +41,6 @@
     import HandPile from './HandPile.vue';
     import { getStatusValue } from '@/core/objects/system/Status';
     import Faction from '@/ui/components/object/Target/Faction.vue';
-import All from '@/ui/components/object/Target/All.vue';
 import AllFactions from '@/ui/components/object/Target/AllFactions.vue';
     //敌人
     const enemyTeam = computed(()=>{
