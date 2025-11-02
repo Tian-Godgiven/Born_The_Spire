@@ -57,7 +57,6 @@ export class Transaction{
     }
     //结束一个事务
     async stop(source:Transaction|"self"){
-        console.log("这个事务结束了",this)
         //自动结束
         if(source == this){
             //记录到日志中：未完成
