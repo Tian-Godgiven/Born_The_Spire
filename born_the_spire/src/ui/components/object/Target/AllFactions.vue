@@ -23,7 +23,9 @@ import ChooseBox from '../../interaction/chooseTarget/ChooseBox.vue';
         targetManager.setFactionState("all","isHovered",false)
     }
     function onClick(){
-        if(!state.value?.chooseState.isSelectable)return;
+        if(!state.value?.chooseState.isSelectable){
+            return
+        }
         //已选中则取消
         if(state.value?.chooseState.isSelected){
             targetManager.setFactionState("all","isSelected",false)

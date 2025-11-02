@@ -17,7 +17,8 @@
         text:"开始/重启战斗",
         click:async()=>{
             const enemy = getEnemyByKey("original_enemy_00001")
-            startNewBattle([nowPlayer],[enemy])
+            const enemy2 = getEnemyByKey("original_enemy_00001")
+            startNewBattle([nowPlayer],[enemy,enemy2])
         }
     },{
         text:"开始回合",

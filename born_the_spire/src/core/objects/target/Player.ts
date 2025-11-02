@@ -5,7 +5,6 @@ import { PlayerMap } from "@/static/list/target/playerList";
 import { getPotionByKey } from "@/static/list/item/potionList";
 import { nanoid } from "nanoid";
 import { Chara } from "./Target";
-import {shuffle} from "lodash"
 import { getCardByKey } from "@/static/list/item/cardList";
 import { getMoneyByKey, Money } from "@/static/list/item/moneyList";
 import { Entity } from "../system/Entity"; 
