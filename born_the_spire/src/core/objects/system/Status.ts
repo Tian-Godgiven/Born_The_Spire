@@ -1,6 +1,6 @@
 import { Entity } from "./Entity"
 import { newError } from "@/ui/hooks/global/alert"
-import { createStatusModifier, StatusModifier } from "./modifier/Modifier"
+import { StatusModifier } from "./modifier/StatusModifier"
 
 export type StatusType = "number"|"max"
 export type StatusOptions = {
@@ -13,18 +13,21 @@ export type StatusOptions = {
 export class Status{
     public label?:string//属性名
     public key:string
-    public _modifier?:StatusModifier[]//修饰器
     public valueType:StatusType
-    public value:number
+    public defaultValue:number//默认值
+    public value:number//当前值
     public options:StatusOptions
+    public _modifier?:StatusModifier//属性修饰器
     constructor(source:any,key:string,defaultValue:number,valueType:StatusType = "number",options?:StatusOptions){
         this.key = key;
         this.valueType = valueType
-        //创建属性时，使用默认值构建修饰器
-        const modifier = createStatusModifier(source,key,defaultValue)
-        this.addModifier(modifier)
-        //使用默认值为初值
-        this.value = defaultValue
+        //构建属性修饰器
+        this._modifier = new StatusModifier(this.key)
+        //添加默认值属性，同时添加默认值属性的修饰器作为基础修饰器
+        this.defaultValue = defaultValue
+        this._modifier.addByJSON(key,source,defaultValue,0,"base")
+        //刷新一下
+        this._modifier.refresh()
         //设置
         if(!options){
             this.options = {}
@@ -32,24 +35,6 @@ export class Status{
         else{
             this.options = options
         }
-    }
-    //使用当前修饰器更新数值
-    refresh(){
-
-    }
-    //添加修饰器
-    addModifier(modifier:StatusModifier){
-        this._modifier?.push(modifier)
-        this.refresh()
-    }
-    //移除修饰器
-    removeModifier(modifier:StatusModifier){
-        const tmp = this._modifier?.findIndex(item=>item.uuId == modifier.uuId)
-        if(tmp != undefined){
-            this._modifier?.splice(tmp,1)
-            return true
-        }
-        return false
     }
 }
 
