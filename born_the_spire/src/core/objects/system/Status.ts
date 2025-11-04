@@ -14,27 +14,20 @@ export class Status{
     public label?:string//属性名
     public key:string
     public valueType:StatusType
-    public defaultValue:number//默认值
-    public value:number//当前值
-    public options:StatusOptions
+    public options:StatusOptions//未实现
     public _modifier?:StatusModifier//属性修饰器
     constructor(source:any,key:string,defaultValue:number,valueType:StatusType = "number",options?:StatusOptions){
         this.key = key;
         this.valueType = valueType
-        //构建属性修饰器
+        //构建基础的属性修饰器
         this._modifier = new StatusModifier(this.key)
-        //添加默认值属性，同时添加默认值属性的修饰器作为基础修饰器
-        this.defaultValue = defaultValue
-        this._modifier.addByJSON(key,source,defaultValue,0,"base")
+        this._modifier.addByJSON(key,source,{
+            "modifierValue":defaultValue,clearable:false
+        })//基础修饰器不可清除
         //刷新一下
         this._modifier.refresh()
         //设置
-        if(!options){
-            this.options = {}
-        }
-        else{
-            this.options = options
-        }
+        this.options = options ?? {}
     }
 }
 
