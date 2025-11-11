@@ -13,8 +13,7 @@ type ModifierOptions = {
     modifierFunc?:(owner:Entity,currentValue:number,value:number)=>number
 }
 
-//属性修饰器对象
-class StatusModifierObj extends ModifierObj{
+export class StatusModifier extends ModifierObj{
     public statusKey: string           // 作用的属性键
     public targetLayer:  TargetLayer
     public modifierType:  ModifierType  
@@ -43,45 +42,6 @@ class StatusModifierObj extends ModifierObj{
             this.snapshotBaseValue = baseValue;
             this.snapshotValue = value
         }
-    }
-}
-
-export class StatusModifier extends Modifier<StatusModifierObj>{
-    public statusKey:string
-    private _value:number = 0//当前值
-    private _baseValue:number = 0//基础值
-    public get value():number{return this._value}
-    public get baseValue():number{return this._baseValue}
-    constructor(statusKey:string){
-        super()
-        this.statusKey = statusKey
-    }
-    //通过JSON数据添加属性修饰器，默认配置下添加的是基础修饰器
-    addByJSON(statusKey:string,source:any,options:{
-        modifierValue:number,
-        targetLayer?:TargetLayer,
-        modifierType?:ModifierType,
-        applyMode?:ApplyMode,
-        clearable?:boolean,
-        modifierFunc?:(owner:Entity,value:number)=>number})
-    {
-        const {modifierValue,targetLayer="base",applyMode="absolute",modifierType="additive",clearable,modifierFunc} = options
-        const modifierObj = new StatusModifierObj(statusKey,source,{
-            targetLayer,
-            modifierType,
-            applyMode,
-            modifierValue,
-            modifierFunc,
-            clearable
-        },{value:this.value,baseValue:this.baseValue});
-        this.add(modifierObj)
-    }
-    //刷新，重新计算当前值和基础值
-    refresh(owner:Entity): void {
-        //刷新基础值
-        this._baseValue = countBaseValue(this._baseValue,this.store)
-        //刷新当前值
-        this._value = countCurrentValue(this.baseValue,this.store)
     }
 }
 
