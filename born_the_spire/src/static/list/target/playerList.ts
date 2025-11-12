@@ -18,8 +18,8 @@ export const playerList:Record<string,PlayerMap> = {
             "original_money_00001":100,
         },
         status:{
-            "health":50,//生命值
-            "energy":3,//能量
+            "max-health":50,//最大生命值
+            "max-energy":3,//最大能量
         },
         potion:{
             max:3,

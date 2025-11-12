@@ -38,14 +38,8 @@
     import Button from "@/ui/components/global/Button.vue"
     import { changeScene } from "@/ui/interaction/scene";
 import { showCardPile } from '@/ui/interaction/cardPile';
-import { getStatusValue } from '@/core/objects/system/status/Status';
     const health = computed(()=>{
-        const max = getStatusValue(nowPlayer,"max-health")
-        const now = getStatusValue(nowPlayer,"health")
-        return {
-            now:now,
-            max:max
-        }
+        return nowPlayer.getHealth()
     })
     const moneys = computed(()=>{
         return nowPlayer.getNowMoneys()

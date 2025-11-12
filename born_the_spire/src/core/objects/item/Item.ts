@@ -42,6 +42,7 @@ export class Item extends Entity{
             newLog([this,"无法被使用"])
             return "cant";
         }
+        return interaction
     }
 }
 

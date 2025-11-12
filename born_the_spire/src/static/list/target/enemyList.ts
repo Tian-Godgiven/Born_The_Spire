@@ -11,7 +11,7 @@ export const enemyList:EnemyMap[] = [
         label:"小石怪",
         key:"original_enemy_00001",
         status:{
-            "health":5
+            "max-health":5
         },
         organ:[
             "original_organ_00002",

@@ -35,7 +35,7 @@ export async function useCard(card:Card,fromPile:Card[],source:Player,targets:Ta
     //卡牌效果
     const cardUse = card.getInteraction("use")
     if(!cardUse){
-        newError(["该卡牌没有使用效果，无法使用该卡牌"])
+        newError(["该卡牌没有使用效果，无法使用该卡牌"])//未完成：不完善，应该是取消选择
         return
     }
     const cardEffects = cardUse.effects

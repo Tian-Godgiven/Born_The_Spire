@@ -1,5 +1,7 @@
 import { toString } from "lodash";
 import { newError } from "../global/alert";
+import { Status } from "@/core/objects/system/status/Status";
+import { toRaw } from "vue";
 
 //对象的描述，存储为数据，使用时翻译为对应的字符串
 export type Describe = (
@@ -33,11 +35,11 @@ export function getDescribe(describe:Describe|undefined,target:Object){
 }
 
 //处理对象的，关于属性的描述文本：提取对应的属性值字符串，提取失败的话会报错
-function getStatusDescribe(statusKeys:string[],target:Record<string,any>){
+function getStatusDescribe(keys:string[],target:Record<string,any>){
     let item = target
     //最后找到的属性字符串
     let result:string = ""
-    for(let key of statusKeys){
+    for(let key of keys){
         //如果Item是数组,则会在item中寻找key与目标相同的对象，并设为item
         if(Array.isArray(item)){
             const tmp = item.find(tmp=>tmp?.key == key)
@@ -51,7 +53,16 @@ function getStatusDescribe(statusKeys:string[],target:Record<string,any>){
             if(item.hasOwnProperty(key)){
                 const value = item[key]
                 if(typeof value == "object"){
-                    item = value
+                    //消除代理
+                    const rawValue = toRaw(value)
+                    if(value instanceof Status){
+                        result = toString(rawValue.value)
+                        break;
+                    }
+                    else{
+                        item = rawValue
+                    }
+                    
                 }
                 else{
                     result = toString(value)
@@ -61,7 +72,7 @@ function getStatusDescribe(statusKeys:string[],target:Record<string,any>){
             else{
                 newError(["没有在target中找到需要的属性",
                     "总目标：",target,
-                    "尝试寻找的key路径",statusKeys,
+                    "尝试寻找的key路径",keys,
                     "按路径最后找到的对象\
                         （即在这个对象里没有找到需要的属性）及属性key",
                     item,key])
