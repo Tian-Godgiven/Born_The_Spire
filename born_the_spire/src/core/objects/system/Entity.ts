@@ -1,13 +1,12 @@
-import { initStatusByMap, StatusMap } from "@/static/list/system/statusList";
+import { StatusMap } from "@/static/list/system/statusMap";
 import { Trigger } from "./trigger/Trigger";
 import { ActionEvent } from "./ActionEvent";
 import { Describe } from "@/ui/hooks/express/describe";
-import { Status } from "./Status";
 import { TriggerMap, TriggerObj } from "@/core/types/object/trigger";
 import { reactive } from "vue";
-
 import { Effect } from "./effect/Effect";
 import { nanoid } from "nanoid";
+import { appendStatus, createStatusFromMap, Status } from "./status/Status";
 // 实体（entity）是Target和Item的基类
 export class Entity{
     public __id:string = nanoid()
@@ -29,8 +28,8 @@ export class Entity{
         //初始化属性
         if(map.status){
             for(let [key,value] of Object.entries(map.status)){
-                const status = initStatusByMap(key,value)
-                this.getStatus(status)
+                const status = createStatusFromMap(this,key,value)
+                appendStatus(this,status)
             }
         }
         //初始化描述
@@ -54,12 +53,6 @@ export class Entity{
     takeEvent(when:"before"|"after",triggerKey:string,event:ActionEvent,effect:Effect|null,triggerLevel:number){
         this.trigger.onTrigger(when,"take",triggerKey,{actionEvent:event,effect},triggerLevel)
     }
-    //获得属性
-    getStatus(status:Status){
-        const key = status.key
-        //添加到属性值中
-        this.status[key] = status
-    }
 }
 
 export type EntityMap = {
@@ -69,21 +62,3 @@ export type EntityMap = {
     trigger?:TriggerMap;
     describe?:Describe
 }
-
-//初始化行为
-//未完成
-// function initBehavior(entity:Entity,map:Record<string,EffectUnit[]>){
-//     //每种行为都对应是一个on的触发器，在行为事件触发时产生效果
-//     for(let [key,effects] of Object.entries(map)){
-//         entity.getTrigger({
-//             when:"before",
-//             how:"via",
-//             key,
-//             callback:async({source,target})=>{
-//                 for(let map in effects){
-//                     await doEffectByKey(source,entity,target,map)
-//                 }
-//             }
-//         })
-//     }
-// }

@@ -1,5 +1,4 @@
 import { ActionEvent, handleEventEntity } from "../ActionEvent";
-import { EffectUnit } from "./EffectUnit";
 import { doEffectFunc, EffectFunc, EffectParams } from "./EffectFunc";
 type EffectConstructor = {
     label?:string,
@@ -58,20 +57,4 @@ export class Effect{
             e.takeEvent(when,this.key,event,this,triggerLevel)
         })
     }
-}
-
-//通过效果unit创建效果对象
-export function createEffectByUnit(triggerEvent:ActionEvent,unit:EffectUnit,effectFunc:EffectFunc,effectLabel?:string):Effect{
-    //组合得到效果对象
-    const {key,params,describe,resultStoreAs} = unit
-    const effectObj = new Effect({
-        label:effectLabel,
-        key,
-        effectFunc,
-        params,
-        describe,
-        triggerEvent,
-        resultStoreAs
-    })
-    return effectObj
 }

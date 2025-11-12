@@ -9,17 +9,18 @@
 </template>
 
 <script setup lang='ts'>
-    import { getStatusByKey } from '@/core/objects/system/Status';
+import { getStatusValue } from '@/core/objects/system/status/Status';
 import { Target } from '@/core/objects/target/Target';
 import gsap from 'gsap';
 import { toNumber } from 'lodash';
 import { computed, useTemplateRef } from 'vue';
     const {target} = defineProps<{target:Target}>()
     const blood = computed(()=>{
-        const health = getStatusByKey(target,"health","max")
-        const percent = toNumber(((health.value.now/health.value.max)*100).toFixed(1))
+        const now = getStatusValue(target,"health")
+        const max = getStatusValue(target,"max-health")
+        const percent = toNumber(((now/max)*100).toFixed(1))
         animate(percent)
-        return health.value
+        return {now,max}
     })
     //动画
     const blackRef = useTemplateRef("blackRef")
