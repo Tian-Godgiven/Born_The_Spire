@@ -28,6 +28,7 @@ export class Modifier<T extends {id:string}>{
     //新增
     add(t:T){
         this.store.push(t)
+        this.refresh()
         //返回移除该修饰器的函数
         return this.delete(t.id)
     }
@@ -36,6 +37,7 @@ export class Modifier<T extends {id:string}>{
         const index = this.store.findIndex(i=>i.id == id)
         if(index >= 0){
             this.store.splice(index,1)
+            this.refresh()
             return true
         }
         return false
@@ -45,6 +47,7 @@ export class Modifier<T extends {id:string}>{
         const index = this.store.findIndex(i=>i.id == id);
         if(index > 0){
             Object.assign(this.store[index],newT)
+            this.refresh()
             return this.store[index]
         }
         return false
@@ -56,6 +59,10 @@ export class Modifier<T extends {id:string}>{
             return tmp
         }
         return false
+    }
+    //刷新
+    refresh(){
+
     }
 }
 

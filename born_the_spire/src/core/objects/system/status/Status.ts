@@ -4,6 +4,7 @@ import { Modifier } from "../modifier/Modifier"
 import { StatusModifier } from "./StatusModifier"
 import { ModifierFunc, ModifierOptions, ModifierType, TargetLayer } from "./type"
 import { newError } from "@/ui/hooks/global/alert"
+import { ref } from "vue"
 
 export type StatusOptions = {
     notNegative?:boolean//非负
@@ -13,10 +14,10 @@ export class Status extends Modifier<StatusModifier>{
     public key:string//唯一键名
     public label:string//属性名称
     public options?:StatusOptions//备注：功能未完成
-    private _value:number = 0//当前值
-    private _baseValue:number = 0//基础值
-    public get value():number{return this._value}
-    public get baseValue():number{return this._baseValue}
+    private _value = ref(0)//当前值
+    private _baseValue = ref(0)//基础值
+    public get value():number{return this._value.value}
+    public get baseValue():number{return this._baseValue.value}
     private owner:Entity
     constructor(owner:Entity,key:string,label?:string){
         super()
@@ -40,10 +41,15 @@ export class Status extends Modifier<StatusModifier>{
     }
     //刷新，重新计算当前值和基础值
     refresh(): void {
+        super.refresh()
         //刷新基础值
-        this._baseValue = countBaseModifier(this.owner,this._baseValue,this.store)
+        this._baseValue.value = countBaseModifier(this.owner,this.baseValue,this.store)
         //刷新当前值
-        this._value = countCurrentModifier(this.owner,this._baseValue,this._value,this.store)
+        this._value.value = countCurrentModifier(this.owner,this.baseValue,this.value,this.store)
+    }
+    //获得响应式值
+    getRefValue(){
+        return this._value
     }
 }
 //计算基础值
@@ -112,6 +118,14 @@ export function getStatusValue(entity:Entity,statusKey:string,defaultValue?:numb
         }
     }
     return status.value
+}
+// 获取目标属性的响应式值，如果目标不具备这个属性则报错
+export function getStatusRefValue(entity:Entity,statusKey:string){
+    const status = entity.status[statusKey]
+    if(!ifHaveStatus(entity,statusKey)){
+        newError([entity,"不具备属性",statusKey])
+    }
+    return status.getRefValue()
 }
 //判断目标是否具备属性
 export function ifHaveStatus(entity:Entity,statusKey:string){

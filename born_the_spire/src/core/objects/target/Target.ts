@@ -1,12 +1,12 @@
 import { nanoid } from "nanoid";
-import { Organ } from "./Organ";
+import { getOrgan, Organ } from "./Organ";
 import { getOrganByKey } from "@/static/list/target/organList";
 import { Entity, EntityMap } from "../system/Entity";
-import { doEvent } from "@/core/objects/system/ActionEvent";
 import { State } from "../system/State";
-import { newLog } from "@/ui/hooks/global/log";
 import { TriggerMap } from "@/core/types/object/trigger";
 import { reactive } from "vue";
+import { getStatusRefValue, getStatusValue } from "../system/status/Status";
+import { getResourceValue } from "../system/Resource/resource";
 
 export type TargetMap = EntityMap & {
     label:string,
@@ -35,22 +35,28 @@ export class Chara extends Target{
         //获得器官
         for(let key of map.organ){
             const organ = getOrganByKey(key)
-            this.getOrgan(this,organ)
+            getOrgan(this,this,organ)
         }
     }
-    //获得器官
-    async getOrgan(source:Entity,organ:Organ){
-        newLog([this,"获得了器官",organ])
-        doEvent({
-            key:"getOrgan",
-            source,
-            medium:organ,
-            target:this
-        })
+    appendOrgan(organ:Organ){
         this.organs.push(organ)
     }
     //获取对象的器官列表
     getOrganList(){
         return this.organs
+    }
+    //获取目标的生命值/最大生命对象
+    getHealth(){
+        //找到其属性
+        return reactive({
+            max:getStatusRefValue(this,"max-health"),
+            now:getResourceValue(this,"health",0)
+        })
+    }
+    getEnergy(){
+        //找到其属性
+        const max = getStatusRefValue(this,"max-energy")
+        const now = getResourceValue(this,"energy",0)
+        return {max,now}
     }
 }

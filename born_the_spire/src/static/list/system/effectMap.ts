@@ -9,6 +9,7 @@ import { costEnergy, emptyEnergy, getEnergy, pay_costEnergy } from "@/core/effec
 import { newError } from "@/ui/hooks/global/alert"
 import { discardCard, pay_discardCard } from "@/core/effects/card/discard"
 import { getState } from "@/core/effects/state/stateControl"
+import { addStatusBase } from "@/core/effects/status/changeStatus"
 
 type EffectData = {
     label?:string,
@@ -93,5 +94,9 @@ const effectMap:EffectData[] = [
     label:"用尽卡牌",
     key:"pay_discard",
     effect:pay_discardCard
+},{
+    label:"基础属性改变：加减",
+    key:"addStatusBase",
+    effect:addStatusBase
 }]
 

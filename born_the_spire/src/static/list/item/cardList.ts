@@ -16,7 +16,7 @@ const cardList:CardMap[] = [{
         cost:1,
     },
     describe:[
-        "造成",{key:["status","damage"]},"点伤害"
+        "造成",{key:["status","damage","value"]},"点伤害"
     ],
     key:"original_card_00001",
     interaction:{

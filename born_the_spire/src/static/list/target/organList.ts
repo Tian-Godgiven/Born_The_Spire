@@ -2,15 +2,11 @@ import { Describe } from "@/ui/hooks/express/describe"
 import { Organ } from "@/core/objects/target/Organ"
 import { TargetMap } from "@/core/objects/target/Target"
 import { ItemMap } from "@/core/objects/item/Item"
-import { EffectUnit } from "@/core/objects/system/effect/EffectUnit"
 
 export type OrganMap = ItemMap&TargetMap&{
     label:string,
     key:string,
     describe?:Describe,
-    behavior?:{
-        getOrgan?:EffectUnit[]
-    }
 }
 
 export const organList:OrganMap[] = [
@@ -21,7 +17,18 @@ export const organList:OrganMap[] = [
     },{
         label:"石芯",
         key:"original_organ_00002",
-        interaction:{}
+        describe:["最大生命+3"],
+        interaction:{
+            get:{
+                "target":{"key":"self"},
+                effects:[{
+                    "key":"addStatusBase",
+                    params:{value:3,statusKey:"max-health"},
+                    "describe":["最大生命+3"],
+                }]
+            }
+        },
+
     },{
         label:"石肤",
         key:"original_organ_00003",
