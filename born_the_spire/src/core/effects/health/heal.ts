@@ -1,10 +1,13 @@
-import { EffectFunc } from "@/core/objects/system/effect/EffectFunc";
-import { changeStatusValue, getStatusValue } from "@/core/objects/system/Status";
+import { handleEventEntity } from "@/core/objects/system/ActionEvent";
+import { doEffectFunc, EffectFunc } from "@/core/objects/system/effect/EffectFunc";
 
 export const healTo:EffectFunc = (event,effect)=>{
     const value = effect.params.value
     const {source,target,medium} = event
     //修改生命值+value 未完成
-    const newValue = getStatusValue(target,"health","now") + value
-    changeStatusValue(source,medium,target,"health",newValue,"now")
+    handleEventEntity(target,(e)=>{
+        // const value = e.getStatusValue("health")
+        // changeStatusValue(source,medium,target,"health",value+=,"now")
+    })
+    
 }

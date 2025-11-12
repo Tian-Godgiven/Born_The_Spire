@@ -3,10 +3,10 @@ import { Target } from "@/core/objects/target/Target";
 import { Item } from "./Item";
 import { doEvent } from "@/core/objects/system/ActionEvent";
 import { CardPiles, Player } from "../target/Player";
-import { getStatusValue } from "../system/Status";
 import { Entity } from "../system/Entity";
 import { EffectUnit } from "../system/effect/EffectUnit";
 import { newError } from "@/ui/hooks/global/alert";
+import { getStatusValue } from "../system/status/Status";
 
 export class Card extends Item{
     public entry:string[] = []
@@ -28,7 +28,7 @@ export async function useCard(card:Card,fromPile:Card[],source:Player,targets:Ta
     //消耗能量
     const costEffect:EffectUnit = {
         key:"pay_costEnergy",
-        describe:[`消耗${getStatusValue(card,"cost")}点能量`],
+        describe:[`消耗${cardCost}点能量`],
         params:{cost:cardCost},
         resultStoreAs:"costEnergyResult"
     }

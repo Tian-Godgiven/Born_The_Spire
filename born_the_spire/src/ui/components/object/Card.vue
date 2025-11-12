@@ -9,15 +9,15 @@
 
 <script setup lang='ts'>
     import { Card } from '@/core/objects/item/Card';
+import { getStatusValue, ifHaveStatus } from '@/core/objects/system/status/Status';
     import { getDescribe } from '@/ui/hooks/express/describe';
     import { computed } from 'vue';
-    import { getStatusValue, haveStatus } from '@/core/objects/system/Status';
     const {card} = defineProps<{card:Card}>()
     const describe = computed(()=>{
         return getDescribe(card.describe,card)
     })
     const cost = computed(()=>{
-        const ifCost = haveStatus(card,"cost")
+        const ifCost = ifHaveStatus(card,"cost")
         if(ifCost){
             return getStatusValue(card,"cost")
         }

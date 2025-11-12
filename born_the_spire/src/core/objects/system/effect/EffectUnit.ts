@@ -1,5 +1,5 @@
 import { getFromEffectMap } from "@/static/list/system/effectMap"
-import { createEffectByUnit, Effect } from "./Effect"
+import { Effect } from "./Effect"
 import { EffectParams } from "./EffectFunc"
 import { ActionEvent } from "../ActionEvent"
 
@@ -13,9 +13,19 @@ export interface EffectUnit{
 }
 
 //通过effectUnit创建effect对象
-export function getEffectByUnit(event:ActionEvent,unit:EffectUnit):Effect{
+export function createEffectByUnit(event:ActionEvent,unit:EffectUnit):Effect{
     //从map中获取效果函数
     const data = getFromEffectMap(unit)
     //构建effect对象
-    return createEffectByUnit(event,unit,data.effect,data.label)
+    const {key,params,describe,resultStoreAs} = unit
+    const effectObj = new Effect({
+        label:data.label,
+        key,
+        effectFunc:data.effect,
+        params,
+        describe,
+        triggerEvent:event,
+        resultStoreAs
+    })
+    return effectObj
 }

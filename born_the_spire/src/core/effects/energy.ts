@@ -1,7 +1,7 @@
 import { showQuickInfo } from "@/ui/hooks/global/quickInfo"
-import { changeStatusValue, getStatusValue } from "@/core/objects/system/Status"
 import { Player } from "../objects/target/Player"
 import { EffectFunc } from "../objects/system/effect/EffectFunc"
+import { changeStatusValue, getStatusValue } from "../objects/system/status/Status"
 
 //消耗玩家的能量
 export const costEnergy:EffectFunc<boolean> = (event,effect)=>{
@@ -11,9 +11,10 @@ export const costEnergy:EffectFunc<boolean> = (event,effect)=>{
     //只有玩家对象具备卡牌
     const ifEnough = checkEnergy(cost,target)
     if(ifEnough){
-        const energy = getStatusValue(target,"energy","now")
+        const energy = getStatusValue(target,"energy")
         const newEnergy = energy - cost
-        changeStatusValue(source,medium,target,"energy",newEnergy,"now")
+        changeStatusValue(target,"energy",newEnergy)
+        // changeStatusValue(source,medium,target,"energy",newEnergy,"now")//未完成，应该添加修饰器的
     }
     else{
         showQuickInfo("能量不足")
@@ -30,9 +31,10 @@ export const pay_costEnergy:EffectFunc<boolean> = (event,effect)=>{
     //只有玩家对象具备卡牌
     const ifEnough = checkEnergy(cost,source)
     if(ifEnough){
-        const energy = getStatusValue(source,"energy","now")
+        const energy = getStatusValue(source,"energy")
         const newEnergy = energy - cost
-        changeStatusValue(source,medium,source,"energy",newEnergy,"now")
+        changeStatusValue(source,"energy",newEnergy)
+        // changeStatusValue(source,medium,target,"energy",newEnergy,"now")//未完成，应该添加修饰器的
     }
     else{
         showQuickInfo("能量不足")
@@ -44,7 +46,7 @@ export const pay_costEnergy:EffectFunc<boolean> = (event,effect)=>{
 //判断能量是否足够
 function checkEnergy(cost:number,target:Player):boolean{
     //判断目标的能量是否足够
-    const energy = getStatusValue(target,"energy","now")
+    const energy = getStatusValue(target,"energy",0)
     if(energy >= cost){
         return true
     }
@@ -59,13 +61,14 @@ export const getEnergy:EffectFunc = (event,effect)=>{
     const energy = effect.params.value as "max"|number
     //修改当前值为max
     if(energy == "max"){
-        value = getStatusValue(target,"energy","max")
+        // value = getStatusValue("max-energy")
     }
     //获得指定的值+当前值
     else{
-        value = getStatusValue(target,"energy","now") + energy
+        // value = target.status.getStatusValue("energy") + energy
     }
-    changeStatusValue(source,medium,target,"energy",value,"now")
+    // source.changeStatusValue("energy",value)
+        // changeStatusValue(source,medium,target,"energy",newEnergy,"now")//未完成，应该添加修饰器的
     return true
 }
 
@@ -73,6 +76,7 @@ export const getEnergy:EffectFunc = (event,effect)=>{
 export const emptyEnergy:EffectFunc = (event,_effect)=>{
     const {source,medium,target} = event
     if(target instanceof Player == false) return;
-    changeStatusValue(source,medium,target,"energy",0,"now")
+    // source.changeStatusValue("energy",0)
+        // changeStatusValue(source,medium,target,"energy",newEnergy,"now")//未完成，应该添加修饰器的
     return true
 }

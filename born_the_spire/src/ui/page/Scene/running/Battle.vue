@@ -39,9 +39,9 @@
     import { nowPlayer } from '@/core/objects/game/run';
     import { computed } from 'vue';
     import HandPile from './HandPile.vue';
-    import { getStatusValue } from '@/core/objects/system/Status';
     import Faction from '@/ui/components/object/Target/Faction.vue';
 import AllFactions from '@/ui/components/object/Target/AllFactions.vue';
+import { getStatusValue } from '@/core/objects/system/status/Status';
     //敌人
     const enemyTeam = computed(()=>{
         return nowBattle.value?.getTeam("enemy")??[]
@@ -53,7 +53,7 @@ import AllFactions from '@/ui/components/object/Target/AllFactions.vue';
     //能量
     const energys = computed(()=>{
         const now = getStatusValue(nowPlayer,"energy")
-        const max = getStatusValue(nowPlayer,"energy","max")
+        const max = getStatusValue(nowPlayer,"max-energy")
         return {now,max}
     })
     //牌堆数量

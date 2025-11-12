@@ -2,7 +2,7 @@ import { Effect } from "./effect/Effect";
 import { Entity } from "./Entity";
 import { gatherToTransaction } from "../game/transaction";
 import { newLog } from "@/ui/hooks/global/log";
-import { EffectUnit, getEffectByUnit } from "./effect/EffectUnit";
+import { EffectUnit, createEffectByUnit } from "./effect/EffectUnit";
 import { nanoid } from "nanoid";
 import { isArray } from "lodash";
 import { newError } from "@/ui/hooks/global/alert";
@@ -51,14 +51,14 @@ export class ActionEvent<
         this.info = info;
         //构建该事件所包含的效果对象
         for(let effectUnit of effectUnits){
-            const effect = getEffectByUnit(this,effectUnit)
+            const effect = createEffectByUnit(this,effectUnit)
             this.effects.push(effect)
         }
         //构建各个阶段包含的效果
         this.phase = phase.map(p=>{
             return {
                 effects:p.effectUnits.map(eu=>{
-                    return getEffectByUnit(this,eu)
+                    return createEffectByUnit(this,eu)
                 }),
                 conditions:p.condition,
                 onFalse:p.onFalse
