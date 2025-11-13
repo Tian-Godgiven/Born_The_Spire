@@ -39,7 +39,7 @@ export class Organ extends Entity{
     }
 }
 
-//角色获得器官
+//角色获得器官：未完成，应该是通过器官修饰器来管理
 export function getOrgan(chara:Chara,source:Entity,organ:Organ){
     newLog([chara,"获得了器官",organ])
     const interaction = organ.getInteraction("get")

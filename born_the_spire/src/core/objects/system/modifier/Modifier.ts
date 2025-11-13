@@ -30,7 +30,7 @@ export class Modifier<T extends {id:string}>{
         this.store.push(t)
         this.refresh()
         //返回移除该修饰器的函数
-        return this.delete(t.id)
+        return ()=>this.delete(t.id)
     }
     //删除
     delete(id:string){
