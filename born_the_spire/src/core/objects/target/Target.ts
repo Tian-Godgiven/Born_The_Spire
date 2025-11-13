@@ -6,7 +6,7 @@ import { State } from "../system/State";
 import { TriggerMap } from "@/core/types/object/trigger";
 import { reactive } from "vue";
 import { getStatusRefValue, getStatusValue } from "../system/status/Status";
-import { getResourceValue } from "../system/Resource/resource";
+import { getCurrentValue } from "../system/Current/current";
 
 export type TargetMap = EntityMap & {
     label:string,
@@ -50,13 +50,13 @@ export class Chara extends Target{
         //找到其属性
         return reactive({
             max:getStatusRefValue(this,"max-health"),
-            now:getResourceValue(this,"health",0)
+            now:getCurrentValue(this,"health",0)
         })
     }
     getEnergy(){
         //找到其属性
         const max = getStatusRefValue(this,"max-energy")
-        const now = getResourceValue(this,"energy",0)
+        const now = getCurrentValue(this,"energy",0)
         return {max,now}
     }
 }

@@ -37,7 +37,7 @@ export class Status extends Modifier<StatusModifier>{
             modifierFunc,
             clearable
         },{value:this.value,baseValue:this.baseValue});
-        this.add(modifierObj)
+        return this.add(modifierObj)
     }
     //刷新，重新计算当前值和基础值
     refresh(): void {
