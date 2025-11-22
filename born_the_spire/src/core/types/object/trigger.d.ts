@@ -29,7 +29,7 @@ export type TriggerUnit<
 }
 
 
-//触发器物体，用于调用触发器
+//触发器物体，作为中间类辅助完成方法
 export type TriggerObj<
     s extends Entity = Entity,
     m extends Entity = Entity,
@@ -38,8 +38,10 @@ export type TriggerObj<
     when:"before"|"after",
     how:"take"|"make"|"via",
     key:string,
-    level?:number
+    level?:number,
     callback:TriggerFunc<s,m,t>,
+    importantKey?:string,
+    onlyKey?:string
 }
 
 
@@ -53,7 +55,7 @@ export interface TriggerEventConfig{
         "eventMedium"|//触发事件中的媒介
         "eventTarget"|//触发事件中的目标
         "triggerSource"|//触发器的来源对象
-        "triggerOwnner"|//持有该触发器的对象
+        "triggerOwner"|//持有该触发器的对象
         Entity//某个指定的对象
     effect:EffectUnit[]
 }

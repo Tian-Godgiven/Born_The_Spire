@@ -64,10 +64,10 @@ function countBaseModifier(owner:Entity,baseValue:number,modifierArr:StatusModif
 }
 //计算当前值
 function countCurrentModifier(owner:Entity,baseValue:number,currentValue:number,modifierArr:StatusModifier[]){
-    let newValue = currentValue
+    let newValue = baseValue
     const sortedModifiers = [...modifierArr].sort((a, b) => a.timeStamp - b.timeStamp)
     for(let i of sortedModifiers){
-        newValue = i.applyCurrent(owner,baseValue,newValue,i)
+        newValue = i.applyCurrent(owner,baseValue,currentValue,i)
     }
     return newValue
 }
@@ -103,7 +103,7 @@ export function appendStatus(entity:Entity,status:Status){
     if(ifHaveStatus(entity,key)){
         newError([entity,"已具备属性",key])
     }
-    //添加到属性值中
+    //添加到对象的属性值中
     entity.status[key] = status
 }
 // 获取目标属性的值，如果目标不具备这个属性则报错，通过safe设置项在不具备属性时返回设定值

@@ -4,7 +4,7 @@ import { TriggerEventConfig, TriggerFunc, TriggerMap, TriggerObj, TriggerType, T
 import { Effect } from "../effect/Effect";
 import { Entity } from "../Entity";
 import { DefaultTrigger, getDefaultTrigger } from "./defaultTrigger";
-import { getImportantTrigger, ImportantTrigger, swapImportantTrigger } from "./importantTrigger";
+import { appendImportantTrigger, createImportantTrigger, ImportantTrigger } from "./importantTrigger";
 
 // 触发器是基于事件总线的，一系列在个体上的响应器
 // 触发器的实现原理是：在某一个时刻(trigger_key)执行对应时刻的回调函数
@@ -13,23 +13,19 @@ export class Trigger{
     public make:TriggerType = {before:{},after:{}}
     public via:TriggerType = {before:{},after:{}}
     public _defaultTrigger:DefaultTrigger[] = []
-    public _importantTriggr:ImportantTrigger[] = []
+    public _importantTrigger:ImportantTrigger[] = []
     constructor(){}
     //通过map来初始化trigger
     initTriggerByMap(source:Entity,target:Entity,map:TriggerMap){
-        for(let triggerItem of map){
-            const triggerObj = createTriggerByTriggerMap(source,target,triggerItem)
-            const {remove,id} = this.getTrigger(triggerObj)
+        for(let item of map){
+            const triggerObj = createTriggerByTriggerMap(source,target,item)
+            const {remove,id} = this.appendTrigger(triggerObj)
             //初始化过程中创建的都是默认触发器
-            getDefaultTrigger(this,triggerObj,id,remove,triggerItem.info)
-            //关键触发器
-            if(triggerItem.importantKey){
-                getImportantTrigger(this,triggerObj,triggerItem.importantKey,id,remove,triggerItem.info,triggerItem.onlyKey)
-            }
+            getDefaultTrigger(this,triggerObj,id,remove,item.info)
         }
     }
-    //获得新的触发器，返回销毁该触发器的方法
-    getTrigger(obj:TriggerObj){
+    //获得新的触发器，返回销毁该触发器的方法与相关设置
+    appendTrigger(obj:TriggerObj,info?:string){
         const {when,how,key} = obj
 
         if(!this[how][when][key]){
@@ -43,28 +39,33 @@ export class Trigger{
             level:obj?.level??0
         }
         this[how][when][key].push(unit)
+        const remove = ()=>this.removeTrigger(obj,unit)
 
-        //判断该触发器是否在关键触发器中唯一存在
-        const triggerWay = `${when}_${how}_${key}`
-        const important = this._importantTriggr.find(item=>item.triggerWay === triggerWay)
-        if(important && important.onlyKey){
-            swapImportantTrigger(important,id,()=>this.removeTrigger(obj,unit))
+        //是关键触发器，则还要添加触发器信息
+        if(obj.importantKey){
+            appendImportantTrigger(this,obj as TriggerObj&{importantKey:string},{id,remove,info})
         }
-
 
         return {
             id,
-            remove:()=>this.removeTrigger(obj,unit)
+            remove
         }
     }
-    //销毁触发器单元
+    //移除并销毁触发器单元
     removeTrigger(obj:TriggerObj,unit:TriggerUnit){
+        //同时移除关键触发器和默认触发器的信息
+        if(obj.importantKey){
+            const index1 = this._importantTrigger.findIndex(i=>i.id == unit.id)
+            this._importantTrigger.slice(index1)
+        }
+        //移除触发器本身
         const {when,how,key} = obj
         const triggerArr = this[how][when][key]
         const index = triggerArr.indexOf(unit)
         if(index>=0){
             triggerArr.splice(index)
         }
+        
     }
     //触发触发器
     onTrigger(when:"before"|"after",
@@ -81,14 +82,15 @@ export class Trigger{
             tmp.callback(actionEvent,effect,triggerLevel)
         }
     }
+    //获取某个关键触发器
+    getImportantTrigger(importantKey:string){
+        return this._importantTrigger.filter(i=>i.importantKey == importantKey)
+    }
 }
 
 //通过triggerMap生成触发器
-function createTriggerByTriggerMap(source:Entity,target:Entity, item:TriggerMap[number]){
-    const when = item?.when??'before';
-    const how = item.how;
-    const key = item.key
-    const level = item.level
+export function createTriggerByTriggerMap(source:Entity,target:Entity, item:TriggerMap[number]){
+    const {when ="before", how, key, level} = item
     
     const callback:TriggerFunc = async(triggerEvent,_effect,triggerLevel)=>{
         //回调函数将会创建并发生n个事件
@@ -99,10 +101,15 @@ function createTriggerByTriggerMap(source:Entity,target:Entity, item:TriggerMap[
             event.happen(()=>{},triggerLevel)
         }
     }
-    const trigger = createTrigger({
+    if(item.importantKey){
+        const {importantKey,onlyKey} = item
+        return createImportantTrigger({
+            when,how,key,callback,level,importantKey,onlyKey
+        })
+    }
+    return createTrigger({
         when,how,key,callback,level
     })
-    return trigger
 }
 
 //创建触发器，通过实体的getTrigger方法挂载到实体上
@@ -124,8 +131,8 @@ function createEventFromTrigger(
     const newEvent = new ActionEvent(
         eventKey,
         source,//触发器来源
-        target,//触发器挂载者
-        eventTarget,
+        target,//触发器持有者
+        eventTarget,//该触发器的目标
         info,
         effectUnit
     )
@@ -133,15 +140,15 @@ function createEventFromTrigger(
 
     function getTriggerEventTarget(targetType:TriggerEventConfig["targetType"]):Entity|Entity[]{
         switch(targetType){
-            case "eventSource":
+            case "eventSource"://指定的事件来源
                 return triggerEvent.source
-            case "eventMedium":
+            case "eventMedium"://指定的事件媒介
                 return triggerEvent.medium;
-            case "eventTarget":
+            case "eventTarget"://指定的事件对象
                 return triggerEvent.target;
-            case "triggerSource":
+            case "triggerSource"://触发器的施加来源
                 return source;
-            case "triggerHover":
+            case "triggerOwner"://持有触发器的对象
                 return target;
             default:
                 if (targetType instanceof Entity) {
