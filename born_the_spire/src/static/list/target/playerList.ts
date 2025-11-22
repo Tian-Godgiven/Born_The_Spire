@@ -21,6 +21,10 @@ export const playerList:Record<string,PlayerMap> = {
             "max-health":50,//最大生命值
             "max-energy":3,//最大能量
         },
+        current:[
+            "health",
+            "energy"
+        ],
         potion:{
             max:3,
             now:["original_potion_00001"]

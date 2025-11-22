@@ -3,6 +3,7 @@ import { kill } from "@/core/hooks/chara";
 import { Chara } from "@/core/objects/target/Target";
 
 export const healthMap:CurrentMap<Chara> = {
+    startValue:"max",
     maxBy:"max-health",//上限值
     minBy:0,//下限值
     //达到下限时触发死亡事件

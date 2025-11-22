@@ -80,7 +80,7 @@ export class State{
         for(let item of triggers){
             const {when,how,key,callback} = item
             //添加行为触发器，触发器的作用目标是该状态对象
-            const result = target.getTrigger({
+            const result = target.appendTrigger({
                 when,
                 how,
                 key,

@@ -17,14 +17,14 @@ export const organList:OrganMap[] = [
     },{
         label:"石芯",
         key:"original_organ_00002",
-        describe:["最大生命+3"],
+        describe:["获得3点最大生命"],
         interaction:{
             get:{
                 "target":{"key":"self"},
                 effects:[{
-                    "key":"addStatusBase",
-                    params:{value:3,statusKey:"max-health"},
-                    "describe":["最大生命+3"],
+                    "key":"addStatusBaseCurrentValue",
+                    params:{value:3,statusKey:"max-health",currentKey:"health"},
+                    "describe":["获得3点最大生命"],
                 }]
             }
         },

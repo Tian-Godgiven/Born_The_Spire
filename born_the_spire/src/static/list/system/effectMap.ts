@@ -10,6 +10,7 @@ import { newError } from "@/ui/hooks/global/alert"
 import { discardCard, pay_discardCard } from "@/core/effects/card/discard"
 import { getState } from "@/core/effects/state/stateControl"
 import { addStatusBase } from "@/core/effects/status/changeStatus"
+import { addCurrent, addStatusBaseCurrentValue } from "@/core/effects/current/changeCurrent"
 
 type EffectData = {
     label?:string,
@@ -40,7 +41,7 @@ const effectMap:EffectData[] = [
     key:"take_reduce_damage",   
     effect:(event,effect)=>{
         handleEventEntity(event.target,(e)=>{
-            e.getTrigger({
+            e.appendTrigger({
                 when:"before",
                 how:"take",
                 key:"damage",
@@ -98,5 +99,13 @@ const effectMap:EffectData[] = [
     label:"基础属性改变：加减",
     key:"addStatusBase",
     effect:addStatusBase
+},{
+    label:"当前值改变：加减",
+    key:"addCurrent",
+    effect:addCurrent
+},{
+    label:"改变属性和对应的当前值：加减",
+    key:"addStatusBaseCurrentValue",
+    effect:addStatusBaseCurrentValue
 }]
 

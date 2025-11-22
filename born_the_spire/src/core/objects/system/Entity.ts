@@ -7,13 +7,17 @@ import { reactive } from "vue";
 import { Effect } from "./effect/Effect";
 import { nanoid } from "nanoid";
 import { appendStatus, createStatusFromMap, Status } from "./status/Status";
+import { Current, initCurrentFromMap } from "./Current/current";
+import { CurrentMapData } from "@/static/list/system/currents/currentMap";
 // 实体（entity）是Target和Item的基类
 export class Entity{
     public __id:string = nanoid()
     public label:string
-    //属性值
+    //属性值:相对静态的，受修饰器管理的值
     public status:Record<string,Status> = {}
-    public describe:Describe = []
+    //当前值：非常动态的，范围内频繁变化的值
+    public current:Record<string,Current> = {}
+    public describe:Describe = [] //描述
     //触发器
     public trigger:Trigger
     constructor(map:EntityMap){
@@ -24,7 +28,6 @@ export class Entity{
             //自带的触发器，其来源和目标都是自身
             this.trigger.initTriggerByMap(this,this,map.trigger)
         }
-
         //初始化属性
         if(map.status){
             for(let [key,value] of Object.entries(map.status)){
@@ -32,14 +35,18 @@ export class Entity{
                 appendStatus(this,status)
             }
         }
+        //初始化当前值
+        if(map.current){
+            initCurrentFromMap<typeof this>(this,map.current)
+        }
         //初始化描述
         this.describe = map.describe??[]
         //响应式代理
         reactive(this)
     }
-    //获得一个触发器
-    getTrigger(triggerObj:TriggerObj){
-        return this.trigger.getTrigger(triggerObj)
+    //添加一个触发器
+    appendTrigger(triggerObj:TriggerObj){
+        return this.trigger.appendTrigger(triggerObj)
     }
     //对象的“造成”触发器被触发
     makeEvent(when:"before"|"after",triggerKey:string,event:ActionEvent,effect:Effect|null,triggerLevel:number){
@@ -55,10 +62,11 @@ export class Entity{
     }
 }
 
-export type EntityMap = {
+export type EntityMap<T extends Entity = Entity> = {
     label:string
     key:string,//唯一识别码，决定这个对象是什么对象/哪种对象（同一种对象可以有多个）
     status?:Record<string,StatusMap|number>;
     trigger?:TriggerMap;
-    describe?:Describe
+    describe?:Describe;
+    current?:CurrentMapData<T>//需要挂载的当前值对象的key及其起始值
 }
