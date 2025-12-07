@@ -11,9 +11,12 @@
         </div>
         
     </div>
-    <template v-for="log in logList">
-        <LogUnit :log :showTime></LogUnit>
-    </template>
+    <div class="logContainer">
+        <template v-for="log in logList">
+            <LogUnit :log :showTime></LogUnit>
+        </template>
+    </div>
+    
   </div>
 </template>
 
@@ -64,9 +67,11 @@ function clear(){
     width: 400px;
     height: 60%;
     overflow-y: auto;
-    overflow-x: visible;
     background-color: white;
+    display: flex;
+    flex-direction: column;
     .title{
+        flex-shrink: 0;
         display: flex;
         justify-content: space-between;
         .control{
@@ -76,6 +81,10 @@ function clear(){
     }
     .log{
         width: 100%;
+    }
+    .logContainer{
+        overflow-y: auto;
+        flex-grow: 1;
     }
 }
 </style>

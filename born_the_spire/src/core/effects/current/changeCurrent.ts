@@ -19,8 +19,7 @@ export const addCurrent:EffectFunc = (event,effect)=>{
     handleEventEntity(target,(e)=>{
         //当前值
         const nowValue = getCurrentValue(e,currentKey)
-        console.log(nowValue+value)
-        changeCurrentValue(e,currentKey,value+nowValue)
+        changeCurrentValue(e,currentKey,value+nowValue,event)
     })
     
 }
@@ -47,8 +46,7 @@ export const addStatusBaseCurrentValue:EffectFunc = (event,effect)=>{
         })
         //当前值
         const nowValue = getCurrentValue(e,currentKey)
-        console.log(nowValue+value)
-        changeCurrentValue(e,currentKey,value+nowValue)
+        changeCurrentValue(e,currentKey,value+nowValue,event)
     })
     
 }

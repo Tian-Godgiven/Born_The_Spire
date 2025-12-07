@@ -5,6 +5,7 @@ import { nanoid } from "nanoid"
 import { ref } from "vue"
 import { nowPlayer } from "./run"
 import { endCharaTurn, startCharaTurn } from "@/core/effects/turn"
+import { nextTick } from "vue"
 
 export class Battle {
     public readonly __key:string = nanoid()
@@ -53,10 +54,12 @@ export const nowBattle = ref<Battle|null>(null)
 export async function startNewBattle(playerTeam:(Player|Chara)[],enemyTeam:(Enemy|Chara)[]):Promise<Battle>{
     const battle = new Battle(1,playerTeam,enemyTeam)
     nowBattle.value = battle   
-    //当前玩家开始战斗
-    nowPlayer.startBattle()
-    //玩家阵容开始回合
-    battle.startTurn("player")
+    nextTick(()=>{
+        //当前玩家开始战斗
+        nowPlayer.startBattle()
+        //玩家阵容开始回合
+        battle.startTurn("player")
+    })
     return battle
 }
 //结束当前战斗

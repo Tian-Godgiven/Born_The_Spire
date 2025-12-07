@@ -8,11 +8,20 @@ import { isArray } from "lodash";
 import { newError } from "@/ui/hooks/global/alert";
 
 // 使得一个阶段事件产生并发生:阶段事件是指单个事件过程中的多个效果会分阶段执行，在每个阶段开始时判断条件后记录效果的返回值。每个效果都对应一个阶段
-type EventPhase = {
-    effectUnits:EffectUnit[],//该阶段中将会启用的效果单元
-    target?:Entity[],
-    condition?:(event:ActionEvent)=>boolean,//该阶段在进行前的判断效果，返回true时进行该阶段
+type EventPhaseBase= {
+    //效果对象映射，该阶段的【目标】会转而使用指定的相较于事件对象的映射,但事件来源和媒介均不可以映射修改
+    entityMap?:{
+        target?:"source"|"medium"
+    },
+    //该阶段在进行前的判断效果，返回true时进行该阶段,返回false时跳过该阶段，返回break时整个事件提前结束
+    condition?:(event:ActionEvent)=>boolean|"break",
     onFalse?:()=>any,//该阶段未能正确进行时的回调函数
+}
+type EventPhase = EventPhaseBase&{
+    effectUnits:EffectUnit[],//该阶段中将会启用的效果单元
+}
+type EventPhase_inObj = EventPhaseBase&{
+    effects:Effect[],
 }
 
 export class ActionEvent<
@@ -29,11 +38,8 @@ export class ActionEvent<
     public info:Record<string,any>;//该事件执行全程的信息
     public effects:Effect[] = [];
     public onExecute?:(actionEvent:ActionEvent)=>void|Promise<void>//事件执行时，执行的函数
-    public phase:{
-        effects:Effect[],
-        conditions?:(event:ActionEvent)=>boolean,
-        onFalse?:()=>any
-    }[];
+    //效果阶段
+    public phase:EventPhase_inObj[];
     private _result:Record<string,any> = {}//阶段的返回值 
     private transactionCollector?:(e:ActionEvent,triggerLevel?:number)=>void//该事件所属的事务的收集器，通过该收集器可以将任意事件添加到该事务中，从而完成事件的内部收集
     constructor(
@@ -55,13 +61,14 @@ export class ActionEvent<
             this.effects.push(effect)
         }
         //构建各个阶段包含的效果
-        this.phase = phase.map(p=>{
+        this.phase = phase.map((p):EventPhase_inObj=>{
             return {
                 effects:p.effectUnits.map(eu=>{
                     return createEffectByUnit(this,eu)
                 }),
-                conditions:p.condition,
-                onFalse:p.onFalse
+                condition:p.condition,
+                onFalse:p.onFalse,
+                entityMap:p.entityMap
             }
         })
     }
@@ -93,7 +100,15 @@ export class ActionEvent<
     //发生这个事件,收集到当前事务中
     happen(doEvent:()=>void,triggerLevel?:number){
         this.onExecute = doEvent
-        //判断这个事件是否具备事务收集器
+        newLog({
+            main:["发生了事件",this],
+            detail:[
+                "来源:",this.source," | ",
+                "媒介:",this.medium," | ",
+                "目标:",this.target," | "
+            ]
+        })
+        //判断这个事件是否具备事务收集器(将与该事件有关的事件收集在同一个事务内)
         const transactionCollector = this.transactionCollector
         if(transactionCollector){
             //收集到收集器中
@@ -104,14 +119,6 @@ export class ActionEvent<
             gatherToTransaction(this,triggerLevel)
         }
         
-        newLog({
-            main:["发生了事件",this],
-            detail:[
-                "来源:",this.source," | ",
-                "媒介:",this.medium," | ",
-                "目标:",this.target," | "
-            ]
-        })
         
     }
     //执行这个事件
@@ -127,15 +134,34 @@ export class ActionEvent<
         //依次执行事件的各个阶段
         for(let p of this.phase){
             //验证条件
-            if(p.conditions ? p.conditions(this):true){
+            const result = p.condition?p.condition(this):true
+            if(result == true){
+                //获取该阶段的目标对象映射
+                let override_event:Partial<ActionEvent> = {}
+                const entityMap = p.entityMap
+                if(entityMap){
+                    if(entityMap.target){
+                        if(entityMap.target == "medium"){
+                            override_event.target = this.medium as unknown as t
+                        }
+                        else if(entityMap.target == "source"){
+                            override_event.target = this.source as unknown as t
+                        }
+                    }
+                }
                 //宣布并执行该阶段的效果
                 for(let effect of p.effects){
                     effect.announce(this.triggerLevel??0)
-                    await effect.apply()
+                    await effect.apply(override_event)
                 }
             }
+            //失败时
             else{
                 p.onFalse?.()
+                //提前中断
+                if(result == "break"){
+                    break;
+                }
             }
         }
     }
@@ -189,7 +215,6 @@ export function doEvent(
     const event = new ActionEvent(key,source,medium,target,info,effectUnits,phase)
     event.happen(()=>{doWhat()})
 }
-
 
 
 //处理事件对象

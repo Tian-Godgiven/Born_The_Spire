@@ -137,7 +137,6 @@ export function startChooseTarget(option:ChooseOption,position:Position){
 }
 //选择完成
 export function successChooseTarget(){
-    console.log(nowChooseAction.value.chosenTargets)
     //触发选择成功回调函数
     if(nowChooseAction.value.onSuccess){
         nowChooseAction.value.onSuccess([...nowChooseAction.value.chosenTargets])

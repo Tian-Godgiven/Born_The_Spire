@@ -5,6 +5,7 @@ import { StatusModifier } from "./StatusModifier"
 import { ModifierFunc, ModifierOptions, ModifierType, TargetLayer } from "./type"
 import { newError } from "@/ui/hooks/global/alert"
 import { ref } from "vue"
+import { getRefValue } from "@/core/hooks/refValue"
 
 export type StatusOptions = {
     notNegative?:boolean//非负
@@ -16,8 +17,8 @@ export class Status extends Modifier<StatusModifier>{
     public options?:StatusOptions//备注：功能未完成
     private _value = ref(0)//当前值
     private _baseValue = ref(0)//基础值
-    public get value():number{return this._value.value}
-    public get baseValue():number{return this._baseValue.value}
+    public get value():number{return getRefValue(this._value)}
+    public get baseValue():number{return getRefValue(this._baseValue)}
     private owner:Entity
     constructor(owner:Entity,key:string,label?:string){
         super()

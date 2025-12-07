@@ -53,6 +53,7 @@ export async function doEffectFunc(effect: Effect,overwrite_event?:ActionEvent) 
     return res
 }
 
+//计算实际传递给效果函数的效果的参数的最终计算值
 function countEffectValue(_effect:Effect){
 
 }

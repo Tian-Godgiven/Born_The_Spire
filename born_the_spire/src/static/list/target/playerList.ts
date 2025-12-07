@@ -21,9 +21,20 @@ export const playerList:Record<string,PlayerMap> = {
             "max-health":50,//最大生命值
             "max-energy":3,//最大能量
         },
-        current:[
-            "health",
-            "energy"
+        current:["health","energy"],
+        //默认触发器：回合开始时抽5张卡牌
+        trigger:[
+            {when:"after",how:"take",key:"turnStart","event":[{
+                key:"turnStartDrawCard",
+                label:"回合开始时抽卡",
+                targetType:"triggerOwner",
+                effect:[
+                    {key:"drawFromDrawPile",params:{value:5}}
+                ]
+            }],
+            importantKey:"turnStart_drawCard",
+            onlyKey:"turnStart_drawCard"
+        }
         ],
         potion:{
             max:3,

@@ -52,9 +52,9 @@ const effectMap:EffectData[] = [
         })
     }
 },
-//获得状态
+//附加状态
 {
-    label:"获得状态",
+    label:"附加状态",
     key:"getState",
     effect:(event,effect)=>{
         getState(event,effect)
@@ -76,7 +76,7 @@ const effectMap:EffectData[] = [
     key:"costEnergy",
     effect:costEnergy
 },{
-    label:"消耗能量",
+    label:"支付能量",
     key:"pay_costEnergy",
     effect:pay_costEnergy
 },{
@@ -92,7 +92,7 @@ const effectMap:EffectData[] = [
     key:"discard",
     effect:discardCard
 },{
-    label:"用尽卡牌",
+    label:"用完卡牌",
     key:"pay_discard",
     effect:pay_discardCard
 },{
@@ -104,7 +104,7 @@ const effectMap:EffectData[] = [
     key:"addCurrent",
     effect:addCurrent
 },{
-    label:"改变属性和对应的当前值：加减",
+    label:"改变属性+对应的当前值：加减",
     key:"addStatusBaseCurrentValue",
     effect:addStatusBaseCurrentValue
 }]

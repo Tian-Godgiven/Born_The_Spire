@@ -26,12 +26,12 @@ export const energyMap:CurrentMap<Player> = {
         key:"turnEnd",
         how:"take",
         when:"after",
-        importantKey:"turnEnd_clearEnergy",
+        importantKey:"turnEnd_emptyEnergy",
         event:[{
-            key:"turnEnd_clearEnergy",
+            key:"turnEnd_emptyEnergy",
             label:"回合结束时清空能量",
             "effect":[{
-                "key":"clearEnergy",
+                "key":"emptyEnergy",
                 params:{}
             }],
             "targetType":"triggerOwner",

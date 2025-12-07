@@ -8,10 +8,10 @@
 
 <script setup lang='ts'>
     import { Chara, Target } from '@/core/objects/target/Target';
-import { ref } from 'vue';
-import { TargetChooseState, targetManager } from '@/ui/interaction/target/targetManager';
-import { chooseATarget } from '@/ui/interaction/target/chooseTarget';
-import ChooseBox from './ChooseBox.vue';
+    import { ref } from 'vue';
+    import { TargetChooseState, targetManager } from '@/ui/interaction/target/targetManager';
+    import { chooseATarget } from '@/ui/interaction/target/chooseTarget';
+    import ChooseBox from './ChooseBox.vue';
     const {target} = defineProps<{target:Chara}>()
     const targetState = ref<{target:Target,chooseState:TargetChooseState}>(targetManager.addTarget(target))
     const hovering = ref(false)
