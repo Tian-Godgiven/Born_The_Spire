@@ -13,6 +13,7 @@
     import { Player } from '@/core/objects/target/Player';
     import { getEnemyByKey } from '@/static/list/target/enemyList';
     import { nowPlayer } from '@/core/objects/game/run';
+import { before } from 'lodash';
     const tools = [{
         text:"开始/重启战斗",
         click:async()=>{
@@ -51,6 +52,13 @@
                     player.drawCard(1,player)
                 }
             }
+        }
+    },{
+        text:"打印玩家的特殊触发器",
+        click:()=>{
+            console.log("默认触发器:",nowPlayer.trigger._defaultTrigger)
+            console.log("关键触发器:",nowPlayer.trigger._importantTrigger)
+
         }
     }]
 </script>

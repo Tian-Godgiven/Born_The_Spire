@@ -8,6 +8,7 @@ import { EffectUnit } from "../system/effect/EffectUnit";
 import { newError } from "@/ui/hooks/global/alert";
 import { getStatusValue } from "../system/status/Status";
 
+// 卡牌对象
 export class Card extends Item{
     public entry:string[] = []
     constructor(map:CardMap){
@@ -25,10 +26,10 @@ export class Card extends Item{
 //对目标使用卡牌
 export async function useCard(card:Card,fromPile:Card[],source:Player,targets:Target[]){
     const cardCost = getStatusValue(card,"cost")
-    //消耗能量
+    //支付能量
     const costEffect:EffectUnit = {
         key:"pay_costEnergy",
-        describe:[`消耗${cardCost}点能量`],
+        describe:[`支付${cardCost}点能量`],
         params:{cost:cardCost},
         resultStoreAs:"costEnergyResult"
     }
@@ -52,14 +53,24 @@ export async function useCard(card:Card,fromPile:Card[],source:Player,targets:Ta
         medium:card,
         target:targets,
         phase:[{
+            entityMap:{
+                target:"source"//消耗自身的能量
+            },
             effectUnits:[costEffect],
         },{
             effectUnits:[...cardEffects],
             condition:(e)=>{
+                if(e.getEventResult("costEnergyResult")!=true){
+                    //卡牌需要的费用不足，取消这个卡牌使用事件
+                    return "break"
+                }
                 return e.getEventResult("costEnergyResult") == true
             }
         },{
-            effectUnits:[discardEffect]
+            effectUnits:[discardEffect],
+            entityMap:{
+                target:"medium"
+            }
         }]
     })
 }

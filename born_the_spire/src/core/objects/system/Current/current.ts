@@ -6,6 +6,8 @@ import { newError } from "@/ui/hooks/global/alert";
 import { CurrentMapData, getMetaFromCurrentMap } from "@/static/list/system/currents/currentMap";
 import { getStatusValue } from "../status/Status";
 import { ActionEvent } from "../ActionEvent";
+import { get, max } from "lodash";
+import { getRefValue, setRefValue } from "@/core/hooks/refValue";
 
 type CurrentOption = {
     allowOverMin?:boolean|"breakdown",//是否允许某次修改超出下限值,默认为true
@@ -17,7 +19,7 @@ type CurrentOption = {
     maxBy?:string|number,//上限为属性值/特定值,默认无上限
     minBy?:string|number,//下限为属性值/特点值，默认为0
     reachMax?:(event:ActionEvent,ownner:Entity,current:Current)=>void,//达到上限时的回调函数
-        reachMin?:(event:ActionEvent,ownner:Entity,current:Current)=>void,//达到下限时的回调函数
+    reachMin?:(event:ActionEvent,ownner:Entity,current:Current)=>void,//达到下限时的回调函数
     onShow?:string|number|((owner:Entity,current:Current)=>number|string)//显示时的返回值
 }
 
@@ -29,10 +31,10 @@ export class Current{
     public options:CurrentOption;
     public owner:Entity//持有者
     get value(){
-        return this._value.value
+        return getRefValue(this._value)
     }
     set value(value:number){
-        this._value.value = value
+        setRefValue(this,"_value",value)
     }
     constructor(source:Entity,owner:Entity,key:string,startValue:number,options:CurrentOption,triggers:TriggerMap){
         this.owner = owner
@@ -124,8 +126,8 @@ export function getCurrentRefValue(entity:Entity,key:string,defaultValue?:number
     newError(["尝试在",entity,"上获取当前值",key,"但即不存在这个值，也没有设定默认值。"])
 }
 
-//获取当前值的上下限值
-export function getCurrentMaxOrMin(owner:Entity,maxOrMin:string|number){
+//工具函数：获取当前值的上下限值minBy或者maxBy对应的数值
+function getCurrentMaxOrMin(owner:Entity,maxOrMin:string|number){
     if(typeof maxOrMin == "string"){
         return getStatusValue(owner,maxOrMin)
     }
@@ -134,13 +136,91 @@ export function getCurrentMaxOrMin(owner:Entity,maxOrMin:string|number){
     }
 }
 
-//修改某个当前值
-export function changeCurrentValue(target:Entity,key:string,newValue:number){
+//修改某个当前值，返回实际修改的值或修改失败false
+export function changeCurrentValue(target:Entity,key:string,newValue:number,event:ActionEvent):false|number{
     const current = target.current[key]
     if(current){
+        //超出上限的情况
+        let result = changeCurrentOverMax(target,current,newValue,event)
+        if(result !== true)return result
+        //超出下限的情况
+        let result2 = changeCurrentOverMin(target,current,newValue,event)
+        if(result2 !== true)return result2
+
+        //没有提前结束，则修改为新的值，并返回修改值
+        const nowValue = current.value
         current.value = newValue
-        return true
+        return Math.abs(newValue-nowValue)
     }
     return false
+}
+
+//修改超出上限值
+function changeCurrentOverMax(target:Entity,current:Current,newValue:number,event:ActionEvent):boolean|number{
+    const maxBy = current.options.maxBy
+    //没有上限返回true即可
+    if(!maxBy)return true
+    //当前值上限和当前值
+    const maxValue = getCurrentMaxOrMin(target,maxBy)
+    const nowValue = current._value.value
+    
+    let res:boolean|number = true
+    //超过了上限
+    if(newValue > maxValue){
+        switch(current.options.allowOverMax){
+            case false:
+                //禁止超过上限的修改
+                return false;
+            case true:
+                //允许超过，但返回值是当前值和最大值的差值
+                res = maxValue - nowValue
+                break;
+            case "breakdown":
+                //允许超过，并且返回的当前值和预期值的差值
+                res = newValue - nowValue
+                break;
+        }
+    }
+    //达到上限
+    if(newValue >= maxValue){
+        //触发上限回调
+        current.options.reachMax?.(event,target,current)
+    }
+    return res
+}
+
+
+//修改超出下限值
+function changeCurrentOverMin(target:Entity,current:Current,newValue:number,event:ActionEvent):boolean|number{
+    const minBy = current.options.minBy
+    //没有上限返回true即可
+    if(!minBy)return true
+    //当前值上限和当前值
+    const minValue = getCurrentMaxOrMin(target,minBy)
+    const nowValue = current._value.value
+    
+    let res:boolean|number = true
+    //超过了下限
+    if(newValue < minValue){
+        switch(current.options.allowOverMin){
+            case false:
+                //禁止超过上限的修改
+                return false;
+            case true:
+                //允许超过，但返回值是当前值和最大值的差值
+                res = nowValue - minValue
+                break;
+            case "breakdown":
+                //允许超过，并且返回的当前值和预期值的差值
+                res = nowValue - newValue
+                break;
+        }
+    }
+    //达到上限
+    if(newValue <= minValue){
+        //触发上限回调
+        current.options.reachMin?.(event,target,current)
+    }
+    return res
 }
 

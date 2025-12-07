@@ -25,27 +25,11 @@ export function endCharaTurn(chara:Chara,battle:Battle){
 
 //玩家开始回合
 export async function startPlayerTurn(player:Player,battle:Battle){
-    const getEnergyEffect:EffectUnit = {
-        key:"getEnergy",
-        describe:["恢复3点能量"],
-        params:{value:3}
-    }
-    const drawCardEffect:EffectUnit = {
-        key:"drawFromDrawPile",
-        describe:["抽5张手牌"],
-        params:{value:5}
-    }
-    startTurn(player,battle,[getEnergyEffect,drawCardEffect])
+    startTurn(player,battle)
 }
 //结束玩家的回合
 export function endPlayerTurn(player:Player,battle:Battle){
-    //清空能量
-    const emptyEnergyEffect:EffectUnit = {
-        key:"emptyEnergy",
-        describe:["清空能量"],
-        params:{}
-    }
-    //丢弃手牌
+    //丢弃手牌：未完成：回合结束丢弃所有的手牌
         // const handPile = player.cardPiles.handPile
         // switch(end.discard.type){
         //     //丢弃所有手牌
@@ -65,8 +49,7 @@ export function endPlayerTurn(player:Player,battle:Battle){
         //         break
         //     }
         // }
-    endTurn(player,battle,[emptyEnergyEffect],()=>{
-    })
+    endTurn(player,battle)
 }
 
 //开始回合行为

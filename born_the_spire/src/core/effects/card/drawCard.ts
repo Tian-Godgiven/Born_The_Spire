@@ -26,7 +26,7 @@ export const drawCard:EffectFunc = (event,effect)=>{
 export const drawFromDrawPile:EffectFunc = (event,effect)=>{
     const {target} = event
     //只有玩家对象具备卡牌
-    if(target instanceof Player == false) return;
+    if(target instanceof Player == false) return false;
     const player = target
     const sourcePile = player.cardPiles.drawPile
     const length = sourcePile.length//还剩多少牌

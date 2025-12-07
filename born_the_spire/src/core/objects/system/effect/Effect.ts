@@ -27,15 +27,16 @@ export class Effect{
         this.actionEvent = triggerEvent
         this.resultStoreAs = resultStoreAs
     }
-    //启用这个效果,效果的事件对象可以被覆盖
-    async apply(override_event?:ActionEvent){
-        //执行效果函数
-        let event:ActionEvent = this.actionEvent
+    //启用这个效果,效果的事件对象的部分属性允许被覆盖（常见的是target等）
+    async apply(override_event?:Partial<ActionEvent>){
+        //记录原本的事件对象
+        let event = this.actionEvent
+        //让效果的事件对象被覆盖
         if(override_event){
-            event = override_event
+            this.actionEvent = Object.assign({},event,override_event)
         }
         const result = await doEffectFunc(this)
-        //记录值到事件中
+        //记录结果到原本的事件中
         if(this.resultStoreAs != null){
             event.setEventResult(this.resultStoreAs,result)
         }

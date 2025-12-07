@@ -9,6 +9,7 @@ import { getCardByKey } from "@/static/list/item/cardList";
 import { getMoneyByKey, Money } from "@/static/list/item/moneyList";
 import { Entity } from "../system/Entity"; 
 import { washPile } from "@/core/effects/card";
+import { reactive } from "vue";
 
 export type CardPiles = {
     handPile:Card[],
@@ -22,12 +23,12 @@ export class Player extends Chara{
     //唯一键
     public readonly __key:string = nanoid()
     //当前的各个卡组的情况
-    public cardPiles:CardPiles = {
+    public cardPiles:CardPiles = reactive({
         handPile:[],
         drawPile:[],
         discardPile:[],
         exhaustPile:[]
-    }
+    })
     //药水的持有情况
     public potions:{max:number,now:Potion[]} = {
         max:0,

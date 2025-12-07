@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { isNumber, isString } from "lodash";
+import { isArray, isBoolean, isNumber, isString } from "lodash";
 import { ref } from "vue";
 
 export const logList = ref<LogUnit[]>([])
@@ -39,15 +39,27 @@ export function newLog(logData:LogData|any[]){
 }
 
 //处理得到的日志数据，返回赋给日志单元的值
-function handleLogData(logData:any){
-    if(logData==null){
-        return "<未定义对象>"
+function handleLogData(logData:any):string{
+    if(logData===null){
+        return "无(null)"
+    }
+    else if(logData === undefined){
+        return "未定义(undefined)"
+    }
+    else if(String(logData).trim() == ""){
+        return "空内容"
     }
     else if(logData?.label || logData?.key){
         return logData?.label ?? logData.key
     }
+    else if(isArray(logData)){
+        return String(logData.map(i=>handleLogData(i)))
+    }
     else if(isString(logData)||isNumber(logData)){
-        return logData
+        return String(logData)
+    }
+    else if(isBoolean(logData)){
+        return logData?'成功(true)':'失败(false)'
     }
     else{
         return "<无法识别对象>"

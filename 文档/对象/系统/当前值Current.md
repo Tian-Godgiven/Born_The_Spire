@@ -26,6 +26,28 @@
  2.生命值达到下限时，角色会触发死亡事件
  3.某个角色的生命值为？？？（仅影响显示）
  
+## 选项
+
+可以为Current添加如下选项以启用一些附加效果
+
+上限为该对象的某个属性值的值or特定值，默认无上限
+    maxBy?:string|number
+下限为该对象的某个属性值的值or特定值，默认为0
+    minBy?:string|number = 0
+是否允许某次修改试图超出下限值，请注意，【这并不意味着修改可以超出下限】
+    allowOverMin?:boolean|"breakdown" = true
+        例如最小值为0，当前值为3，尝试修改至 -100
+        1.false: 不会进行修改并返回false
+        2.true: 会修改为最小值0，并返回实际修改的值即为3-0 = 3
+        3.breakdown: 会修改为最小值0，并返回预期修改的值即为3-(-100) = 103
+是否允许某次修改超出上限值，可选项及其含义参见↑
+    allowOverMax?:boolean|"breakdown" = true
+某次修改达到上限时的回调函数，包括试图超过上限的情况和正好为上限的情况
+    reachMax?:(event:ActionEvent,ownner:Entity,current:Current)=>void
+某次修改达到下限时的回到函数，同上
+    reachMin?:(event:ActionEvent,ownner:Entity,current:Current)=>void
+尝试显示该Current的值时的值，注意：修改Current时仍然会使用其原本的值
+    onShow?:string|number|((owner:Entity,current:Current)=>number|string)
 
 ## 已注册的当前值
 
@@ -48,7 +70,7 @@
 3.无法修改超过下限，即当尝试修改能量的目标值小于0的话，会拒绝修改
 4.添加触发器：
     关键触发器turnStart_recoverEnergy：回合开始时，获得等同于能量上限的能量值
-    关键触发器turnEnd_clearEnergy：回合结束时，当前能量归0
+    关键触发器turnEnd_emptyEnergy：回合结束时，当前能量归0
 
 - 对玩家Player来说，若其物质属性的值为0，则会在绝大部分情况判定游戏失败。
 - 对敌方Enemy来说，若其物质属性的值为0，则会在绝大部分情况判定击败敌方（敌方死亡）。
