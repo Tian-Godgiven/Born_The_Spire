@@ -1,6 +1,6 @@
 import { Card, drawCardFromDrawPile } from "../item/Card";
-import type { Potion } from "../item/Potion"
-import type { Relic } from "../item/Relic"
+import type { Potion } from "../item/Subclass/Potion"
+import type { Relic } from "../item/Subclass/Relic"
 import { PlayerMap } from "@/static/list/target/playerList";
 import { getPotionByKey } from "@/static/list/item/potionList";
 import { nanoid } from "nanoid";
