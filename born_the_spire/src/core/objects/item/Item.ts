@@ -3,12 +3,26 @@ import { Entity, EntityMap } from "../system/Entity";
 import { EffectUnit } from "../system/effect/EffectUnit";
 import { TargetType } from "@/static/list/registry/chooseTargetType";
 import { newLog } from "@/ui/hooks/global/log";
+import { TriggerMap } from "@/core/types/object/trigger";
+import { ModifierOptions } from "../system/status/type";
+
+export type ItemModifierDef = {
+    statusKey: string
+    label?: string
+} & Partial<ModifierOptions>
+
+export type InteractionData = {
+    target: TargetType
+    effects: EffectUnit[]
+    triggers?: TriggerMap
+    modifiers?: ItemModifierDef[]
+}
 
 export type ItemMap = EntityMap & {
     label:string,
     describe?:Describe,
     key:string,
-    interaction:Record<string,{target:TargetType,effects:EffectUnit[]}>
+    interaction:Record<string, InteractionData>
 }
 
 export class Item extends Entity{
@@ -33,7 +47,7 @@ export class Item extends Entity{
             return false
         }
         return i
-    }   
+    }
     //使用item
     use(targets:Entity[]){
         //调用对象的use交互
@@ -46,9 +60,6 @@ export class Item extends Entity{
     }
 }
 
-//交互
-export interface Interaction{
-    key:string,
-    target:TargetType,
-    effects:EffectUnit[]
+export interface Interaction extends InteractionData {
+    key:string
 }

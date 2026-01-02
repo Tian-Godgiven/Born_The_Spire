@@ -33,20 +33,24 @@ export const organList:OrganMap[] = [
         label:"石肤",
         key:"original_organ_00003",
         describe:["受到的伤害值-1"],
-        interaction:{},
-        trigger:[{
-            how:"via",
-            key:"getOragn",
-            event:[{
-                key:"protect",
-                label:"石肤防护",
-                targetType:"eventTarget",
-                effect:[
-                    {key:"take_reduce_damage",params:{value:1}}
-                ]
-            }]
-        }]
-        
+        interaction:{
+            possess:{
+                target:{"key":"self"},
+                effects:[],
+                triggers:[{
+                    how:"take",
+                    key:"damage",
+                    event:[{
+                        key:"reduceDamage",
+                        label:"石肤防护",
+                        targetType:"triggerOwner",
+                        effect:[
+                            {key:"reduceDamageValue",params:{value:1}}
+                        ]
+                    }]
+                }]
+            }
+        }
     }
 ]
 
