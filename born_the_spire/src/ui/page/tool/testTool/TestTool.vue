@@ -13,7 +13,6 @@
     import { Player } from '@/core/objects/target/Player';
     import { getEnemyByKey } from '@/static/list/target/enemyList';
     import { nowPlayer } from '@/core/objects/game/run';
-import { before } from 'lodash';
     const tools = [{
         text:"开始/重启战斗",
         click:async()=>{
