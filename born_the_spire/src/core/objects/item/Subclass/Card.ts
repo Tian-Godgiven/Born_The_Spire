@@ -1,6 +1,6 @@
 import { CardMap } from "@/static/list/item/cardList";
 import { Target } from "@/core/objects/target/Target";
-import { Item } from "./Item";
+import { Item } from "../Item";
 import { doEvent } from "@/core/objects/system/ActionEvent";
 import { CardPiles, Player } from "../target/Player";
 import { Entity } from "../system/Entity";

@@ -1,4 +1,4 @@
-import { Potion } from "@/core/objects/item/Potion";
+import { Potion } from "@/core/objects/item/Subclass/Potion";
 import { ItemMap } from "@/core/objects/item/Item";
 
 export type PotionMap = ItemMap & {
@@ -14,10 +14,10 @@ const potionList:PotionMap[] = [
         describe:["恢复",{key:["status","heal"]}],
         targetType:"player",
         key:"original_potion_00001",
-        behavior:{
+        interaction:{
             use:[{
                 "value":10,
-                "targetType":"player",
+                "target":,
                 "key":"heal"
             }]
         }

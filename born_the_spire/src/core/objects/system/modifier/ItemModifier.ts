@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid"
 import { Entity } from "../Entity"
 import { Organ } from "../../target/Organ"
-import { Relic } from "../../item/Relic"
+import { Relic } from "../../item/Subclass/Relic"
 import { reactive } from "vue"
 
 /**

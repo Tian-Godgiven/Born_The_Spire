@@ -6,16 +6,18 @@ import { newLog } from "@/ui/hooks/global/log";
 import { TriggerMap } from "@/core/types/object/trigger";
 import { ModifierOptions } from "../system/status/type";
 
+// 物品修饰器
 export type ItemModifierDef = {
     statusKey: string
     label?: string
 } & Partial<ModifierOptions>
 
+// 物品交互
 export type InteractionData = {
-    target: TargetType
-    effects: EffectUnit[]
-    triggers?: TriggerMap
-    modifiers?: ItemModifierDef[]
+    target: TargetType//这个交互可以指定的对象
+    effects: EffectUnit[]//交互将会造成的即时效果
+    triggers?: TriggerMap//交互将会添加的触发器
+    modifiers?: ItemModifierDef[]//交互将会添加的修饰器
 }
 
 export type ItemMap = EntityMap & {
@@ -25,10 +27,11 @@ export type ItemMap = EntityMap & {
     interaction:Record<string, InteractionData>
 }
 
+// 物品：一系列可以被玩家交互的对象
 export class Item extends Entity{
     public label:string;
     public readonly key:string;
-    public interaction:Interaction[]
+    public interaction:Interaction[]//交互
     constructor(map:ItemMap){
         super(map)
         this.label = map.label;
