@@ -8,6 +8,8 @@ export type LogUnit = {
     text:string,//直接在日志栏中输出的内容
     detail:string,//在日志栏中作为上述内容的折叠内容，点一下才会显示(再点一下收起)
     time:number
+    children?:LogUnit[],//子日志列表（嵌套日志）
+    level?:number//嵌套层级，用于缩进显示（0为顶层）
 }
 
 export type LogData = {
@@ -15,7 +17,7 @@ export type LogData = {
     detail:any[]//详情內容
 }
 //在日志栏打印内容
-export function newLog(logData:LogData|any[]){
+export function newLog(logData:LogData|any[], parent?:LogUnit):LogUnit{
     const logUnit:LogUnit = {
         text:"",
         detail:"",
@@ -34,8 +36,20 @@ export function newLog(logData:LogData|any[]){
             logUnit.text += handleLogData(i)
         }
     }
-    
-    logList.value.push(logUnit)
+
+    if(parent){
+        // 作为子日志添加到父日志
+        if(!parent.children) parent.children = []
+        parent.children.push(logUnit)
+        logUnit.level = (parent.level || 0) + 1
+    }
+    else{
+        // 作为顶层日志添加到列表
+        logList.value.push(logUnit)
+        logUnit.level = 0
+    }
+
+    return logUnit  // 返回日志单元，供后续添加子日志
 }
 
 //处理得到的日志数据，返回赋给日志单元的值

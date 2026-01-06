@@ -1,5 +1,5 @@
 
-import { Card } from "@/core/objects/item/Card"
+import { Card } from "@/core/objects/item/Subclass/Card"
 import { ItemMap } from "@/core/objects/item/Item"
 
 export type CardMap = ItemMap & {

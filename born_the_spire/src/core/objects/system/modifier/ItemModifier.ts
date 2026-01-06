@@ -3,6 +3,7 @@ import { Entity } from "../Entity"
 import { Organ } from "../../target/Organ"
 import { Relic } from "../../item/Subclass/Relic"
 import { reactive } from "vue"
+import { newLog, LogUnit } from "@/ui/hooks/global/log"
 
 /**
  * 物品修饰单元 - 记录单个物品（器官/遗物）产生的所有副作用
@@ -61,16 +62,22 @@ export class ItemModifierUnit {
 
     /**
      * 清理所有副作用
+     * @param parentLog 可选的父日志，如果提供则将清理日志作为子日志
      */
-    cleanup() {
+    cleanup(parentLog?: LogUnit) {
         // 逆序清理（后添加的先清理）
         for (let i = this.removers.length - 1; i >= 0; i--) {
             const { type, name, remove } = this.removers[i]
             try {
+                // 如果有父日志，添加子日志
+                if(parentLog) {
+                    const typeName = type === 'trigger' ? '触发器' : type === 'modifier' ? '修饰器' : '副作用'
+                    newLog([`移除${typeName}:`, name || '未命名'], parentLog)
+                }
                 remove()
             } catch (error) {
                 console.error(`[ItemModifierUnit] 清理失败:`, {
-                    item: this.item.label,
+                    item: (this.item as any).label || (this.item as any).name || 'Unknown',
                     type,
                     name,
                     error
@@ -89,9 +96,9 @@ export class ItemModifierUnit {
             byType[r.type] = (byType[r.type] || 0) + 1
         }
         return {
-            itemLabel: this.item.label,
-            itemKey: this.item.key,
-            owner: this.owner.label,
+            itemLabel: (this.item as any).label || (this.item as any).name || 'Unknown',
+            itemKey: (this.item as any).key || 'unknown',
+            owner: (this.owner as any).label || 'Unknown',
             total: this.removers.length,
             byType
         }
@@ -106,7 +113,7 @@ export class ItemModifierUnit {
  */
 export class ItemModifier {
     protected units: ItemModifierUnit[] = reactive([])
-    private readonly owner: Entity
+    protected readonly owner: Entity
 
     constructor(owner: Entity) {
         this.owner = owner
@@ -124,12 +131,13 @@ export class ItemModifier {
 
     /**
      * 通过单元 ID 移除物品
+     * @param parentLog 可选的父日志
      */
-    remove(unitId: string): boolean {
+    remove(unitId: string, parentLog?: LogUnit): boolean {
         const index = this.units.findIndex(u => u.id === unitId)
         if (index >= 0) {
             const unit = this.units[index]
-            unit.cleanup()
+            unit.cleanup(parentLog)
             this.units.splice(index, 1)
             return true
         }
@@ -138,12 +146,13 @@ export class ItemModifier {
 
     /**
      * 通过物品本身移除（查找第一个匹配的）
+     * @param parentLog 可选的父日志
      */
-    removeByItem(item: Organ | Relic): boolean {
+    removeByItem(item: Organ | Relic, parentLog?: LogUnit): boolean {
         const index = this.units.findIndex(u => u.item === item)
         if (index >= 0) {
             const unit = this.units[index]
-            unit.cleanup()
+            unit.cleanup(parentLog)
             this.units.splice(index, 1)
             return true
         }
@@ -152,12 +161,13 @@ export class ItemModifier {
 
     /**
      * 通过物品 key 移除（查找第一个匹配的）
+     * @param parentLog 可选的父日志
      */
-    removeByKey(itemKey: string): boolean {
-        const index = this.units.findIndex(u => u.item.key === itemKey)
+    removeByKey(itemKey: string, parentLog?: LogUnit): boolean {
+        const index = this.units.findIndex(u => (u.item as any).key === itemKey)
         if (index >= 0) {
             const unit = this.units[index]
-            unit.cleanup()
+            unit.cleanup(parentLog)
             this.units.splice(index, 1)
             return true
         }

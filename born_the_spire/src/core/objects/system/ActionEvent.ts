@@ -1,7 +1,7 @@
 import { Effect } from "./effect/Effect";
 import { Entity } from "./Entity";
 import { gatherToTransaction } from "../game/transaction";
-import { newLog } from "@/ui/hooks/global/log";
+import { newLog, LogUnit, LogData } from "@/ui/hooks/global/log";
 import { EffectUnit, createEffectByUnit } from "./effect/EffectUnit";
 import { nanoid } from "nanoid";
 import { isArray } from "lodash";
@@ -38,10 +38,13 @@ export class ActionEvent<
     public info:Record<string,any>;//该事件执行全程的信息
     public effects:Effect[] = [];
     public onExecute?:(actionEvent:ActionEvent)=>void|Promise<void>//事件执行时，执行的函数
+    public onComplete?:(actionEvent:ActionEvent)=>void//事件执行完成后的回调
     //效果阶段
     public phase:EventPhase_inObj[];
-    private _result:Record<string,any> = {}//阶段的返回值 
+    private _result:Record<string,any> = {}//阶段的返回值
+    private _sideEffects:Array<()=>void> = []//副作用收集器，用于收集effect执行时产生的副作用（如修饰器的remover）
     private transactionCollector?:(e:ActionEvent,triggerLevel?:number)=>void//该事件所属的事务的收集器，通过该收集器可以将任意事件添加到该事务中，从而完成事件的内部收集
+    public logUnit?:LogUnit//该事件的日志单元，用于收集子日志
     constructor(
         key:string,//触发key
         source:s,medium:m,target:t|t[],
@@ -77,14 +80,9 @@ export class ActionEvent<
         this.triggerLevel = triggerLevel
         this.source.makeEvent(when,this.key,this,null,triggerLevel);
         this.medium.viaEvent(when,this.key,this,null,triggerLevel)
-        if(isArray(this.target)){
-            for(let t of this.target){
-                t.takeEvent(when,this.key,this,null,triggerLevel)
-            }
-        }
-        else{
-            this.target.takeEvent(when,this.key,this,null,triggerLevel)
-        }
+        handleEventEntity(this.target,(e)=>{
+            e.takeEvent(when,this.key,this,null,triggerLevel)
+        })
        
     }
     //宣布这个事件将会发生，同时宣布其中的effect效果
@@ -100,7 +98,8 @@ export class ActionEvent<
     //发生这个事件,收集到当前事务中
     happen(doEvent:()=>void,triggerLevel?:number){
         this.onExecute = doEvent
-        newLog({
+        // 创建日志并保存引用，供后续添加子日志
+        this.logUnit = newLog({
             main:["发生了事件",this],
             detail:[
                 "来源:",this.source," | ",
@@ -118,8 +117,8 @@ export class ActionEvent<
         else{
             gatherToTransaction(this,triggerLevel)
         }
-        
-        
+
+
     }
     //执行这个事件
     async excute(){
@@ -164,6 +163,10 @@ export class ActionEvent<
                 }
             }
         }
+        //执行完成后调用回调
+        if(this.onComplete){
+            this.onComplete(this)
+        }
     }
     //设置事件的阶段返回结果
     setEventResult(key:string,res:any){
@@ -195,6 +198,25 @@ export class ActionEvent<
     innerGatherToSameTransaction(e:ActionEvent,triggerLevel?:number){
         this.transactionCollector?.(e,triggerLevel)
     }
+    //收集副作用
+    collectSideEffect(remover:()=>void){
+        this._sideEffects.push(remover)
+    }
+    //获取所有副作用
+    getSideEffects(){
+        return [...this._sideEffects]
+    }
+    //添加子日志（供效果/子事件使用）
+    addChildLog(logData:LogData|any[]):LogUnit{
+        if(this.logUnit){
+            // 作为子日志添加到该事件的日志下
+            return newLog(logData, this.logUnit)
+        }
+        else{
+            // 如果该事件没有日志，就作为顶层日志
+            return newLog(logData)
+        }
+    }
 }
 
 // 使得一个事件产生并发生
@@ -207,12 +229,16 @@ type DoEventType = {
     effectUnits?:EffectUnit[]
     phase?:EventPhase[]
     doWhat?:()=>void,//可选，在事件执行时进行的函数
+    onComplete?:(event:ActionEvent)=>void//可选，在事件执行完成后的回调
 }
 export function doEvent(
-    {key,source,medium,target,info={},effectUnits=[],phase=[],doWhat=()=>{}}:DoEventType
+    {key,source,medium,target,info={},effectUnits=[],phase=[],doWhat=()=>{},onComplete}:DoEventType
 ){
     //创建行为事件
     const event = new ActionEvent(key,source,medium,target,info,effectUnits,phase)
+    if(onComplete){
+        event.onComplete = onComplete
+    }
     event.happen(()=>{doWhat()})
 }
 

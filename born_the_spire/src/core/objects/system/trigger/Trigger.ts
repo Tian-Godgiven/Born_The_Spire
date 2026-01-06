@@ -126,8 +126,8 @@ function createEventFromTrigger(
 ){
     const {key:eventKey,info={},targetType,effect:effectUnit} = eventConfig
     //获取目标
-    const eventTarget = getTriggerEventTarget(targetType)
-    
+    const eventTarget = resolveTriggerEventTarget(targetType, triggerEvent, source, target)
+
     const newEvent = new ActionEvent(
         eventKey,
         source,//触发器来源
@@ -137,25 +137,38 @@ function createEventFromTrigger(
         effectUnit
     )
     return newEvent
+}
 
-    function getTriggerEventTarget(targetType:TriggerEventConfig["targetType"]):Entity|Entity[]{
-        switch(targetType){
-            case "eventSource"://指定的事件来源
-                return triggerEvent.source
-            case "eventMedium"://指定的事件媒介
-                return triggerEvent.medium;
-            case "eventTarget"://指定的事件对象
-                return triggerEvent.target;
-            case "triggerSource"://触发器的施加来源
-                return source;
-            case "triggerOwner"://持有触发器的对象
-                return target;
-            default:
-                if (targetType instanceof Entity) {
-                    return targetType;
-                }
-                throw new Error("不被支持的目标类型:"+targetType)
-        }
+/**
+ * 解析触发器事件的目标类型
+ * @param targetType 目标类型配置
+ * @param triggerEvent 触发该触发器的原始事件
+ * @param triggerSource 触发器的施加来源
+ * @param triggerOwner 持有触发器的对象
+ * @returns 解析后的目标实体
+ */
+export function resolveTriggerEventTarget(
+    targetType: TriggerEventConfig["targetType"],
+    triggerEvent: ActionEvent,
+    triggerSource: Entity,
+    triggerOwner: Entity
+): Entity | Entity[] {
+    switch(targetType){
+        case "eventSource"://指定的事件来源
+            return triggerEvent.source
+        case "eventMedium"://指定的事件媒介
+            return triggerEvent.medium;
+        case "eventTarget"://指定的事件对象
+            return triggerEvent.target;
+        case "triggerSource"://触发器的施加来源
+            return triggerSource;
+        case "triggerOwner"://持有触发器的对象
+            return triggerOwner;
+        default:
+            if (targetType instanceof Entity) {
+                return targetType;
+            }
+            throw new Error("不被支持的目标类型:"+targetType)
     }
 }
 

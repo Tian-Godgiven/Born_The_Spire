@@ -132,14 +132,14 @@ export function getStatusRefValue(entity:Entity,statusKey:string){
 export function ifHaveStatus(entity:Entity,statusKey:string){
     return entity.status[statusKey] ? true:false
 }
-//为目标的属性值添加新的修饰器
-export function changeStatusValue(entity:Entity,statusKey:string,source:any,{value,type="additive",target="base",modifierFunc}:{value:number,type?:ModifierType,target?:TargetLayer,modifierFunc?:ModifierFunc}){
+//为目标的属性值添加新的修饰器，返回移除函数
+export function changeStatusValue(entity:Entity,statusKey:string,source:any,{value,type="additive",target="base",modifierFunc}:{value:number,type?:ModifierType,target?:TargetLayer,modifierFunc?:ModifierFunc}):()=>void{
     //找到属性
     if(ifHaveStatus(entity,statusKey)){
         const status = entity.status[statusKey]
         //创建修饰器
         if(target == "base"){
-            status.addByJSON(source,{
+            return status.addByJSON(source,{
                 "modifierValue":value,
                 "applyMode":"absolute",
                 "modifierType":type,
@@ -148,7 +148,7 @@ export function changeStatusValue(entity:Entity,statusKey:string,source:any,{val
             })
         }
         else if(target == "current"){
-            status.addByJSON(source,{
+            return status.addByJSON(source,{
                 "modifierValue":value,
                 "applyMode":"snapshot",
                 "modifierType":type,
@@ -160,6 +160,8 @@ export function changeStatusValue(entity:Entity,statusKey:string,source:any,{val
     else{
         newError([entity,"不具备属性",statusKey])
     }
+    // 如果出错，返回空函数
+    return ()=>{}
 }
 
 

@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang='ts'>
-    import { Card, useCard } from '@/core/objects/item/Card';
+    import { Card, useCard } from '@/core/objects/item/Subclass/Card';
     import CardVue from '@/ui/components/object/Card.vue';
     import ChooseSource from '@/ui/components/interaction/chooseTarget/ChooseSource.vue';
     import { computed, useTemplateRef } from 'vue';

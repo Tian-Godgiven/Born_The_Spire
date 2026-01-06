@@ -15,11 +15,13 @@ const potionList:PotionMap[] = [
         targetType:"player",
         key:"original_potion_00001",
         interaction:{
-            use:[{
-                "value":10,
-                "target":,
-                "key":"heal"
-            }]
+            use:{
+                target: {key: "self"},
+                effects: [{
+                    key: "heal",
+                    params: {value: 10}
+                }]
+            }
         }
         
     }

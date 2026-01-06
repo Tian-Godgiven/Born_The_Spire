@@ -1,4 +1,4 @@
-import { Card, drawCardFromDrawPile } from "../item/Card";
+import { Card, drawCardFromDrawPile } from "../item/Subclass/Card";
 import type { Potion } from "../item/Subclass/Potion"
 import type { Relic } from "../item/Subclass/Relic"
 import { PlayerMap } from "@/static/list/target/playerList";
@@ -34,11 +34,24 @@ export class Player extends Chara{
         max:0,
         now:[]
     }
-    public cards:Card[] = []//卡组
+    public cards:Card[]  // 不要在这里初始化！
     public relics:Relic[] = []//拥有的遗物
     public moneys:Money[] = []//资产
     constructor(map:PlayerMap){
+        console.log('[Player 构造函数] 开始，调用 super 之前')
         super(map)
+        console.log('[Player 构造函数] super 完成后')
+
+        // 在字段初始化后，初始化 cards 数组
+        this.cards = []
+        console.log('[Player 构造函数] cards 初始化为空数组')
+
+        // 现在添加器官（这样 CardModifier 才能正确添加卡牌）
+        console.log('[Player 构造函数] 准备初始化器官')
+        this.initOrgans()
+        console.log('[Player 构造函数] 器官初始化完成，cards 长度：', this.cards.length)
+        console.log('[Player 构造函数] cards 内容：', this.cards.map(c => c.label))
+
         //玩家特有内容的初始化
         this.getMoney(map.money)
         const potion = map.potion
@@ -48,10 +61,14 @@ export class Player extends Chara{
             //获取初始药水
             this.getPotion(key)
         }
+
+        console.log('[Player 构造函数] 准备添加初始卡组')
         //获取初始拥有的卡组
         for(let key of map.card){
             this.getCard(key)
         }
+        console.log('[Player 构造函数] 完成，最终 cards 长度：', this.cards.length)
+        console.log('[Player 构造函数] 最终 cards 内容：', this.cards.map(c => c.label))
     }
     
     //获取自身
@@ -118,10 +135,16 @@ export class Player extends Chara{
     }
     //初始化牌堆，将卡组内的卡牌洗进抽牌堆
     initCardPile(){
+        console.log(`[Player.initCardPile] 开始初始化牌堆，当前 cards 数组长度：`, this.cards.length)
+        console.log(`[Player.initCardPile] cards 内容：`, this.cards.map(c => c.label))
+
         //洗抽牌堆
         const cards = this.cards;
         this.cardPiles.drawPile = cards;
         this.washCardPile("drawPile")
+
+        console.log(`[Player.initCardPile] 初始化完成，drawPile 长度：`, this.cardPiles.drawPile.length)
+
         //其他牌堆清空
         this.cardPiles.discardPile = []
         this.cardPiles.exhaustPile = []

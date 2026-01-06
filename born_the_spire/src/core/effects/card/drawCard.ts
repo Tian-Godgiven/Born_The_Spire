@@ -1,6 +1,6 @@
 //抽牌相关
 
-import { Card } from "@/core/objects/item/Card";
+import { Card } from "@/core/objects/item/Subclass/Card";
 import { handleEventEntity } from "@/core/objects/system/ActionEvent";
 import { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import { CardPiles, Player } from "@/core/objects/target/Player"

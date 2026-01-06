@@ -218,3 +218,39 @@ The game is designed to support modding through:
 - Effect mapping system for custom effects
 - Registry system for adding content
 - Refer to `文档/` for detailed Chinese documentation on modding
+
+## Development Workflow Preferences
+
+**IMPORTANT: User-Guided Problem Solving**
+
+The user prefers a specific workflow when working with Claude Code:
+
+1. **One Problem at a Time**
+   - Focus on solving ONE specific problem per iteration
+   - Wait for user feedback before moving to the next problem
+   - Don't try to solve multiple issues simultaneously
+
+2. **User-Guided Direction**
+   - Let the user guide which problems to tackle and in what order
+   - User will identify issues and direct the investigation
+   - Follow the user's lead on debugging approaches
+
+3. **User Handles Testing**
+   - DO NOT automatically start dev servers or run tests
+   - User will test changes themselves and report results
+   - Wait for user's test results before proceeding
+
+4. **Iterative Feedback Loop**
+   - Make changes based on user's specific requests
+   - User tests → User reports issues → Claude fixes specific issue → Repeat
+   - Don't assume the next step - wait for user guidance
+
+**Example Workflow:**
+```
+User: "测试时发现X问题"
+Claude: [Analyzes problem, proposes solution]
+User: [Reviews solution, approves or redirects]
+Claude: [Implements solution]
+User: [Tests and reports: "还是有Y问题" or "可以，继续下一个"]
+Claude: [Waits for next instruction]
+```

@@ -16,11 +16,13 @@ export const addStatusBase:EffectFunc = (event,effect)=>{
     statusKey = String(statusKey)
     value = Number(value)
     handleEventEntity(target,(e)=>{
-        changeStatusValue(e,statusKey,{source,medium},{
+        const remover = changeStatusValue(e,statusKey,{source,medium},{
             "target":"base",
             "type":"additive",
             "value":value
         })
+        // 收集副作用
+        event.collectSideEffect(remover)
     })
-    
+
 }

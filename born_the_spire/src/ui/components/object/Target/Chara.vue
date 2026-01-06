@@ -21,11 +21,10 @@
     import Target from "@/ui/components/interaction/chooseTarget/Target.vue";
     import BloodLine from '@/ui/components/object/Target/BloodLine.vue';
     import State from '@/ui/components/object/State.vue';
-    import { computed,toRef } from 'vue';
     const {target} = defineProps<{target:Chara}>()
-    const organList = computed(()=>{
-        return toRef(()=>target.organs).value;
-    })
+    // target.organs 已经是 computed，直接使用
+    const organList = target.organs
+
 </script>
 
 <style scoped lang='scss'>

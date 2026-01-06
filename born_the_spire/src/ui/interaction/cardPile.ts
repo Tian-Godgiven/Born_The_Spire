@@ -1,4 +1,4 @@
-import { Card } from "@/core/objects/item/Card";
+import { Card } from "@/core/objects/item/Subclass/Card";
 import { showPopUp } from "../hooks/global/popUp";
 import { shallowRef } from "vue";
 import CardPile from "@/ui/page/popUp/CardPile.vue";

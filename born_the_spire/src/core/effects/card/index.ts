@@ -1,4 +1,4 @@
-import { Card } from "@/core/objects/item/Card"
+import { Card } from "@/core/objects/item/Subclass/Card"
 import { newError } from "@/ui/hooks/global/alert"
 import {shuffle} from "lodash"
 

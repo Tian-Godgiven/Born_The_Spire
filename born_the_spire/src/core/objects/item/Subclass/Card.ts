@@ -1,16 +1,18 @@
 import { CardMap } from "@/static/list/item/cardList";
 import { Target } from "@/core/objects/target/Target";
-import { Item } from "../Item";
+import { Item } from "@/core/objects/item/Item";
 import { doEvent } from "@/core/objects/system/ActionEvent";
-import { CardPiles, Player } from "../target/Player";
-import { Entity } from "../system/Entity";
-import { EffectUnit } from "../system/effect/EffectUnit";
+import { CardPiles, Player } from "@/core/objects/target/Player";
+import { Entity } from "@/core/objects/system/Entity";
+import { EffectUnit } from "@/core/objects/system/effect/EffectUnit";
 import { newError } from "@/ui/hooks/global/alert";
-import { getStatusValue } from "../system/status/Status";
+import { getStatusValue } from "@/core/objects/system/status/Status";
+import { Organ } from "@/core/objects/target/Organ";
 
 // 卡牌对象
 export class Card extends Item{
     public entry:string[] = []
+    public source?: Entity  // 卡牌来源（可能是器官、遗物或其他来源）
     constructor(map:CardMap){
         super(map)
         this.entry.push(...map.entry??[])
@@ -25,6 +27,17 @@ export class Card extends Item{
 
 //对目标使用卡牌
 export async function useCard(card:Card,fromPile:Card[],source:Player,targets:Target[]){
+    // 检查卡牌来源是否有效（如果有来源）
+    if(card.source) {
+        const cardModifier = getCardModifier(source)
+        const canPlay = cardModifier.canPlayCard(card)
+        if(canPlay !== true) {
+            // 来源无效，无法打出
+            newError(["无法使用该卡牌:", canPlay])
+            return
+        }
+    }
+
     const cardCost = getStatusValue(card,"cost")
     //支付能量
     const costEffect:EffectUnit = {

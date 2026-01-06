@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang='ts'>
-    import { Card } from '@/core/objects/item/Card';
+    import { Card } from '@/core/objects/item/Subclass/Card';
 import { getStatusValue, ifHaveStatus } from '@/core/objects/system/status/Status';
     import { getDescribe } from '@/ui/hooks/express/describe';
     import { computed } from 'vue';

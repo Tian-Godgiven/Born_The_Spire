@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"@/core/objects/item/Card\" *.ts)"
+    ]
+  }
+}

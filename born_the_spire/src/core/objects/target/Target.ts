@@ -4,9 +4,10 @@ import { getOrganByKey } from "@/static/list/target/organList";
 import { Entity, EntityMap } from "../system/Entity";
 import { State } from "../system/State";
 import { TriggerMap } from "@/core/types/object/trigger";
-import { reactive } from "vue";
+import { computed, reactive } from "vue";
 import { getStatusRefValue } from "../system/status/Status";
 import { getCurrentRefValue } from "../system/Current/current";
+import { getOrganModifier } from "../system/modifier/OrganModifier";
 
 export type TargetMap = EntityMap & {
     label:string,
@@ -29,21 +30,32 @@ export type CharaMap = TargetMap & {
 }
 //用于角色和敌人
 export class Chara extends Target{
-    public organs:Organ[] = reactive([])
+    // 从 OrganModifier 动态获取器官列表（用于 UI 显示）
+    public organs = computed(() => {
+        return getOrganModifier(this).getOrgans()
+    })
+
     constructor(map:CharaMap){
         super(map)
-        //获得器官
-        for(let key of map.organ){
-            const organ = getOrganByKey(key)
-            getOrgan(this,this,organ)
+        // 不要在这里添加器官！留给子类在字段初始化后添加
+        // 保存器官列表供子类使用
+        ;(this as any)._organKeys = map.organ
+    }
+
+    // 添加器官的方法（由子类在适当时机调用）
+    protected initOrgans() {
+        const organKeys = (this as any)._organKeys as string[]
+        if (organKeys) {
+            for(let key of organKeys){
+                const organ = getOrganByKey(key)
+                getOrgan(this, this, organ)
+            }
         }
     }
-    appendOrgan(organ:Organ){
-        this.organs.push(organ)
-    }
+
     //获取对象的器官列表
     getOrganList(){
-        return this.organs
+        return this.organs.value
     }
     //获取目标的生命值/最大生命对象
     getHealth(){
