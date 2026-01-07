@@ -1,5 +1,7 @@
 import { ActionEvent, handleEventEntity } from "../ActionEvent";
 import { doEffectFunc, EffectFunc, EffectParams } from "./EffectFunc";
+import { EventParticipant } from "@/core/types/event/EventParticipant";
+import { nanoid } from "nanoid";
 type EffectConstructor = {
     label?:string,
     key:string,
@@ -10,11 +12,13 @@ type EffectConstructor = {
     resultStoreAs?:string
 }
 
-export class Effect{
+export class Effect implements EventParticipant{
+    public __id:string = nanoid()
     public key:string;//关键字
     public effectFunc:EffectFunc;
     public params:EffectParams;
     public label?:string = "";//效果的名称
+    public participantType: 'effect' = 'effect'
     public describe?:string[] = [];
     public actionEvent:ActionEvent;//引发这个效果的事件
     public resultStoreAs?:string

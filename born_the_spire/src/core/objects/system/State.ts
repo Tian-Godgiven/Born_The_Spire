@@ -6,6 +6,8 @@ import { newError } from "@/ui/hooks/global/alert"
 import { ActionEvent } from "./ActionEvent"
 import { EffectUnit } from "./effect/EffectUnit"
 import { TriggerMap } from "@/core/types/object/trigger"
+import { EventParticipant } from "@/core/types/event/EventParticipant"
+import { nanoid } from "nanoid"
 
 // ==================== 类型定义 ====================
 
@@ -82,9 +84,11 @@ export type StateMap = StateData & {
  * 状态是添加在 Target 上的临时效果，具有层数和持续时间
  * 通过 interaction 定义状态的行为
  */
-export class State {
+export class State implements EventParticipant {
+    public __id: string = nanoid()
     public label: string
     public key: string
+    public participantType: 'state' = 'state'
     public describe: Describe
     public showType: "number" | "bool" = "number"
     public stacks: Stack[]  // 层数对象数组

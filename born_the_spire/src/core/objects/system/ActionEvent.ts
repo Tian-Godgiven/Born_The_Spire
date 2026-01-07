@@ -6,6 +6,8 @@ import { EffectUnit, createEffectByUnit } from "./effect/EffectUnit";
 import { nanoid } from "nanoid";
 import { isArray } from "lodash";
 import { newError } from "@/ui/hooks/global/alert";
+import { EventParticipant } from "@/core/types/event/EventParticipant";
+import { isEntity } from "@/core/utils/typeGuards";
 
 // 使得一个阶段事件产生并发生:阶段事件是指单个事件过程中的多个效果会分阶段执行，在每个阶段开始时判断条件后记录效果的返回值。每个效果都对应一个阶段
 type EventPhaseBase= {
@@ -25,13 +27,13 @@ type EventPhase_inObj = EventPhaseBase&{
 }
 
 export class ActionEvent<
-    s extends Entity = Entity,
-    m extends Entity = Entity,
-    t extends Entity = Entity>
+    s extends EventParticipant = EventParticipant,
+    m extends EventParticipant = EventParticipant,
+    t extends EventParticipant = EventParticipant>
 {
     public key:string;//事件的触发key
     public uuId:string;//唯一识别码
-    public source:s;//执行该事件的目标
+    public source:s;//执行该事件的来源
     public medium:m;//执行该事件的媒介
     public target:t|t[];//接受该事件的目标
     public triggerLevel:number|null=null//事件的触发等级
@@ -78,12 +80,19 @@ export class ActionEvent<
     //触发事件
     trigger(when:"before"|"after",triggerLevel:number){
         this.triggerLevel = triggerLevel
-        this.source.makeEvent(when,this.key,this,null,triggerLevel);
-        this.medium.viaEvent(when,this.key,this,null,triggerLevel)
+        // 只有 Entity 类型才有触发器
+        if (isEntity(this.source)) {
+            this.source.makeEvent(when,this.key,this,null,triggerLevel);
+        }
+        if (isEntity(this.medium)) {
+            this.medium.viaEvent(when,this.key,this,null,triggerLevel)
+        }
         handleEventEntity(this.target,(e)=>{
-            e.takeEvent(when,this.key,this,null,triggerLevel)
+            if (isEntity(e)) {
+                e.takeEvent(when,this.key,this,null,triggerLevel)
+            }
         })
-       
+
     }
     //宣布这个事件将会发生，同时宣布其中的effect效果
     announce(triggerLevel:number){
@@ -222,9 +231,9 @@ export class ActionEvent<
 // 使得一个事件产生并发生
 type DoEventType = {
     key:string,
-    source:Entity,
-    medium:Entity,
-    target:Entity|Entity[],
+    source:EventParticipant,
+    medium:EventParticipant,
+    target:EventParticipant|EventParticipant[],
     info?:Record<string,any>,
     effectUnits?:EffectUnit[]
     phase?:EventPhase[]
@@ -244,7 +253,7 @@ export function doEvent(
 
 
 //处理事件对象
-export function handleEventEntity<T extends Entity>(entity:T|T[],callback:(e:T)=>void){
+export function handleEventEntity<T extends EventParticipant>(entity:T|T[],callback:(e:T)=>void){
     if(isArray(entity)){
         for(let e of entity){
             callback(e)

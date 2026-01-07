@@ -9,10 +9,12 @@ import { nanoid } from "nanoid";
 import { appendStatus, createStatusFromMap, Status } from "./status/Status";
 import { Current, initCurrentFromMap } from "./Current/current";
 import { CurrentMapData } from "@/static/list/system/currents/currentMap";
+import { EventParticipant } from "@/core/types/event/EventParticipant";
 // 实体（entity）是Target和Item的基类
-export class Entity{
+export class Entity implements EventParticipant{
     public __id:string = nanoid()
     public label:string
+    public participantType: 'entity' = 'entity'
     //属性值:相对静态的，受修饰器管理的值
     public status:Record<string,Status> = {}
     //当前值：非常动态的，范围内频繁变化的值
