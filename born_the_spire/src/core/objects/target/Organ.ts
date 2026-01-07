@@ -11,7 +11,7 @@ export class Organ extends Entity{
     public readonly key:string
     public interaction:Interaction[]
     public cards:string[] = []  // 器官提供的卡牌列表
-    public isBroken:boolean = false // 是否损坏
+    // 注意：isDisabled 继承自 Item 基类，表示器官是否损坏
 
     // 内部管理的触发器移除函数
     private workTriggerRemovers: Array<()=>void> = []

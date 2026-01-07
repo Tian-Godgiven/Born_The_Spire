@@ -252,7 +252,7 @@ export class OrganModifier extends ItemModifier {
         }
 
         // 检查是否损坏
-        if(organ.isBroken) {
+        if(organ.isDisabled) {
             newLog([organ, "已损坏，无法使用"])
             return "cant"
         }
@@ -291,12 +291,12 @@ export class OrganModifier extends ItemModifier {
         }
 
         // 如果已经损坏，直接返回
-        if(organ.isBroken) {
+        if(organ.isDisabled) {
             return false
         }
 
         // 设置损坏状态
-        organ.isBroken = true
+        organ.isDisabled = true
 
         // 移除 work 触发器
         organ.removeWorkTriggers()
@@ -332,12 +332,12 @@ export class OrganModifier extends ItemModifier {
         }
 
         // 如果未损坏，直接返回
-        if(!organ.isBroken) {
+        if(!organ.isDisabled) {
             return false
         }
 
         // 设置修复状态
-        organ.isBroken = false
+        organ.isDisabled = false
 
         // 移除 broken 触发器
         organ.removeBrokenTriggers()

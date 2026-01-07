@@ -11,6 +11,7 @@ import { discardCard, pay_discardCard } from "@/core/effects/card/discard"
 import { getState } from "@/core/effects/state/stateControl"
 import { addStatusBase } from "@/core/effects/status/changeStatus"
 import { addCurrent, addStatusBaseCurrentValue } from "@/core/effects/current/changeCurrent"
+import { gainReserve, spendReserve } from "@/core/effects/reserve/reserve"
 
 type EffectData = {
     label?:string,
@@ -107,5 +108,13 @@ const effectMap:EffectData[] = [
     label:"改变属性+对应的当前值：加减",
     key:"addStatusBaseCurrentValue",
     effect:addStatusBaseCurrentValue
+},{
+    label:"获得储备",
+    key:"gainReserve",
+    effect:gainReserve
+},{
+    label:"消耗储备",
+    key:"spendReserve",
+    effect:spendReserve
 }]
 

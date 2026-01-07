@@ -14,6 +14,7 @@ export type ItemModifierDef = {
 
 // 物品交互
 export type InteractionData = {
+    label?: string//交互的显示名称（如"饮用"、"投掷"、"激活"）
     target: TargetType//这个交互可以指定的对象
     effects: EffectUnit[]//交互将会造成的即时效果
     triggers?: TriggerMap//交互将会添加的触发器
@@ -32,6 +33,9 @@ export class Item extends Entity{
     public label:string;
     public readonly key:string;
     public interaction:Interaction[]//交互
+    public isDisabled:boolean = false // 物品是否失效（器官损坏、遗物失效等）
+    public useInteractions:Interaction[] = [] // 所有的 use 交互
+
     constructor(map:ItemMap){
         super(map)
         this.label = map.label;
@@ -39,7 +43,27 @@ export class Item extends Entity{
         this.key = map.key;
         const interaction:Interaction[] = []
         for(let key in map.interaction){
-            interaction.push({key,...map.interaction[key]})
+            const data = map.interaction[key]
+
+            // 特殊处理 use（可能是数组）
+            if(key === 'use') {
+                if(Array.isArray(data)) {
+                    // use 是数组，创建多个交互
+                    data.forEach((d, i) => {
+                        const useInteraction = {key: `use_${i}`, ...d}
+                        interaction.push(useInteraction)
+                        this.useInteractions.push(useInteraction)
+                    })
+                } else if(data) {
+                    // use 是单个对象
+                    const useInteraction = {key: 'use', ...data}
+                    interaction.push(useInteraction)
+                    this.useInteractions.push(useInteraction)
+                }
+            } else {
+                // 其他交互正常处理
+                interaction.push({key,...data})
+            }
         }
         this.interaction = interaction
     }
@@ -51,6 +75,21 @@ export class Item extends Entity{
         }
         return i
     }
+
+    /**
+     * 获取 use 交互数量
+     */
+    getUseCount(): number {
+        return this.useInteractions.length
+    }
+
+    /**
+     * 获取指定索引的 use 交互
+     */
+    getUse(index: number = 0): Interaction | undefined {
+        return this.useInteractions[index]
+    }
+
     //使用item
     use(targets:Entity[]){
         //调用对象的use交互

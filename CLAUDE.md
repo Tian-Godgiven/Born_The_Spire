@@ -221,6 +221,13 @@ The game is designed to support modding through:
 
 ## Development Workflow Preferences
 
+**CRITICAL: Code Quality First**
+
+- **代码的优雅和长期维护性永远是第一需求**
+- 即使为了快速实现功能，也不能牺牲代码质量
+- 优先选择可复用、可维护的方案，而不是快速但有技术债的方案
+- 重构优于重复，抽象优于复制粘贴
+
 **IMPORTANT: User-Guided Problem Solving**
 
 The user prefers a specific workflow when working with Claude Code:

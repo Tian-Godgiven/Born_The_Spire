@@ -6,10 +6,11 @@ import { getPotionByKey } from "@/static/list/item/potionList";
 import { nanoid } from "nanoid";
 import { Chara } from "./Target";
 import { getCardByKey } from "@/static/list/item/cardList";
-import { getMoneyByKey, Money } from "@/static/list/item/moneyList";
-import { Entity } from "../system/Entity"; 
+import { Entity } from "../system/Entity";
 import { washPile } from "@/core/effects/card";
 import { reactive } from "vue";
+import { getReserveModifier } from "../system/modifier/ReserveModifier";
+import { getStatusValue } from "../system/status/Status";
 
 export type CardPiles = {
     handPile:Card[],
@@ -30,13 +31,9 @@ export class Player extends Chara{
         exhaustPile:[]
     })
     //药水的持有情况
-    public potions:{max:number,now:Potion[]} = {
-        max:0,
-        now:[]
-    }
+    public potions:Potion[] = []  // 当前拥有的药水（最大数量由 status["max-potion"] 控制）
     public cards:Card[]  // 不要在这里初始化！
     public relics:Relic[] = []//拥有的遗物
-    public moneys:Money[] = []//资产
     constructor(map:PlayerMap){
         console.log('[Player 构造函数] 开始，调用 super 之前')
         super(map)
@@ -53,10 +50,17 @@ export class Player extends Chara{
         console.log('[Player 构造函数] cards 内容：', this.cards.map(c => c.label))
 
         //玩家特有内容的初始化
-        this.getMoney(map.money)
+
+        // 初始化储备（金钱等）
+        if(map.reserves) {
+            const reserveModifier = getReserveModifier(this)
+            for(const [reserveKey, amount] of Object.entries(map.reserves)) {
+                reserveModifier._setReserve(reserveKey, amount)
+            }
+        }
+
         const potion = map.potion
-        //设定药水总数
-        this.setPotionsMaxNum(potion.max)
+        // 药水最大数量现在由 status["max-potion"] 控制
         for(let key of potion.now){
             //获取初始药水
             this.getPotion(key)
@@ -75,27 +79,17 @@ export class Player extends Chara{
     getSelf(){
         return this
     }
-    //获取金钱
-    getMoney(moneyKeyMap:Record<string,number>){
-        //获得指定种类的金钱对象
-        for(let key in moneyKeyMap){
-            const value = moneyKeyMap[key]
-            const money = getMoneyByKey(key,value)
-            //添加到资产中
-            this.moneys.push(money) 
-        }
-    }
     //获取药水,一次一瓶
     getPotion(potionKey:string){
-        const maxNum = this.potions.max
-        const nowNum = this.potions.now.length
-        if(nowNum==maxNum){
+        const maxNum = getStatusValue(this, "max-potion")
+        const nowNum = this.potions.length
+        if(nowNum >= maxNum){
             return false
         }
         else{
             //获取药水对象的数据
             const potion = getPotionByKey(potionKey)
-            this.potions.now.push(potion)
+            this.potions.push(potion)
             return true
         }
     }
@@ -166,15 +160,6 @@ export class Player extends Chara{
     //获取遗物列表
     getRelicsList(){
         return this.relics
-    }
-    //设置药水的最大数量
-    setPotionsMaxNum(maxNum:number){
-        this.potions.max = maxNum
-    }
-
-    //获取当前持有的金钱
-    getNowMoneys(){
-        return this.moneys
     }
     //获取当前持有的卡牌
     getCardGroup(){

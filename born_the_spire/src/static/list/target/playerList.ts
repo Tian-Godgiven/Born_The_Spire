@@ -2,10 +2,9 @@ import { CharaMap } from "@/core/objects/target/Target"
 
 export type PlayerMap = CharaMap & {
     key:string
-    money:Record<string,number>,
+    reserves?:Record<string,number>,  // 储备（金钱等）
     potion:{
-        max:number,
-        now:string[]
+        now:string[]  // 初始拥有的药水
     }
     organ:string[]
     card:string[],
@@ -14,12 +13,13 @@ export const playerList:Record<string,PlayerMap> = {
     "default":{
         label:"你",
         key:"original_chara_00001",
-        money:{
-            "original_money_00001":100,
+        reserves:{
+            "gold":100,  // 初始金钱
         },
         status:{
             "max-health":50,//最大生命值
             "max-energy":3,//最大能量
+            "max-potion":3,//最大药水数量
         },
         current:["health","energy"],
         //默认触发器：回合开始时抽5张卡牌
@@ -37,7 +37,6 @@ export const playerList:Record<string,PlayerMap> = {
         }
         ],
         potion:{
-            max:3,
             now:["original_potion_00001"]
         },
         organ:[
