@@ -83,6 +83,41 @@ const potionList:PotionMap[] = [
                 }]
             }
         }
+    },
+    // 火焰药水
+    {
+        label:"火焰药水",
+        status:{
+            "damage":20
+        },
+        describe:["对单个目标造成",{key:["status","damage"]},"点伤害"],
+        targetType:"enemy",
+        key:"original_potion_00004",
+        interaction:{
+            use:{
+                label: "投掷",
+                target: {faction: "enemy"},
+                effects: [{
+                    key: "damage",
+                    params: {value: 20}
+                }]
+            }
+        }
+    },
+    // 瓶中精灵 - 无法使用（等待战斗系统完善）
+    {
+        label:"瓶中精灵",
+        status:{
+            "reviveHealth":30
+        },
+        describe:["死亡时以",{key:["status","reviveHealth"]},"点生命值复活（当前无法使用，等待战斗系统完善）"],
+        targetType:"player",
+        canDrop: false,  // 无法丢弃
+        key:"original_potion_00005",
+        interaction:{
+            // 暂无 use 交互，无法主动使用
+            // 未来实现：possess 时添加触发器，监听死亡事件并复活
+        }
     }
 ]
 

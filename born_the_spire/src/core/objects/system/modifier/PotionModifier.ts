@@ -2,7 +2,7 @@ import { Entity } from "../Entity"
 import { Potion } from "../../item/Subclass/Potion"
 import { ItemModifier } from "./ItemModifier"
 import { newLog, LogUnit } from "@/ui/hooks/global/log"
-import { computed } from "vue"
+import { computed, toRaw } from "vue"
 
 /**
  * 药水管理器
@@ -137,17 +137,16 @@ export class PotionModifier extends ItemModifier {
     }
 }
 
+// 使用 WeakMap 存储 PotionModifier 实例，避免与 Vue reactive 冲突
+const potionModifierMap = new WeakMap<Entity, PotionModifier>()
+
 /**
  * 为实体初始化药水管理器
  */
 export function initPotionModifier(entity: Entity): PotionModifier {
-    const modifier = new PotionModifier(entity)
-    Object.defineProperty(entity, '_potionModifier', {
-        value: modifier,
-        writable: false,
-        enumerable: false,
-        configurable: false
-    })
+    const rawEntity = toRaw(entity)  // 获取原始对象
+    const modifier = new PotionModifier(rawEntity)
+    potionModifierMap.set(rawEntity, modifier)
     return modifier
 }
 
@@ -155,9 +154,10 @@ export function initPotionModifier(entity: Entity): PotionModifier {
  * 获取实体的药水管理器
  */
 export function getPotionModifier(entity: Entity): PotionModifier {
-    const modifier = (entity as any)._potionModifier
+    const rawEntity = toRaw(entity)  // 获取原始对象作为key
+    let modifier = potionModifierMap.get(rawEntity)
     if (!modifier) {
-        return initPotionModifier(entity)
+        modifier = initPotionModifier(rawEntity)
     }
     return modifier
 }

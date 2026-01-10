@@ -25,8 +25,8 @@ export class EventStack{
     }
     //整理事件
     organizeEvents(){
-        this.stack = []
-        //将各个事件先按triggerlevel分成n组
+        //将gatherStack中的事件整理到stack中
+        //注意：不清空gatherStack，而是在整理后清空，以便检测执行期间是否有新事件
         const triggerLevelMap:Record<number,EventUnit[]> = {}
         for(let unit of this.gatherStack){
             //按照triggerLevel为key
@@ -35,6 +35,9 @@ export class EventStack{
             }
             triggerLevelMap[unit.triggerLevel].push(unit)
         }
+        //清空gatherStack，执行期间新增的事件会重新添加
+        this.gatherStack = []
+
         //将这些triggerLevel分组按照triggerLevel的值依次放进stack中
         const levelArray = Object.keys(triggerLevelMap)
             .map(Number)
@@ -48,6 +51,10 @@ export class EventStack{
             this.stack.push(eventsArray)
         }
     }
+    //检查是否有新事件被收集
+    hasNewEvents(){
+        return this.gatherStack.length > 0
+    }
     //执行事件栈
     async doEvents(){
         // 按排序后的键获取事件数组
@@ -56,6 +63,8 @@ export class EventStack{
                 await event.actionEvent.excute()
             }
         }
+        // 清空stack，为下一轮执行做准备
+        this.stack = []
     }
     
 }

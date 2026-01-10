@@ -120,6 +120,9 @@ export function startChooseTarget(option:ChooseOption,position:Position){
     const {targetType,onSuccess,onStop=()=>{},ifShowConnectLine} = option
     //解析选择规则
     const rule = resolveTargetTypeRules(targetType)
+
+ 
+
     //按规则设置可选框
     setChooseAbleBlock(rule)
     nowChooseAction.value = {

@@ -2,6 +2,7 @@ import { getFromEffectMap } from "@/static/list/system/effectMap"
 import { Effect } from "./Effect"
 import { EffectParams } from "./EffectFunc"
 import { ActionEvent } from "../ActionEvent"
+import _ from "lodash"
 
 
 // 效果单元类型，这是效果对象存储在JSON中的格式
@@ -18,11 +19,21 @@ export function createEffectByUnit(event:ActionEvent,unit:EffectUnit):Effect{
     const data = getFromEffectMap(unit)
     //构建effect对象
     const {key,params,describe,resultStoreAs} = unit
+
+    // 使用 JSON 深拷贝
+    let clonedParams: EffectParams
+    try {
+        clonedParams = JSON.parse(JSON.stringify(params))
+    } catch (e) {
+        // 如果有循环引用，退回到浅拷贝
+        clonedParams = {...params}
+    }
+
     const effectObj = new Effect({
         label:data.label,
         key,
         effectFunc:data.effect,
-        params,
+        params: clonedParams,  // 深拷贝 params，避免污染原始数据
         describe,
         triggerEvent:event,
         resultStoreAs

@@ -1,4 +1,4 @@
-import { reactive } from "vue"
+import { reactive, toRaw } from "vue"
 import { Entity } from "../Entity"
 import { newLog } from "@/ui/hooks/global/log"
 import { doEvent } from "../ActionEvent"
@@ -131,17 +131,16 @@ export class ReserveModifier {
     }
 }
 
+// 使用 WeakMap 存储 ReserveModifier 实例，避免与 Vue reactive 冲突
+const reserveModifierMap = new WeakMap<Entity, ReserveModifier>()
+
 /**
  * 为实体初始化储备管理器
  */
 export function initReserveModifier(entity: Entity): ReserveModifier {
-    const modifier = new ReserveModifier(entity)
-    Object.defineProperty(entity, '_reserveModifier', {
-        value: modifier,
-        writable: false,
-        enumerable: false,
-        configurable: false
-    })
+    const rawEntity = toRaw(entity)
+    const modifier = new ReserveModifier(rawEntity)
+    reserveModifierMap.set(rawEntity, modifier)
     return modifier
 }
 
@@ -149,9 +148,10 @@ export function initReserveModifier(entity: Entity): ReserveModifier {
  * 获取实体的储备管理器
  */
 export function getReserveModifier(entity: Entity): ReserveModifier {
-    const modifier = (entity as any)._reserveModifier
+    const rawEntity = toRaw(entity)
+    let modifier = reserveModifierMap.get(rawEntity)
     if (!modifier) {
-        return initReserveModifier(entity)
+        modifier = initReserveModifier(rawEntity)
     }
     return modifier
 }

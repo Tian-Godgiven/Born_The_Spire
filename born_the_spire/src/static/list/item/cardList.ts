@@ -81,8 +81,81 @@ const cardList:CardMap[] = [{
         use:{
             target:{faction:"player",key:"self"},
             effects:[{
-                key:"getState",
-                params:{statusKey:"power",stacks:1},
+                key:"applyState",
+                params:{stateKey:"power",stacks:1},
+            }]
+        }
+    }
+},{
+    label:"淬毒",
+    status:{
+        poison:3,
+        cost:1
+    },
+    describe:["使目标获得",{key:["status","poison"]},"层中毒"],
+    key:"original_card_00008",
+    interaction:{
+        use:{
+            target:{faction:"enemy"},
+            effects:[{
+                key:"applyState",
+                params:{stateKey:"poison",stacks:3},
+            }]
+        }
+    }
+},{
+    label:"随机打击",
+    status:{
+        cost:1,
+        minDamage:5,
+        maxDamage:10
+    },
+    describe:["造成",{key:["status","minDamage"]},"到",{key:["status","maxDamage"]},"点随机伤害"],
+    key:"original_card_00009",
+    interaction:{
+        use:{
+            target:{faction:"enemy"},
+            effects:[{
+                key:"damage",
+                params:{value:"$random[5,10]"},
+            }]
+        }
+    }
+},{
+    label:"虚弱诅咒",
+    status:{
+        weak:2,
+        cost:0
+    },
+    describe:["使自己获得",{key:["status","weak"]},"层虚弱"],
+    key:"original_card_00010",
+    interaction:{
+        use:{
+            target:{faction:"player",key:"self"},
+            effects:[{
+                key:"applyState",
+                params:{stateKey:"weak",stacks:2},
+            }]
+        }
+    }
+},{
+    label:"易伤打击",
+    status:{
+        vulnerable:2,
+        damage:8,
+        cost:1
+    },
+    describe:["造成",{key:["status","damage"]},"点伤害，使目标获得",{key:["status","vulnerable"]},"层易伤"],
+    key:"original_card_00011",
+    interaction:{
+        use:{
+            target:{faction:"enemy"},
+            effects:[{
+                key:"damage",
+                params:{value:8},
+            },{
+                key:"applyState",
+                params:{stateKey:"vulnerable",stacks:2},
             }]
         }
     }

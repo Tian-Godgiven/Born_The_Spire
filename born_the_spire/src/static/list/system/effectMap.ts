@@ -1,5 +1,5 @@
 import _ from "lodash"
-import {damageTo, reduceDamageFor} from "@/core/effects/health/damage"
+import {damageTo, reduceDamageFor, modifyDamageValue, modifyDamageByPercent} from "@/core/effects/health/damage"
 import { healTo } from "@/core/effects/health/heal"
 import { EffectUnit } from "@/core/objects/system/effect/EffectUnit"
 import { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
@@ -8,7 +8,7 @@ import { drawFromDrawPile } from "@/core/effects/card/drawCard"
 import { costEnergy, emptyEnergy, getEnergy, pay_costEnergy } from "@/core/effects/energy"
 import { newError } from "@/ui/hooks/global/alert"
 import { discardCard, pay_discardCard } from "@/core/effects/card/discard"
-import { getState } from "@/core/effects/state/stateControl"
+import { applyState, removeState, changeStateStack } from "@/core/effects/state/stateControl"
 import { addStatusBase } from "@/core/effects/status/changeStatus"
 import { addCurrent, addStatusBaseCurrentValue } from "@/core/effects/current/changeCurrent"
 import { gainReserve, spendReserve } from "@/core/effects/reserve/reserve"
@@ -36,6 +36,24 @@ const effectMap:EffectData[] = [
     key:"damage",
     effect:damageTo
 },
+//减少伤害值
+{
+    label:"减少伤害值",
+    key:"reduceDamageValue",
+    effect:reduceDamageFor
+},
+//修改伤害值
+{
+    label:"修改伤害值",
+    key:"modifyDamageValue",
+    effect:modifyDamageValue
+},
+//按百分比修改伤害值
+{
+    label:"按百分比修改伤害值",
+    key:"modifyDamageByPercent",
+    effect:modifyDamageByPercent
+},
 //收到伤害时，减少受到的伤害
 {
     label:"受到伤害时，减少受到的伤害",
@@ -55,11 +73,21 @@ const effectMap:EffectData[] = [
 },
 //附加状态
 {
-    label:"附加状态",
-    key:"getState",
-    effect:(event,effect)=>{
-        getState(event,effect)
-    }
+    label:"添加状态",
+    key:"applyState",
+    effect:applyState
+},
+//移除状态
+{
+    label:"移除状态",
+    key:"removeState",
+    effect:removeState
+},
+//修改状态层数
+{
+    label:"修改状态层数",
+    key:"changeStateStack",
+    effect:changeStateStack
 },
 //回复生命
 {

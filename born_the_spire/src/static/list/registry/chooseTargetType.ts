@@ -50,30 +50,50 @@ export type TargetType = {
 //根据targetType来判断当前场上哪些对象满足key对应的约束函数要求
 export function getSpecificTargetsByTargetType(targetType:TargetType&{key:string}):Target[]{
     let nowTargetArr:Target[]
-    //先按照阵营获取可选对象
-    switch(targetType?.faction){
-        case "player":
-            nowTargetArr = nowBattle.value?.getTeam("player") ?? []
-            break;
-        case "all":
-            const enemy = nowBattle.value?.getTeam("enemy") ?? []
-            const player = nowBattle.value?.getTeam("player") ?? []
-            nowTargetArr = [...player,...enemy]
-            break;
-        default:
-            nowTargetArr = nowBattle.value?.getTeam("enemy") ?? []
-    }
-    //过滤约束函数
+
+    // 如果有key约束，先从全局目标池中应用key过滤
+    // 这样像"self"这种key就不会受faction限制
     if(targetType?.key){
         const func = chooseTargetType[targetType.key] as RegistryValue
         if(!func){
             newError(["选择目标类型注册表中不存在指定key对应的约束函数",targetType.key])
+            return []
         }
-        //过滤可选目标
-        nowTargetArr = func(nowTargetArr,true)
+        // 从全局目标池（所有阵营）中筛选
+        const enemy = nowBattle.value?.getTeam("enemy") ?? []
+        const player = nowBattle.value?.getTeam("player") ?? []
+        const allTargets = [...player, ...enemy]
+        nowTargetArr = func(allTargets, true)
+
+        // 如果指定了faction，再按faction进一步过滤
+        if(targetType?.faction && targetType.faction !== "all"){
+            nowTargetArr = nowTargetArr.filter(t => {
+                if(targetType.faction === "player"){
+                    return nowBattle.value?.getTeam("player")?.includes(t)
+                } else {
+                    return nowBattle.value?.getTeam("enemy")?.includes(t)
+                }
+            })
+        }
     }
+    // 如果没有key约束，只按照阵营获取可选对象
+    else {
+        switch(targetType?.faction){
+            case "player":
+                nowTargetArr = nowBattle.value?.getTeam("player") ?? []
+                break;
+            case "all":
+                const enemy = nowBattle.value?.getTeam("enemy") ?? []
+                const player = nowBattle.value?.getTeam("player") ?? []
+                nowTargetArr = [...player,...enemy]
+                break;
+            default:
+                nowTargetArr = nowBattle.value?.getTeam("enemy") ?? []
+        }
+    }
+
     return nowTargetArr
-    
+
 }
 
 // 判断targets是否满足条件

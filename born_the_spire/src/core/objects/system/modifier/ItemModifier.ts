@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid"
 import { Entity } from "../Entity"
 import { Item } from "../../item/Item"
-import { reactive } from "vue"
+import { reactive, toRaw } from "vue"
 import { newLog, LogUnit } from "@/ui/hooks/global/log"
 import { doEvent } from "../ActionEvent"
 import { EffectUnit } from "../effect/EffectUnit"
@@ -541,18 +541,16 @@ export class ItemModifier {
     }
 }
 
+// 使用 WeakMap 存储 ItemModifier 实例，避免与 Vue reactive 冲突
+const itemModifierMap = new WeakMap<Entity, ItemModifier>()
+
 /**
  * 为实体初始化物品修饰器管理器
  */
 export function initItemModifier(entity: Entity): ItemModifier {
-    const modifier = new ItemModifier(entity)
-    // 将修饰器挂载到实体的私有属性上
-    Object.defineProperty(entity, '_itemModifier', {
-        value: modifier,
-        writable: false,
-        enumerable: false,
-        configurable: false
-    })
+    const rawEntity = toRaw(entity)
+    const modifier = new ItemModifier(rawEntity)
+    itemModifierMap.set(rawEntity, modifier)
     return modifier
 }
 
@@ -560,10 +558,10 @@ export function initItemModifier(entity: Entity): ItemModifier {
  * 获取实体的物品修饰器管理器
  */
 export function getItemModifier(entity: Entity): ItemModifier {
-    const modifier = (entity as any)._itemModifier
+    const rawEntity = toRaw(entity)
+    let modifier = itemModifierMap.get(rawEntity)
     if (!modifier) {
-        // 如果不存在，自动初始化
-        return initItemModifier(entity)
+        modifier = initItemModifier(rawEntity)
     }
     return modifier
 }

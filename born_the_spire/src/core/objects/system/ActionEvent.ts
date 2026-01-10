@@ -47,6 +47,7 @@ export class ActionEvent<
     private _sideEffects:Array<()=>void> = []//副作用收集器，用于收集effect执行时产生的副作用（如修饰器的remover）
     private transactionCollector?:(e:ActionEvent,triggerLevel?:number)=>void//该事件所属的事务的收集器，通过该收集器可以将任意事件添加到该事务中，从而完成事件的内部收集
     public logUnit?:LogUnit//该事件的日志单元，用于收集子日志
+    private parentEvent?:ActionEvent//父事件，用于建立日志的父子关系
     constructor(
         key:string,//触发key
         source:s,medium:m,target:t|t[],
@@ -108,14 +109,24 @@ export class ActionEvent<
     happen(doEvent:()=>void,triggerLevel?:number){
         this.onExecute = doEvent
         // 创建日志并保存引用，供后续添加子日志
-        this.logUnit = newLog({
+        // 如果有父事件，作为子日志创建；否则作为顶层日志创建
+        const logData = {
             main:["发生了事件",this],
             detail:[
                 "来源:",this.source," | ",
                 "媒介:",this.medium," | ",
                 "目标:",this.target," | "
             ]
-        })
+        }
+
+        if(this.parentEvent?.logUnit){
+            // 作为父事件的子日志
+            this.logUnit = newLog(logData, this.parentEvent.logUnit)
+        } else {
+            // 作为顶层日志
+            this.logUnit = newLog(logData)
+        }
+
         //判断这个事件是否具备事务收集器(将与该事件有关的事件收集在同一个事务内)
         const transactionCollector = this.transactionCollector
         if(transactionCollector){
@@ -195,6 +206,9 @@ export class ActionEvent<
     }
     //触发了另一个事件，这会使得另一个事件得到一些关键属性，以使得这两个事件进入同一个事务中
     spawnEvent(event:ActionEvent){
+        // 设置父子关系，用于日志嵌套
+        event.parentEvent = this
+        // 共享事务收集器
         if(this.transactionCollector){
             event.setTransactionCollector(this.transactionCollector)
         }
@@ -249,6 +263,7 @@ export function doEvent(
         event.onComplete = onComplete
     }
     event.happen(()=>{doWhat()})
+    return event
 }
 
 

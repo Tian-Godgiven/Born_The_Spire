@@ -39,12 +39,13 @@ export const organList:OrganMap[] = [
                 target:{"key":"self"},
                 effects:[],
                 triggers:[{
+                    when:"before",
                     how:"take",
                     key:"damage",
                     event:[{
                         key:"reduceDamage",
                         label:"石肤防护",
-                        targetType:"triggerOwner",
+                        targetType:"triggerEffect",  // 把触发效果（damage效果）作为目标
                         effect:[
                             {key:"reduceDamageValue",params:{value:1}}
                         ]

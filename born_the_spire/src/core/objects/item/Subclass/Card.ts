@@ -1,7 +1,7 @@
 import { CardMap } from "@/static/list/item/cardList";
 import { Target } from "@/core/objects/target/Target";
 import { Item } from "@/core/objects/item/Item";
-import { doEvent } from "@/core/objects/system/ActionEvent";
+import { doEvent, ActionEvent } from "@/core/objects/system/ActionEvent";
 import { CardPiles, Player } from "@/core/objects/target/Player";
 import { Entity } from "@/core/objects/system/Entity";
 import { EffectUnit } from "@/core/objects/system/effect/EffectUnit";
@@ -71,13 +71,30 @@ export async function useCard(card:Card,fromPile:Card[],source:Player,targets:Ta
             },
             effectUnits:[costEffect],
         },{
-            effectUnits:[...cardEffects],
-            condition:(e)=>{
-                if(e.getEventResult("costEnergyResult")!=true){
-                    //卡牌需要的费用不足，取消这个卡牌使用事件
+            // 如果支付成功，创建 cardEffect 事件
+            effectUnits:[],
+            condition:(useCardEvent)=>{
+                const success = useCardEvent.getEventResult("costEnergyResult") == true
+                if(success){
+                    // 创建卡牌效果事件
+                    const cardEffectEvent = new ActionEvent(
+                        "cardEffect",
+                        source,
+                        card,
+                        targets,
+                        {},
+                        [...cardEffects]
+                    )
+                    // 继承 useCard 事件的事务收集器
+                    useCardEvent.spawnEvent(cardEffectEvent)
+                    // 收集到事务中
+                    cardEffectEvent.happen(()=>{})
+                }
+                else{
+                    // 费用不足，取消事件
                     return "break"
                 }
-                return e.getEventResult("costEnergyResult") == true
+                return true
             }
         },{
             effectUnits:[discardEffect],

@@ -41,6 +41,8 @@
 
 <style scoped lang='scss'>
 .target{
+    width: 100%;
+        height: 100%;
     .chooseBox{
         width: 100%;
         height: 100%;

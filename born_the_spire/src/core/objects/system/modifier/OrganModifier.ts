@@ -2,9 +2,9 @@ import { Entity } from "../Entity"
 import { Organ } from "../../target/Organ"
 import { ItemModifier } from "./ItemModifier"
 import { newLog } from "@/ui/hooks/global/log"
-import { doEvent } from "../ActionEvent"
+import { doEvent, ActionEvent } from "../ActionEvent"
 import { EffectUnit } from "../effect/EffectUnit"
-import { computed } from "vue"
+import { computed, toRaw } from "vue"
 import { resolveTriggerEventTarget } from "../trigger/Trigger"
 import { getCardModifier } from "./CardModifier"
 import { Player } from "../../target/Player"
@@ -71,19 +71,25 @@ export class OrganModifier extends ItemModifier {
                                         const target = resolveTriggerEventTarget(
                                             eventConfig.targetType,
                                             event,
+                                            effect,       // 触发效果
                                             organ,        // triggerSource: 器官本身
                                             this.owner    // triggerOwner: 拥有者
                                         )
 
-                                        // 执行事件
-                                        doEvent({
-                                            key: eventConfig.key,
-                                            source: organ,
-                                            medium: organ,
+                                        // 创建新事件（不自动 happen）
+                                        const newEvent = new ActionEvent(
+                                            eventConfig.key,
+                                            organ,
+                                            organ,
                                             target,
-                                            info: eventConfig.info || {},
-                                            effectUnits: eventConfig.effect
-                                        })
+                                            {...eventConfig.info, level: eventConfig.level || 0},
+                                            eventConfig.effect
+                                        )
+
+                                        // 将新事件关联到触发事件的事务中
+                                        event.spawnEvent(newEvent)
+                                        // 手动 happen，传递 triggerLevel
+                                        newEvent.happen(() => {}, triggerLevel)
                                     }
                                 })
 
@@ -350,17 +356,16 @@ export class OrganModifier extends ItemModifier {
     }
 }
 
+// 使用 WeakMap 存储 OrganModifier 实例，避免与 Vue reactive 冲突
+const organModifierMap = new WeakMap<Entity, OrganModifier>()
+
 /**
  * 为实体初始化器官管理器
  */
 export function initOrganModifier(entity: Entity): OrganModifier {
-    const modifier = new OrganModifier(entity)
-    Object.defineProperty(entity, '_organModifier', {
-        value: modifier,
-        writable: false,
-        enumerable: false,
-        configurable: false
-    })
+    const rawEntity = toRaw(entity)
+    const modifier = new OrganModifier(rawEntity)
+    organModifierMap.set(rawEntity, modifier)
     return modifier
 }
 
@@ -368,9 +373,10 @@ export function initOrganModifier(entity: Entity): OrganModifier {
  * 获取实体的器官管理器
  */
 export function getOrganModifier(entity: Entity): OrganModifier {
-    const modifier = (entity as any)._organModifier
+    const rawEntity = toRaw(entity)
+    let modifier = organModifierMap.get(rawEntity)
     if (!modifier) {
-        return initOrganModifier(entity)
+        modifier = initOrganModifier(rawEntity)
     }
     return modifier
 }

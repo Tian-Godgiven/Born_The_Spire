@@ -4,28 +4,25 @@
         <div class="name">{{ nowPlayer.label }}</div>
         <div class="health">
             生命：
-            {{ health.now }} / 
+            {{ health.now }} /
             {{ health.max }}
         </div>
-        <div class="moneys">
-            <div v-for="money in moneys">
-                {{ money.label+"："+money.num }}
-            </div>
-        </div>
+        <ReserveDisplay :player="nowPlayer" />
         <div class="potions flex">
-            <div v-for="potion in potions" >
-                <div v-if="potion">{{ potion.label }}</div>
-                <div v-else>[空]</div>
-            </div>
+            <PotionVue
+                v-for="(potion, index) in potions"
+                :key="index"
+                :potion="potion"
+            />
         </div>
     </div>
-    
+
     <div class="gameRunData">
         <div>层数：{{ nowGameRun.towerLevel }}</div>
         <div>进阶：{{ nowGameRun.towerFire }}</div>
     </div>
     <div class="ability flex">
-        <Button v-for="ability in abilities" 
+        <Button v-for="ability in abilities"
             :click="ability.click"
             :label="ability.label"/>
     </div>
@@ -36,17 +33,28 @@
     import { endRun, nowGameRun, nowPlayer } from '@/core/objects/game/run';
     import { computed } from 'vue';
     import Button from "@/ui/components/global/Button.vue"
+    import ReserveDisplay from "./components/ReserveDisplay.vue"
+    import PotionVue from "@/ui/components/object/Potion.vue"
     import { changeScene } from "@/ui/interaction/scene";
-import { showCardPile } from '@/ui/interaction/cardPile';
+    import { showCardPile } from '@/ui/interaction/cardPile';
+    import { getStatusValue } from '@/core/objects/system/status/Status';
+    import type { Potion } from '@/core/objects/item/Subclass/Potion';
+    import { getPotionModifier } from '@/core/objects/system/modifier/PotionModifier';
+
     const health = computed(()=>{
         return nowPlayer.getHealth()
     })
-    const moneys = computed(()=>{
-        return nowPlayer.getNowMoneys()
+
+    const potions = computed(() => {
+        const maxNum = getStatusValue(nowPlayer, "max-potion")
+        const potionModifier = getPotionModifier(nowPlayer)
+        const list: (Potion | null)[] = [...potionModifier.potions.value]
+        while (list.length < maxNum) {
+            list.push(null)
+        }
+        return list
     })
-    const potions = computed(()=>{
-        return nowPlayer.getPotionList()
-    })
+
     const abilities = [
         {label:"地图",click:()=>changeScene("map")},
         {label:"卡组",click:()=>showCardPile()},
@@ -76,5 +84,8 @@ import { showCardPile } from '@/ui/interaction/cardPile';
     >div{
         flex-shrink: 0;
     }
+}
+.potions{
+    gap: 10px;
 }
 </style>

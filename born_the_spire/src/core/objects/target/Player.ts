@@ -11,6 +11,7 @@ import { washPile } from "@/core/effects/card";
 import { reactive } from "vue";
 import { getReserveModifier } from "../system/modifier/ReserveModifier";
 import { getStatusValue } from "../system/status/Status";
+import { getPotionModifier } from "../system/modifier/PotionModifier";
 
 export type CardPiles = {
     handPile:Card[],
@@ -32,22 +33,10 @@ export class Player extends Chara{
     })
     //药水的持有情况
     public potions:Potion[] = []  // 当前拥有的药水（最大数量由 status["max-potion"] 控制）
-    public cards:Card[]  // 不要在这里初始化！
+    public cards:Card[] = []  // 卡牌数组（器官会通过 CardModifier 添加卡牌）
     public relics:Relic[] = []//拥有的遗物
     constructor(map:PlayerMap){
-        console.log('[Player 构造函数] 开始，调用 super 之前')
         super(map)
-        console.log('[Player 构造函数] super 完成后')
-
-        // 在字段初始化后，初始化 cards 数组
-        this.cards = []
-        console.log('[Player 构造函数] cards 初始化为空数组')
-
-        // 现在添加器官（这样 CardModifier 才能正确添加卡牌）
-        console.log('[Player 构造函数] 准备初始化器官')
-        this.initOrgans()
-        console.log('[Player 构造函数] 器官初始化完成，cards 长度：', this.cards.length)
-        console.log('[Player 构造函数] cards 内容：', this.cards.map(c => c.label))
 
         //玩家特有内容的初始化
 
@@ -66,13 +55,10 @@ export class Player extends Chara{
             this.getPotion(key)
         }
 
-        console.log('[Player 构造函数] 准备添加初始卡组')
         //获取初始拥有的卡组
         for(let key of map.card){
             this.getCard(key)
         }
-        console.log('[Player 构造函数] 完成，最终 cards 长度：', this.cards.length)
-        console.log('[Player 构造函数] 最终 cards 内容：', this.cards.map(c => c.label))
     }
     
     //获取自身
@@ -82,14 +68,16 @@ export class Player extends Chara{
     //获取药水,一次一瓶
     getPotion(potionKey:string){
         const maxNum = getStatusValue(this, "max-potion")
-        const nowNum = this.potions.length
+        const potionModifier = getPotionModifier(this)
+        const nowNum = potionModifier.getPotions().length
         if(nowNum >= maxNum){
             return false
         }
         else{
             //获取药水对象的数据
             const potion = getPotionByKey(potionKey)
-            this.potions.push(potion)
+            // 使用 PotionModifier 系统添加药水
+            potionModifier.acquirePotion(potion, this)
             return true
         }
     }
@@ -129,15 +117,10 @@ export class Player extends Chara{
     }
     //初始化牌堆，将卡组内的卡牌洗进抽牌堆
     initCardPile(){
-        console.log(`[Player.initCardPile] 开始初始化牌堆，当前 cards 数组长度：`, this.cards.length)
-        console.log(`[Player.initCardPile] cards 内容：`, this.cards.map(c => c.label))
-
         //洗抽牌堆
         const cards = this.cards;
         this.cardPiles.drawPile = cards;
         this.washCardPile("drawPile")
-
-        console.log(`[Player.initCardPile] 初始化完成，drawPile 长度：`, this.cardPiles.drawPile.length)
 
         //其他牌堆清空
         this.cardPiles.discardPile = []

@@ -1,4 +1,4 @@
-import { reactive } from "vue"
+import { reactive, toRaw } from "vue"
 import { Entity } from "../Entity"
 import { Card } from "../../item/Subclass/Card"
 import { Player } from "../../target/Player"
@@ -20,7 +20,6 @@ export class CardModifier {
 
     constructor(owner: Player) {
         this.owner = owner
-        console.log('[CardModifier 构造] 绑定到 player：', owner === (window as any).nowPlayerDebug ? 'nowPlayer(global)' : 'new player', 'cards:', owner.cards)
     }
 
     /**
@@ -38,9 +37,6 @@ export class CardModifier {
             this.owner.cards = []
         }
 
-        console.log(`[CardModifier] 准备添加 ${cardKeys.length} 张卡牌，来源：`, (source as any).label || source)
-        console.log(`[CardModifier] 当前 cards 数组长度：`, this.owner.cards.length)
-
         for (const cardKey of cardKeys) {
             // 创建卡牌实例
             const card = getCardByKey(cardKey)
@@ -50,7 +46,6 @@ export class CardModifier {
 
             // 添加到玩家卡组
             this.owner.cards.push(card)
-            console.log(`[CardModifier] 添加卡牌到 cards：`, card.label, `新长度：`, this.owner.cards.length)
 
             // 记录到来源映射
             if (!this.cardsFromSources.has(source)) {
@@ -66,7 +61,6 @@ export class CardModifier {
             }
         }
 
-        console.log(`[CardModifier] 添加完成，总卡牌数：`, this.owner.cards.length)
         return addedCards
     }
 
@@ -192,17 +186,15 @@ export class CardModifier {
     }
 }
 
+// 使用 WeakMap 存储 CardModifier 实例，避免与 Vue reactive 冲突
+const cardModifierMap = new WeakMap<Player, CardModifier>()
+
 /**
  * 为玩家初始化卡牌修饰器管理器
  */
 export function initCardModifier(player: Player): CardModifier {
     const modifier = new CardModifier(player)
-    Object.defineProperty(player, '_cardModifier', {
-        value: modifier,
-        writable: false,
-        enumerable: false,
-        configurable: false
-    })
+    cardModifierMap.set(player, modifier)
     return modifier
 }
 
@@ -210,9 +202,9 @@ export function initCardModifier(player: Player): CardModifier {
  * 获取玩家的卡牌修饰器管理器
  */
 export function getCardModifier(player: Player): CardModifier {
-    const modifier = (player as any)._cardModifier
+    let modifier = cardModifierMap.get(player)
     if (!modifier) {
-        return initCardModifier(player)
+        modifier = initCardModifier(player)
     }
     return modifier
 }

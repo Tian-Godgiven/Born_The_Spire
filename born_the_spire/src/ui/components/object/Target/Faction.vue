@@ -1,18 +1,18 @@
 <template>
 <div class="faction"  
     @mouseenter="onHover" @mouseleave="onLeave" @click="onClick">
-    <ChooseBox :chooseState="state.chooseState"></ChooseBox>
-    <CharaVue :class="ifCenter(target)?'center':''" v-for="target in charas" :target />
+    <ChooseBox :chooseState="chooseState.chooseState"></ChooseBox>
+    <CharaVue :class="ifCenter(target)?'center':''" v-for="target in charas" :target :side="whichSide" />
 </div>
 </template>
 
 <script setup lang='ts'>
     import { Chara } from '@/core/objects/target/Target';
-    import { ref } from 'vue';
+    import { computed, ref } from 'vue';
     import { TargetChooseState, targetManager } from '@/ui/interaction/target/targetManager';
     import { chooseAFaction } from '@/ui/interaction/target/chooseTarget';
     import { nowPlayer } from '@/core/objects/game/run';
-    import CharaVue from './Chara.vue';
+    import CharaVue from './Chara/Chara.vue';
     import ChooseBox from '../../interaction/chooseTarget/ChooseBox.vue';
     const {charas,factionName} = defineProps<{
         charas:Chara[],
@@ -25,7 +25,17 @@
         }
         return false
     }
-    const state = ref<{chooseState:TargetChooseState}>(getChooseState())
+    //阵营在哪边
+    const whichSide = computed(()=>{
+        if(factionName == "player"){
+            return "left"
+        }
+        else{
+            return "right"
+        }
+    })
+    //阵营的选择状态
+    const chooseState = ref<{chooseState:TargetChooseState}>(getChooseState())
     function getChooseState(){
         if(!["enemy","player","all"].includes(factionName)){
             return targetManager.addFaction(factionName)
@@ -45,11 +55,11 @@
         targetManager.setFactionState(factionName,"isHovered",false)
     }
     function onClick(){
-        if(!state.value?.chooseState.isSelectable){
+        if(!chooseState.value?.chooseState.isSelectable){
             return
         }
         //已选中则取消
-        if(state.value?.chooseState.isSelected){
+        if(chooseState.value?.chooseState.isSelected){
             targetManager.setFactionState(factionName,"isSelected",false)
         }
         else{
@@ -66,6 +76,7 @@
     position: relative;
     display: flex;
     justify-content: center;
+    align-items: center;
     .chooseBox{
         width: 80%;
         height: 80%;

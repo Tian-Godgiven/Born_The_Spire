@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang='ts'>
-    import Top from "./Top.vue";
+    import Top from "./Top/index.vue";
     import Battle from "@/ui/page/Scene/running/Battle.vue"
 import ConnectLine from "@/ui/components/interaction/chooseTarget/ConnectLine.vue";
 import TestTool from "@/ui/page/tool/testTool/TestTool.vue";

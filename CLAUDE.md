@@ -203,6 +203,21 @@ Use `player.appendTrigger()` with appropriate when/how/key combinations.
 - Status and Current values are reactive
 - Changes through the effect system automatically trigger UI updates
 
+## UI Design Style
+
+The game uses a minimalist, retro aesthetic with clean lines and simple borders:
+
+- **Visual Style**: Black borders (2px solid), white backgrounds
+- **NO Shadows**: Do not use `box-shadow`, `drop-shadow`, or any shadow effects
+- **Popovers/Modals**: Use absolute positioning with clean borders only
+- **Colors**: Minimal color palette, primarily black text on white backgrounds
+- **Hover Effects**: Subtle background color changes (e.g., `rgba(0, 0, 0, 0.05)`)
+- **Interactive Elements**: Clear visual feedback on hover/click without overdone animations
+
+When creating new UI components, match this existing aesthetic for visual consistency.
+
+**Example Reference**: See `ReserveDisplay.vue` for popover styling that fits the game's aesthetic.
+
 ## Testing Workflow
 
 Currently no automated tests. Manual testing workflow:

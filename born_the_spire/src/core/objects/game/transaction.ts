@@ -46,7 +46,17 @@ export class Transaction{
     //执行事件栈
     async do(){
         this.state = "doing"
-        await this.eventStack.doEvents()
+        // 循环执行直到没有新事件产生
+        while(true){
+            await this.eventStack.doEvents()
+            // 如果执行期间有新事件被收集，继续整理并执行
+            if(this.eventStack.hasNewEvents()){
+                this.eventStack.organizeEvents()
+            } else {
+                // 没有新事件，结束循环
+                break
+            }
+        }
         //执行完成后结束该事务
         await this.stop("self")
     }

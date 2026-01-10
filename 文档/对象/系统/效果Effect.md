@@ -88,3 +88,160 @@
 3.为你的某个事件添加这个效果名称的效果单元
 4.在该事件创建时，会根据这个效果单元创建对应的效果对象，其中就包含了你的酷炫函数
 5.在执行事件时，调用效果对象，即可让你的酷炫函数被执行！
+
+## params 语法
+
+效果的参数（params）支持动态语法，可以从事件的参与者中获取值。
+
+### 语法规则
+
+```
+$<participant>.<type>.<key>
+```
+
+**参数说明：**
+- `participant`: 事件参与者
+  - `source`: 事件来源
+  - `medium`: 事件媒介
+  - `target`: 事件目标
+
+- `type`: 值的类型
+  - `stack`: 状态层数（仅当参与者是 State 对象时可用）
+  - `status`: 属性值（从 Status 系统获取）
+  - `current`: 当前值（从 Current 系统获取）
+
+- `key`: 具体的键名
+
+### 支持的语法类型
+
+#### 动态值获取：`$<participant>.<type>.<key>`
+从事件参与者获取动态值
+
+#### 随机值生成：`$random[min,max]`
+生成随机数值
+- 整数随机：`$random[1,10]` → 生成 1-10 的整数（包含边界）
+- 浮点随机：`$random[1.5,3.5]` → 生成 1.5-3.5 的浮点数（不包含 max）
+
+#### 结果值引用：`$r.<key>`
+从事件结果中获取值（旧语法）
+
+### 使用示例
+
+#### 1. 获取状态层数
+
+```typescript
+{
+  key: "damage",
+  params: {
+    value: "$source.stack.default"  // 从 source（状态对象）获取 default 层数
+  }
+}
+```
+
+**适用场景：** 中毒状态在回合结束时造成等同于层数的伤害
+
+#### 2. 获取属性值
+
+```typescript
+{
+  key: "heal",
+  params: {
+    value: "$target.status.maxHealth"  // 获取目标的最大生命值
+  }
+}
+```
+
+**适用场景：** 完全恢复目标生命值
+
+#### 3. 获取当前值
+
+```typescript
+{
+  key: "damage",
+  params: {
+    value: "$target.current.health"  // 获取目标的当前生命值
+  }
+}
+```
+
+**适用场景：** 造成等同于目标当前生命值的伤害
+
+#### 4. 随机值
+
+```typescript
+{
+  key: "damage",
+  params: {
+    value: "$random[5,10]"  // 生成 5 到 10 之间的随机整数
+  }
+}
+```
+
+**适用场景：** 造成随机伤害
+
+**语法规则：**
+- `$random[min,max]`: 生成随机数
+  - 如果 min 和 max 都是整数，生成 [min, max] 范围内的随机整数（包含边界）
+  - 如果 min 或 max 有小数，生成 [min, max) 范围内的随机浮点数（不包含 max）
+- 示例：
+  - `$random[1,6]` → 1, 2, 3, 4, 5, 6（模拟骰子）
+  - `$random[5,10]` → 5, 6, 7, 8, 9, 10
+  - `$random[1.5,3.5]` → 1.5 到 3.5 之间的浮点数
+
+#### 5. 修改伤害值（状态增伤）
+
+```typescript
+// 力量状态：造成伤害时增加伤害
+{
+  label: "力量",
+  key: "power",
+  interaction: {
+    possess: {
+      triggers: [{
+        when: "before",
+        how: "make",
+        key: "damage",
+        event: [{
+          key: "powerBoost",
+          targetType: "triggerEffect",  // 目标是伤害效果本身
+          effect: [{
+            key: "modifyDamageValue",
+            params: {
+              delta: "$source.stack.default"  // 增加等同于力量层数的伤害
+            }
+          }]
+        }]
+      }]
+    }
+  }
+}
+```
+
+### 旧语法：$r.xxx
+
+从事件结果中获取值：
+
+```typescript
+{
+  key: "someEffect",
+  params: {
+    value: "$r.resultKey"  // 从 event.getEventResult("resultKey") 获取
+  }
+}
+```
+
+**适用场景：** 当一个效果需要使用前一个效果的返回值时
+
+### 解析时机
+
+参数解析发生在 **Effect 对象构造时**，在 Effect 构造函数中自动调用 `resolveParams()` 方法。
+
+所有以 `$` 开头的字符串参数都会被自动解析为实际值。
+
+**注意：** 随机值每次创建 Effect 对象时都会重新 roll，这意味着同一张卡的不同使用会产生不同的随机值。
+
+### 错误处理
+
+如果解析失败（例如参与者不是预期的类型，或者键不存在），会在控制台输出警告信息，并返回 `undefined`。
+
+效果函数应该妥善处理 `undefined` 值，避免运行时错误。

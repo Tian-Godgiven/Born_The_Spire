@@ -120,17 +120,15 @@ export class RelicModifier extends ItemModifier {
     }
 }
 
+// 使用 WeakMap 存储 RelicModifier 实例，避免与 Vue reactive 冲突
+const relicModifierMap = new WeakMap<Entity, RelicModifier>()
+
 /**
  * 为实体初始化遗物管理器
  */
 export function initRelicModifier(entity: Entity): RelicModifier {
     const modifier = new RelicModifier(entity)
-    Object.defineProperty(entity, '_relicModifier', {
-        value: modifier,
-        writable: false,
-        enumerable: false,
-        configurable: false
-    })
+    relicModifierMap.set(entity, modifier)
     return modifier
 }
 
@@ -138,9 +136,9 @@ export function initRelicModifier(entity: Entity): RelicModifier {
  * 获取实体的遗物管理器
  */
 export function getRelicModifier(entity: Entity): RelicModifier {
-    const modifier = (entity as any)._relicModifier
+    let modifier = relicModifierMap.get(entity)
     if (!modifier) {
-        return initRelicModifier(entity)
+        modifier = initRelicModifier(entity)
     }
     return modifier
 }

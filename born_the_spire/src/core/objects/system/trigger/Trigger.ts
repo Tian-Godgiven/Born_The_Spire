@@ -91,11 +91,11 @@ export class Trigger{
 //通过triggerMap生成触发器
 export function createTriggerByTriggerMap(source:Entity,target:Entity, item:TriggerMap[number]){
     const {when ="before", how, key, level} = item
-    
-    const callback:TriggerFunc = async(triggerEvent,_effect,triggerLevel)=>{
+
+    const callback:TriggerFunc = async(triggerEvent,triggerEffect,triggerLevel)=>{
         //回调函数将会创建并发生n个事件
         for(let eventConfig of item.event){
-            const event = createEventFromTrigger({source,target,triggerEvent},eventConfig)
+            const event = createEventFromTrigger({source,target,triggerEvent,triggerEffect},eventConfig)
             //这个事件会继承触发事件的收集函数
             triggerEvent.spawnEvent(event)
             event.happen(()=>{},triggerLevel)
@@ -121,12 +121,12 @@ export function createTrigger({when,how,key,callback,level}:TriggerObj):TriggerO
 
 //工具函数，用于创建触发器事件
 function createEventFromTrigger(
-    {source,target,triggerEvent}:{source:Entity,target:Entity,triggerEvent:ActionEvent},
+    {source,target,triggerEvent,triggerEffect}:{source:Entity,target:Entity,triggerEvent:ActionEvent,triggerEffect:Effect|null},
     eventConfig:TriggerEventConfig
 ){
     const {key:eventKey,info={},targetType,effect:effectUnit} = eventConfig
     //获取目标
-    const eventTarget = resolveTriggerEventTarget(targetType, triggerEvent, source, target)
+    const eventTarget = resolveTriggerEventTarget(targetType, triggerEvent, triggerEffect, source, target)
 
     const newEvent = new ActionEvent(
         eventKey,
@@ -143,16 +143,18 @@ function createEventFromTrigger(
  * 解析触发器事件的目标类型
  * @param targetType 目标类型配置
  * @param triggerEvent 触发该触发器的原始事件
+ * @param triggerEffect 触发该触发器的效果对象（可能为 null）
  * @param triggerSource 触发器的施加来源
  * @param triggerOwner 持有触发器的对象
- * @returns 解析后的目标实体
+ * @returns 解析后的目标实体或效果
  */
 export function resolveTriggerEventTarget(
     targetType: TriggerEventConfig["targetType"],
     triggerEvent: ActionEvent,
+    triggerEffect: Effect | null,
     triggerSource: Entity,
     triggerOwner: Entity
-): Entity | Entity[] {
+): Entity | Entity[] | Effect {
     switch(targetType){
         case "eventSource"://指定的事件来源
             return triggerEvent.source
@@ -164,6 +166,11 @@ export function resolveTriggerEventTarget(
             return triggerSource;
         case "triggerOwner"://持有触发器的对象
             return triggerOwner;
+        case "triggerEffect"://触发该触发器的效果对象
+            if(!triggerEffect){
+                throw new Error("触发效果为null，无法作为目标")
+            }
+            return triggerEffect;
         default:
             if (targetType instanceof Entity) {
                 return targetType;

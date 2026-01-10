@@ -37,14 +37,12 @@ export class Chara extends Target{
 
     constructor(map:CharaMap){
         super(map)
-        // 不要在这里添加器官！留给子类在字段初始化后添加
-        // 保存器官列表供子类使用
-        ;(this as any)._organKeys = map.organ
+        // 初始化器官
+        this.initOrgans(map.organ)
     }
 
-    // 添加器官的方法（由子类在适当时机调用）
-    protected initOrgans() {
-        const organKeys = (this as any)._organKeys as string[]
+    // 添加器官的方法
+    protected initOrgans(organKeys: string[]) {
         if (organKeys) {
             for(let key of organKeys){
                 const organ = getOrganByKey(key)

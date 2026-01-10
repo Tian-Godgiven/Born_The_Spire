@@ -70,6 +70,7 @@ function clear(){
     background-color: white;
     display: flex;
     flex-direction: column;
+    user-select: text;  // 允许日志文字选择
     .title{
         flex-shrink: 0;
         display: flex;

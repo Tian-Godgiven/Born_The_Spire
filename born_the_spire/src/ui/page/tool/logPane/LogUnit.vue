@@ -2,17 +2,16 @@
 <div class="log" :style="{marginLeft: (log.level || 0) * 15 + 'px'}">
         <!-- 主内容行 -->
         <div class="text"
-            @click="toggleChildren"
+            @click="toggleExpand"
             :class="hasChildren || log.detail ? 'clickable' : ''">
             <!-- 时间戳 -->
             <span v-show="showTime" class="time">[{{ dayjs(log.time).format("HH:mm:ss SSS") }}]</span>
 
-            <!-- 子日志展开/收起箭头 -->
-            <span v-if="hasChildren" class="expand-icon">{{ childrenExpanded ? '▼' : '▶' }}</span>
-
-            <!-- 详情展开/收起箭头（独立点击） -->
-            <span v-if="log.detail" class="detail-icon" @click.stop="toggleDetail">
-                {{ detailExpanded ? '▲' : '▼' }}
+            <!-- 展开/收起箭头（控制子日志和详情），有子日志时蓝色，无子日志时黑色 -->
+            <span v-if="hasChildren || log.detail"
+                class="expand-icon"
+                :class="hasChildren ? 'has-children' : ''">
+                {{ expanded ? '▼' : '▶' }}
             </span>
 
             <!-- 日志文本 -->
@@ -20,10 +19,10 @@
         </div>
 
         <!-- 详情内容（detail） -->
-        <div class="detail" v-show="detailExpanded">{{ log.detail }}</div>
+        <div class="detail" v-show="expanded && log.detail">{{ log.detail }}</div>
 
         <!-- 子日志（递归渲染） -->
-        <div v-show="childrenExpanded" class="children">
+        <div v-show="expanded && hasChildren" class="children">
             <LogUnit
                 v-for="(child, index) in log.children"
                 :key="child.time + '-' + index"
@@ -40,24 +39,17 @@ import dayjs from 'dayjs';
 import { computed, ref } from 'vue';
     const {log,showTime} = defineProps<{log:LogUnit,showTime:boolean}>()
 
-    // 详情展开状态
-    const detailExpanded = ref(false)
-    // 子日志展开状态（默认折叠）
-    const childrenExpanded = ref(false)
+    // 统一的展开状态（控制子日志和详情）
+    const expanded = ref(false)
 
     // 是否有子日志
     const hasChildren = computed(() => log.children && log.children.length > 0)
 
-    // 切换子日志展开/收起
-    function toggleChildren(){
-        if(hasChildren.value){
-            childrenExpanded.value = !childrenExpanded.value
+    // 切换展开/收起
+    function toggleExpand(){
+        if(hasChildren.value || log.detail){
+            expanded.value = !expanded.value
         }
-    }
-
-    // 切换详情展开/收起
-    function toggleDetail(){
-        detailExpanded.value = !detailExpanded.value
     }
 </script>
 
@@ -65,13 +57,13 @@ import { computed, ref } from 'vue';
 .log{
     margin: 5px 0;
     overflow: visible;
+    user-select: all;
 
     .text{
         &.clickable{
             cursor: pointer;
             padding: 2px 5px;
             box-sizing: border-box;
-            user-select: none;
             border: 1px solid rgb(213, 213, 213);
             border-radius: 5px;
             background-color: rgb(252, 252, 252);
@@ -83,14 +75,14 @@ import { computed, ref } from 'vue';
     }
 
     .expand-icon{
-        color: rgb(100, 100, 255);
+        color: black;
         font-weight: bold;
         margin-right: 3px;
-    }
+        user-select: none;
 
-    .detail-icon{
-        color: rgb(150, 150, 150);
-        margin-right: 3px;
+        &.has-children{
+            color: rgb(100, 100, 255);
+        }
     }
 }
 

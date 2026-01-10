@@ -28,7 +28,7 @@ export type Stack = {
 export type StackChangeRule = {
     timing: "turnStart" | "turnEnd" | "battleStart" | "battleEnd"  // 触发时机
     stackKey?: string                // 要修改的层数key，默认 "default"
-    delta: number                    // 变化量（可正可负）
+    delta: number | "all"            // 变化量（可正可负），"all" 表示清空（设为0）
     condition?: string               // 可选条件表达式（如 "turn % 2 === 1"）
 }
 
@@ -50,9 +50,6 @@ export type StateInteractionData = {
     remove?: {
         effects?: EffectUnit[]
     }
-
-    // 层数变化规则（自动衰减/增长）
-    stackChange?: StackChangeRule[]
 }
 
 /**
@@ -66,6 +63,7 @@ export type StateData = {
     repeate?: "stack" | "refresh" | "none"  // 重复获得时的行为
     stacks?: Stack[] | number         // 层数对象（可简写为数字）
     checkExist?: (getter: Target, state: State) => boolean  // 检查状态是否还存在
+    stackChange?: StackChangeRule[]   // 层数自动变化规则
     interaction?: StateInteractionData  // 状态交互
 }
 
@@ -94,6 +92,7 @@ export class State implements EventParticipant {
     public stacks: Stack[]  // 层数对象数组
     public repeate: "stack" | "refresh" | "none" = "stack"
     public checkExist: (getter: Target, state: State) => boolean
+    public stackChange?: StackChangeRule[]  // 层数自动变化规则
     public interaction: StateInteractionData
 
     // 触发器清理函数（在失去状态时调用）
@@ -106,6 +105,7 @@ export class State implements EventParticipant {
         this.showType = map.showType ?? "number"
         this.repeate = map.repeate ?? "stack"
         this.checkExist = map.checkExist ?? defaultCheckExist
+        this.stackChange = map.stackChange
         this.interaction = map.interaction ?? {}
 
         // 处理 stacks（支持简写）
