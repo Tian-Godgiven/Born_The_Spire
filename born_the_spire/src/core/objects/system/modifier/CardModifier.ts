@@ -5,6 +5,7 @@ import { Player } from "../../target/Player"
 import { getCardByKey } from "@/static/list/item/cardList"
 import { newLog, LogUnit } from "@/ui/hooks/global/log"
 import { Organ } from "../../target/Organ"
+import { getEntryModifier } from "./EntryModifier"
 
 /**
  * 卡牌修饰器管理器
@@ -23,8 +24,8 @@ export class CardModifier {
     }
 
     /**
-     * 从指定来源添加卡牌到牌组
-     * @param source 来源实体（如器官）
+     * 添加卡牌到牌组
+     * @param source 来源实体（器官、遗物或玩家自身）
      * @param cardKeys 要添加的卡牌 key 列表
      * @param parentLog 可选的父日志，用于嵌套显示
      * @returns 添加的卡牌对象数组
@@ -41,8 +42,21 @@ export class CardModifier {
             // 创建卡牌实例
             const card = getCardByKey(cardKey)
 
-            // 设置卡牌来源
+            // 设置卡牌来源和持有者
             card.source = source
+            card.owner = this.owner
+
+            // 应用卡牌词条
+            const entryModifier = getEntryModifier(card)
+            for (const entryKey of card.entry) {
+                const result = entryModifier.addEntry(entryKey)
+                if (result !== true) {
+                    // 词条应用失败，记录日志
+                    if (parentLog) {
+                        newLog(["词条应用失败:", entryKey, result], parentLog)
+                    }
+                }
+            }
 
             // 添加到玩家卡组
             this.owner.cards.push(card)
@@ -112,6 +126,11 @@ export class CardModifier {
         }
 
         const source = card.source
+
+        // 如果来源是 Player 类型（玩家的初始卡组），总是可以打出
+        if (source instanceof Player) {
+            return true
+        }
 
         // 如果来源是器官，检查是否损坏
         if (source instanceof Organ) {

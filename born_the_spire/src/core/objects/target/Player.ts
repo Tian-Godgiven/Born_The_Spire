@@ -12,6 +12,8 @@ import { reactive } from "vue";
 import { getReserveModifier } from "../system/modifier/ReserveModifier";
 import { getStatusValue } from "../system/status/Status";
 import { getPotionModifier } from "../system/modifier/PotionModifier";
+import { getCardModifier } from "../system/modifier/CardModifier";
+import { getEntryModifier } from "../system/modifier/EntryModifier";
 
 export type CardPiles = {
     handPile:Card[],
@@ -55,10 +57,9 @@ export class Player extends Chara{
             this.getPotion(key)
         }
 
-        //获取初始拥有的卡组
-        for(let key of map.card){
-            this.getCard(key)
-        }
+        //获取初始拥有的卡组（来源是玩家自身）
+        const cardModifier = getCardModifier(this)
+        cardModifier.addCardsFromSource(this, map.card)
     }
     
     //获取自身
@@ -85,6 +86,19 @@ export class Player extends Chara{
     getCard(cardKey:string){
         //获取卡牌对象
         const card = getCardByKey(cardKey)
+        //设置持有者
+        card.owner = this
+
+        //应用卡牌词条
+        const entryModifier = getEntryModifier(card)
+        for (const entryKey of card.entry) {
+            const result = entryModifier.addEntry(entryKey)
+            if (result !== true) {
+                // 词条应用失败，记录到控制台
+                console.warn(`词条应用失败: ${entryKey}`, result)
+            }
+        }
+
         //添加到卡组中
         this.cards.push(card)
     }

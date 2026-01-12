@@ -11,6 +11,8 @@ export class Organ extends Entity{
     public readonly key:string
     public interaction:Interaction[]
     public cards:string[] = []  // 器官提供的卡牌列表
+    public entry:string[] = []  // 器官的词条列表
+    public owner?: Entity   // 器官持有者（通常是 Player 或 Enemy）
     // 注意：isDisabled 继承自 Item 基类，表示器官是否损坏
 
     // 内部管理的触发器移除函数
@@ -22,6 +24,7 @@ export class Organ extends Entity{
         this.label = map.label;
         this.key = map.key;
         this.cards = map.cards || []  // 初始化卡牌列表
+        this.entry = map.entry || []  // 初始化词条列表
         const interaction:Interaction[] = []
         for(let key in map.interaction){
             interaction.push({key,...map.interaction[key]})

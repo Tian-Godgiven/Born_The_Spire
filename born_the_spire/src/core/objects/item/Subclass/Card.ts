@@ -8,11 +8,21 @@ import { EffectUnit } from "@/core/objects/system/effect/EffectUnit";
 import { newError } from "@/ui/hooks/global/alert";
 import { getStatusValue } from "@/core/objects/system/status/Status";
 import { Organ } from "@/core/objects/target/Organ";
+import { getCardModifier } from "@/core/objects/system/modifier/CardModifier";
 
-// 卡牌对象
+/**
+ * 卡牌对象
+ *
+ * 卡牌的使用后处理（弃牌/消耗等）通过 getAfterUseEffect 方法决定。
+ * 词条可以通过覆盖此方法来改变卡牌使用后的去向：
+ * - 默认：移入弃牌堆
+ * - exhaust 词条：移入消耗堆
+ * - void 词条：回合结束时的特殊处理
+ */
 export class Card extends Item{
     public entry:string[] = []
     public source?: Entity  // 卡牌来源（可能是器官、遗物或其他来源）
+    public owner?: Entity   // 卡牌持有者（通常是 Player）
     constructor(map:CardMap){
         super(map)
         this.entry.push(...map.entry??[])
@@ -22,6 +32,21 @@ export class Card extends Item{
             return true
         }
         return false
+    }
+
+    /**
+     * 获取卡牌使用后的处理效果
+     * 此方法可被词条覆盖以改变卡牌使用后的去向
+     * @param fromPile 卡牌所在的牌堆（通常是手牌）
+     * @returns 使用后的处理效果
+     */
+    getAfterUseEffect(fromPile:Card[]): EffectUnit {
+        // 默认：弃牌
+        return {
+            key:"pay_discard",
+            describe:["将卡牌移入弃牌堆"],
+            params:{sourcePile:fromPile,card:this}
+        }
     }
 }
 
@@ -53,12 +78,7 @@ export async function useCard(card:Card,fromPile:Card[],source:Player,targets:Ta
         return
     }
     const cardEffects = cardUse.effects
-    //移入弃牌堆
-    const discardEffect = {
-        key:"pay_discard",
-        describe:["将卡牌移入弃牌堆"],
-        params:{sourcePile:fromPile,card}
-    }
+
     //消耗卡牌对应的费用，事件成功时才会触发卡牌效果
     doEvent({
         key:"useCard",
@@ -97,7 +117,8 @@ export async function useCard(card:Card,fromPile:Card[],source:Player,targets:Ta
                 return true
             }
         },{
-            effectUnits:[discardEffect],
+            // 使用后处理（弃牌/消耗等），由卡牌的 getAfterUseEffect 方法决定
+            effectUnits:[card.getAfterUseEffect(fromPile)],
             entityMap:{
                 target:"medium"
             }

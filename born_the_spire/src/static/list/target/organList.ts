@@ -8,6 +8,7 @@ export type OrganMap = ItemMap&TargetMap&{
     key:string,
     describe?:Describe,
     cards?: string[]  // 器官提供的卡牌列表（卡牌的 key）
+    entry?: string[]  // 器官的词条列表（词条的 key）
 }
 
 export const organList:OrganMap[] = [

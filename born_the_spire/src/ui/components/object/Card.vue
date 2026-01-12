@@ -3,27 +3,70 @@
     <div class="cost" v-if="cost">{{ cost }}</div>
     <div class="title">{{ card.label }}</div>
     <div class="line"></div>
+
+    <!-- 词条标签显示 -->
+    <div class="entry-tags" v-if="card.entry && card.entry.length > 0">
+        <Popover
+            v-for="entryKey in card.entry"
+            :key="entryKey"
+            :placement="side === 'left' ? 'left' : 'right'"
+        >
+            <template #trigger="{ open, close }">
+                <span
+                    class="entry-tag"
+                    @mouseenter="open"
+                    @mouseleave="close"
+                >
+                    [{{ getEntryLabel(entryKey) }}]
+                </span>
+            </template>
+            <div class="entry-detail">
+                <div class="entry-name">{{ getEntryLabel(entryKey) }}</div>
+                <div class="entry-desc">{{ getEntryDescription(entryKey) }}</div>
+            </div>
+        </Popover>
+    </div>
+
     <div class="describe">{{ describe }}</div>
 </div>
 </template>
 
 <script setup lang='ts'>
-    import { Card } from '@/core/objects/item/Subclass/Card';
+import { Card } from '@/core/objects/item/Subclass/Card';
 import { getStatusValue, ifHaveStatus } from '@/core/objects/system/status/Status';
-    import { getDescribe } from '@/ui/hooks/express/describe';
-    import { computed } from 'vue';
-    const {card} = defineProps<{card:Card}>()
-    const describe = computed(()=>{
-        return getDescribe(card.describe,card)
-    })
-    const cost = computed(()=>{
-        const ifCost = ifHaveStatus(card,"cost")
-        if(ifCost){
-            return getStatusValue(card,"cost")
-        }
-        return false
-    })
-    
+import { getDescribe } from '@/ui/hooks/express/describe';
+import { computed } from 'vue';
+import { entryMap } from '@/static/list/system/entryMap';
+import Popover from '@/ui/components/global/Popover.vue';
+
+const {card, side} = defineProps<{
+    card: Card
+    side?: 'left' | 'right'  // 可选，默认右侧
+}>()
+
+const describe = computed(()=>{
+    return getDescribe(card.describe,card)
+})
+const cost = computed(()=>{
+    const ifCost = ifHaveStatus(card,"cost")
+    if(ifCost){
+        return getStatusValue(card,"cost")
+    }
+    return false
+})
+
+// 获取词条显示名称
+function getEntryLabel(entryKey: string): string {
+    return entryMap[entryKey]?.label || entryKey
+}
+
+// 获取词条描述
+function getEntryDescription(entryKey: string): string {
+    const entry = entryMap[entryKey]
+    if (!entry) return ''
+    return getDescribe(entry.describe)
+}
+
 </script>
 
 <style scoped lang='scss'>
@@ -59,9 +102,48 @@ import { getStatusValue, ifHaveStatus } from '@/core/objects/system/status/Statu
         height: 1px;
         background-color: black;
     }
+    .entry-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        padding: 0 5px;
+        margin-bottom: 4px;
+
+        .entry-tag {
+            display: inline-block;
+            font-size: 11px;
+            color: #333;
+            cursor: pointer;
+            transition: color 0.2s;
+
+            &:hover {
+                color: black;
+                font-weight: bold;
+            }
+        }
+    }
     .describe{
         padding:0 5px;
         overflow-y: auto;
+    }
+}
+
+.entry-detail {
+    min-width: 150px;
+    max-width: 220px;
+
+    .entry-name {
+        font-weight: bold;
+        font-size: 13px;
+        margin-bottom: 4px;
+        padding-bottom: 4px;
+        border-bottom: 1px solid #ccc;
+    }
+
+    .entry-desc {
+        font-size: 12px;
+        line-height: 1.4;
+        color: #333;
     }
 }
 </style>

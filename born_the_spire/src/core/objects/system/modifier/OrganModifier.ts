@@ -38,6 +38,9 @@ export class OrganModifier extends ItemModifier {
     acquireOrgan(organ: Organ, source: Entity) {
         const parentLog = newLog([this.owner, "获得了器官", organ])
 
+        // 设置器官持有者
+        organ.owner = this.owner
+
         // 1. 创建 ItemModifierUnit
         const unit = this.add(organ)
 

@@ -39,6 +39,30 @@ export const pay_discardCard:EffectFunc = (event,effect)=>{
     })
 }
 
+/**
+ * 指定的卡牌消耗（移入消耗堆）
+ * @params {
+ *   sourcePileName?: keyof CardPiles - 来源牌堆名称（可选，与 sourcePile 二选一）
+ *   sourcePile?: Card[] - 来源牌堆数组（可选，与 sourcePileName 二选一）
+ * }
+ * @event.target 要消耗的卡牌（Card | Card[]）
+ * @event.source 玩家对象（Player）
+ */
+export const pay_exhaustCard:EffectFunc = (event,effect)=>{
+    const {source,target} = event
+    //只有玩家对象具备卡牌
+    if(source instanceof Player == false) return;
+    //来源的牌堆存储在params中
+    const pileName = effect.params.sourcePileName as keyof CardPiles
+    const pile = effect.params.sourcePile as Card[]
+    const sourcePile = pile??source.cardPiles[pileName]
+    //要消耗的卡牌就是事件的target
+    handleEventEntity(target,(card)=>{
+        //移动到消耗堆
+        cardMove(sourcePile,card,source.cardPiles.exhaustPile)
+    })
+}
+
 
 //丢弃目标的所有卡牌
 export const discardAllCard:EffectFunc = async(event,effect)=>{

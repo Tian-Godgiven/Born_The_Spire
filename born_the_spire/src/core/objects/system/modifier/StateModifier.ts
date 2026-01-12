@@ -6,7 +6,6 @@ import { doEvent, ActionEvent } from "../ActionEvent"
 import { resolveTriggerEventTarget } from "../trigger/Trigger"
 import { nanoid } from "nanoid"
 import _ from "lodash"
-import { toRaw } from "vue"
 
 /**
  * StateModifierUnit - 管理单个 state 的副作用
@@ -382,16 +381,15 @@ export class StateModifier {
     }
 }
 
-// 使用 WeakMap 存储 StateModifier 实例，避免与 Vue reactive 冲突
+// 使用 WeakMap 存储 StateModifier 实例
 const stateModifierMap = new WeakMap<Target, StateModifier>()
 
 /**
  * 为 Target 初始化状态管理器
  */
 export function initStateModifier(target: Target): StateModifier {
-    const rawTarget = toRaw(target)
-    const modifier = new StateModifier(rawTarget)
-    stateModifierMap.set(rawTarget, modifier)
+    const modifier = new StateModifier(target)
+    stateModifierMap.set(target, modifier)
     return modifier
 }
 
@@ -399,10 +397,9 @@ export function initStateModifier(target: Target): StateModifier {
  * 获取 Target 的状态管理器
  */
 export function getStateModifier(target: Target): StateModifier {
-    const rawTarget = toRaw(target)
-    let modifier = stateModifierMap.get(rawTarget)
+    let modifier = stateModifierMap.get(target)
     if (!modifier) {
-        modifier = initStateModifier(rawTarget)
+        modifier = initStateModifier(target)
     }
     return modifier
 }

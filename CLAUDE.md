@@ -148,15 +148,105 @@ organ.onAcquire = () => {
 // DON'T create organ.onLose - the system handles cleanup
 ```
 
-### 3. Trigger Structure Must Be Correct
+### 3. Trigger System Details
+
+**Basic Structure:**
 ```typescript
-entity.appendTrigger({
+entity.trigger.appendTrigger({
   when: "before" | "after",
   how: "make" | "via" | "take",
   key: "damage" | "heal" | "drawCard" | ...,  // See ActionEvent keys
-  callback: (event, effect) => { /* ... */ },
-  level: 0  // Higher level = triggered first
+  callback: (event, effect, triggerLevel) => { /* ... */ },
+  level: 0  // Higher level = triggered first (optional, default 0)
 })
+```
+
+**When/How/Key Explanation:**
+- **when**: Timing relative to event execution
+  - `before`: Before event effects are applied (can modify event)
+  - `after`: After event effects are applied (for reactions)
+
+- **how**: Entity's role in the event
+  - `make`: Entity is the event source (造成事件)
+  - `via`: Entity is the event medium (参与事件/事件媒介)
+  - `take`: Entity is the event target (被事件作用)
+
+- **key**: Event type identifier (matches ActionEvent keys)
+  - Common keys: `damage`, `heal`, `drawCard`, `useCard`, `turnStart`, `turnEnd`
+
+**Example:**
+```typescript
+// "When player takes healing, increase it by 2"
+player.trigger.appendTrigger({
+  when: "before",
+  how: "take",
+  key: "heal",
+  callback: (event) => {
+    // Modify healing amount before it's applied
+    event.effects[0].params.value += 2
+  }
+})
+```
+
+**Default Triggers (默认触发器):**
+- Triggers that entities have from creation
+- Stored in `entity.trigger._defaultTrigger[]`
+- Can be removed/replaced but are tracked for transparency
+- Example: Cards have default `after_via_useCard` → discard to discard pile
+
+**Important Triggers (关键触发器):**
+- Triggers that may conflict with existing triggers
+- Use `importantKey` to identify related triggers
+- Use `onlyKey` for unique triggers (only one can exist)
+- Stored in `entity.trigger._importantTrigger[]`
+
+```typescript
+entity.trigger.appendTrigger({
+  when: "after",
+  how: "via",
+  key: "useCard",
+  importantKey: "afterUseCard",  // Groups related triggers
+  onlyKey: "afterUseCard_discard",  // Unique identifier (replaces existing)
+  callback: (event) => { /* ... */ }
+})
+```
+
+**Creating Triggers via TriggerMap (recommended for data-driven approach):**
+```typescript
+// In card/organ/relic data
+{
+  interaction: {
+    possess: {  // When possessed
+      triggers: [{
+        when: "before",
+        how: "make",
+        key: "damage",
+        event: [{  // Events to spawn when triggered
+          key: "modifyDamage",
+          targetType: "eventTarget",
+          effect: [{
+            key: "increaseDamage",
+            params: { value: 2 }
+          }]
+        }]
+      }]
+    }
+  }
+}
+```
+
+**Trigger Removal:**
+```typescript
+// Method 1: Use returned remove function
+const { remove } = entity.trigger.appendTrigger({...})
+remove()  // Removes this specific trigger
+
+// Method 2: Remove by importantKey (removes all matching)
+const triggers = entity.trigger.getImportantTrigger("afterUseCard")
+triggers.forEach(t => t.remove())
+
+// Method 3: Swap only trigger (automatic removal + add)
+// Used internally when adding trigger with same onlyKey
 ```
 
 ### 4. Event Cascading

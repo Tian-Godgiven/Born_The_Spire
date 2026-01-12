@@ -43,8 +43,6 @@ export class Entity implements EventParticipant{
         }
         //初始化描述
         this.describe = map.describe??[]
-        //响应式代理
-        // reactive(this)
     }
     //添加一个触发器
     appendTrigger(triggerObj:TriggerObj){

@@ -49,6 +49,7 @@ export const playerList:Record<string,PlayerMap> = {
                 "original_card_00010",  // 虚弱诅咒 - 测试虚弱状态
                 "original_card_00011",  // 易伤打击 - 测试易伤状态
                 "original_card_00001",  // 打击 - 用于测试虚弱和易伤的效果
+                "original_card_00002",  // 消耗打击 - 测试消耗词条
             ],
     }
 }
