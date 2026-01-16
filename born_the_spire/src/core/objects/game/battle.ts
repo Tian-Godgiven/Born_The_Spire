@@ -9,6 +9,7 @@ import { nextTick } from "vue"
 import { doEvent } from "../system/ActionEvent"
 import { prepareEnemyIntents, executeAllEnemiesTurn } from "./enemyTurn"
 import { newLog } from "@/ui/hooks/global/log"
+import { showDisplayMessage } from "@/ui/hooks/global/displayMessage"
 
 export class Battle {
     public readonly __key:string = nanoid()
@@ -106,6 +107,10 @@ export class Battle {
         const player = this.getAlivePlayers()[0]  // 假设单个玩家
 
         if (player && aliveEnemies.length > 0) {
+            // 显示"敌人行动"提示（1.5秒），然后等待1.5秒
+            showDisplayMessage("敌人行动", 1500)
+            await new Promise(resolve => setTimeout(resolve, 3000))
+
             // 按行动顺序排序敌人
             const sortedEnemies = this.sortEnemiesByActionOrder(aliveEnemies)
 
@@ -118,6 +123,10 @@ export class Battle {
                 this.endBattle(afterEnemyResult)
                 return
             }
+
+            // 显示"敌人回合结束"提示（1.5秒），然后等待1.5秒
+            showDisplayMessage("敌人回合结束", 1500)
+            await new Promise(resolve => setTimeout(resolve, 3000))
         }
 
         // 5. 回合数+1
@@ -130,6 +139,11 @@ export class Battle {
 
         // 7. 开始新的玩家回合
         newLog(["===== 玩家回合开始 =====", `回合 ${this.turnNumber}`])
+
+        // 显示"回合开始"提示（1.5秒），然后等待1.5秒
+        showDisplayMessage("回合开始", 1500)
+        await new Promise(resolve => setTimeout(resolve, 3000))
+
         await this.startTurn("player")
     }
 

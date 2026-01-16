@@ -15,6 +15,9 @@
 
     <div class="endTurn center" @click="endTurn">结束回合</div>
 
+    <!-- 回合提示显示 -->
+    <TurnDisplay />
+
     <div class="drawPile center" 
         @click="showCardPile('draw')">
         抽排堆：{{ drawNum }}
@@ -41,6 +44,8 @@
     import HandPile from './HandPile.vue';
     import Faction from '@/ui/components/object/Target/Faction.vue';
     import AllFactions from '@/ui/components/object/Target/AllFactions.vue';
+    import TurnDisplay from '@/ui/components/display/TurnDisplay.vue';
+
     //敌人
     const enemyTeam = computed(()=>{
         return nowBattle.value?.getTeam("enemy")??[]
@@ -69,8 +74,8 @@
         }
     })
     //结束当前回合
-    function endTurn(){
-        nowBattle.value?.endTurn("player")
+    async function endTurn(){
+        await nowBattle.value?.endPlayerTurnAndStartEnemyTurn()
     }
     
 </script>
