@@ -6,6 +6,11 @@
             @mouseenter="showStateDisplay = true"
             @mouseleave="showStateDisplay = false"
         >
+            <!-- 意图显示（仅敌人） -->
+            <div v-if="isEnemy && enemyIntentDisplay" class="intent-display">
+                {{ enemyIntentDisplay }}
+            </div>
+
             <div class="organs">
                 <Organ :organ v-for="organ in organList" :key="organ.__id"></Organ>
             </div>
@@ -32,12 +37,14 @@
 
 <script setup lang='ts'>
     import { Chara } from '@/core/objects/target/Target';
+    import { Enemy } from '@/core/objects/target/Enemy';
     import { computed, ref } from 'vue';
     import Organ from '@/ui/components/object/Organ.vue';
     import Target from "@/ui/components/interaction/chooseTarget/Target.vue";
     import BloodLine from '@/ui/components/object/Target/Chara/components/BloodLine.vue';
     import State from '@/ui/components/object/State.vue';
-    import StateDisplay from '@/ui/components/object/Target/Chara/components/StateDisplay.vue';
+    import StateDisplay from '@/ui/components/display/StateDisplay.vue';
+    import { formatIntentDisplay } from '@/core/objects/system/Intent';
 
     const {target,side} = defineProps<{target:Chara,side:'left'|"right"}>()
 
@@ -46,6 +53,17 @@
 
     // 状态显示控制
     const showStateDisplay = ref(false)
+
+    // 判断是否是敌人
+    const isEnemy = computed(() => target instanceof Enemy)
+
+    // 获取敌人意图显示文本
+    const enemyIntentDisplay = computed(() => {
+        if (target instanceof Enemy && target.intent) {
+            return formatIntentDisplay(target.intent)
+        }
+        return null
+    })
 </script>
 
 <style scoped lang='scss'>
@@ -62,6 +80,19 @@
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
+
+    .intent-display {
+        position: absolute;
+        top: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 4px 8px;
+        background: white;
+        border: 2px solid black;
+        font-size: 12px;
+        white-space: nowrap;
+        z-index: 10;
+    }
 
     .organs{
         flex-grow: 1;

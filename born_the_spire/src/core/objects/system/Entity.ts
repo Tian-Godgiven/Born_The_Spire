@@ -3,7 +3,6 @@ import { Trigger } from "./trigger/Trigger";
 import { ActionEvent } from "./ActionEvent";
 import { Describe } from "@/ui/hooks/express/describe";
 import { TriggerMap, TriggerObj } from "@/core/types/object/trigger";
-import { reactive } from "vue";
 import { Effect } from "./effect/Effect";
 import { nanoid } from "nanoid";
 import { appendStatus, createStatusFromMap, Status } from "./status/Status";

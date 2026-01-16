@@ -138,6 +138,26 @@ export async function doEffectFunc(effect: Effect, override_event?:Partial<Actio
     const medium = override_event?.medium ?? event.medium
     const target = override_event?.target ?? event.target
 
+    // 如果是模拟模式，检查目标类型
+    if (event.simulate) {
+        // 检查目标是否为效果对象（修改参数）
+        const targets = Array.isArray(target) ? target : [target]
+        const isModifyingEffect = targets.some(t =>
+            t instanceof Effect ||
+            (t as any).participantType === 'effect'
+        )
+
+        if (isModifyingEffect) {
+            // 目标是效果对象，允许执行（修改参数）
+            console.log("[doEffectFunc] 模拟模式：执行参数修改效果", effect.key)
+            // 继续执行...
+        } else {
+            // 目标是实体，跳过执行（修改状态）
+            console.log("[doEffectFunc] 模拟模式：跳过状态修改效果", effect.key)
+            return undefined
+        }
+    }
+
     // 使用原始事件创建子日志
     event.addChildLog({
         main:[source,"对",target,"造成了效果",effect],

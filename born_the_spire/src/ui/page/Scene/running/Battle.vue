@@ -24,7 +24,7 @@
         @click="showCardPile('discard')">
         弃牌堆: {{ pileNum.discard }}
     </div>
-    <div class="exhaustPile center" 
+    <div class="exhaustPile center"
         @click="showCardPile('exhaust')">
         消耗堆: {{ pileNum.exhaust }}
     </div>
@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang='ts'>
-    
+
     import Relic from '@/ui/components/object/Relic.vue';
     import { nowBattle } from '@/core/objects/game/battle';
     import { showCardPile } from '@/ui/interaction/cardPile';
@@ -40,7 +40,7 @@
     import { computed } from 'vue';
     import HandPile from './HandPile.vue';
     import Faction from '@/ui/components/object/Target/Faction.vue';
-import AllFactions from '@/ui/components/object/Target/AllFactions.vue';
+    import AllFactions from '@/ui/components/object/Target/AllFactions.vue';
     //敌人
     const enemyTeam = computed(()=>{
         return nowBattle.value?.getTeam("enemy")??[]

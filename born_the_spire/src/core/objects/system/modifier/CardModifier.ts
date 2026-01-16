@@ -2,24 +2,26 @@ import { reactive, toRaw } from "vue"
 import { Entity } from "../Entity"
 import { Card } from "../../item/Subclass/Card"
 import { Player } from "../../target/Player"
-import { getCardByKey } from "@/static/list/item/cardList"
+import { Chara } from "../../target/Target"
+import { getCardByKey, getAllCards } from "@/static/list/item/cardList"
 import { newLog, LogUnit } from "@/ui/hooks/global/log"
 import { Organ } from "../../target/Organ"
 import { getEntryModifier } from "./EntryModifier"
+import { nowBattle } from "../../game/battle"
 
 /**
  * 卡牌修饰器管理器
  *
  * 专门用于管理角色牌组中来自不同来源（器官、遗物等）的卡牌
  * 当来源（如器官）被移除时，自动移除对应的卡牌
- * 每个 Player 应该有一个 CardModifier 实例
+ * 支持 Player 和 Enemy
  */
 export class CardModifier {
-    private readonly owner: Player
+    private readonly owner: Chara
     // 记录每个来源（器官/遗物）提供的卡牌
     private cardsFromSources: Map<Entity, Card[]> = reactive(new Map())
 
-    constructor(owner: Player) {
+    constructor(owner: Chara) {
         this.owner = owner
     }
 
@@ -33,33 +35,27 @@ export class CardModifier {
     addCardsFromSource(source: Entity, cardKeys: string[], parentLog?: LogUnit): Card[] {
         const addedCards: Card[] = []
 
-        // 安全检查：确保 cards 数组已初始化
-        if (!this.owner.cards) {
-            this.owner.cards = []
-        }
+        // 检查是否在战斗中
+        const isInBattle = nowBattle.value !== null
 
         for (const cardKey of cardKeys) {
             // 创建卡牌实例
             const card = getCardByKey(cardKey)
 
-            // 设置卡牌来源和持有者
+            // 从 cardList 获取 CardMap 以获取词条定义
+            const cardMap = getAllCards().find(c => c.key === cardKey)
+            const entries = cardMap?.entry ?? []
+
+            // 设置卡牌来源
             card.source = source
-            card.owner = this.owner
 
-            // 应用卡牌词条
-            const entryModifier = getEntryModifier(card)
-            for (const entryKey of card.entry) {
-                const result = entryModifier.addEntry(entryKey)
-                if (result !== true) {
-                    // 词条应用失败，记录日志
-                    if (parentLog) {
-                        newLog(["词条应用失败:", entryKey, result], parentLog)
-                    }
-                }
+            // 设置持有者（会自动应用词条）
+            card.setOwner(this.owner, entries)
+
+            // 如果在战斗中且 owner 是 Player，将卡牌添加到弃牌堆
+            if (isInBattle && this.owner instanceof Player) {
+                this.owner.cardPiles.discardPile.push(card)
             }
-
-            // 添加到玩家卡组
-            this.owner.cards.push(card)
 
             // 记录到来源映射
             if (!this.cardsFromSources.has(source)) {
@@ -90,17 +86,20 @@ export class CardModifier {
             return false
         }
 
-        // 安全检查：确保 cards 数组已初始化
-        if (!this.owner.cards) {
-            this.owner.cards = []
-            return false
-        }
+        // 检查是否在战斗中
+        const isInBattle = nowBattle.value !== null
 
-        // 从玩家卡组中移除所有该来源的卡牌
-        for (const card of cards) {
-            const index = this.owner.cards.indexOf(card)
-            if (index >= 0) {
-                this.owner.cards.splice(index, 1)
+        // 如果在战斗中且 owner 是 Player，从各个牌堆中移除
+        if (isInBattle && this.owner instanceof Player) {
+            for (const card of cards) {
+                const piles: (keyof typeof this.owner.cardPiles)[] = ['drawPile', 'discardPile', 'handPile', 'exhaustPile']
+                for (const pileName of piles) {
+                    const pile = this.owner.cardPiles[pileName]
+                    const pileIndex = pile.indexOf(card)
+                    if (pileIndex >= 0) {
+                        pile.splice(pileIndex, 1)
+                    }
+                }
 
                 // 记录日志
                 if (parentLog) {
@@ -149,6 +148,17 @@ export class CardModifier {
     }
 
     /**
+     * 获取所有卡牌（从所有来源）
+     */
+    getAllCards(): Card[] {
+        const allCards: Card[] = []
+        for (const cards of this.cardsFromSources.values()) {
+            allCards.push(...cards)
+        }
+        return allCards
+    }
+
+    /**
      * 获取指定来源提供的卡牌列表
      */
     getCardsFromSource(source: Entity): Card[] {
@@ -167,12 +177,7 @@ export class CardModifier {
      */
     clearAll() {
         for (const [source, cards] of this.cardsFromSources.entries()) {
-            for (const card of cards) {
-                const index = this.owner.cards.indexOf(card)
-                if (index >= 0) {
-                    this.owner.cards.splice(index, 1)
-                }
-            }
+            // 不需要从 player.cards 中移除，因为已经不存在了
         }
         this.cardsFromSources.clear()
     }
@@ -206,24 +211,26 @@ export class CardModifier {
 }
 
 // 使用 WeakMap 存储 CardModifier 实例，避免与 Vue reactive 冲突
-const cardModifierMap = new WeakMap<Player, CardModifier>()
+const cardModifierMap = new WeakMap<Chara, CardModifier>()
 
 /**
- * 为玩家初始化卡牌修饰器管理器
+ * 为角色初始化卡牌修饰器管理器
  */
-export function initCardModifier(player: Player): CardModifier {
-    const modifier = new CardModifier(player)
-    cardModifierMap.set(player, modifier)
+export function initCardModifier(chara: Chara): CardModifier {
+    const rawChara = toRaw(chara)
+    const modifier = new CardModifier(rawChara)
+    cardModifierMap.set(rawChara, modifier)
     return modifier
 }
 
 /**
- * 获取玩家的卡牌修饰器管理器
+ * 获取角色的卡牌修饰器管理器
  */
-export function getCardModifier(player: Player): CardModifier {
-    let modifier = cardModifierMap.get(player)
+export function getCardModifier(chara: Chara): CardModifier {
+    const rawChara = toRaw(chara)
+    let modifier = cardModifierMap.get(rawChara)
     if (!modifier) {
-        modifier = initCardModifier(player)
+        modifier = initCardModifier(rawChara)
     }
     return modifier
 }

@@ -14,6 +14,7 @@ import { getStatusValue } from "../system/status/Status";
 import { getPotionModifier } from "../system/modifier/PotionModifier";
 import { getCardModifier } from "../system/modifier/CardModifier";
 import { getEntryModifier } from "../system/modifier/EntryModifier";
+import { doEvent } from "../system/ActionEvent";
 
 export type CardPiles = {
     handPile:Card[],
@@ -35,7 +36,6 @@ export class Player extends Chara{
     })
     //药水的持有情况
     public potions:Potion[] = []  // 当前拥有的药水（最大数量由 status["max-potion"] 控制）
-    public cards:Card[] = []  // 卡牌数组（器官会通过 CardModifier 添加卡牌）
     public relics:Relic[] = []//拥有的遗物
     constructor(map:PlayerMap){
         super(map)
@@ -86,21 +86,15 @@ export class Player extends Chara{
     getCard(cardKey:string){
         //获取卡牌对象
         const card = getCardByKey(cardKey)
-        //设置持有者
-        card.owner = this
 
-        //应用卡牌词条
-        const entryModifier = getEntryModifier(card)
-        for (const entryKey of card.entry) {
-            const result = entryModifier.addEntry(entryKey)
-            if (result !== true) {
-                // 词条应用失败，记录到控制台
-                console.warn(`词条应用失败: ${entryKey}`, result)
-            }
-        }
+        // 从 cardList 获取 CardMap 以获取词条定义
+        const { getAllCards } = require("@/static/list/item/cardList")
+        const cardMap = getAllCards().find((c: any) => c.key === cardKey)
+        const entries = cardMap?.entry ?? []
 
-        //添加到卡组中
-        this.cards.push(card)
+        // 使用 CardModifier 添加卡牌
+        const cardModifier = getCardModifier(this)
+        cardModifier.addCardsFromSource(this, [cardKey])
     }
 
     //战斗开始
@@ -131,9 +125,14 @@ export class Player extends Chara{
     }
     //初始化牌堆，将卡组内的卡牌洗进抽牌堆
     initCardPile(){
-        //洗抽牌堆
-        const cards = this.cards;
-        this.cardPiles.drawPile = cards;
+        //从 CardModifier 获取所有卡牌
+        const cardModifier = getCardModifier(this)
+        const cards = cardModifier.getAllCards()
+
+        //洗抽牌堆 - 清空后 push，而不是直接赋值
+        this.cardPiles.drawPile.length = 0
+        this.cardPiles.drawPile.push(...cards)
+
         this.washCardPile("drawPile")
 
         //其他牌堆清空
@@ -160,7 +159,8 @@ export class Player extends Chara{
     }
     //获取当前持有的卡牌
     getCardGroup(){
-        return this.cards
+        const cardModifier = getCardModifier(this)
+        return cardModifier.getAllCards()
     }
 }
 

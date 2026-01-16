@@ -3,6 +3,7 @@ import { Entity } from "@/core/objects/system/Entity"
 import { TriggerMap } from "@/core/types/object/trigger"
 import { healthMap } from "./health"
 import { energyMap } from "./energy"
+import { isAliveMap } from "./isAlive"
 import { ActionEvent } from "@/core/objects/system/ActionEvent"
 
 export type CurrentMap<T extends Entity> = {
@@ -26,6 +27,7 @@ export type CurrentMapData<T extends Entity> = ((Partial<CurrentMap<T>>&{key:str
 const currentMap:Record<string,CurrentMap<any>> = {
     health:healthMap,
     energy:energyMap,
+    isAlive:isAliveMap,
 }
 
 export function getMetaFromCurrentMap(key:string){

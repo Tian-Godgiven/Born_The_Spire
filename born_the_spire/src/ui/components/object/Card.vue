@@ -5,9 +5,9 @@
     <div class="line"></div>
 
     <!-- 词条标签显示 -->
-    <div class="entry-tags" v-if="card.entry && card.entry.length > 0">
+    <div class="entry-tags" v-if="entries.length > 0">
         <Popover
-            v-for="entryKey in card.entry"
+            v-for="entryKey in entries"
             :key="entryKey"
             :placement="side === 'left' ? 'left' : 'right'"
         >
@@ -38,6 +38,7 @@ import { getDescribe } from '@/ui/hooks/express/describe';
 import { computed } from 'vue';
 import { entryMap } from '@/static/list/system/entryMap';
 import Popover from '@/ui/components/global/Popover.vue';
+import { getEntryModifier } from '@/core/objects/system/modifier/EntryModifier';
 
 const {card, side} = defineProps<{
     card: Card
@@ -53,6 +54,12 @@ const cost = computed(()=>{
         return getStatusValue(card,"cost")
     }
     return false
+})
+
+// 从 EntryModifier 获取词条列表
+const entries = computed(() => {
+    const entryModifier = getEntryModifier(card)
+    return entryModifier.getEntries()
 })
 
 // 获取词条显示名称
@@ -111,7 +118,7 @@ function getEntryDescription(entryKey: string): string {
 
         .entry-tag {
             display: inline-block;
-            font-size: 11px;
+            font-size: 16px;
             color: #333;
             cursor: pointer;
             transition: color 0.2s;

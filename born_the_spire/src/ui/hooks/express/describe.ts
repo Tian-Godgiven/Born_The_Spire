@@ -11,7 +11,7 @@ export type Describe = (
 })[]
 
 //将描述对象翻译为文本
-export function getDescribe(describe:Describe|undefined,target:Object){
+export function getDescribe(describe:Describe|undefined,target?:Object){
     let text = "";
     if(!describe)return text
     describe.forEach(value=>{
@@ -22,7 +22,7 @@ export function getDescribe(describe:Describe|undefined,target:Object){
         //是一个对象
         else if(value instanceof Object){
             //这是一个数组，并且会尝试访问target的key属性
-            if("key" in value){
+            if("key" in value && target){
                 const statusValue = getStatusDescribe(value.key,target)
                 //将其添加到text中
                 text += statusValue

@@ -22,7 +22,7 @@ export const playerList:Record<string,PlayerMap> = {
             "max-energy":3,//最大能量
             "max-potion":3,//最大药水数量
         },
-        current:["health","energy"],
+        current:["health","energy","isAlive"],
         //默认触发器：回合开始时抽5张卡牌
         trigger:[
             {when:"after",how:"take",key:"turnStart","event":[{
@@ -48,7 +48,18 @@ export const playerList:Record<string,PlayerMap> = {
         card:[
                 "original_card_00010",  // 虚弱诅咒 - 测试虚弱状态
                 "original_card_00011",  // 易伤打击 - 测试易伤状态
-                "original_card_00001",  // 打击 - 用于测试虚弱和易伤的效果
+                "original_card_00001",  // 打击 x10 - 测试基础卡牌
+                "original_card_00001",
+                "original_card_00001",
+                "original_card_00001",
+                "original_card_00001",
+                "original_card_00001",
+                "original_card_00001",
+                "original_card_00001",
+                "original_card_00001",
+                "original_card_00001",
+                "original_card_00012",  // 固有打击 - 测试固有词条
+                "original_card_00003",  // 虚无打击 - 测试虚无词条
                 "original_card_00002",  // 消耗打击 - 测试消耗词条
             ],
     }

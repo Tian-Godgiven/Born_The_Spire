@@ -211,22 +211,26 @@ entity.trigger.appendTrigger({
 })
 ```
 
-**Creating Triggers via TriggerMap (recommended for data-driven approach):**
+**Creating Triggers via TriggerMap (RECOMMENDED for data-driven approach):**
+
+This is the preferred way to define triggers for cards, organs, and relics. Triggers are defined declaratively in the data, not imperatively with callbacks.
+
+**Basic Structure:**
 ```typescript
-// In card/organ/relic data
+// In card/organ/relic data definition
 {
   interaction: {
-    possess: {  // When possessed
+    possess: {  // When entity is possessed (owned)
       triggers: [{
-        when: "before",
-        how: "make",
-        key: "damage",
-        event: [{  // Events to spawn when triggered
-          key: "modifyDamage",
-          targetType: "eventTarget",
-          effect: [{
-            key: "increaseDamage",
-            params: { value: 2 }
+        when: "before" | "after",
+        how: "make" | "via" | "take",
+        key: string,  // Event key to listen for
+        event: [{  // Array of events to spawn when triggered
+          key: string,  // Event type to create
+          targetType: "owner" | "eventTarget" | "self" | ...,
+          effect: [{  // Array of effects in the spawned event
+            key: string,  // Effect type
+            params: { ... }  // Effect parameters
           }]
         }]
       }]
@@ -234,6 +238,105 @@ entity.trigger.appendTrigger({
   }
 }
 ```
+
+**Real Example - "回血石" Relic:**
+```typescript
+{
+  label: "回血石",
+  describe: ["战斗结束时", "回复", { key: ["status", "heal"] }, "生命"],
+  key: "original_relic_00001",
+  status: {
+    "heal": 5
+  },
+  interaction: {
+    possess: {
+      target: { key: "self" },
+      effects: [],
+      triggers: [{
+        when: "after",       // After the event happens
+        how: "make",         // When the owner MAKES this event
+        key: "battleEnd",    // Listen for battleEnd events
+        event: [{           // When triggered, spawn these events:
+          targetType: "owner",  // Target is the relic owner (player)
+          key: "heal",          // Create a heal event
+          effect: [{
+            key: "heal",        // Apply heal effect
+            params: { value: 5 } // Heal for 5 HP
+          }]
+        }]
+      }]
+    }
+  }
+}
+```
+
+**Explanation:**
+- When the player (owner) finishes a battle (after make battleEnd)
+- The relic creates a heal event targeting the player
+- The heal event applies a heal effect for 5 HP
+
+**Key Differences from Programmatic Triggers:**
+1. **Declarative**: Define WHAT should happen, not HOW
+2. **Data-Driven**: Stored in JSON-like structures, not code
+3. **Event Spawning**: Instead of callbacks, you declare events to spawn
+4. **No Direct Modification**: You don't write code to modify values directly
+
+**targetType Options:**
+- `"owner"`: The entity that owns this trigger source (e.g., player who has the relic)
+- `"eventTarget"`: The target of the original event that triggered this
+- `"eventSource"`: The source of the original event
+- `"self"`: The entity itself (the card/organ/relic)
+- `{ faction: "enemy" }`: All enemies
+- `{ faction: "ally" }`: All allies
+
+**Common Patterns:**
+
+*Passive Buff on Possess:*
+```typescript
+possess: {
+  triggers: [{
+    when: "before",
+    how: "take",
+    key: "damage",
+    event: [{
+      targetType: "self",
+      key: "modifyEvent",
+      effect: [{
+        key: "reduceDamage",
+        params: { value: 2 }
+      }]
+    }]
+  }]
+}
+// "When owner takes damage, reduce it by 2"
+```
+
+*Trigger on Turn Start:*
+```typescript
+possess: {
+  triggers: [{
+    when: "after",
+    how: "make",
+    key: "turnStart",
+    event: [{
+      targetType: "owner",
+      key: "drawCard",
+      effect: [{
+        key: "drawCard",
+        params: { value: 1 }
+      }]
+    }]
+  }]
+}
+// "At turn start, draw 1 card"
+```
+
+**Important Notes:**
+- Triggers in `possess` interaction are applied when the item is acquired
+- Triggers are automatically removed when the item is lost (via modifier system)
+- Multiple triggers can be defined in the same array
+- Each trigger can spawn multiple events
+- Events are processed through the same Transaction/EventStack system
 
 **Trigger Removal:**
 ```typescript

@@ -37,6 +37,32 @@ export class Chara extends Target{
 
     constructor(map:CharaMap){
         super(map)
+
+        // 添加默认的死亡触发器
+        // 使用 onlyKey 机制，允许被子类或配置覆盖
+        this.appendTrigger({
+            when: "after",
+            how: "take",
+            key: "healthReachMin",
+            onlyKey: "default_death_on_health_zero",
+            importantKey: "death_behavior",
+            callback: (event) => {
+                // 默认行为：生命归0时立即死亡
+                const { doEvent } = require("../system/ActionEvent")
+                doEvent({
+                    key: "kill",
+                    source: event.source,
+                    medium: event.medium,
+                    target: this,
+                    info: { reason: "生命值达到下限" },
+                    effectUnits: [{
+                        key: "kill",
+                        params: { reason: "生命值达到下限" }
+                    }]
+                })
+            }
+        })
+
         // 初始化器官
         this.initOrgans(map.organ)
     }

@@ -1,10 +1,17 @@
 <template>
-<div class="running">    
+<div class="running">
     <Top></Top>
     <div class="content">
         <Battle></Battle>
         <ConnectLine></ConnectLine>
         <PopUpContainer></PopUpContainer>
+
+        <!-- 地图弹窗 -->
+        <Transition name="map-fade" appear>
+            <div v-if="isMapVisible" class="map-popup">
+                <EnemySelectMap></EnemySelectMap>
+            </div>
+        </Transition>
     </div>
     <div class="tool">
         <TestTool></TestTool>
@@ -20,6 +27,14 @@ import ConnectLine from "@/ui/components/interaction/chooseTarget/ConnectLine.vu
 import TestTool from "@/ui/page/tool/testTool/TestTool.vue";
 import PopUpContainer from '@/ui/components/global/PopUpContainer.vue';
 import LogPane from "@/ui/page/tool/logPane/LogPane.vue"
+import EnemySelectMap from "@/ui/page/Scene/test/EnemySelectMap.vue"
+import { onMounted } from 'vue';
+import { isMapVisible, showMap } from '@/ui/hooks/global/mapDisplay';
+
+// 组件挂载时自动显示地图
+onMounted(() => {
+    showMap()
+})
 
 </script>
 
@@ -59,6 +74,29 @@ import LogPane from "@/ui/page/tool/logPane/LogPane.vue"
             pointer-events: auto;
         }
     }
-    
+}
+
+// 地图弹窗样式
+.map-popup {
+    position: absolute;
+    top: 0;
+    left: 5%;
+    width: 90%;
+    height: 100%;
+    z-index: 10;
+    background: white;
+    border: 2px solid black;
+    overflow: auto;
+}
+
+// 地图弹窗渐显动画
+.map-fade-enter-active,
+.map-fade-leave-active {
+    transition: opacity 0.3s ease;
+}
+
+.map-fade-enter-from,
+.map-fade-leave-to {
+    opacity: 0;
 }
 </style>

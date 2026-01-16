@@ -40,6 +40,7 @@
     import { getStatusValue } from '@/core/objects/system/status/Status';
     import type { Potion } from '@/core/objects/item/Subclass/Potion';
     import { getPotionModifier } from '@/core/objects/system/modifier/PotionModifier';
+    import { toggleMap } from '@/ui/hooks/global/mapDisplay';
 
     const health = computed(()=>{
         return nowPlayer.getHealth()
@@ -56,7 +57,7 @@
     })
 
     const abilities = [
-        {label:"地图",click:()=>changeScene("map")},
+        {label:"地图",click:()=>toggleMap()},
         {label:"卡组",click:()=>showCardPile()},
         {label:"返回",click:()=>endRun()}
     ]

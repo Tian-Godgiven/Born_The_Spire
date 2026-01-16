@@ -1,4 +1,4 @@
-import { ActionEvent, handleEventEntity } from "../ActionEvent";
+import { ActionEvent, handleEventEntity, setCurrentExecutingEvent, getCurrentExecutingEvent } from "../ActionEvent";
 import { doEffectFunc, EffectFunc, EffectParams, resolveEffectParams } from "./EffectFunc";
 import { EventParticipant } from "@/core/types/event/EventParticipant";
 import { isEntity } from "@/core/utils/typeGuards";
@@ -74,18 +74,28 @@ export class Effect implements EventParticipant{
     //触发效果对象所在的事件的参与者的触发器
     trigger(when:"before"|"after",triggerLevel:number){
         const event = this.actionEvent
-        // 只有 Entity 类型才有触发器
-        if (isEntity(event.source)) {
-            event.source.makeEvent(when,this.key,event,this,triggerLevel);
-        }
-        if (isEntity(event.medium)) {
-            event.medium.viaEvent(when,this.key,event,this,triggerLevel)
-        }
-        handleEventEntity(event.target,(e)=>{
-            // 只对 Entity 类型调用触发器
-            if (isEntity(e)) {
-                e.takeEvent(when,this.key,event,this,triggerLevel)
+
+        // 设置当前执行的事件（用于传递模拟标记）
+        const previousEvent = getCurrentExecutingEvent()
+        setCurrentExecutingEvent(event)
+
+        try {
+            // 只有 Entity 类型才有触发器
+            if (isEntity(event.source)) {
+                event.source.makeEvent(when,this.key,event,this,triggerLevel);
             }
-        })
+            if (isEntity(event.medium)) {
+                event.medium.viaEvent(when,this.key,event,this,triggerLevel)
+            }
+            handleEventEntity(event.target,(e)=>{
+                // 只对 Entity 类型调用触发器
+                if (isEntity(e)) {
+                    e.takeEvent(when,this.key,event,this,triggerLevel)
+                }
+            })
+        } finally {
+            // 恢复之前的事件
+            setCurrentExecutingEvent(previousEvent)
+        }
     }
 }

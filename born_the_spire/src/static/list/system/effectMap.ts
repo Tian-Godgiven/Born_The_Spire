@@ -8,10 +8,12 @@ import { drawFromDrawPile } from "@/core/effects/card/drawCard"
 import { costEnergy, emptyEnergy, getEnergy, pay_costEnergy } from "@/core/effects/energy"
 import { newError } from "@/ui/hooks/global/alert"
 import { discardCard, pay_discardCard, pay_exhaustCard } from "@/core/effects/card/discard"
+import { voidExhaust, moveInherentToHand } from "@/core/effects/card/entryEffects"
 import { applyState, removeState, changeStateStack } from "@/core/effects/state/stateControl"
 import { addStatusBase } from "@/core/effects/status/changeStatus"
 import { addCurrent, addStatusBaseCurrentValue } from "@/core/effects/current/changeCurrent"
 import { gainReserve, spendReserve } from "@/core/effects/reserve/reserve"
+import { killTarget, reviveTarget } from "@/core/effects/life/lifeControl"
 
 type EffectData = {
     label?:string,
@@ -148,5 +150,21 @@ const effectMap:EffectData[] = [
     label:"消耗储备",
     key:"spendReserve",
     effect:spendReserve
+},{
+    label:"虚无：若在手牌则消耗",
+    key:"voidExhaust",
+    effect:voidExhaust
+},{
+    label:"固有：将固有卡牌移入手牌",
+    key:"moveInherentToHand",
+    effect:moveInherentToHand
+},{
+    label:"杀死目标",
+    key:"kill",
+    effect:killTarget
+},{
+    label:"复活目标",
+    key:"revive",
+    effect:reviveTarget
 }]
 

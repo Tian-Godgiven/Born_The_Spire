@@ -1,13 +1,21 @@
 <template>
-<div class="test" draggable="true">
-    测试工具
-    <div class="item" v-for="item,index in tools" @click="item.click" :key="index">
-        {{ item.text }}
+<div>
+    <div class="test" draggable="true">
+        测试工具
+        <div class="item" v-for="item,index in tools" @click="item.click" :key="index">
+            {{ item.text }}
+        </div>
+    </div>
+
+    <!-- 测试卡牌面板弹窗 -->
+    <div v-if="showCardPanel" class="panel-backdrop" @click="closeCardPanel">
+        <TestCardPanel @close="closeCardPanel" @click.stop />
     </div>
 </div>
 </template>
 
 <script setup lang='ts'>
+    import { ref } from 'vue'
     import { nowBattle, nowPlayerTeam, startNewBattle } from '@/core/objects/game/battle';
     import { newError } from '@/ui/hooks/global/alert';
     import { Player } from '@/core/objects/target/Player';
@@ -15,8 +23,23 @@
     import { nowPlayer } from '@/core/objects/game/run';
     import { doEvent } from '@/core/objects/system/ActionEvent';
     import { getPotionModifier } from '@/core/objects/system/modifier/PotionModifier';
+    import TestCardPanel from '@/ui/test/TestCardPanel.vue';
+
+    // 控制测试卡牌面板的显示
+    const showCardPanel = ref(false)
+
+    function openCardPanel() {
+        showCardPanel.value = true
+    }
+
+    function closeCardPanel() {
+        showCardPanel.value = false
+    }
 
     const tools = [{
+        text:"添加卡牌",
+        click: openCardPanel
+    },{
         text:"开始/重启战斗",
         click:async()=>{
             const enemy = getEnemyByKey("original_enemy_00001")
@@ -112,5 +135,18 @@
     .item{
         cursor: pointer;
     }
+}
+
+.panel-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 </style>

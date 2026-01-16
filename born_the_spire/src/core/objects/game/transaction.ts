@@ -14,6 +14,8 @@ export class Transaction{
     public maxLength:number
     //刚刚创建/收集中/整理中/执行中
     public state:"created"|"gathering"|"organizing"|"doing"
+    //是否为模拟事务（模拟事务不会实际执行效果，只触发触发器）
+    public simulate:boolean = false
     constructor(maxLength:number=10000){
         this.maxLength = maxLength
         this.state = "created"

@@ -9,6 +9,7 @@ import { newError } from "@/ui/hooks/global/alert";
 import { getStatusValue } from "@/core/objects/system/status/Status";
 import { Organ } from "@/core/objects/target/Organ";
 import { getCardModifier } from "@/core/objects/system/modifier/CardModifier";
+import { getEntryModifier } from "@/core/objects/system/modifier/EntryModifier";
 
 /**
  * 卡牌对象
@@ -20,18 +21,43 @@ import { getCardModifier } from "@/core/objects/system/modifier/CardModifier";
  * - void 词条：回合结束时的特殊处理
  */
 export class Card extends Item{
-    public entry:string[] = []
     public source?: Entity  // 卡牌来源（可能是器官、遗物或其他来源）
     public owner?: Entity   // 卡牌持有者（通常是 Player）
+    public tags?: string[]  // 卡牌标签（用于分类和筛选）
+
     constructor(map:CardMap){
         super(map)
-        this.entry.push(...map.entry??[])
+        this.tags = map.tags
     }
-    haveEntry(entry:string){
-        if(this.entry.includes(entry)){
-            return true
+
+    /**
+     * 检查卡牌是否有某个词条
+     * @param entryKey 词条 key
+     * @returns 是否有该词条
+     */
+    hasEntry(entryKey: string): boolean {
+        const entryModifier = getEntryModifier(this)
+        return entryModifier.hasEntry(entryKey)
+    }
+
+    /**
+     * 设置卡牌持有者并应用词条
+     * @param owner 持有者（通常是 Player）
+     * @param entries 要应用的词条列表（从 CardMap 中获取）
+     */
+    setOwner(owner: Entity, entries?: string[]) {
+        this.owner = owner
+
+        // 应用卡牌词条
+        if (entries && entries.length > 0) {
+            const entryModifier = getEntryModifier(this)
+            for (const entryKey of entries) {
+                const result = entryModifier.addEntry(entryKey)
+                if (result !== true) {
+                    console.warn(`[Card.setOwner] 词条应用失败: ${entryKey}`, result)
+                }
+            }
         }
-        return false
     }
 
     /**

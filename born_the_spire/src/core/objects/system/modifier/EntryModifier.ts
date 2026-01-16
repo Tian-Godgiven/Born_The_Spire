@@ -1,7 +1,6 @@
 import { Entity } from "../Entity"
-import { Card } from "../../item/Subclass/Card"
-import { Organ } from "../../target/Organ"
-import { entryList } from "@/static/list/system/entryMap"
+import { entryDefinitions } from "../Entry"
+import { toRaw } from "vue"
 
 /**
  * 词条实例
@@ -38,7 +37,7 @@ export class EntryModifier {
         }
 
         // 获取词条定义
-        const entryDef = entryList[entryKey]
+        const entryDef = entryDefinitions[entryKey]
         if (!entryDef) {
             return `词条 ${entryKey} 不存在`
         }
@@ -108,11 +107,10 @@ export class EntryModifier {
      * Organ.owner → Player/Enemy
      */
     private resolveParentOwner(): Entity | undefined {
-        if (this.owner instanceof Card) {
-            return this.owner.owner
-        }
-        if (this.owner instanceof Organ) {
-            return this.owner.owner
+        // 使用鸭子类型判断：检查是否有 owner 属性（Card 和 Organ 都有）
+        const maybeOwner = (this.owner as any).owner
+        if (maybeOwner instanceof Entity) {
+            return maybeOwner
         }
         return undefined
     }
@@ -125,8 +123,9 @@ const entryModifierMap = new WeakMap<Entity, EntryModifier>()
  * 为实体初始化词条管理器
  */
 export function initEntryModifier(entity: Entity): EntryModifier {
-    const modifier = new EntryModifier(entity)
-    entryModifierMap.set(entity, modifier)
+    const rawEntity = toRaw(entity)
+    const modifier = new EntryModifier(rawEntity)
+    entryModifierMap.set(rawEntity, modifier)
     return modifier
 }
 
@@ -134,9 +133,10 @@ export function initEntryModifier(entity: Entity): EntryModifier {
  * 获取实体的词条管理器
  */
 export function getEntryModifier(entity: Entity): EntryModifier {
-    let modifier = entryModifierMap.get(entity)
+    const rawEntity = toRaw(entity)
+    let modifier = entryModifierMap.get(rawEntity)
     if (!modifier) {
-        modifier = initEntryModifier(entity)
+        modifier = initEntryModifier(rawEntity)
     }
     return modifier
 }

@@ -16,7 +16,7 @@
     import { getDescribe } from '@/ui/hooks/express/describe';
 import { Organ } from '@/core/objects/target/Organ';
 import { computed, ref } from 'vue';
-import EntryDisplay from './EntryDisplay.vue';
+import EntryDisplay from '@/ui/components/display/EntryDisplay.vue';
 
     const {organ, side} = defineProps<{
         organ: Organ

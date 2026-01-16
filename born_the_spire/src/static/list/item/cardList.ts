@@ -7,10 +7,12 @@ export type CardMap = ItemMap & {
         cost:number|null
     }
     entry?:string[],
+    tags?:string[],  // 卡牌标签（用于分类和筛选）
 }
 
 const cardList:CardMap[] = [{
     label:"打击",
+    tags:["attack", "basic"],
     status:{
         damage:5,
         cost:1,
@@ -30,6 +32,7 @@ const cardList:CardMap[] = [{
     }
 },{
     label:"消耗打击",
+    tags:["attack"],
     status:{
         damage:15,
         cost:1,
@@ -50,6 +53,7 @@ const cardList:CardMap[] = [{
     }
 },{
     label:"虚无打击",
+    tags:["attack"],
     status:{
         damage:15,
         cost:1,
@@ -69,7 +73,29 @@ const cardList:CardMap[] = [{
         }
     }
 },{
+    label:"固有打击",
+    tags:["attack"],
+    status:{
+        damage:8,
+        cost:1,
+    },
+    entry:["inherent"],
+    describe:[
+        "造成",{key:["status","damage"]},"点伤害"
+    ],
+    key:"original_card_00012",
+    interaction:{
+        use:{
+            target:{faction:"enemy"},
+            effects:[{
+                key:"damage",
+                params:{value:8},
+            }]
+        }
+    }
+},{
     label:"肌肉强化",
+    tags:["power"],
     status:{
         power:1,
         cost:0
@@ -88,6 +114,7 @@ const cardList:CardMap[] = [{
     }
 },{
     label:"淬毒",
+    tags:["skill"],
     status:{
         poison:3,
         cost:1
@@ -105,6 +132,7 @@ const cardList:CardMap[] = [{
     }
 },{
     label:"随机打击",
+    tags:["attack"],
     status:{
         cost:1,
         minDamage:5,
@@ -123,6 +151,7 @@ const cardList:CardMap[] = [{
     }
 },{
     label:"虚弱诅咒",
+    tags:["curse"],
     status:{
         weak:2,
         cost:0
@@ -140,6 +169,7 @@ const cardList:CardMap[] = [{
     }
 },{
     label:"易伤打击",
+    tags:["attack"],
     status:{
         vulnerable:2,
         damage:8,
@@ -161,6 +191,7 @@ const cardList:CardMap[] = [{
     }
 },{
     label:"旋风斩",
+    tags:["attack"],
     status:{
         cost:1,
         damage:3
@@ -178,6 +209,7 @@ const cardList:CardMap[] = [{
     }
 },{
     label:"末日",
+    tags:["attack"],
     status:{
         cost:3,
         damage:999,
@@ -195,6 +227,7 @@ const cardList:CardMap[] = [{
     }
 },{
     label:"接二连三",
+    tags:["attack"],
     status:{
         cost:1,
         damage:2,
@@ -217,4 +250,8 @@ export function getCardByKey(key:string){
     if(!data)throw new Error("不存在的卡牌")
     const card = new Card(data)
     return card
+}
+
+export function getAllCards(){
+    return cardList
 }

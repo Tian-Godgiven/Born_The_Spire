@@ -48,6 +48,8 @@ export class ActionEvent<
     private transactionCollector?:(e:ActionEvent,triggerLevel?:number)=>void//该事件所属的事务的收集器，通过该收集器可以将任意事件添加到该事务中，从而完成事件的内部收集
     public logUnit?:LogUnit//该事件的日志单元，用于收集子日志
     private parentEvent?:ActionEvent//父事件，用于建立日志的父子关系
+    //是否为模拟事件（模拟事件不会实际执行效果，只触发触发器）
+    public simulate:boolean = false
     constructor(
         key:string,//触发key
         source:s,medium:m,target:t|t[],
@@ -81,19 +83,28 @@ export class ActionEvent<
     //触发事件
     trigger(when:"before"|"after",triggerLevel:number){
         this.triggerLevel = triggerLevel
-        // 只有 Entity 类型才有触发器
-        if (isEntity(this.source)) {
-            this.source.makeEvent(when,this.key,this,null,triggerLevel);
-        }
-        if (isEntity(this.medium)) {
-            this.medium.viaEvent(when,this.key,this,null,triggerLevel)
-        }
-        handleEventEntity(this.target,(e)=>{
-            if (isEntity(e)) {
-                e.takeEvent(when,this.key,this,null,triggerLevel)
-            }
-        })
 
+        // 设置当前执行的事件（用于传递模拟标记）
+        const previousEvent = getCurrentExecutingEvent()
+        setCurrentExecutingEvent(this)
+
+        try {
+            // 只有 Entity 类型才有触发器
+            if (isEntity(this.source)) {
+                this.source.makeEvent(when,this.key,this,null,triggerLevel);
+            }
+            if (isEntity(this.medium)) {
+                this.medium.viaEvent(when,this.key,this,null,triggerLevel)
+            }
+            handleEventEntity(this.target,(e)=>{
+                if (isEntity(e)) {
+                    e.takeEvent(when,this.key,this,null,triggerLevel)
+                }
+            })
+        } finally {
+            // 恢复之前的事件
+            setCurrentExecutingEvent(previousEvent)
+        }
     }
     //宣布这个事件将会发生，同时宣布其中的effect效果
     announce(triggerLevel:number){
@@ -208,6 +219,8 @@ export class ActionEvent<
     spawnEvent(event:ActionEvent){
         // 设置父子关系，用于日志嵌套
         event.parentEvent = this
+        // 继承模拟标记
+        event.simulate = this.simulate
         // 共享事务收集器
         if(this.transactionCollector){
             event.setTransactionCollector(this.transactionCollector)
@@ -242,6 +255,17 @@ export class ActionEvent<
     }
 }
 
+// 当前正在执行的事件（用于传递模拟标记）
+let currentExecutingEvent: ActionEvent | null = null
+
+export function setCurrentExecutingEvent(event: ActionEvent | null) {
+    currentExecutingEvent = event
+}
+
+export function getCurrentExecutingEvent(): ActionEvent | null {
+    return currentExecutingEvent
+}
+
 // 使得一个事件产生并发生
 type DoEventType = {
     key:string,
@@ -262,6 +286,15 @@ export function doEvent(
     if(onComplete){
         event.onComplete = onComplete
     }
+
+    // 如果当前有正在执行的事件，且该事件是模拟模式，则继承模拟标记
+    if (currentExecutingEvent && currentExecutingEvent.simulate) {
+        event.simulate = true
+        // 模拟模式下，不收集到事务，但返回事件对象供触发器使用
+        console.log("[doEvent] 模拟模式下创建了模拟事件:", key)
+        return event
+    }
+
     event.happen(()=>{doWhat()})
     return event
 }
