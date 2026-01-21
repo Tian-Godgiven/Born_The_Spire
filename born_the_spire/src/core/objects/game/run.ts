@@ -4,6 +4,10 @@ import router from "@/ui/router";
 import { playerList } from "@/static/list/target/playerList";
 import { reactive, ref } from "vue";
 import { addToPlayerTeam } from "./battle";
+import { initBlackStoreItemPools } from "@/static/list/blackStore/blackStoreItemPool";
+
+// 初始化黑市物品池
+initBlackStoreItemPools()
 
 const defaultPlayer = new Player(playerList["default"])
 const defaultGameRun = new GameRun()
