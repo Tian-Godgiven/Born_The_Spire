@@ -1,6 +1,4 @@
 import { nanoid } from "nanoid";
-import { getOrgan, Organ } from "./Organ";
-import { getOrganByKey } from "@/static/list/target/organList";
 import { Entity, EntityMap } from "../system/Entity";
 import { State } from "../system/State";
 import { TriggerMap } from "@/core/types/object/trigger";
@@ -8,6 +6,9 @@ import { computed, reactive } from "vue";
 import { getStatusRefValue } from "../system/status/Status";
 import { getCurrentRefValue } from "../system/Current/current";
 import { getOrganModifier } from "../system/modifier/OrganModifier";
+import { doEvent } from "../system/ActionEvent";
+import { getOrganByKey } from "@/static/list/target/organList";
+import { getOrgan } from "./Organ";
 
 export type TargetMap = EntityMap & {
     label:string,
@@ -48,7 +49,6 @@ export class Chara extends Target{
             importantKey: "death_behavior",
             callback: (event) => {
                 // 默认行为：生命归0时立即死亡
-                const { doEvent } = require("../system/ActionEvent")
                 doEvent({
                     key: "kill",
                     source: event.source,

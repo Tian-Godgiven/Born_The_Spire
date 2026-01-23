@@ -36,6 +36,24 @@ export interface EventMap {
  * 事件配置列表
  */
 export const eventList: EventMap[] = [
+    // 开场事件：启程
+    {
+        key: "event_game_start",
+        title: "苏生",
+        description: "是时候去唤醒尖塔了……",
+        icon: "",
+        options: [
+            {
+                title: "向前",
+                description: "生长……蠕行……吸收……",
+                icon: "",
+                effects: [
+                    { key: "nothing" }
+                ]
+            }
+        ]
+    },
+
     // 示例事件1：神秘商人
     {
         key: "event_mysterious_merchant",

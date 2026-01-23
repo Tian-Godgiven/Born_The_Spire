@@ -5,6 +5,11 @@ import { Enemy } from "../target/Enemy"
 import { Chara } from "../target/Target"
 import { EnemyMap } from "@/static/list/target/enemyList"
 import { newLog } from "@/ui/hooks/global/log"
+import { getLazyModule } from "@/core/utils/lazyLoader"
+import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
+import { nowPlayer } from "@/core/objects/game/run"
+import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
+import { roomRegistry } from "@/static/registry/roomRegistry"
 
 /**
  * 战斗房间配置
@@ -54,7 +59,7 @@ export class BattleRoom extends Room {
      * 根据敌人 key 列表加载敌人配置
      */
     private loadEnemyConfigsByKeys(keys: string[]): EnemyMap[] {
-        const { enemyList } = require("@/static/list/target/enemyList")
+        const enemyList = getLazyModule<EnemyMap[]>('enemyList')
         return keys.map(key => {
             const config = enemyList.find((e: EnemyMap) => e.key === key)
             if (!config) {
@@ -155,13 +160,42 @@ export class BattleRoom extends Room {
      */
     private async handleNormalRewards(): Promise<void> {
         newLog(["普通战斗奖励："])
-        newLog(["- 吞噬物质"])
-        newLog(["- 同化器官（3选1）"])
 
-        // TODO: 实现奖励逻辑
-        // 1. 计算物质奖励（根据层级）
-        // 2. 从敌人器官中随机抽取3个
-        // 3. 显示奖励选择UI
+        // 1. 计算并给予物质奖励（根据层级）
+        const materialReward = this.calculateMaterialReward()
+        newLog([`吞噬物质: +${materialReward}`])
+
+        const reserveModifier = getReserveModifier(nowPlayer)
+        reserveModifier.gainReserve("material", materialReward, nowPlayer)
+
+        // 2. 收集所有敌人的器官
+        const allOrganKeys = this.collectEnemyOrgans()
+
+        if (allOrganKeys.length === 0) {
+            newLog(["敌人没有可同化的器官"])
+            return
+        }
+
+        // 3. 随机选择3个器官（如果不足3个则全部显示）
+        const selectedOrganKeys = this.selectRandomOrgans(allOrganKeys, 3)
+        newLog([`可同化器官（${selectedOrganKeys.length}选1）:`])
+
+        const organList = getLazyModule<any[]>('organList')
+        selectedOrganKeys.forEach(key => {
+            try {
+                const organ = organList.find(o => o.key === key)
+                if (organ) {
+                    newLog([`  - ${organ.label}`])
+                } else {
+                    newLog([`  - ${key} (未找到)`])
+                }
+            } catch (e) {
+                newLog([`  - ${key} (未找到)`])
+            }
+        })
+
+        // TODO: 显示奖励选择UI
+        newLog(["器官选择 UI 尚未实现，请等待后续开发"])
     }
 
     /**
@@ -171,13 +205,14 @@ export class BattleRoom extends Room {
      */
     private async handleEliteRewards(): Promise<void> {
         newLog(["精英战斗奖励："])
-        newLog(["- 吞噬物质"])
-        newLog(["- 同化器官（3选1）"])
-        newLog(["- 遗物奖励"])
 
-        // TODO: 实现奖励逻辑
+        // 先给予普通奖励
         await this.handleNormalRewards()
-        // + 遗物奖励
+
+        // 额外给予遗物奖励
+        newLog(["遗物奖励（3选1）:"])
+        // TODO: 实现遗物选择逻辑
+        newLog(["遗物选择 UI 尚未实现，请等待后续开发"])
     }
 
     /**
@@ -188,11 +223,79 @@ export class BattleRoom extends Room {
      */
     private async handleBossRewards(): Promise<void> {
         newLog(["Boss战斗奖励："])
-        newLog(["- 吞噬物质"])
-        newLog(["- Boss器官（指定选择1个）"])
-        newLog(["- Boss遗物（3选1）"])
 
-        // TODO: 实现奖励逻辑
+        // 1. 给予更多物质奖励
+        const materialReward = this.calculateMaterialReward() * 2
+        newLog([`吞噬物质: +${materialReward}`])
+
+        const reserveModifier = getReserveModifier(nowPlayer)
+        reserveModifier.gainReserve("material", materialReward, nowPlayer)
+
+        // 2. Boss器官（所有器官都可选择）
+        const allOrganKeys = this.collectEnemyOrgans()
+        newLog([`Boss器官（${allOrganKeys.length}选1）:`])
+
+        const organList = getLazyModule<any[]>('organList')
+        allOrganKeys.forEach(key => {
+            try {
+                const organ = organList.find(o => o.key === key)
+                if (organ) {
+                    newLog([`  - ${organ.label}`])
+                } else {
+                    newLog([`  - ${key} (未找到)`])
+                }
+            } catch (e) {
+                newLog([`  - ${key} (未找到)`])
+            }
+        })
+
+        // 3. Boss遗物
+        newLog(["Boss遗物（3选1）:"])
+
+        // TODO: 显示奖励选择UI
+        newLog(["Boss奖励选择 UI 尚未实现，请等待后续开发"])
+    }
+
+    /**
+     * 计算物质奖励（根据层级）
+     */
+    private calculateMaterialReward(): number {
+        // 基础物质 + 层级加成
+        return 30 + this.targetLayer * 5
+    }
+
+    /**
+     * 收集所有敌人的器官
+     */
+    private collectEnemyOrgans(): string[] {
+        const allOrganKeys: string[] = []
+
+        for (const enemy of this.enemies) {
+            const organModifier = getOrganModifier(enemy)
+            const organs = organModifier.getOrgans()
+
+            // 收集器官的 key
+            organs.forEach(organ => {
+                if (organ.key) {
+                    allOrganKeys.push(organ.key)
+                }
+            })
+        }
+
+        return allOrganKeys
+    }
+
+    /**
+     * 从器官列表中随机选择指定数量的器官
+     */
+    private selectRandomOrgans(organKeys: string[], count: number): string[] {
+        if (organKeys.length <= count) {
+            return [...organKeys]
+        }
+
+        // 随机打乱并选择前 count 个
+        const shuffled = [...organKeys].sort(() => Math.random() - 0.5)
+        return shuffled.slice(0, count)
     }
 
     /**

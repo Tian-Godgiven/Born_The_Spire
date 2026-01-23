@@ -1,10 +1,12 @@
-import { OrganMap } from "@/static/list/target/organList";
+import type { OrganMap, OrganUpgradeConfig } from "@/static/list/target/organList";
 import { Entity } from "../system/Entity";
 import { Chara } from "./Target";
 import { Interaction } from "../item/Item";
 import { getOrganModifier } from "../system/modifier/OrganModifier";
 import { doEvent } from "../system/ActionEvent";
 import { resolveTriggerEventTarget } from "../system/trigger/Trigger";
+import { OrganQuality, calculateAbsorbValue } from "@/static/list/target/organQuality";
+import { OrganPart } from "@/static/list/target/organPart";
 
 export class Organ extends Entity{
     public readonly label:string
@@ -14,6 +16,13 @@ export class Organ extends Entity{
     public entry:string[] = []  // 器官的词条列表
     public owner?: Entity   // 器官持有者（通常是 Player 或 Enemy）
     // 注意：isDisabled 继承自 Item 基类，表示器官是否损坏
+
+    // 新增属性
+    public readonly quality: OrganQuality  // 稀有度
+    public level: number                   // 等级（可变，可以升级）
+    public readonly part?: OrganPart       // 部位（可选）
+    public readonly absorbValue: number    // 吞噬获取量
+    public readonly upgradeConfig?: OrganUpgradeConfig  // 升级配置（可选）
 
     // 内部管理的触发器移除函数
     private workTriggerRemovers: Array<()=>void> = []
@@ -25,6 +34,14 @@ export class Organ extends Entity{
         this.key = map.key;
         this.cards = map.cards || []  // 初始化卡牌列表
         this.entry = map.entry || []  // 初始化词条列表
+
+        // 初始化新属性
+        this.quality = map.quality
+        this.level = map.level ?? 1  // 默认等级为 1
+        this.part = map.part
+        this.absorbValue = calculateAbsorbValue(map.quality, map.absorbValue)
+        this.upgradeConfig = map.upgrade  // 升级配置
+
         const interaction:Interaction[] = []
         for(let key in map.interaction){
             interaction.push({key,...map.interaction[key]})

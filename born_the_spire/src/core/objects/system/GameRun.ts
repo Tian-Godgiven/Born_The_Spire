@@ -1,6 +1,5 @@
 import { nanoid } from "nanoid"
 import { Room } from "../room/Room"
-import { ref } from "vue"
 import { floorManager } from "./FloorManager"
 
 //每一局游戏
@@ -12,7 +11,7 @@ export class GameRun{
 
     // 房间相关
     public roomHistory: Room[] = []  // 已完成的房间历史
-    public currentRoom = ref<Room | null>(null)  // 当前所在房间
+    public currentRoom: Room | null = null  // 当前所在房间（不使用 ref，由外层 reactive 提供响应式）
 
     // 楼层管理器
     public floorManager = floorManager
@@ -28,7 +27,7 @@ export class GameRun{
      * 进入一个房间
      */
     async enterRoom(room: Room) {
-        this.currentRoom.value = room
+        this.currentRoom = room
         room.state = "active"
 
         // 记录房间类型到楼层管理器
@@ -45,7 +44,7 @@ export class GameRun{
      * 完成当前房间
      */
     async completeCurrentRoom() {
-        const room = this.currentRoom.value
+        const room = this.currentRoom
         if (!room) {
             console.warn("[GameRun] 没有正在进行的房间")
             return
@@ -64,13 +63,13 @@ export class GameRun{
      * 离开当前房间（不完成）
      */
     async exitCurrentRoom() {
-        const room = this.currentRoom.value
+        const room = this.currentRoom
         if (!room) {
             return
         }
 
         await room.exit()
-        this.currentRoom.value = null
+        this.currentRoom = null
     }
 
     /**

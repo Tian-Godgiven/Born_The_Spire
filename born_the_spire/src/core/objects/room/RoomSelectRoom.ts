@@ -6,7 +6,7 @@
 import { Room, RoomConfig } from "./Room"
 import { Choice, ChoiceGroup } from "../system/Choice"
 import { roomRegistry } from "@/static/registry/roomRegistry"
-import { nowGameRun } from "@/core/objects/game/run"
+import { nowGameRun, enterRoom } from "@/core/objects/game/run"
 import { newLog } from "@/ui/hooks/global/log"
 
 /**
@@ -33,10 +33,10 @@ export class RoomSelectRoom extends Room {
         super(config)
 
         // 计算目标层级
-        this.targetLayer = config.targetLayer ?? nowGameRun.value.floorManager.getCurrentFloor() + 1
+        this.targetLayer = config.targetLayer ?? nowGameRun.floorManager.getCurrentFloor() + 1
 
         // 生成或使用提供的房间选项
-        const roomKeys = config.roomKeys ?? nowGameRun.value.generateNextFloorRoomOptions(config.roomCount ?? 3)
+        const roomKeys = config.roomKeys ?? nowGameRun.generateNextFloorRoomOptions(config.roomCount ?? 3)
 
         // 创建可选房间实例
         this.availableRooms = roomKeys
@@ -109,11 +109,8 @@ export class RoomSelectRoom extends Room {
             // 完成当前房间（房间选择房间）
             await this.complete()
 
-            // 进入选中的房间（会自动前进楼层）
-            await nowGameRun.value.enterRoom(this.selectedRoom)
-
-            // 处理选中的房间内容
-            await this.selectedRoom.process()
+            // 使用独立的 enterRoom 函数进入选中的房间
+            await enterRoom(this.selectedRoom)
         }
     }
 
@@ -146,3 +143,5 @@ export class RoomSelectRoom extends Room {
         return "🚪"
     }
 }
+
+// ==================== 自动注册 ====================

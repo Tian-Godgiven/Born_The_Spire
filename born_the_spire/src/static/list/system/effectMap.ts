@@ -14,6 +14,7 @@ import { addStatusBase } from "@/core/effects/status/changeStatus"
 import { addCurrent, addStatusBaseCurrentValue } from "@/core/effects/current/changeCurrent"
 import { gainReserve, spendReserve } from "@/core/effects/reserve/reserve"
 import { killTarget, reviveTarget } from "@/core/effects/life/lifeControl"
+import { replaceOrgan } from "@/core/effects/organ/organEffects"
 
 type EffectData = {
     label?:string,
@@ -31,7 +32,7 @@ export function getFromEffectMap(unit:EffectUnit){
 }
 
 //效果映射表，将json中存储的效果map转化成效果对象
-const effectMap:EffectData[] = [
+export const effectMap:EffectData[] = [
 //对target造成伤害
 {
     label:"造成伤害",
@@ -166,5 +167,9 @@ const effectMap:EffectData[] = [
     label:"复活目标",
     key:"revive",
     effect:reviveTarget
+},{
+    label:"替换器官",
+    key:"replaceOrgan",
+    effect:replaceOrgan
 }]
 

@@ -1,4 +1,4 @@
-import { handleEventEntity } from "@/core/objects/system/ActionEvent";
+import { handleEventEntity, doEvent } from "@/core/objects/system/ActionEvent";
 import { EffectFunc } from "@/core/objects/system/effect/EffectFunc";
 import { newError } from "@/ui/hooks/global/alert";
 
@@ -85,9 +85,6 @@ export const addTriggerToTarget: EffectFunc = (event, effect) => {
             key,
             level,
             callback: (triggerEvent, triggerEffect, triggerLevel) => {
-                // 导入 doEvent（避免循环依赖，在运行时导入）
-                const { doEvent } = require("@/core/objects/system/ActionEvent");
-
                 // 确定事件目标
                 let eventTarget = entity;
                 if (triggerEvent.targetType === "eventSource") {

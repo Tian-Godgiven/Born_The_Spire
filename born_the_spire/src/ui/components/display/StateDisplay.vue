@@ -83,8 +83,8 @@ function resolveDynamicValue(part: any, state: State): string {
     position: absolute;
     top: 0;
     left: 0;
-    width: 0;
-    height: 0;
+    width: 100%;
+    height: 100%;
     pointer-events: none;  // 不阻止鼠标事件
 }
 
@@ -100,12 +100,12 @@ function resolveDynamicValue(part: any, state: State): string {
     pointer-events: auto;  // 弹窗本身可以接收事件
 
     &.left {
-        left: 0;
+        left: 0%;
         transform: translateX(calc(-100% - 8px));  // 向左移动自身宽度+间距
     }
 
     &.right {
-        right: 0;
+        right: 0%;
         transform: translateX(calc(100% + 8px));  // 向右移动自身宽度+间距
     }
 

@@ -6,6 +6,7 @@
 import { OrganMap } from "@/static/list/target/organList"
 import { RelicMap } from "@/static/list/item/relicList"
 import { PotionMap } from "@/static/list/item/potionList"
+import { getLazyModule } from "@/core/utils/lazyLoader"
 
 /**
  * 物品池配置
@@ -47,18 +48,18 @@ export const blackStorePotionPool: ItemPoolConfig<PotionMap> = {
 export function initBlackStoreItemPools(): void {
     console.log("[BlackStorePool] 开始初始化黑市物品池")
 
-    // 加载器官
-    const { organList } = require("@/static/list/target/organList")
+    // 加载器官（使用懒加载）
+    const organList = getLazyModule<OrganMap[]>('organList')
     blackStoreOrganPool.items = [...organList]
     blackStoreOrganPool.weights = new Array(organList.length).fill(1)
 
-    // 加载遗物
-    const { relicList } = require("@/static/list/item/relicList")
+    // 加载遗物（使用懒加载）
+    const relicList = getLazyModule<RelicMap[]>('relicList')
     blackStoreRelicPool.items = [...relicList]
     blackStoreRelicPool.weights = new Array(relicList.length).fill(1)
 
-    // 加载药水
-    const { potionList } = require("@/static/list/item/potionList")
+    // 加载药水（使用懒加载）
+    const potionList = getLazyModule<PotionMap[]>('potionList')
     blackStorePotionPool.items = [...potionList]
     blackStorePotionPool.weights = new Array(potionList.length).fill(1)
 

@@ -10,7 +10,7 @@ export type CardMap = ItemMap & {
     tags?:string[],  // 卡牌标签（用于分类和筛选）
 }
 
-const cardList:CardMap[] = [{
+export const cardList:CardMap[] = [{
     label:"打击",
     tags:["attack", "basic"],
     status:{

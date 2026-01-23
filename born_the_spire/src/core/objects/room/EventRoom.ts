@@ -5,10 +5,12 @@
 
 import { Room, RoomConfig } from "./Room"
 import { Choice, ChoiceGroup } from "../system/Choice"
-import { EventMap } from "@/static/list/event/eventList"
-import { executeEventEffects } from "@/static/list/event/eventEffectMap"
+import { EventMap } from "@/static/list/room/event/eventList"
+import { executeEventEffects } from "@/static/list/room/event/eventEffectMap"
 import { newLog } from "@/ui/hooks/global/log"
 import { Component } from "vue"
+import { getLazyModule } from "@/core/utils/lazyLoader"
+import { roomRegistry } from "@/static/registry/roomRegistry"
 
 /**
  * 事件房间配置
@@ -77,7 +79,7 @@ export class EventRoom extends Room {
      * 根据事件 key 加载事件配置
      */
     private loadEventByKey(key: string): EventMap {
-        const { eventList } = require("@/static/list/event/eventList")
+        const eventList = getLazyModule<EventMap[]>('eventList')
         const config = eventList.find((e: EventMap) => e.key === key)
         if (!config) {
             throw new Error(`[EventRoom] 未找到事件配置: ${key}`)

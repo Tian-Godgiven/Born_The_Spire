@@ -1,6 +1,6 @@
 import { Relic, RelicMap } from "@/core/objects/item/Subclass/Relic";
 
-const relicList: RelicMap[] = [
+export const relicList: RelicMap[] = [
     // 被动遗物 - 只有 possess
     {
         label: "回血石",

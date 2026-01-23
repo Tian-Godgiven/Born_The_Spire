@@ -2,6 +2,7 @@ import { Reward, RewardConfig } from "./Reward"
 import { Organ } from "@/core/objects/target/Organ"
 import { OrganMap } from "@/static/list/target/organList"
 import { newLog } from "@/ui/hooks/global/log"
+import { getLazyModule } from "@/core/utils/lazyLoader"
 
 /**
  * 器官选择奖励配置
@@ -38,7 +39,7 @@ export class OrganSelectReward extends Reward {
      * 根据器官 key 列表加载器官配置
      */
     private loadOrgansByKeys(keys: string[]): OrganMap[] {
-        const { organList } = require("@/static/list/target/organList")
+        const organList = getLazyModule<OrganMap[]>('organList')
         return keys.map(key => {
             const config = organList.find((o: OrganMap) => o.key === key)
             if (!config) {

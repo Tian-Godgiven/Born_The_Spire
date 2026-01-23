@@ -2,6 +2,7 @@ import { Reward, RewardConfig } from "./Reward"
 import { Relic } from "@/core/objects/item/Subclass/Relic"
 import { RelicMap } from "@/static/list/item/relicList"
 import { newLog } from "@/ui/hooks/global/log"
+import { getLazyModule } from "@/core/utils/lazyLoader"
 
 /**
  * 遗物奖励配置
@@ -34,7 +35,7 @@ export class RelicReward extends Reward {
      * 根据遗物 key 加载遗物配置
      */
     private loadRelicByKey(key: string): RelicMap {
-        const { relicList } = require("@/static/list/item/relicList")
+        const relicList = getLazyModule<RelicMap[]>('relicList')
         const config = relicList.find((r: RelicMap) => r.key === key)
         if (!config) {
             console.warn(`[RelicReward] 未找到遗物配置: ${key}`)

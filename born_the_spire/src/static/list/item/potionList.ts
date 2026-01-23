@@ -6,7 +6,7 @@ export type PotionMap = ItemMap & {
     canDrop?: boolean  // 是否可丢弃，默认 true
 }
 
-const potionList:PotionMap[] = [
+export const potionList:PotionMap[] = [
     // 简单药水 - 单个 use
     {
         label:"生命药剂",

@@ -5,7 +5,7 @@ import { PlayerMap } from "@/static/list/target/playerList";
 import { getPotionByKey } from "@/static/list/item/potionList";
 import { nanoid } from "nanoid";
 import { Chara } from "./Target";
-import { getCardByKey } from "@/static/list/item/cardList";
+import { getCardByKey, getAllCards } from "@/static/list/item/cardList";
 import { Entity } from "../system/Entity";
 import { washPile } from "@/core/effects/card";
 import { reactive } from "vue";
@@ -14,6 +14,7 @@ import { getStatusValue } from "../system/status/Status";
 import { getPotionModifier } from "../system/modifier/PotionModifier";
 import { getCardModifier } from "../system/modifier/CardModifier";
 import { getEntryModifier } from "../system/modifier/EntryModifier";
+import { getOrganModifier } from "../system/modifier/OrganModifier";
 import { doEvent } from "../system/ActionEvent";
 
 export type CardPiles = {
@@ -40,6 +41,9 @@ export class Player extends Chara{
     constructor(map:PlayerMap){
         super(map)
 
+        console.log('[Player] 构造函数开始，map.organ:', map.organ)
+        console.log('[Player] 构造函数开始，map.card:', map.card)
+
         //玩家特有内容的初始化
 
         // 初始化储备（金钱等）
@@ -59,7 +63,13 @@ export class Player extends Chara{
 
         //获取初始拥有的卡组（来源是玩家自身）
         const cardModifier = getCardModifier(this)
-        cardModifier.addCardsFromSource(this, map.card)
+        const addedCards = cardModifier.addCardsFromSource(this, map.card)
+        console.log('[Player] 构造函数结束，添加的卡牌数量:', addedCards.length)
+
+        // 检查器官
+        const organModifier = getOrganModifier(this)
+        console.log('[Player] 构造函数结束，器官数量:', organModifier.getOrgans().length)
+        console.log('[Player] 构造函数结束，卡组总数:', cardModifier.getAllCards().length)
     }
     
     //获取自身
@@ -88,7 +98,6 @@ export class Player extends Chara{
         const card = getCardByKey(cardKey)
 
         // 从 cardList 获取 CardMap 以获取词条定义
-        const { getAllCards } = require("@/static/list/item/cardList")
         const cardMap = getAllCards().find((c: any) => c.key === cardKey)
         const entries = cardMap?.entry ?? []
 

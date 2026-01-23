@@ -11,6 +11,9 @@
     <div v-if="showCardPanel" class="panel-backdrop" @click="closeCardPanel">
         <TestCardPanel @close="closeCardPanel" @click.stop />
     </div>
+
+    <!-- 开发者控制台 -->
+    <DevConsole ref="consoleRef" />
 </div>
 </template>
 
@@ -24,9 +27,11 @@
     import { doEvent } from '@/core/objects/system/ActionEvent';
     import { getPotionModifier } from '@/core/objects/system/modifier/PotionModifier';
     import TestCardPanel from '@/ui/test/TestCardPanel.vue';
+    import DevConsole from '@/ui/page/tool/console/DevConsole.vue';
 
     // 控制测试卡牌面板的显示
     const showCardPanel = ref(false)
+    const consoleRef = ref<InstanceType<typeof DevConsole>>()
 
     function openCardPanel() {
         showCardPanel.value = true
@@ -36,7 +41,14 @@
         showCardPanel.value = false
     }
 
+    function openConsole() {
+        consoleRef.value?.open()
+    }
+
     const tools = [{
+        text:"控制台",
+        click: openConsole
+    },{
         text:"添加卡牌",
         click: openCardPanel
     },{

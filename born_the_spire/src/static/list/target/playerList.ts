@@ -42,20 +42,12 @@ export const playerList:Record<string,PlayerMap> = {
         },
         organ:[
             "original_organ_00001",
-            "test_organ_cards_001",  // 战斗之心 - 提供打击
             "test_organ_cards_002",  // 狂暴腺体 - 提供消耗打击和肌肉强化
         ],
         card:[
                 "original_card_00010",  // 虚弱诅咒 - 测试虚弱状态
                 "original_card_00011",  // 易伤打击 - 测试易伤状态
                 "original_card_00001",  // 打击 x10 - 测试基础卡牌
-                "original_card_00001",
-                "original_card_00001",
-                "original_card_00001",
-                "original_card_00001",
-                "original_card_00001",
-                "original_card_00001",
-                "original_card_00001",
                 "original_card_00001",
                 "original_card_00001",
                 "original_card_00012",  // 固有打击 - 测试固有词条

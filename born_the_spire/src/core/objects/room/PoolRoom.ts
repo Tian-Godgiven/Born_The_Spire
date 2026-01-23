@@ -7,6 +7,12 @@ import { Room, RoomConfig } from "./Room"
 import { Choice, ChoiceGroup } from "../system/Choice"
 import { nowPlayer } from "@/core/objects/game/run"
 import { newLog } from "@/ui/hooks/global/log"
+import { getStatusValue, changeStatusValue } from "@/core/objects/system/status/Status"
+import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
+import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
+import { showComponent } from "@/core/hooks/componentManager"
+import { doEvent } from "@/core/objects/system/ActionEvent"
+import { roomRegistry } from "@/static/registry/roomRegistry"
 
 /**
  * 水池房间配置
@@ -34,8 +40,8 @@ export class PoolRoom extends Room {
         this.absorbAmount = config.absorbAmount ?? this.calculateAbsorbAmount(config.layer)
         this.allowBloodMark = config.allowBloodMark ?? true
 
-        // TODO: 从全局状态检查是否已染血
-        // this.hasBloodMark = nowGameRun.value.hasBloodMark
+        // 从玩家状态检查是否已染血
+        this.hasBloodMark = getStatusValue(nowPlayer, "ifBloodMark", 0) === 1
 
         // 创建选项
         const choices = this.createChoices()
@@ -133,8 +139,9 @@ export class PoolRoom extends Room {
     private async onAbsorb(): Promise<void> {
         newLog([`汲取了 ${this.absorbAmount} 物质`])
 
-        // TODO: 实现物质系统后，给玩家添加物质
-        // nowPlayer.addMaterial(this.absorbAmount)
+        // 给玩家添加物质
+        const reserveModifier = getReserveModifier(nowPlayer)
+        reserveModifier.gainReserve("material", this.absorbAmount, nowPlayer)
     }
 
     /**
@@ -143,8 +150,41 @@ export class PoolRoom extends Room {
     private async onUpgrade(): Promise<void> {
         newLog(["打开器官升级界面..."])
 
-        // TODO: 打开器官升级 UI
-        // 这里应该触发一个全局事件或调用 UI 系统
+        // 获取玩家的器官列表
+        const organModifier = getOrganModifier(nowPlayer)
+        const organs = organModifier.getOrgans()
+
+        if (organs.length === 0) {
+            newLog(["你没有可以升级的器官"])
+            return
+        }
+
+        // 显示器官选择界面
+        try {
+            const selectedOrgan = await showComponent({
+                component: "OrganUpgradeChoice",
+                data: {
+                    organs: organs,
+                    player: nowPlayer
+                },
+                layout: "modal"
+            })
+
+            if (selectedOrgan) {
+                // 升级选中的器官
+                const success = await organModifier.upgradeOrgan(selectedOrgan)
+
+                if (success) {
+                    newLog([`${selectedOrgan.label} 升级成功！`])
+                    // 升级成功后，可以继续升级（递归调用）
+                    // 这样玩家可以在同一个水池多次升级
+                    await this.onUpgrade()
+                }
+            }
+        } catch (error) {
+            // 用户取消或出错
+            newLog(["取消升级"])
+        }
     }
 
     /**
@@ -153,11 +193,35 @@ export class PoolRoom extends Room {
     private async onBloodMark(): Promise<void> {
         newLog(["获得了红色印记！"])
 
-        // TODO: 实现红色印记系统
-        // nowPlayer.addBloodMark()
-        // nowGameRun.value.hasBloodMark = true
+        // 给玩家添加红色印记效果
+        // 红色印记：提升攻击力，但降低最大生命值
 
+        // 降低最大生命值（例如 -10）
+        doEvent({
+            key: "bloodMark",
+            source: nowPlayer,
+            medium: nowPlayer,
+            target: nowPlayer,
+            effectUnits: [{
+                key: "addStatusBaseCurrentValue",
+                params: {
+                    value: -10,
+                    statusKey: "max-health",
+                    currentKey: "health"
+                }
+            }]
+        })
+
+        // 标记玩家已染血状态
+        changeStatusValue(nowPlayer, "ifBloodMark", { source: nowPlayer, medium: nowPlayer }, {
+            target: "base",
+            type: "final",
+            value: true
+        })
         this.hasBloodMark = true
+
+        newLog(["最大生命值 -10"])
+        newLog(["（红色印记的其他效果待实现）"])
     }
 
     /**

@@ -9,6 +9,11 @@ import { resolveTriggerEventTarget } from "../trigger/Trigger"
 import { getCardModifier } from "./CardModifier"
 import { Player } from "../../target/Player"
 import { Chara } from "../../target/Target"
+import { getPartMaxCount } from "@/static/list/target/organPart"
+import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
+import { getQualityConfig, calculateUpgradeCost } from "@/static/list/target/organQuality"
+import { getCurrentValue } from "@/core/objects/system/Current/current"
+import { showComponent } from "@/core/hooks/componentManager"
 
 /**
  * 器官管理器
@@ -27,6 +32,7 @@ export class OrganModifier extends ItemModifier {
      * 获得器官
      *
      * 完整流程（使用新的副作用收集系统）：
+     * 0. 检查部位互斥，如果有冲突则自动吞噬旧器官
      * 1. 创建 ItemModifierUnit 用于收集副作用的清理函数
      * 2. 触发 possessOrgan 事件处理 possess 交互
      *    - 在事件中添加 triggers 和 modifiers
@@ -37,6 +43,29 @@ export class OrganModifier extends ItemModifier {
      */
     acquireOrgan(organ: Organ, source: Entity) {
         const parentLog = newLog([this.owner, "获得了器官", organ])
+
+        // 0. 检查部位互斥
+        if (organ.part) {
+            const maxCount = getPartMaxCount(organ.part)
+
+            // 获取相同部位的器官
+            const samePartOrgans = this.getOrgans().filter(o => o.part === organ.part)
+
+            // 如果超过限制，需要吞噬旧器官
+            if (samePartOrgans.length >= maxCount) {
+                const oldOrgan = samePartOrgans[0]  // 吞噬第一个（最旧的）
+                newLog([`部位 ${organ.part} 已满，吞噬旧器官`, oldOrgan])
+
+                // 计算吞噬获得的物质
+                const reserveModifier = getReserveModifier(this.owner)
+                const materialGain = this.calculateDevourMaterial(oldOrgan)
+                reserveModifier.gainReserve("material", materialGain, this.owner)
+                newLog([`吞噬获得 ${materialGain} 物质`])
+
+                // 移除旧器官
+                this.loseOrgan(oldOrgan, false)
+            }
+        }
 
         // 设置器官持有者
         organ.owner = this.owner
@@ -355,6 +384,134 @@ export class OrganModifier extends ItemModifier {
         organ.activateWorkTriggers(this.owner)
 
         newLog([organ, "已修复"])
+        return true
+    }
+
+    /**
+     * 计算吞噬器官获得的物质
+     * 根据文档：吞噬获取量 * 等级 + 稀有度加成
+     * @param organ 要吞噬的器官
+     * @returns 获得的物质数量
+     */
+    private calculateDevourMaterial(organ: Organ): number {
+        const qualityConfig = getQualityConfig(organ.quality)
+
+        // 吞噬获取量 * 等级 + 稀有度加成
+        const baseMaterial = organ.absorbValue * organ.level
+        const qualityBonus = qualityConfig.baseAbsorbValue * 0.2  // 稀有度加成 20%
+
+        return Math.floor(baseMaterial + qualityBonus)
+    }
+
+    /**
+     * 升级器官
+     * @param organ 要升级的器官
+     * @returns 是否成功升级
+     */
+    async upgradeOrgan(organ: Organ): Promise<boolean> {
+        // 检查是否拥有该器官
+        if (!this.units.some(u => u.item === organ)) {
+            newLog([this.owner, "未拥有器官", organ])
+            return false
+        }
+
+        // 检查器官是否损坏
+        if (organ.isDisabled) {
+            newLog([organ, "已损坏，无法升级"])
+            return false
+        }
+
+        // 计算升级成本
+        let upgradeCost: number
+
+        if (organ.upgradeConfig?.cost !== undefined) {
+            // 使用自定义成本
+            if (typeof organ.upgradeConfig.cost === "function") {
+                upgradeCost = organ.upgradeConfig.cost(organ)
+            } else {
+                upgradeCost = organ.upgradeConfig.cost
+            }
+        } else {
+            // 使用稀有度默认成本（带随机波动）
+            upgradeCost = calculateUpgradeCost(organ.quality, organ.absorbValue, true)
+        }
+
+        // 检查生命值是否足够
+        const currentHealth = getCurrentValue(this.owner, "health")
+
+        if (currentHealth <= upgradeCost) {
+            newLog(["生命值不足，无法升级", `需要 ${upgradeCost}，当前 ${currentHealth}`])
+            return false
+        }
+
+        newLog([this.owner, "升级器官", organ, `消耗 ${upgradeCost} 生命值`])
+
+        // 扣除生命值（当前值 + 最大值）
+        doEvent({
+            key: "upgradeOrgan",
+            source: this.owner,
+            medium: organ,
+            target: this.owner,
+            effectUnits: [{
+                key: "addStatusBaseCurrentValue",
+                params: {
+                    value: -upgradeCost,
+                    statusKey: "max-health",
+                    currentKey: "health"
+                }
+            }]
+        })
+
+        // 提升器官等级
+        const oldLevel = organ.level
+        organ.level++
+        newLog([organ, `等级提升: ${oldLevel} → ${organ.level}`])
+
+        // 执行每级通用效果
+        if (organ.upgradeConfig?.perLevel?.effects) {
+            doEvent({
+                key: "organUpgradePerLevel",
+                source: this.owner,
+                medium: organ,
+                target: this.owner,
+                effectUnits: organ.upgradeConfig.perLevel.effects
+            })
+        }
+
+        // 检查是否达到里程碑
+        const milestone = organ.upgradeConfig?.milestones?.find(m => m.level === organ.level)
+        if (milestone) {
+            newLog([organ, `达到里程碑等级 ${organ.level}！`])
+
+            // 执行里程碑效果
+            if (milestone.effects) {
+                doEvent({
+                    key: "organUpgradeMilestone",
+                    source: this.owner,
+                    medium: organ,
+                    target: this.owner,
+                    effectUnits: milestone.effects
+                })
+            }
+
+            // 如果有自定义组件，显示组件
+            if (milestone.component) {
+                try {
+                    await showComponent({
+                        component: milestone.component,
+                        data: {
+                            organ: organ,
+                            owner: this.owner,
+                            ...milestone.componentData
+                        },
+                        layout: "modal"
+                    })
+                } catch (error) {
+                    console.error("[OrganModifier] 显示升级组件失败:", error)
+                }
+            }
+        }
+
         return true
     }
 }

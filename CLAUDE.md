@@ -61,6 +61,22 @@ The game uses a sophisticated event-driven architecture centered around three co
    - **ContentModifier**: Manages item/organ possession
    - Modifiers automatically handle "add/remove" logic - when an organ is lost, its effects are automatically removed and attributes recalculated
 
+5. **Lazy Loading System (懒加载系统)**
+   - **Purpose**: Avoid circular dependencies between core system classes and data configuration files
+   - **Location**: `src/core/utils/lazyLoader.ts`
+   - **How it works**:
+     - Core system classes (Entity, ActionEvent, EffectUnit) are loaded during module initialization
+     - Data configuration files (effectMap, organList, cardList, etc.) are loaded at runtime via `preloadAllLazyModules()`
+     - Uses ES6 dynamic `import()` instead of `require()` for ES module compatibility
+   - **Usage**:
+     ```typescript
+     import { getLazyModule } from "@/core/utils/lazyLoader"
+     const effectMap = getLazyModule('effectMap')
+     ```
+   - **IMPORTANT**: Never use `require()` in this codebase - always use ES6 `import()` or the lazy loader
+   - **Registered modules**: effectMap, organList, cardList, relicList, potionList, enemyList, eventList
+   - All data modules are preloaded in `main.ts` before the app starts
+
 ### Key System Objects
 
 **Location: `src/core/objects/system/`**

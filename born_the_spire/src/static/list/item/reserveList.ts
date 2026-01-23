@@ -23,6 +23,11 @@ export const reserveList: ReserveData[] = [
         label: "灵魂",
         key: "soul",
         describe: ["神秘的灵魂能量"]
+    },
+    {
+        label: "物质",
+        key: "material",
+        describe: ["用于升级器官的材料"]
     }
 ]
 

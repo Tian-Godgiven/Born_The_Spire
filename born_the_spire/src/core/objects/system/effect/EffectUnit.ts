@@ -1,7 +1,8 @@
-import { getFromEffectMap } from "@/static/list/system/effectMap"
 import { Effect } from "./Effect"
 import { EffectParams } from "./EffectFunc"
 import { ActionEvent } from "../ActionEvent"
+import { getLazyModule } from "@/core/utils/lazyLoader"
+import { newError } from "@/ui/hooks/global/alert"
 import _ from "lodash"
 
 
@@ -15,8 +16,24 @@ export interface EffectUnit{
 
 //通过effectUnit创建effect对象
 export function createEffectByUnit(event:ActionEvent,unit:EffectUnit):Effect{
-    //从map中获取效果函数
-    const data = getFromEffectMap(unit)
+    /**
+     * 架构说明：为什么使用懒加载 effectMap？
+     *
+     * 问题：如果在顶部静态导入 effectMap，会形成循环依赖：
+     * Entity → Trigger → ActionEvent → EffectUnit → effectMap → (各种 effect 函数) → Organ → Entity
+     *
+     * 解决方案：使用统一的懒加载机制
+     * - 核心系统类（Entity、ActionEvent、EffectUnit）在模块加载时建立依赖
+     * - 数据配置文件（effectMap、organList 等）通过 lazyLoader 在运行时按需加载
+     * - 所有数据层都使用相同的懒加载机制，保持架构一致性
+     */
+    const effectMap = getLazyModule<any[]>('effectMap')
+    const data = effectMap.find((tmp: any) => tmp.key == unit.key)
+    if(!data){
+        newError(["错误:没有找到目标效果", unit.key])
+        throw new Error()
+    }
+
     //构建effect对象
     const {key,params,describe,resultStoreAs} = unit
 

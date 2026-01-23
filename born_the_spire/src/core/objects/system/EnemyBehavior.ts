@@ -116,7 +116,7 @@ export function evaluateCondition(
 ): boolean {
     // 检查玩家血量条件
     if (condition.playerHealth) {
-        const playerHealthPercent = (player.current.health.value / player.status.maxHealth.value) * 100
+        const playerHealthPercent = (player.current.health.value / player.status["max-health"].value) * 100
 
         if (condition.playerHealth.below !== undefined && playerHealthPercent >= condition.playerHealth.below) {
             return false
@@ -131,7 +131,7 @@ export function evaluateCondition(
 
     // 检查敌人血量条件
     if (condition.selfHealth) {
-        const selfHealthPercent = (enemy.current.health.value / enemy.status.maxHealth.value) * 100
+        const selfHealthPercent = (enemy.current.health.value / enemy.status["max-health"].value) * 100
 
         if (condition.selfHealth.below !== undefined && selfHealthPercent >= condition.selfHealth.below) {
             return false

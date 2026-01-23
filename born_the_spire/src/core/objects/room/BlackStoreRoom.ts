@@ -14,7 +14,15 @@ import {
     blackStoreRelicPool,
     blackStorePotionPool,
     selectRandomItemsFromPool
-} from "@/static/list/blackStore/blackStoreItemPool"
+} from "@/static/list/room/blackStore/blackStoreItemPool"
+import { calculateBlackStorePrice } from "@/static/list/target/organQuality"
+import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
+import { getLazyModule } from "@/core/utils/lazyLoader"
+import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
+import { getRelicModifier } from "@/core/objects/system/modifier/RelicModifier"
+import { getCurrentValue } from "@/core/objects/system/Current/current"
+import { doEvent } from "@/core/objects/system/ActionEvent"
+import { roomRegistry } from "@/static/registry/roomRegistry"
 
 /**
  * 商品类型
@@ -161,11 +169,11 @@ export class BlackStoreRoom extends Room {
 
     /**
      * 计算器官价格
+     * 基于稀有度和等级
      */
     private calculateOrganPrice(organ: OrganMap): number {
-        // TODO: 根据器官等级和稀有度计算
-        // 基础价格
-        return 150
+        const level = organ.level ?? 1
+        return calculateBlackStorePrice(organ.quality, level)
     }
 
     /**
@@ -233,32 +241,51 @@ export class BlackStoreRoom extends Room {
             return false
         }
 
-        // TODO: 检查玩家金钱是否足够
-        // const playerGold = nowPlayer.getGold()
-        // if (playerGold < item.price) {
-        //     newLog(["金钱不足！"])
-        //     return false
-        // }
+        // 检查玩家金钱是否足够
+        const reserveModifier = getReserveModifier(nowPlayer)
+        const playerGold = reserveModifier.getReserve("gold")
+
+        if (playerGold < item.price) {
+            newLog(["金钱不足！", `需要 ${item.price} 金币，当前 ${playerGold} 金币`])
+            return false
+        }
 
         newLog([`购买了 ${item.name}，花费 ${item.price} 金钱`])
 
-        // TODO: 扣除金钱
-        // nowPlayer.spendGold(item.price)
+        // 扣除金钱
+        reserveModifier.spendReserve("gold", item.price)
 
-        // TODO: 给予商品
+        // 给予商品
         switch (item.type) {
-            case "organ":
+            case "organ": {
+                const organList = getLazyModule<OrganMap[]>('organList')
+                const organData = item.data as OrganMap
+                const organ = organList.find(o => o.key === organData.key)
+                if (!organ) throw new Error(`未找到器官: ${organData.key}`)
+                const organModifier = getOrganModifier(nowPlayer)
+                organModifier.acquireOrgan(organ, nowPlayer)
                 newLog([`获得器官: ${item.name}`])
-                // nowPlayer.addOrgan(item.data as OrganMap)
                 break
-            case "relic":
+            }
+            case "relic": {
+                const relicList = getLazyModule<RelicMap[]>('relicList')
+                const relicData = item.data as RelicMap
+                const relic = relicList.find(r => r.key === relicData.key)
+                if (!relic) throw new Error(`未找到遗物: ${relicData.key}`)
+                const relicModifier = getRelicModifier(nowPlayer)
+                relicModifier.acquireRelic(relic, nowPlayer)
                 newLog([`获得遗物: ${item.name}`])
-                // nowPlayer.addRelic(item.data as RelicMap)
                 break
-            case "potion":
+            }
+            case "potion": {
+                const potionList = getLazyModule<PotionMap[]>('potionList')
+                const potionData = item.data as PotionMap
+                const potion = potionList.find(p => p.key === potionData.key)
+                if (!potion) throw new Error(`未找到药水: ${potionData.key}`)
+                nowPlayer.getPotion(potionData.key)
                 newLog([`获得药水: ${item.name}`])
-                // nowPlayer.addPotion(item.data as PotionMap)
                 break
+            }
         }
 
         item.isPurchased = true
@@ -268,33 +295,48 @@ export class BlackStoreRoom extends Room {
     /**
      * 出售器官
      */
-    async sellOrgan(organKey: string): Promise<number> {
+    async sellOrgan(organ: Organ): Promise<number> {
         if (!this.allowSellOrgan) {
             newLog(["此黑市不接受器官交易"])
             return 0
         }
 
-        // TODO: 获取器官信息
-        const price = this.calculateOrganSellPrice(organKey)
+        // 检查玩家是否拥有该器官
+        const organModifier = getOrganModifier(nowPlayer)
+        const playerOrgans = organModifier.getOrgans()
 
-        newLog([`出售了器官，获得 ${price} 金钱`])
+        if (!playerOrgans.includes(organ)) {
+            newLog(["你没有这个器官！"])
+            return 0
+        }
 
-        // TODO: 移除器官
-        // nowPlayer.removeOrgan(organKey)
+        // 计算售价
+        const price = this.calculateOrganSellPrice(organ)
 
-        // TODO: 给予金钱
-        // nowPlayer.addGold(price)
+        newLog([`出售了器官 ${organ.label}，获得 ${price} 金钱`])
+
+        // 移除器官
+        organModifier.loseOrgan(organ, false)
+
+        // 给予金钱
+        const reserveModifier = getReserveModifier(nowPlayer)
+        reserveModifier.gainReserve("gold", price, nowPlayer)
 
         return price
     }
 
     /**
      * 计算器官售价
+     * 售价是购买价的 50-70%（随机）
      */
-    private calculateOrganSellPrice(organKey: string): number {
-        // TODO: 根据器官等级和稀有度计算
-        // 售价通常是购买价的 50-70%
-        return 100
+    private calculateOrganSellPrice(organ: Organ): number {
+        // 基础购买价格
+        const baseBuyPrice = this.calculateOrganPrice(organ as any)
+
+        // 售价是购买价的 50-70%
+        const sellRatio = 0.5 + Math.random() * 0.2
+
+        return Math.floor(baseBuyPrice * sellRatio)
     }
 
     /**
@@ -306,16 +348,38 @@ export class BlackStoreRoom extends Room {
             return 0
         }
 
+        // 检查玩家当前生命值是否足够
+        const currentHealth = getCurrentValue(nowPlayer, "health")
+
+        if (currentHealth <= amount) {
+            newLog(["生命值不足！", `需要保留至少 1 点生命值`])
+            return 0
+        }
+
         // 计算售价（随着售出次数增加不断贬值）
         const price = this.calculateHealthSellPrice(amount)
 
         newLog([`出售了 ${amount} 生命值，获得 ${price} 金钱`])
 
-        // TODO: 扣除生命值
-        // nowPlayer.loseMaxHealth(amount)
+        // 扣除最大生命值和当前生命值
+        doEvent({
+            key: "loseMaxHealth",
+            source: nowPlayer,
+            medium: nowPlayer,
+            target: nowPlayer,
+            effectUnits: [{
+                key: "addStatusBaseCurrentValue",
+                params: {
+                    value: -amount,
+                    statusKey: "max-health",
+                    currentKey: "health"
+                }
+            }]
+        })
 
-        // TODO: 给予金钱
-        // nowPlayer.addGold(price)
+        // 给予金钱
+        const reserveModifier = getReserveModifier(nowPlayer)
+        reserveModifier.gainReserve("gold", price, nowPlayer)
 
         // 增加售出次数
         this.healthSoldCount++
@@ -379,3 +443,5 @@ export class BlackStoreRoom extends Room {
         return "$"
     }
 }
+
+// ==================== 自动注册 ====================

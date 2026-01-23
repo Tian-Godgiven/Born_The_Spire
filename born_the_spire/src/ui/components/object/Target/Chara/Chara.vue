@@ -1,11 +1,10 @@
 <template>
 <div class="chara-wrapper">
-    <Target :target>
-        <div
-            class="chara-content"
+    <Target :target 
             @mouseenter="showStateDisplay = true"
             @mouseleave="showStateDisplay = false"
-        >
+            >
+        <div class="chara-content">
             <!-- 意图显示（仅敌人） -->
             <div v-if="isEnemy && enemyIntentDisplay" class="intent-display">
                 {{ enemyIntentDisplay }}
@@ -24,14 +23,15 @@
                 </div>
             </div>
         </div>
+        <!-- 状态详情显示 - 放在Target外面，以便正确定位 -->
+        <StateDisplay
+            v-if="showStateDisplay"
+            :target="target"
+            :side="side=='left'?'right':'left'"
+        />
     </Target>
 
-    <!-- 状态详情显示 - 放在Target外面，以便正确定位 -->
-    <StateDisplay
-        v-if="showStateDisplay"
-        :target="target"
-        :side
-    />
+
 </div>
 </template>
 

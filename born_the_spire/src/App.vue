@@ -3,6 +3,8 @@
     <div class="router">
       <RouterView></RouterView>
     </div>
+    <!-- 动态组件容器 -->
+    <DynamicComponentContainer />
   </main>
 </template>
 
@@ -11,6 +13,8 @@ import { onMounted } from 'vue';
 import { RouterView } from 'vue-router';
 import router from './ui/router';
 import { onMousemove } from './ui/hooks/global/mousePosition';
+import DynamicComponentContainer from './ui/components/global/DynamicComponentContainer.vue';
+
 onMounted(()=>{
     router.replace("/")
 })

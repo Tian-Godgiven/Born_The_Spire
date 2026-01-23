@@ -2,6 +2,7 @@ import { Reward, RewardConfig } from "./Reward"
 import { Potion } from "@/core/objects/item/Subclass/Potion"
 import { PotionMap } from "@/static/list/item/potionList"
 import { newLog } from "@/ui/hooks/global/log"
+import { getLazyModule } from "@/core/utils/lazyLoader"
 
 /**
  * 药水奖励配置
@@ -34,7 +35,7 @@ export class PotionReward extends Reward {
      * 根据药水 key 加载药水配置
      */
     private loadPotionByKey(key: string): PotionMap {
-        const { potionList } = require("@/static/list/item/potionList")
+        const potionList = getLazyModule<PotionMap[]>('potionList')
         const config = potionList.find((p: PotionMap) => p.key === key)
         if (!config) {
             console.warn(`[PotionReward] 未找到药水配置: ${key}`)

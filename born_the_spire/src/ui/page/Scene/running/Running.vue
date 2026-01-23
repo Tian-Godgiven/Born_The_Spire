@@ -1,18 +1,16 @@
 <template>
 <div class="running">
+    <!-- 顶部内容 -->
     <Top></Top>
+    <!-- 房间内容 -->
     <div class="content">
-        <Battle></Battle>
+        <!-- 根据房间类型动态显示对应组件 -->
+        <component v-if="currentRoomComponent" :is="currentRoomComponent"></component>
+
         <ConnectLine></ConnectLine>
         <PopUpContainer></PopUpContainer>
-
-        <!-- 地图弹窗 -->
-        <Transition name="map-fade" appear>
-            <div v-if="isMapVisible" class="map-popup">
-                <EnemySelectMap></EnemySelectMap>
-            </div>
-        </Transition>
     </div>
+    <!-- 测试工具 -->
     <div class="tool">
         <TestTool></TestTool>
         <LogPane></LogPane>
@@ -21,20 +19,27 @@
 </template>
 
 <script setup lang='ts'>
-    import Top from "./Top/index.vue";
-    import Battle from "@/ui/page/Scene/running/Battle.vue"
-import ConnectLine from "@/ui/components/interaction/chooseTarget/ConnectLine.vue";
-import TestTool from "@/ui/page/tool/testTool/TestTool.vue";
-import PopUpContainer from '@/ui/components/global/PopUpContainer.vue';
+import { computed } from 'vue'
+import Top from "./Top/index.vue"
+import ConnectLine from "@/ui/components/interaction/chooseTarget/ConnectLine.vue"
+import TestTool from "@/ui/page/tool/testTool/TestTool.vue"
+import PopUpContainer from '@/ui/components/global/PopUpContainer.vue'
 import LogPane from "@/ui/page/tool/logPane/LogPane.vue"
-import EnemySelectMap from "@/ui/page/Scene/test/EnemySelectMap.vue"
-import { onMounted } from 'vue';
-import { isMapVisible, showMap } from '@/ui/hooks/global/mapDisplay';
+import { nowGameRun } from '@/core/objects/game/run'
+import { getRoomComponent } from '@/ui/registry/roomComponentRegistry'
 
-// 组件挂载时自动显示地图
-onMounted(() => {
-    showMap()
+// 获取当前房间对应的组件
+const currentRoomComponent = computed(() => {
+    const roomType = nowGameRun.currentRoom?.type
+    if (!roomType) return null
+
+    const component = getRoomComponent(roomType)
+    if (!component) {
+        console.warn(`[Running] 未找到房间类型 "${roomType}" 对应的组件`)
+    }
+    return component
 })
+
 
 </script>
 

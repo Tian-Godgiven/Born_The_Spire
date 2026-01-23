@@ -11,7 +11,6 @@ import {
     getAllRoomGenerationRules
 } from "./RoomGenerationRules"
 import { roomRegistry } from "@/static/registry/roomRegistry"
-import { allRoomConfigs } from "@/static/list/room/roomList"
 
 /**
  * 楼层管理器类
@@ -197,7 +196,7 @@ export class FloorManager {
      * 根据类型选择多个房间
      */
     private selectRoomsByType(roomType: RoomType, count: number): string[] {
-        const availableRooms = allRoomConfigs.filter(config => config.type === roomType)
+        const availableRooms = roomRegistry.getRoomConfigsByType(roomType)
         const selectedKeys: string[] = []
 
         for (let i = 0; i < count; i++) {
@@ -214,7 +213,7 @@ export class FloorManager {
      * 根据类型随机选择一个房间配置
      */
     private selectRandomRoomByType(roomType: RoomType): string | null {
-        const availableRooms = allRoomConfigs.filter(config => config.type === roomType)
+        const availableRooms = roomRegistry.getRoomConfigsByType(roomType)
 
         if (availableRooms.length === 0) {
             console.warn(`[FloorManager] 没有可用的 ${roomType} 类型房间`)
