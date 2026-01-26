@@ -5,6 +5,7 @@ import { Effect } from "../effect/Effect";
 import { Entity } from "../Entity";
 import { DefaultTrigger, getDefaultTrigger } from "./defaultTrigger";
 import { appendImportantTrigger, createImportantTrigger, ImportantTrigger } from "./importantTrigger";
+import { isEntity } from "@/core/utils/typeGuards";
 
 // 触发器是基于事件总线的，一系列在个体上的响应器
 // 触发器的实现原理是：在某一个时刻(trigger_key)执行对应时刻的回调函数
@@ -157,13 +158,32 @@ export function resolveTriggerEventTarget(
 ): Entity | Entity[] | Effect {
     switch(targetType){
         case "eventSource"://指定的事件来源
+            if (!isEntity(triggerEvent.source)) {
+                throw new Error("事件来源不是 Entity 类型")
+            }
             return triggerEvent.source
         case "eventMedium"://指定的事件媒介
+            if (!isEntity(triggerEvent.medium)) {
+                throw new Error("事件媒介不是 Entity 类型")
+            }
             return triggerEvent.medium;
         case "eventTarget"://指定的事件对象
-            return triggerEvent.target;
+            if (Array.isArray(triggerEvent.target)) {
+                // 如果是数组，检查每个元素
+                const entities = triggerEvent.target.filter(isEntity)
+                if (entities.length === 0) {
+                    throw new Error("事件目标数组中没有 Entity 类型")
+                }
+                return entities
+            } else {
+                if (!isEntity(triggerEvent.target)) {
+                    throw new Error("事件目标不是 Entity 类型")
+                }
+                return triggerEvent.target
+            }
         case "triggerSource"://触发器的施加来源
             return triggerSource;
+        case "owner"://持有者（别名）
         case "triggerOwner"://持有触发器的对象
             return triggerOwner;
         case "triggerEffect"://触发该触发器的效果对象

@@ -7,6 +7,7 @@ import { newLog } from "@/ui/hooks/global/log"
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
 import { getOrganByKey } from "@/static/list/target/organList"
 import { Organ } from "@/core/objects/target/Organ"
+import { isEntity } from "@/core/utils/typeGuards"
 
 /**
  * 替换器官效果
@@ -14,7 +15,19 @@ import { Organ } from "@/core/objects/target/Organ"
  */
 export const replaceOrgan: EffectFunc = (event, effect) => {
     const { target, medium } = event
-    const { organKey, keepLevel = true } = effect.params
+    const { organKey } = effect.params
+    const keepLevel = effect.params.keepLevel !== false // 默认为 true
+
+    // 验证 target 是 Entity（不能是数组）
+    if (Array.isArray(target)) {
+        newLog(["错误：replaceOrgan 效果的 target 不能是数组"])
+        return
+    }
+
+    if (!isEntity(target)) {
+        newLog(["错误：replaceOrgan 效果的 target 必须是单个实体"])
+        return
+    }
 
     // medium 应该是旧器官
     if (!(medium instanceof Organ)) {
@@ -32,7 +45,7 @@ export const replaceOrgan: EffectFunc = (event, effect) => {
     }
 
     // 创建新器官
-    const newOrgan = getOrganByKey(organKey)
+    const newOrgan = getOrganByKey(String(organKey))
 
     // 如果保留等级，设置新器官的等级
     if (keepLevel) {

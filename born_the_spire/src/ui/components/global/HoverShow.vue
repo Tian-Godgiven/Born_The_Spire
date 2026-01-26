@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang='ts'>
-    import { computed, ref, Teleport, useTemplateRef } from 'vue';
+    import { ref, computed, useTemplateRef } from 'vue';
     const {hoverPosition="left",maxWidth=300} = defineProps<{
         hoverPosition?:"left"|"right"|"top"|"bottom",
         maxWidth?:number

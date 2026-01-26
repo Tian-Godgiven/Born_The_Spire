@@ -6,7 +6,6 @@ import { Chara } from "../../target/Target"
 import { getCardByKey, getAllCards } from "@/static/list/item/cardList"
 import { newLog, LogUnit } from "@/ui/hooks/global/log"
 import { Organ } from "../../target/Organ"
-import { getEntryModifier } from "./EntryModifier"
 import { nowBattle } from "../../game/battle"
 
 /**
@@ -133,7 +132,7 @@ export class CardModifier {
 
         // 如果来源是器官，检查是否损坏
         if (source instanceof Organ) {
-            if (source.isBroken) {
+            if (source.isDisabled) {
                 return `来源器官 ${source.label} 已损坏`
             }
         }
@@ -176,7 +175,7 @@ export class CardModifier {
      * 清理所有有来源的卡牌（用于战斗结束等场景）
      */
     clearAll() {
-        for (const [source, cards] of this.cardsFromSources.entries()) {
+        for (const [_source, _cards] of this.cardsFromSources.entries()) {
             // 不需要从 player.cards 中移除，因为已经不存在了
         }
         this.cardsFromSources.clear()

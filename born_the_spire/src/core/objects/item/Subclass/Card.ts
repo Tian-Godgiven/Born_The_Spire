@@ -7,7 +7,6 @@ import { Entity } from "@/core/objects/system/Entity";
 import { EffectUnit } from "@/core/objects/system/effect/EffectUnit";
 import { newError } from "@/ui/hooks/global/alert";
 import { getStatusValue } from "@/core/objects/system/status/Status";
-import { Organ } from "@/core/objects/target/Organ";
 import { getCardModifier } from "@/core/objects/system/modifier/CardModifier";
 import { getEntryModifier } from "@/core/objects/system/modifier/EntryModifier";
 

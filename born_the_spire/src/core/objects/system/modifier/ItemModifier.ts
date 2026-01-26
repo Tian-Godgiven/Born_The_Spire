@@ -261,7 +261,7 @@ export class ItemModifier {
         item: Item,
         possessInteraction: any,
         unit: ItemModifierUnit,
-        parentLog?: LogUnit
+        _parentLog?: LogUnit
     ) {
         // 使用事件系统处理 possess 效果
         doEvent({
@@ -285,11 +285,12 @@ export class ItemModifier {
                                 how,
                                 key,
                                 level,
-                                callback: (event, effect, triggerLevel) => {
+                                callback: (event, _effect, _triggerLevel) => {
                                     // 使用公共的目标解析函数
                                     const target = resolveTriggerEventTarget(
                                         eventConfig.targetType,
                                         event,
+                                        _effect,
                                         item,           // triggerSource: 物品本身
                                         this.owner      // triggerOwner: 拥有者
                                     )

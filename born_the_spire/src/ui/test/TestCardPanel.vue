@@ -35,7 +35,6 @@ import { getAllCards } from '@/static/list/item/cardList'
 import { getCardByKey } from '@/static/list/item/cardList'
 import { nowPlayer } from '@/core/objects/game/run'
 import { entryMap } from '@/static/list/system/entryMap'
-import { getEntryModifier } from '@/core/objects/system/modifier/EntryModifier'
 import { getDescribe } from '../hooks/express/describe'
 
 // 定义 emit
@@ -58,13 +57,7 @@ function addCardToDrawPile(cardKey: string) {
     // 设置卡牌的 owner
     card.owner = nowPlayer
 
-    // 应用词条效果
-    if (card.entry && card.entry.length > 0) {
-        const entryModifier = getEntryModifier(card)
-        for (const entryKey of card.entry) {
-            entryModifier.addEntry(entryKey)
-        }
-    }
+    // 词条效果由 CardModifier 自动处理，无需手动添加
 
     // 添加到抽牌堆
     nowPlayer.cardPiles.drawPile.push(card)

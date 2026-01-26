@@ -1,5 +1,4 @@
 import { Effect } from "./effect/Effect";
-import { Entity } from "./Entity";
 import { gatherToTransaction } from "../game/transaction";
 import { newLog, LogUnit, LogData } from "@/ui/hooks/global/log";
 import { EffectUnit, createEffectByUnit } from "./effect/EffectUnit";

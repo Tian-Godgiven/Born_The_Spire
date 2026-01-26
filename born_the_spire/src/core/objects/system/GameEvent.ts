@@ -168,7 +168,7 @@ export class ChoiceEvent extends GameEvent {
      * 当选择完成时调用
      * 子类可重写此方法来处理选择结果
      */
-    protected async onChoicesSelected(selected: Choice[]): Promise<void> {
+    protected async onChoicesSelected(_selected: Choice[]): Promise<void> {
         // 默认实现：直接完成事件
         await this.complete()
     }

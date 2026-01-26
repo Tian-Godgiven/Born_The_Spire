@@ -4,6 +4,7 @@ import { doEvent, handleEventEntity } from "@/core/objects/system/ActionEvent";
 import { EffectFunc } from "@/core/objects/system/effect/EffectFunc";
 import { CardPiles, Player } from "@/core/objects/target/Player";
 import { cardMove } from ".";
+import { isCard } from "@/core/utils/typeGuards";
 
 //从指定牌堆丢弃指定的卡牌到弃牌堆
 export const discardCard:EffectFunc = (event,effect)=>{
@@ -57,7 +58,10 @@ export const pay_exhaustCard:EffectFunc = (event,effect)=>{
     const pile = effect.params.sourcePile as Card[]
     const sourcePile = pile??source.cardPiles[pileName]
     //要消耗的卡牌就是事件的target
-    handleEventEntity(target,(card)=>{
+    handleEventEntity(target,(cardEntity)=>{
+        // 只处理 Card 类型
+        if (!isCard(cardEntity)) return;
+        const card = cardEntity as Card;
         //移动到消耗堆
         cardMove(sourcePile,card,source.cardPiles.exhaustPile)
     })

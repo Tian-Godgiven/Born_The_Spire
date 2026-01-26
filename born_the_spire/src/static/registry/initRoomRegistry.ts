@@ -9,7 +9,6 @@ import { RoomSelectRoom } from "@/core/objects/room/RoomSelectRoom"
 import { PoolRoom } from "@/core/objects/room/PoolRoom"
 import { EventRoom } from "@/core/objects/room/EventRoom"
 import { BlackStoreRoom } from "@/core/objects/room/BlackStoreRoom"
-import { allRoomConfigs } from "@/static/list/room/roomList"
 
 /**
  * 初始化房间注册表
@@ -18,11 +17,8 @@ import { allRoomConfigs } from "@/static/list/room/roomList"
 export function initRoomRegistry(): void {
     console.log("[initRoomRegistry] 开始初始化房间注册表")
 
-    // 1. 注册基础房间类型
+    // 注册基础房间类型
     registerBaseRoomTypes()
-
-    // 2. 注册房间配置
-    registerRoomConfigs()
 
     console.log("[initRoomRegistry] 房间注册表初始化完成")
 }
@@ -47,14 +43,6 @@ function registerBaseRoomTypes(): void {
     roomRegistry.registerRoomType("blackStore", BlackStoreRoom)
 
     console.log("[initRoomRegistry] 基础房间类型注册完成")
-}
-
-/**
- * 注册房间配置
- */
-function registerRoomConfigs(): void {
-    roomRegistry.registerRoomConfigs(allRoomConfigs)
-    console.log(`[initRoomRegistry] 注册了 ${allRoomConfigs.length} 个房间配置`)
 }
 
 /**

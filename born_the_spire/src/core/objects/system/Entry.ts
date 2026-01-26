@@ -112,7 +112,7 @@ export const entryDefinitions: Record<string, EntryDefinition> = {
                 return []
             }
 
-            const card = owner
+            // const _card = owner
             const player = parentOwner
 
             // 在 Player 上添加触发器，监听战斗开始

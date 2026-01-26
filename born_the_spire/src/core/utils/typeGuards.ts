@@ -9,6 +9,7 @@ import { EventParticipant } from "@/core/types/event/EventParticipant"
 import { Entity } from "@/core/objects/system/Entity"
 import { State } from "@/core/objects/system/State"
 import { Effect } from "@/core/objects/system/effect/Effect"
+import { Card } from "@/core/objects/item/Subclass/Card"
 
 /**
  * 检查对象是否为 Entity 类型
@@ -56,4 +57,12 @@ export function assertEffect(participant: EventParticipant, context: string = ""
     if (!isEffect(participant)) {
         throw new Error(`${context}: 期望 Effect 类型，实际为 ${participant.participantType}`)
     }
+}
+
+/**
+ * 检查对象是否为 Card 类型
+ */
+export function isCard(participant: EventParticipant): participant is Card {
+    if (!isEntity(participant)) return false
+    return participant instanceof Card
 }

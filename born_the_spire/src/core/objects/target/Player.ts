@@ -5,7 +5,6 @@ import { PlayerMap } from "@/static/list/target/playerList";
 import { getPotionByKey } from "@/static/list/item/potionList";
 import { nanoid } from "nanoid";
 import { Chara } from "./Target";
-import { getCardByKey, getAllCards } from "@/static/list/item/cardList";
 import { Entity } from "../system/Entity";
 import { washPile } from "@/core/effects/card";
 import { reactive } from "vue";
@@ -13,9 +12,7 @@ import { getReserveModifier } from "../system/modifier/ReserveModifier";
 import { getStatusValue } from "../system/status/Status";
 import { getPotionModifier } from "../system/modifier/PotionModifier";
 import { getCardModifier } from "../system/modifier/CardModifier";
-import { getEntryModifier } from "../system/modifier/EntryModifier";
 import { getOrganModifier } from "../system/modifier/OrganModifier";
-import { doEvent } from "../system/ActionEvent";
 
 export type CardPiles = {
     handPile:Card[],
@@ -35,8 +32,8 @@ export class Player extends Chara{
         discardPile:[],
         exhaustPile:[]
     })
-    //药水的持有情况
-    public potions:Potion[] = []  // 当前拥有的药水（最大数量由 status["max-potion"] 控制）
+    //药水的持有情况 - 通过 PotionModifier 管理，这里不需要存储
+    // public potions - 已移除，使用 getPotionModifier(this).getPotions() 获取
     public relics:Relic[] = []//拥有的遗物
     constructor(map:PlayerMap){
         super(map)
@@ -94,13 +91,6 @@ export class Player extends Chara{
     }
     //获取卡牌
     getCard(cardKey:string){
-        //获取卡牌对象
-        const card = getCardByKey(cardKey)
-
-        // 从 cardList 获取 CardMap 以获取词条定义
-        const cardMap = getAllCards().find((c: any) => c.key === cardKey)
-        const entries = cardMap?.entry ?? []
-
         // 使用 CardModifier 添加卡牌
         const cardModifier = getCardModifier(this)
         cardModifier.addCardsFromSource(this, [cardKey])
@@ -154,10 +144,14 @@ export class Player extends Chara{
         this.state = []
     }
 
-    //获取药水列表
+    //获取药水列表（用于 UI 显示，包含空槽位）
     getPotionList(){
-        const list:(Potion|null)[] = [...this.potions.now]
-        while (list.length < this.potions.max) {
+        const potionModifier = getPotionModifier(this)
+        const currentPotions = potionModifier.getPotions()
+        const maxPotions = getStatusValue(this, "max-potion")
+
+        const list:(Potion|null)[] = [...currentPotions]
+        while (list.length < maxPotions) {
             list.push(null);
         }
         return list

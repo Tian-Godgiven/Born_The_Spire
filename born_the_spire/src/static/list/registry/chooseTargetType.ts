@@ -69,9 +69,9 @@ export function getSpecificTargetsByTargetType(targetType:TargetType&{key:string
         if(targetType?.faction && targetType.faction !== "all"){
             nowTargetArr = nowTargetArr.filter(t => {
                 if(targetType.faction === "player"){
-                    return nowBattle.value?.getTeam("player")?.includes(t)
+                    return nowBattle.value?.getTeam("player")?.includes(t as any)
                 } else {
-                    return nowBattle.value?.getTeam("enemy")?.includes(t)
+                    return nowBattle.value?.getTeam("enemy")?.includes(t as any)
                 }
             })
         }

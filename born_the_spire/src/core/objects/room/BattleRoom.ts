@@ -1,15 +1,12 @@
 import { Room, RoomConfig, BattleRoomType } from "./Room"
-import { Battle, startNewBattle, nowBattle } from "../game/battle"
-import { Player } from "../target/Player"
+import { startNewBattle, Battle } from "../game/battle"
 import { Enemy } from "../target/Enemy"
-import { Chara } from "../target/Target"
 import { EnemyMap } from "@/static/list/target/enemyList"
 import { newLog } from "@/ui/hooks/global/log"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
 import { nowPlayer } from "@/core/objects/game/run"
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
-import { roomRegistry } from "@/static/registry/roomRegistry"
 
 /**
  * 战斗房间配置
@@ -66,7 +63,7 @@ export class BattleRoom extends Room {
                 console.warn(`[BattleRoom] 未找到敌人配置: ${key}`)
             }
             return config
-        }).filter(Boolean)
+        }).filter((config): config is EnemyMap => config !== undefined)
     }
 
     /**
@@ -261,7 +258,7 @@ export class BattleRoom extends Room {
      */
     private calculateMaterialReward(): number {
         // 基础物质 + 层级加成
-        return 30 + this.targetLayer * 5
+        return 30 + this.layer * 5
     }
 
     /**

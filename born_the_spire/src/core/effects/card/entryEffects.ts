@@ -7,7 +7,7 @@ import { getEntryModifier } from "@/core/objects/system/modifier/EntryModifier"
 /**
  * 虚无词条效果：若卡牌在手牌中，则移入消耗堆
  */
-export const voidExhaust: EffectFunc = (event, effect) => {
+export const voidExhaust: EffectFunc = (event, _effect) => {
     const { source, target } = event
 
     // 只有玩家对象具备卡牌
@@ -29,7 +29,7 @@ export const voidExhaust: EffectFunc = (event, effect) => {
 /**
  * 固有词条效果：将所有固有卡牌移入手牌
  */
-export const moveInherentToHand: EffectFunc = (event, effect) => {
+export const moveInherentToHand: EffectFunc = (event, _effect) => {
     const { target } = event
 
     // 只有玩家对象具备卡牌

@@ -165,7 +165,7 @@ export function evaluateCondition(
 
     // 检查状态层数条件
     if (condition.hasState) {
-        const target = condition.hasState.target === "self" ? enemy : player
+        // const _target = condition.hasState.target === "self" ? enemy : player
         // TODO: 需要实现 getStateStacks 方法
         // const stacks = target.getStateStacks?.(condition.hasState.stateKey) || 0
         // const requiredStacks = condition.hasState.stacks ?? 1

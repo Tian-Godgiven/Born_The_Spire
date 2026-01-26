@@ -38,7 +38,7 @@ export class RelicReward extends Reward {
         const relicList = getLazyModule<RelicMap[]>('relicList')
         const config = relicList.find((r: RelicMap) => r.key === key)
         if (!config) {
-            console.warn(`[RelicReward] 未找到遗物配置: ${key}`)
+            throw new Error(`[RelicReward] 未找到遗物配置: ${key}`)
         }
         return config
     }

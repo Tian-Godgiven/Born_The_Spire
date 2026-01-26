@@ -19,12 +19,14 @@ export function gainReserve(event: ActionEvent<any, any, any>, effect: Effect) {
     }
 
     const reserveModifier = getReserveModifier(event.target)
-    const current = reserveModifier.getReserve(reserveKey)
-    const newAmount = current + amount
+    const reserveKeyStr = String(reserveKey)
+    const amountNum = Number(amount)
+    const current = reserveModifier.getReserve(reserveKeyStr)
+    const newAmount = current + amountNum
 
-    reserveModifier._setReserve(reserveKey, newAmount)
+    reserveModifier._setReserve(reserveKeyStr, newAmount)
 
-    newLog([event.target, "获得了", amount, reserveKey])
+    newLog([event.target, "获得了", amountNum, reserveKeyStr])
 }
 
 /**
@@ -43,16 +45,18 @@ export function spendReserve(event: ActionEvent<any, any, any>, effect: Effect) 
     }
 
     const reserveModifier = getReserveModifier(event.target)
-    const current = reserveModifier.getReserve(reserveKey)
-    const newAmount = current - amount
+    const reserveKeyStr = String(reserveKey)
+    const amountNum = Number(amount)
+    const current = reserveModifier.getReserve(reserveKeyStr)
+    const newAmount = current - amountNum
 
     if (newAmount < 0) {
-        console.warn(`[spendReserve] 储备 ${reserveKey} 不足，需要 ${amount}，当前 ${current}`)
+        console.warn(`[spendReserve] 储备 ${reserveKeyStr} 不足，需要 ${amountNum}，当前 ${current}`)
         // 设置为 0 而不是负数
-        reserveModifier._setReserve(reserveKey, 0)
+        reserveModifier._setReserve(reserveKeyStr, 0)
     } else {
-        reserveModifier._setReserve(reserveKey, newAmount)
+        reserveModifier._setReserve(reserveKeyStr, newAmount)
     }
 
-    newLog([event.target, "消耗了", amount, reserveKey])
+    newLog([event.target, "消耗了", amountNum, reserveKeyStr])
 }

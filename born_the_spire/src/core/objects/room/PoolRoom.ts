@@ -7,12 +7,11 @@ import { Room, RoomConfig } from "./Room"
 import { Choice, ChoiceGroup } from "../system/Choice"
 import { nowPlayer } from "@/core/objects/game/run"
 import { newLog } from "@/ui/hooks/global/log"
-import { getStatusValue, changeStatusValue } from "@/core/objects/system/status/Status"
+import { getStatusValue, changeStatusValue, ensureStatusExists } from "@/core/objects/system/status/Status"
 import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
 import { showComponent } from "@/core/hooks/componentManager"
 import { doEvent } from "@/core/objects/system/ActionEvent"
-import { roomRegistry } from "@/static/registry/roomRegistry"
 
 /**
  * 水池房间配置
@@ -32,6 +31,7 @@ export class PoolRoom extends Room {
     public readonly allowBloodMark: boolean
     public readonly choiceGroup: ChoiceGroup
     private hasBloodMark: boolean = false  // 全局是否已染血
+    private bloodMarkChoice?: Choice  // 保存染血选项的引用
 
     constructor(config: PoolRoomConfig) {
         super(config)
@@ -87,14 +87,17 @@ export class PoolRoom extends Room {
 
         // 选项3：染血（如果允许且未染血）
         if (this.allowBloodMark && !this.hasBloodMark) {
-            choices.push(new Choice({
+            const bloodMarkChoice = new Choice({
                 title: "染血",
                 description: "获得红色印记（全局只能进行1次）",
                 icon: "🩸",
                 onSelect: async () => {
                     await this.onBloodMark()
                 }
-            }))
+            })
+            choices.push(bloodMarkChoice)
+            // 保存引用，以便后续移除
+            this.bloodMarkChoice = bloodMarkChoice
         }
 
         return choices
@@ -213,12 +216,22 @@ export class PoolRoom extends Room {
         })
 
         // 标记玩家已染血状态
-        changeStatusValue(nowPlayer, "ifBloodMark", { source: nowPlayer, medium: nowPlayer }, {
+        // 确保玩家具备 ifBloodMark 属性，如果不存在则创建
+        ensureStatusExists(nowPlayer, "ifBloodMark", 0)
+        changeStatusValue(nowPlayer, "ifBloodMark", nowPlayer, {
             target: "base",
-            type: "final",
-            value: true
+            type: "additive",
+            value: 1  // 使用 1 表示有标记，0 表示无标记
         })
         this.hasBloodMark = true
+
+        // 从当前选项组中移除染血选项
+        if (this.bloodMarkChoice) {
+            const index = this.choiceGroup.choices.indexOf(this.bloodMarkChoice)
+            if (index !== -1) {
+                this.choiceGroup.choices.splice(index, 1)
+            }
+        }
 
         newLog(["最大生命值 -10"])
         newLog(["（红色印记的其他效果待实现）"])

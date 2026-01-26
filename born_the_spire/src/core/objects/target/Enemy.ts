@@ -54,7 +54,7 @@ export class Enemy extends Chara{
 
         for (const organ of organs) {
             // 跳过损坏的器官
-            if (organ.isDisabled || organ.isBroken) {
+            if (organ.isDisabled) {
                 continue
             }
 

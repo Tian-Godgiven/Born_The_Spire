@@ -59,7 +59,7 @@ export async function enterRoom(room: Room | string, layer?: number): Promise<vo
 export function initDefaultGameObjects() {
     // nowPlayer 已经在模块初始化时创建，这里只需要重新赋值
     const defaultPlayer = new Player(playerList["default"])
-    nowPlayer = reactive(defaultPlayer)
+    nowPlayer = reactive(defaultPlayer) as unknown as Player
 
     const defaultGameRun = new GameRun()
     Object.assign(nowGameRun, defaultGameRun)
@@ -144,7 +144,7 @@ export async function startNewRun(){
     //创建本局角色
     const map = playerList["default"]
     const player = new Player(map)
-    nowPlayer = reactive(player)  // 重新赋值，不要用 Object.assign
+    nowPlayer = reactive(player) as unknown as Player  // 重新赋值，不要用 Object.assign
 
     //添加到队伍中
     addToPlayerTeam(nowPlayer)

@@ -115,6 +115,122 @@ PS:对于“当前生命”，“当前能量”等频繁变化、且与事务�
 
 ## API 与约定
 
+### 核心函数
+
+#### appendStatus(entity, status)
+添加属性到实体。不允许重复添加同一个 key 的属性。
+
+```typescript
+const status = createStatusFromMap(entity, "max-health", 100)
+appendStatus(entity, status)
+```
+
+**重要**：必须使用 `markRaw()` 包装 Status 对象，防止被 Vue 的 reactive 系统破坏：
+```typescript
+entity.status[key] = markRaw(status)
+```
+
+#### ensureStatusExists(entity, statusKey, initialValue)
+确保实体具备某个属性，如果不存在则创建。这是一个安全的辅助函数。
+
+```typescript
+// 确保玩家有 ifBloodMark 属性
+ensureStatusExists(nowPlayer, "ifBloodMark", 0)
+
+// 之后可以安全地修改
+changeStatusValue(nowPlayer, "ifBloodMark", source, {
+    target: "base",
+    type: "additive",
+    value: 1
+})
+```
+
+**实现细节**：
+- 使用 `createStatusFromMap()` 创建 Status 对象
+- 自动添加默认值修饰器
+- 使用 `markRaw()` 保护 Status 对象不被 reactive 破坏
+
+#### changeStatusValue(entity, statusKey, source, options)
+为目标的属性值添加新的修饰器，返回移除函数。
+
+**参数说明**：
+- `entity`: 目标实体
+- `statusKey`: 属性键名（字符串）
+- `source`: 修饰器来源对象（**注意**：这是第三个参数，不是对象）
+- `options`: 配置对象
+  - `value`: 修改值
+  - `type`: 修饰器类型（"additive" | "multiplicative"，默认 "additive"）
+  - `target`: 目标层级（"base" | "current"，默认 "base"）
+  - `modifierFunc`: 可选的修饰函数
+
+**正确用法**：
+```typescript
+// ✅ 正确 - source 是第三个参数
+changeStatusValue(player, "max-health", organ, {
+    value: 10,
+    type: "additive",
+    target: "base"
+})
+
+// ❌ 错误 - 不要传递对象作为 source
+changeStatusValue(player, "max-health", { source: organ, medium: card }, {
+    value: 10
+})
+```
+
+**返回值**：
+返回一个移除函数，调用后会移除该修饰器并重新计算属性值。
+
+```typescript
+const remove = changeStatusValue(player, "max-health", organ, { value: 10 })
+// 稍后移除
+remove()
+```
+
+#### getStatusValue(entity, statusKey, defaultValue?)
+获取目标属性的当前值。如果目标不具备这个属性，返回 defaultValue（如果提供），否则报错。
+
+```typescript
+const maxHealth = getStatusValue(player, "max-health")
+const bloodMark = getStatusValue(player, "ifBloodMark", 0)  // 不存在时返回 0
+```
+
+#### getStatusRefValue(entity, statusKey)
+获取目标属性的响应式值（ref）。用于 Vue 组件中需要响应式更新的场景。
+
+```typescript
+const maxHealthRef = getStatusRefValue(player, "max-health")
+// 在 Vue 模板中会自动解包
+```
+
+### Vue 响应式系统注意事项
+
+**问题**：Entity 对象被 `reactive()` 包装后，Vue 会递归转换所有嵌套对象。Status 对象内部有 `_baseValue = ref(0)` 和 `_value = ref(0)`，如果被 reactive 处理，这些 ref 会被"解包"成普通数字，导致错误。
+
+**解决方案**：使用 `markRaw()` 标记 Status 对象，告诉 Vue 跳过响应式转换。
+
+```typescript
+// 在 appendStatus 中
+entity.status[key] = markRaw(status)
+
+// 在 ensureStatusExists 中
+entity.status[statusKey] = markRaw(status)
+```
+
+**错误示例**：
+```
+TypeError: Cannot create property 'value' on number '50'
+```
+这个错误表示 `_baseValue` 被转换成了数字 50，而不是 ref 对象。
+
+**何时使用 markRaw**：
+- ✅ Status 对象添加到 entity.status 时
+- ✅ 任何包含内部 ref/reactive 结构的对象
+- ❌ Entity 本身（Entity 需要是 reactive 的）
+- ❌ 简单的数据对象
+
+### 旧版 API（已废弃）
+
 - 添加：`addStatusModifier(target, statusKey, modifier)`
   - 分配 `timestamp`（时间序或自增序号）。
   - 首次添加时按需记录快照（`snapshotValue/snapshotBaseValue`）。

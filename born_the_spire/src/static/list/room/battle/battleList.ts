@@ -14,13 +14,13 @@ export interface BattleRoomConfig {
 }
 
 export const battleList: BattleRoomConfig[] = [
-    {
-        key: "battle_normal_slime",
-        name: "史莱姆巢穴",
-        description: "一群史莱姆聚集的地方",
-        battleType: "normal",
-        enemyConfigs: ["test_enemy_slime","test_enemy_slime","test_enemy_slime"]
-    },
+    // {
+    //     key: "battle_normal_slime",
+    //     name: "史莱姆巢穴",
+    //     description: "一群史莱姆聚集的地方",
+    //     battleType: "normal",
+    //     enemyConfigs: ["test_enemy_slime","test_enemy_slime","test_enemy_slime"]
+    // },
     {
         key: "battle_normal_rocker",
         name: "小石块",
@@ -28,11 +28,11 @@ export const battleList: BattleRoomConfig[] = [
         battleType: "normal",
         enemyConfigs: ["original_enemy_00001"]
     },
-    {
-        key: "battle_elite_berserker",
-        name: "狂战士领地",
-        description: "强大的狂战士守护着这里",
-        battleType: "elite",
-        enemyConfigs: ["test_enemy_berserker"]
-    }
+    // {
+    //     key: "battle_elite_berserker",
+    //     name: "狂战士领地",
+    //     description: "强大的狂战士守护着这里",
+    //     battleType: "elite",
+    //     enemyConfigs: ["test_enemy_berserker"]
+    // }
 ]

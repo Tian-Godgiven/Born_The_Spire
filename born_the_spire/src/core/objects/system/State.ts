@@ -1,9 +1,7 @@
 import { Describe } from "@/ui/hooks/express/describe"
 import { Target } from "../target/Target"
-import { Entity } from "./Entity"
 import { stateList } from "@/static/list/target/stateList"
 import { newError } from "@/ui/hooks/global/alert"
-import { ActionEvent } from "./ActionEvent"
 import { EffectUnit } from "./effect/EffectUnit"
 import { TriggerMap } from "@/core/types/object/trigger"
 import { EventParticipant } from "@/core/types/event/EventParticipant"
@@ -120,7 +118,7 @@ export class State implements EventParticipant {
      * 获取该状态（为目标添加触发器）
      * 现在通过 StateModifier 调用
      */
-    getState(target: Target) {
+    getState(_target: Target) {
         // 处理 possess 交互的触发器
         // 这部分逻辑移到 StateModifier 中处理
     }

@@ -1,5 +1,4 @@
 import { Reward, RewardConfig } from "./Reward"
-import { nowPlayer } from "@/core/objects/game/run"
 import { newLog } from "@/ui/hooks/global/log"
 
 /**

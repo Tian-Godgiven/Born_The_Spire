@@ -1,5 +1,6 @@
 import { Entity } from "../Entity"
 import { Organ } from "../../target/Organ"
+import { Item } from "../../item/Item"
 import { ItemModifier } from "./ItemModifier"
 import { newLog } from "@/ui/hooks/global/log"
 import { doEvent, ActionEvent } from "../ActionEvent"
@@ -8,7 +9,6 @@ import { computed, toRaw } from "vue"
 import { resolveTriggerEventTarget } from "../trigger/Trigger"
 import { getCardModifier } from "./CardModifier"
 import { Player } from "../../target/Player"
-import { Chara } from "../../target/Target"
 import { getPartMaxCount } from "@/static/list/target/organPart"
 import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
 import { getQualityConfig, calculateUpgradeCost } from "@/static/list/target/organQuality"
@@ -22,7 +22,7 @@ import { showComponent } from "@/core/hooks/componentManager"
  * 每个角色应该有一个 OrganModifier 实例
  */
 export class OrganModifier extends ItemModifier {
-    public organs = computed(() => this.units.map(u => u.item as Organ))
+    public organs = computed(() => this.units.map(u => u.item as unknown as Organ))
 
     constructor(owner: Entity) {
         super(owner)
@@ -71,7 +71,7 @@ export class OrganModifier extends ItemModifier {
         organ.owner = this.owner
 
         // 1. 创建 ItemModifierUnit
-        const unit = this.add(organ)
+        const unit = this.add(organ as unknown as Item)
 
         // 2. 处理 possess 交互（持有期间的持续效果）
         const possessInteraction = organ.getInteraction("possess")
@@ -114,7 +114,7 @@ export class OrganModifier extends ItemModifier {
                                             organ,
                                             organ,
                                             target,
-                                            {...eventConfig.info, level: eventConfig.level || 0},
+                                            {...eventConfig.info || {}},
                                             eventConfig.effect
                                         )
 
@@ -213,7 +213,7 @@ export class OrganModifier extends ItemModifier {
         organ.removeWorkTriggers()
 
         // 2. 找到并清理副作用（传入父日志以嵌套显示清理过程）
-        const removed = this.removeByItem(organ, parentLog)
+        const removed = this.removeByItem(organ as unknown as Item, parentLog)
         if (!removed) {
             console.warn(`[OrganModifier] 未找到器官 ${organ.label}，可能已经被移除`)
         }
@@ -284,7 +284,7 @@ export class OrganModifier extends ItemModifier {
      */
     useOrgan(organ: Organ, targets: Entity[]) {
         // 检查是否拥有该器官
-        if(!this.units.some(u => u.item === organ)) {
+        if(!this.units.some(u => u.item === (organ as unknown as Item))) {
             newLog([this.owner, "未拥有器官", organ])
             return "cant"
         }
@@ -323,7 +323,7 @@ export class OrganModifier extends ItemModifier {
      */
     breakOrgan(organ: Organ) {
         // 检查是否拥有该器官
-        if(!this.units.some(u => u.item === organ)) {
+        if(!this.units.some(u => u.item === (organ as unknown as Item))) {
             newLog([this.owner, "未拥有器官", organ])
             return false
         }
@@ -364,7 +364,7 @@ export class OrganModifier extends ItemModifier {
      */
     repairOrgan(organ: Organ) {
         // 检查是否拥有该器官
-        if(!this.units.some(u => u.item === organ)) {
+        if(!this.units.some(u => u.item === (organ as unknown as Item))) {
             newLog([this.owner, "未拥有器官", organ])
             return false
         }
@@ -404,13 +404,79 @@ export class OrganModifier extends ItemModifier {
     }
 
     /**
+     * 同化器官
+     * 在战斗结束时，从敌人的器官中选择一个未损坏的器官进行同化
+     * 消耗 20% 吞噬获取量的物质
+     * @param organ 要同化的器官
+     * @returns 是否成功同化
+     */
+    assimilateOrgan(organ: Organ): boolean {
+        // 检查器官是否损坏
+        if (organ.isDisabled) {
+            newLog([organ, "已损坏，无法同化"])
+            return false
+        }
+
+        // 计算同化成本（20% 吞噬获取量）
+        const assimilateCost = Math.floor(organ.absorbValue * 0.2)
+
+        // 检查物质是否足够
+        const reserveModifier = getReserveModifier(this.owner)
+        const currentMaterial = reserveModifier.getReserve("material")
+
+        if (currentMaterial < assimilateCost) {
+            newLog([`物质不足，无法同化`, `需要 ${assimilateCost}，当前 ${currentMaterial}`])
+            return false
+        }
+
+        // 扣除物质
+        reserveModifier.spendReserve("material", assimilateCost)
+        newLog([this.owner, "消耗", assimilateCost, "物质同化器官", organ])
+
+        // 获得器官（等级重置为 1）
+        organ.level = 1
+        this.acquireOrgan(organ, this.owner)
+
+        return true
+    }
+
+    /**
+     * 吞噬器官
+     * 消耗指定的器官，获得物质
+     * 获得量 = 吞噬获取量 * 等级 + 稀有度加成
+     * @param organ 要吞噬的器官
+     * @returns 是否成功吞噬
+     */
+    devourOrgan(organ: Organ): boolean {
+        // 检查是否拥有该器官
+        if (!this.units.some(u => u.item === (organ as unknown as Item))) {
+            newLog([this.owner, "未拥有器官", organ])
+            return false
+        }
+
+        // 计算吞噬获得的物质
+        const materialGain = this.calculateDevourMaterial(organ)
+
+        // 获得物质
+        const reserveModifier = getReserveModifier(this.owner)
+        reserveModifier.gainReserve("material", materialGain, this.owner)
+
+        newLog([this.owner, "吞噬器官", organ, `获得 ${materialGain} 物质`])
+
+        // 移除器官（不触发 lose 效果）
+        this.loseOrgan(organ, false)
+
+        return true
+    }
+
+    /**
      * 升级器官
      * @param organ 要升级的器官
      * @returns 是否成功升级
      */
     async upgradeOrgan(organ: Organ): Promise<boolean> {
         // 检查是否拥有该器官
-        if (!this.units.some(u => u.item === organ)) {
+        if (!this.units.some(u => u.item === (organ as unknown as Item))) {
             newLog([this.owner, "未拥有器官", organ])
             return false
         }

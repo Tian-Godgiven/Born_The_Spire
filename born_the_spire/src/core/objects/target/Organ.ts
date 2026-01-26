@@ -15,7 +15,7 @@ export class Organ extends Entity{
     public cards:string[] = []  // 器官提供的卡牌列表
     public entry:string[] = []  // 器官的词条列表
     public owner?: Entity   // 器官持有者（通常是 Player 或 Enemy）
-    // 注意：isDisabled 继承自 Item 基类，表示器官是否损坏
+    public isDisabled:boolean = false // 器官是否损坏
 
     // 新增属性
     public readonly quality: OrganQuality  // 稀有度
@@ -44,7 +44,10 @@ export class Organ extends Entity{
 
         const interaction:Interaction[] = []
         for(let key in map.interaction){
-            interaction.push({key,...map.interaction[key]})
+            const data = map.interaction[key]
+            if (data && !Array.isArray(data)) {
+                interaction.push({key, ...data})
+            }
         }
         this.interaction = interaction
     }
@@ -66,7 +69,7 @@ export class Organ extends Entity{
     activateWorkTriggers(owner: Entity) {
         this.removeWorkTriggers()
         const workInteraction = this.getInteraction("work")
-        if(workInteraction?.triggers) {
+        if(workInteraction && workInteraction.triggers) {
             this.workTriggerRemovers = this.addTriggersFromInteraction(workInteraction, owner)
         }
     }
@@ -87,7 +90,7 @@ export class Organ extends Entity{
     activateBrokenTriggers(owner: Entity) {
         this.removeBrokenTriggers()
         const brokenInteraction = this.getInteraction("broken")
-        if(brokenInteraction?.triggers) {
+        if(brokenInteraction && brokenInteraction.triggers) {
             this.brokenTriggerRemovers = this.addTriggersFromInteraction(brokenInteraction, owner)
         }
     }
@@ -122,13 +125,14 @@ export class Organ extends Entity{
                     how,
                     key,
                     level,
-                    callback: (event, _effect, _triggerLevel) => {
+                    callback: (event, effect, _triggerLevel) => {
                         // 使用公共的目标解析函数
                         const target = resolveTriggerEventTarget(
                             eventConfig.targetType,
                             event,
-                            this,  // triggerSource: 器官本身
-                            owner  // triggerOwner: 拥有者
+                            effect,  // 触发效果
+                            this,    // triggerSource: 器官本身
+                            owner    // triggerOwner: 拥有者
                         )
 
                         doEvent({
@@ -188,4 +192,28 @@ export function breakOrgan(chara: Chara, organ: Organ) {
 export function repairOrgan(chara: Chara, organ: Organ) {
     const organModifier = getOrganModifier(chara)
     return organModifier.repairOrgan(organ)
+}
+
+/**
+ * 同化器官（包装函数）
+ */
+export function assimilateOrgan(chara: Chara, organ: Organ) {
+    const organModifier = getOrganModifier(chara)
+    return organModifier.assimilateOrgan(organ)
+}
+
+/**
+ * 吞噬器官（包装函数）
+ */
+export function devourOrgan(chara: Chara, organ: Organ) {
+    const organModifier = getOrganModifier(chara)
+    return organModifier.devourOrgan(organ)
+}
+
+/**
+ * 升级器官（包装函数）
+ */
+export function upgradeOrgan(chara: Chara, organ: Organ) {
+    const organModifier = getOrganModifier(chara)
+    return organModifier.upgradeOrgan(organ)
 }

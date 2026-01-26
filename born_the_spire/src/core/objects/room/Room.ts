@@ -102,7 +102,8 @@ export abstract class Room {
             "battle": "战斗",
             "event": "事件",
             "pool": "水池",
-            "blackStore": "黑市"
+            "blackStore": "黑市",
+            "roomSelect": "选择房间"
         }
 
         return typeNameMap[this.type] || "未知房间"
@@ -116,7 +117,8 @@ export abstract class Room {
             "battle": "⚔️",
             "event": "?",
             "pool": "〜",
-            "blackStore": "$"
+            "blackStore": "$",
+            "roomSelect": "→"
         }
 
         return iconMap[this.type] || "?"

@@ -18,7 +18,7 @@ export class Effect implements EventParticipant{
     public key:string;//关键字
     public effectFunc:EffectFunc;
     public params:EffectParams;
-    public label?:string = "";//效果的名称
+    public label:string = "";//效果的名称
     public participantType: 'effect' = 'effect'
     public describe?:string[] = [];
     public actionEvent:ActionEvent;//引发这个效果的事件

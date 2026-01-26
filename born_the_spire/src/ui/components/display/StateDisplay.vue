@@ -61,7 +61,7 @@ function getStackDisplay(state: State): string {
 }
 
 // 解析动态值（用于 describe 中的 {key:...} 部分）
-function resolveDynamicValue(part: any, state: State): string {
+function resolveDynamicValue(part: any, _state: State): string {
     if (!part.key || !Array.isArray(part.key)) return ''
 
     const [type, ...rest] = part.key

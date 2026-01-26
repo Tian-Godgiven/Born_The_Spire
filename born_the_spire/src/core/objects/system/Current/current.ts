@@ -6,7 +6,6 @@ import { newError } from "@/ui/hooks/global/alert";
 import { CurrentMapData, getMetaFromCurrentMap } from "@/static/list/system/currents/currentMap";
 import { getStatusValue } from "../status/Status";
 import { ActionEvent } from "../ActionEvent";
-import { get, max } from "lodash";
 import { getRefValue, setRefValue } from "@/core/hooks/refValue";
 
 type CurrentOption = {

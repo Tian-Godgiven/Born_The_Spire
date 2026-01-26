@@ -29,7 +29,7 @@ export type EffectParams = {
  * - $target.current.xxx: 从 target 获取当前值
  * - $random[min,max]: 生成随机数（整数或浮点数）
  */
-export function resolveEffectParams(param: EffectParams[string], event: ActionEvent, effect: Effect) {
+export function resolveEffectParams(param: EffectParams[string], event: ActionEvent, _effect: Effect) {
     if (typeof param !== "string" || !param.startsWith("$")) {
         return param
     }
@@ -198,7 +198,7 @@ export async function doEffectFunc(effect: Effect, override_event?:Partial<Actio
 
 //计算实际传递给效果函数的效果的参数的最终计算值
 // 注意：现在参数解析在 Effect 构造函数中完成，这个函数已经不再使用
-function countEffectValue(effect: Effect) {
+function countEffectValue(_effect: Effect) {
     // 参数解析已经在 Effect 构造函数中完成
     // 这里保留空函数以防有其他地方调用
 }

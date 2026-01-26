@@ -129,7 +129,7 @@
             const potionModifier = getPotionModifier(nowPlayer)
             console.log("PotionModifier units:", potionModifier.getUnits())
             console.log("Potions computed:", potionModifier.potions.value)
-            console.log("Player.potions (旧):", nowPlayer.potions)
+            // console.log("Player.potions (旧):", nowPlayer.potions)
         }
     }]
 </script>

@@ -25,7 +25,7 @@ export type ItemMap = EntityMap & {
     label:string,
     describe?:Describe,
     key:string,
-    interaction:Record<string, InteractionData>
+    interaction:Record<string, InteractionData | InteractionData[]>
 }
 
 // 物品：一系列可以被玩家交互的对象
@@ -62,7 +62,9 @@ export class Item extends Entity{
                 }
             } else {
                 // 其他交互正常处理
-                interaction.push({key,...data})
+                if (data && !Array.isArray(data)) {
+                    interaction.push({key, ...data})
+                }
             }
         }
         this.interaction = interaction
@@ -91,7 +93,7 @@ export class Item extends Entity{
     }
 
     //使用item
-    use(targets:Entity[]){
+    use(_targets:Entity[]){
         //调用对象的use交互
         const interaction = this.interaction.find(item=>item.key == "use");
         if(!interaction){

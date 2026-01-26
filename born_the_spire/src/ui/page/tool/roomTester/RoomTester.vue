@@ -74,13 +74,13 @@ async function enterRoom(roomKey: string) {
         return
     }
 
-    if (!nowGameRun.value) {
+    if (!nowGameRun) {
         console.error(`[RoomTester] 游戏未开始，请先点击"开始游戏"`)
         alert('请先点击"开始游戏"')
         return
     }
 
-    await nowGameRun.value.enterRoom(room)
+    await nowGameRun.enterRoom(room)
     console.log(`[RoomTester] 成功进入房间: ${roomKey}`)
 
     // 如果不在 running 页面，跳转过去

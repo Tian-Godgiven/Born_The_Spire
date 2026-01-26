@@ -54,7 +54,7 @@ export function createRoomChoiceGroup(
 
             if (room) {
                 // 进入房间
-                await nowGameRun.value.enterRoom(room)
+                await nowGameRun.enterRoom(room)
             }
         }
     })

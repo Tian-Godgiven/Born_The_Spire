@@ -1,6 +1,6 @@
 import { Entity } from "../Entity"
 import { Target } from "../../target/Target"
-import { State, StateData, changeStateStack, getStateStack } from "../State"
+import { State, StateData } from "../State"
 import { newLog, LogUnit } from "@/ui/hooks/global/log"
 import { doEvent, ActionEvent } from "../ActionEvent"
 import { resolveTriggerEventTarget } from "../trigger/Trigger"
@@ -87,7 +87,7 @@ export class StateModifier {
         const unit = new StateModifierUnit(state)
         this.units.push(unit)
 
-        const parentLog = newLog([this.owner, "获得了状态", state])
+        newLog([this.owner, "获得了状态", state])
 
         // 处理 apply 交互（一次性效果）
         const applyInteraction = state.interaction.apply
@@ -95,7 +95,7 @@ export class StateModifier {
             doEvent({
                 key: "applyState",
                 source,
-                medium: state,
+                medium: state as any,
                 target: this.owner,
                 effectUnits: applyInteraction.effects
             })
@@ -103,7 +103,7 @@ export class StateModifier {
 
         // 处理 possess 交互（持续效果）
         const possessInteraction = state.interaction.possess
-        if (possessInteraction?.triggers) {
+        if (possessInteraction && possessInteraction.triggers) {
             this.setupStateTriggers(state, unit, possessInteraction.triggers)
         }
 
@@ -121,7 +121,7 @@ export class StateModifier {
     private handleRepeatState(
         state: State,
         stacks: number | Array<{key: string, stack: number}>,
-        source: Entity
+        _source: Entity
     ) {
         const behavior = state.repeate
 
@@ -172,7 +172,7 @@ export class StateModifier {
     private setupStateTriggers(
         state: State,
         unit: StateModifierUnit,
-        triggersMap: NonNullable<StateData["interaction"]>["possess"]["triggers"]
+        triggersMap: NonNullable<NonNullable<StateData["interaction"]>["possess"]>["triggers"]
     ) {
         if (!triggersMap) return
 
@@ -191,29 +191,31 @@ export class StateModifier {
                     how,
                     key,
                     level,
-                    callback: (event, effect, triggerLevel) => {
+                    callback: (event, effect, _triggerLevel) => {
                         // 解析目标
                         const target = resolveTriggerEventTarget(
                             clonedEventConfig.targetType,
                             event,
                             effect,
-                            state,      // triggerSource: 状态本身
+                            state as any,      // triggerSource: 状态本身（State 作为触发源）
                             this.owner  // triggerOwner: 拥有者
                         )
+
+                        // 执行事件
 
                         // 创建新事件
                         const newEvent = new ActionEvent(
                             clonedEventConfig.key,
-                            state,
-                            state,
+                            state as any,
+                            state as any,
                             target,
-                            {...clonedEventConfig.info, level: clonedEventConfig.level || 0},
+                            {...clonedEventConfig.info},
                             clonedEventConfig.effect
                         )
 
                         // 关联到父事件并传递 triggerLevel
                         event.spawnEvent(newEvent)
-                        newEvent.happen(() => {}, triggerLevel)
+                        newEvent.happen(() => {}, _triggerLevel)
                     }
                 })
 
@@ -240,7 +242,7 @@ export class StateModifier {
                 how: "take",    // 承受时间事件（监听 turnStart, turnEnd 等）
                 key: timing,    // 监听的事件 key
                 level: 0,
-                callback: (event, effect, triggerLevel) => {
+                callback: (event, _effect, triggerLevel) => {
                     // 构建 effect
                     const effectUnits = []
 
@@ -272,8 +274,8 @@ export class StateModifier {
                     // 创建自动衰减事件
                     const newEvent = new ActionEvent(
                         `${state.key}_stackChange`,
-                        state,      // source: 状态自己
-                        state,      // medium: 状态自己
+                        state as any,      // source: 状态自己
+                        state as any,      // medium: 状态自己
                         this.owner, // target: 持有者
                         { level: 0 },
                         effectUnits

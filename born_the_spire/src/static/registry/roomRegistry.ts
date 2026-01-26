@@ -215,83 +215,25 @@ export type { RoomTypeRegistration }
 
 /**
  * 初始化所有房间类型
- * 在懒加载完成后调用，只注册房间类型，不注册具体配置
+ * 在懒加载完成后调用，依次调用各个房间类型的注册模块
  */
 export async function initAllRooms(): Promise<void> {
     console.log('[RoomRegistry] 开始注册所有房间类型...')
 
-    // 导入所有 Room 类
-    const { BattleRoom } = await import('@/core/objects/room/BattleRoom')
-    const { EventRoom } = await import('@/core/objects/room/EventRoom')
-    const { PoolRoom } = await import('@/core/objects/room/PoolRoom')
-    const { BlackStoreRoom } = await import('@/core/objects/room/BlackStoreRoom')
-    const { RoomSelectRoom } = await import('@/core/objects/room/RoomSelectRoom')
+    // 导入各个房间类型的注册模块
+    const { initBattleRooms } = await import('./rooms/initBattleRooms')
+    const { initEventRooms } = await import('./rooms/initEventRooms')
+    const { initPoolRooms } = await import('./rooms/initPoolRooms')
+    const { initBlackStoreRooms } = await import('./rooms/initBlackStoreRooms')
+    const { initRoomSelectRooms } = await import('./rooms/initRoomSelectRooms')
 
-    // 只注册房间类型
-    roomRegistry.registerRoomType("battle", BattleRoom)
-    roomRegistry.registerRoomType("event", EventRoom)
-    roomRegistry.registerRoomType("pool", PoolRoom)
-    roomRegistry.registerRoomType("blackStore", BlackStoreRoom)
-    roomRegistry.registerRoomType("roomSelect", RoomSelectRoom)
+    // 依次初始化各个房间类型
+    await initBattleRooms()
+    await initEventRooms()
+    await initPoolRooms()
+    await initBlackStoreRooms()
+    await initRoomSelectRooms()
 
-    console.log('[RoomRegistry] 房间类型注册完成')
-
-    // 导入配置数据
-    const { battleList } = await import('@/static/list/room/battle/battleList')
-    const { getLazyModule } = await import('@/core/utils/lazyLoader')
-    const eventList = getLazyModule<any[]>('eventList')
-
-    // 注册战斗房间配置
-    battleList.forEach(battle => {
-        roomRegistry.registerRoomConfig({
-            key: battle.key,
-            type: "battle",
-            name: battle.name,
-            description: battle.description,
-            customData: {
-                battleType: battle.battleType,
-                enemyConfigs: battle.enemyConfigs
-            }
-        })
-    })
-    console.log(`[RoomRegistry] 已注册 ${battleList.length} 个战斗房间配置`)
-
-    // 注册事件房间配置
-    eventList.forEach((event: any) => {
-        roomRegistry.registerRoomConfig({
-            key: event.key,
-            type: "event",
-            name: event.title,
-            description: event.description,
-            customData: {
-                eventKey: event.key
-            }
-        })
-    })
-    console.log(`[RoomRegistry] 已注册 ${eventList.length} 个事件房间配置`)
-
-    // 注册其他房间的默认配置
-    roomRegistry.registerRoomConfig({
-        key: "pool_default",
-        type: "pool",
-        name: "水池",
-        description: "可以休息和提升的地方"
-    })
-
-    roomRegistry.registerRoomConfig({
-        key: "blackStore_default",
-        type: "blackStore",
-        name: "黑市",
-        description: "神秘的黑市商人"
-    })
-
-    roomRegistry.registerRoomConfig({
-        key: "room_select_default",
-        type: "roomSelect",
-        name: "选择房间",
-        description: "选择下一个要进入的房间"
-    })
-
-    console.log('[RoomRegistry] 所有房间配置注册完成')
+    console.log('[RoomRegistry] 所有房间类型和配置注册完成')
 }
 

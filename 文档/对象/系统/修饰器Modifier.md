@@ -103,6 +103,310 @@ attack:{
 例如：[organ]表示在 entity.organ._modifier 下,
     [item,potion]表示在 entiy.item.potion._modifier 下
 
+## 新增修饰器类型
+
+### StateModifier（状态修饰器）
+
+管理 Target 身上的所有状态（State）及其副作用。
+
+**位置**：`src/core/objects/system/modifier/StateModifier.ts`
+
+**主要功能**：
+- 添加/移除状态
+- 管理状态的触发器
+- 处理状态层数变化
+- 自动清理状态相关的副作用
+
+**核心方法**：
+```typescript
+// 添加状态
+stateModifier.addState(stateData, stacks, source)
+
+// 移除状态
+stateModifier.removeState(stateKey, triggerRemoveEffect)
+
+// 修改状态层数
+stateModifier.changeStack(stateKey, stackKey, delta)
+
+// 获取状态
+const state = stateModifier.getState(stateKey)
+```
+
+**使用示例**：
+```typescript
+import { getStateModifier } from "@/core/objects/system/modifier/StateModifier"
+
+const stateModifier = getStateModifier(player)
+
+// 添加中毒状态，3层
+stateModifier.addState(poisonStateData, 3, source)
+
+// 每回合减少1层
+stateModifier.changeStack("poison", "default", -1)
+```
+
+### ReserveModifier（储备修饰器）
+
+管理玩家的储备资源（金钱、物质等）。
+
+**位置**：`src/core/objects/system/modifier/ReserveModifier.ts`
+
+**主要功能**：
+- 获得/消耗储备资源
+- 检查储备是否足够
+- 响应式更新 UI
+
+**核心方法**：
+```typescript
+// 获得储备
+reserveModifier.gainReserve(reserveKey, amount, source)
+
+// 消耗储备
+reserveModifier.spendReserve(reserveKey, amount, source)
+
+// 检查是否足够
+const canAfford = reserveModifier.canAfford(reserveKey, amount)
+
+// 获取当前数量
+const gold = reserveModifier.getReserve("gold")
+```
+
+**使用示例**：
+```typescript
+import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
+
+const reserveModifier = getReserveModifier(player)
+
+// 获得50金币
+reserveModifier.gainReserve("gold", 50, rewardSource)
+
+// 消耗30物质
+if (reserveModifier.canAfford("material", 30)) {
+    reserveModifier.spendReserve("material", 30, upgradeSource)
+}
+```
+
+### PotionModifier（药水修饰器）
+
+管理玩家的药水持有和使用。
+
+**位置**：`src/core/objects/system/modifier/PotionModifier.ts`
+
+**主要功能**：
+- 添加/移除药水
+- 使用药水
+- 管理药水槽位
+- 响应式更新 UI
+
+**核心方法**：
+```typescript
+// 添加药水
+potionModifier.addPotion(potion)
+
+// 移除药水
+potionModifier.removePotion(potion)
+
+// 使用药水
+potionModifier.usePotion(potion, target)
+
+// 获取所有药水
+const potions = potionModifier.getPotions()
+```
+
+**使用示例**：
+```typescript
+import { getPotionModifier } from "@/core/objects/system/modifier/PotionModifier"
+
+const potionModifier = getPotionModifier(player)
+
+// 获得一瓶治疗药水
+const healingPotion = createPotion("healing_potion")
+potionModifier.addPotion(healingPotion)
+
+// 使用药水
+potionModifier.usePotion(healingPotion, player)
+```
+
+### OrganModifier（器官修饰器）
+
+管理玩家的器官持有和升级。
+
+**位置**：`src/core/objects/system/modifier/OrganModifier.ts`
+
+**主要功能**：
+- 添加/移除器官
+- 升级器官
+- 管理器官相关的卡牌和属性修饰器
+- 自动清理器官失去时的副作用
+
+**核心方法**：
+```typescript
+// 添加器官
+organModifier.addOrgan(organ)
+
+// 移除器官
+organModifier.removeOrgan(organ)
+
+// 升级器官
+organModifier.upgradeOrgan(organ)
+
+// 获取所有器官
+const organs = organModifier.getOrgans()
+```
+
+**使用示例**：
+```typescript
+import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
+
+const organModifier = getOrganModifier(player)
+
+// 获得一个器官
+const heartOrgan = createOrgan("heart")
+organModifier.addOrgan(heartOrgan)
+
+// 升级器官
+organModifier.upgradeOrgan(heartOrgan)
+```
+
+### CardModifier（卡牌修饰器）
+
+管理玩家的卡组。
+
+**位置**：`src/core/objects/system/modifier/CardModifier.ts`
+
+**主要功能**：
+- 添加/移除卡牌
+- 获取所有卡牌
+- 管理卡牌来源追踪
+
+**核心方法**：
+```typescript
+// 添加卡牌
+cardModifier.addCard(card, source)
+
+// 移除卡牌
+cardModifier.removeCard(card)
+
+// 获取所有卡牌
+const allCards = cardModifier.getAllCards()
+```
+
+## 修饰器与 Vue 响应式系统
+
+### 自动清理机制
+
+修饰器的核心优势是**自动清理**。当你失去某个物品/器官时，不需要手动撤销它添加的所有效果：
+
+```typescript
+// 获得器官时
+organ.onAcquire = () => {
+    // 添加属性修饰器
+    changeStatusValue(player, "max-health", organ, { value: 10 })
+
+    // 添加卡牌
+    cardModifier.addCard(newCard, organ)
+
+    // 添加触发器
+    player.appendTrigger({ ... })
+}
+
+// 失去器官时 - 不需要手动清理！
+// 修饰器系统会自动：
+// 1. 移除所有来源为该器官的属性修饰器
+// 2. 移除所有来源为该器官的卡牌
+// 3. 移除所有来源为该器官的触发器
+// 4. 重新计算属性值
+```
+
+### markRaw 的使用
+
+当修饰器管理的对象包含内部 ref/reactive 结构时，需要使用 `markRaw()` 保护：
+
+```typescript
+// ✅ 正确 - 保护 Status 对象
+entity.status[key] = markRaw(status)
+
+// ✅ 正确 - 保护包含 ref 的对象
+const modifier = new StatusModifier(...)
+entity.statusModifiers.push(markRaw(modifier))
+
+// ❌ 错误 - 直接添加会被 reactive 破坏
+entity.status[key] = status  // Status 内部的 ref 会被解包
+```
+
+**为什么需要 markRaw**：
+- Entity 对象被 `reactive()` 包装
+- Vue 会递归转换所有嵌套对象
+- Status/Modifier 等对象内部有 `ref()` 字段
+- 如果被 reactive 处理，ref 会被"解包"成普通值
+- 使用 `markRaw()` 告诉 Vue 跳过这些对象
+
+### 响应式更新
+
+修饰器的变化会自动触发 UI 更新：
+
+```typescript
+// 储备修饰器使用 ref 存储数据
+class ReserveModifier {
+    public reserves = ref<Record<string, number>>({})
+
+    gainReserve(key: string, amount: number) {
+        this.reserves.value[key] += amount
+        // UI 自动更新
+    }
+}
+
+// 在 Vue 组件中
+const reserveModifier = getReserveModifier(player)
+const gold = computed(() => reserveModifier.reserves.value.gold)
+// gold 会自动响应变化
+```
+
+## 实际使用示例
+
+### 完整的器官获得流程
+
+```typescript
+// 1. 创建器官
+const organ = new Organ(organData)
+
+// 2. 通过 OrganModifier 添加
+const organModifier = getOrganModifier(player)
+organModifier.addOrgan(organ)
+
+// 3. OrganModifier 自动处理：
+//    - 添加器官到 player.organs
+//    - 应用器官的 possess 交互
+//    - 添加器官提供的卡牌
+//    - 添加器官的属性修饰器
+//    - 添加器官的触发器
+
+// 4. 失去器官时
+organModifier.removeOrgan(organ)
+
+// 5. OrganModifier 自动清理：
+//    - 移除器官
+//    - 移除所有相关的卡牌
+//    - 移除所有相关的属性修饰器
+//    - 移除所有相关的触发器
+//    - 重新计算属性值
+```
+
+### 水池房间的物质获得
+
+```typescript
+// 在水池房间的汲取行为中
+private async onAbsorb(): Promise<void> {
+    const amount = this.absorbAmount  // 50 + layer * 10
+
+    // 通过 ReserveModifier 添加物质
+    const reserveModifier = getReserveModifier(nowPlayer)
+    reserveModifier.gainReserve("material", amount, this)
+
+    // UI 自动更新显示新的物质数量
+}
+```
+
 
 
 

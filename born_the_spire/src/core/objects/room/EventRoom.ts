@@ -10,7 +10,6 @@ import { executeEventEffects } from "@/static/list/room/event/eventEffectMap"
 import { newLog } from "@/ui/hooks/global/log"
 import { Component } from "vue"
 import { getLazyModule } from "@/core/utils/lazyLoader"
-import { roomRegistry } from "@/static/registry/roomRegistry"
 
 /**
  * 事件房间配置
@@ -19,6 +18,9 @@ export interface EventRoomConfig extends RoomConfig {
     type: "event"
     eventConfig?: EventMap          // 事件配置（可选，如果不提供则从 eventKey 加载）
     eventKey?: string               // 事件 key（从 eventList 中加载）
+    customData?: {                  // 自定义数据（用于从 roomList 创建）
+        eventKey?: string
+    }
 }
 
 /**

@@ -46,7 +46,7 @@ export class OrganSelectReward extends Reward {
                 console.warn(`[OrganSelectReward] 未找到器官配置: ${key}`)
             }
             return config
-        }).filter(Boolean)
+        }).filter((config): config is OrganMap => config !== undefined)
     }
 
     /**

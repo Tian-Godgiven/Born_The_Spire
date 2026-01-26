@@ -1,5 +1,8 @@
 import { Relic, RelicMap } from "@/core/objects/item/Subclass/Relic";
 
+// 重新导出 RelicMap 类型供其他模块使用
+export type { RelicMap }
+
 export const relicList: RelicMap[] = [
     // 被动遗物 - 只有 possess
     {

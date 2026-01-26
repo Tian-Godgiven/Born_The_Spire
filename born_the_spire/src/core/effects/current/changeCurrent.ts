@@ -3,6 +3,7 @@ import { changeCurrentValue, getCurrentValue } from "@/core/objects/system/Curre
 import { EffectFunc } from "@/core/objects/system/effect/EffectFunc";
 import { changeStatusValue } from "@/core/objects/system/status/Status";
 import { newError } from "@/ui/hooks/global/alert";
+import { isEntity } from "@/core/utils/typeGuards";
 
 //增加属性基础值
 export const addCurrent:EffectFunc = (event,effect)=>{
@@ -17,11 +18,12 @@ export const addCurrent:EffectFunc = (event,effect)=>{
     currentKey = String(currentKey)
     value = Number(value)
     handleEventEntity(target,(e)=>{
+        if (!isEntity(e)) return;
         //当前值
         const nowValue = getCurrentValue(e,currentKey)
         changeCurrentValue(e,currentKey,value+nowValue,event)
     })
-    
+
 }
 
 //同时改变属性值和对应的当前值
@@ -38,8 +40,9 @@ export const addStatusBaseCurrentValue:EffectFunc = (event,effect)=>{
     currentKey = String(currentKey)
     value = Number(value)
     handleEventEntity(target,(e)=>{
+        if (!isEntity(e)) return;
         //属性值
-        changeStatusValue(e,statusKey,{source,medium},{
+        changeStatusValue(e,statusKey,source,{
             "target":"base",
             "type":"additive",
             "value":value
@@ -48,6 +51,6 @@ export const addStatusBaseCurrentValue:EffectFunc = (event,effect)=>{
         const nowValue = getCurrentValue(e,currentKey)
         changeCurrentValue(e,currentKey,value+nowValue,event)
     })
-    
+
 }
 

@@ -78,7 +78,7 @@ export class RoomSelectEvent extends ChoiceEvent {
             newLog([`选择了房间: ${this.selectedRoom.getDisplayName()}`])
 
             // 进入选中的房间
-            await nowGameRun.value.enterRoom(this.selectedRoom)
+            await nowGameRun.enterRoom(this.selectedRoom)
 
             // 处理房间内容
             await this.selectedRoom.process()

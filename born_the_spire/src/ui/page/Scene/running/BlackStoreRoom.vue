@@ -109,7 +109,7 @@
             <div class="organ-list">
                 <div
                     v-for="organ in playerOrgans"
-                    :key="organ.__key"
+                    :key="organ.key"
                     class="organ-item"
                     @click="confirmSellOrgan(organ)"
                 >

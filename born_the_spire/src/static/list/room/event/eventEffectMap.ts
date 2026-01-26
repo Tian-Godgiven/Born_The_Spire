@@ -3,7 +3,6 @@
  * 提供原子效果供 mod 作者组合使用
  */
 
-import { nowPlayer } from "@/core/objects/game/run"
 import { newLog } from "@/ui/hooks/global/log"
 
 /**

@@ -1,7 +1,16 @@
 <template>
 <div class="top">
     <div class="playerData">
-        <div class="name">{{ nowPlayer.label }}</div>
+        <div class="name">
+            <div class="text">{{ nowPlayer.label }}</div>
+            <div class="state">
+                <transition-group name="fade-in" tag="div">
+                    <div class="stateText" :style="{color: value.color}" v-for="(value, index) in stateList" :key="value.text">
+                        &nbsp;&nbsp;{{ value.text }}
+                    </div>
+                </transition-group>
+            </div>
+        </div>
         <div class="health">
             生命：
             {{ health.now }} /
@@ -49,6 +58,33 @@
         return nowPlayer.getHealth()
     })
 
+    const stateList = computed(() => {
+        const states: Array<{text: string, color: string}> = []
+
+        // 检查 nowPlayer 是否已初始化
+        if (!nowPlayer || !nowPlayer.status) {
+            return states
+        }
+
+        // 检查染血状态
+        if (getStatusValue(nowPlayer, "ifBloodMark", 0) === 1) {
+            states.push({
+                text: "已染血",
+                color: "red"
+            })
+        }
+
+        // 未来可以添加其他状态检查
+        // if (getStatusValue(nowPlayer, "ifPoison", 0) === 1) {
+        //     states.push({
+        //         text: "已浸毒",
+        //         color: "green"
+        //     })
+        // }
+
+        return states
+    })
+
     const potions = computed(() => {
         // 检查 nowPlayer 是否已初始化（检查是否有 status 属性）
         if (!nowPlayer || !nowPlayer.status) {
@@ -86,6 +122,13 @@
         grid-template-columns: repeat(2,1fr);
     }
 }
+.name{
+    display: flex;
+    align-items: center;
+    .text{
+
+    }
+}
 .flex{
     display: flex;
     align-items: center;
@@ -95,5 +138,19 @@
 }
 .potions{
     gap: 10px;
+}
+
+/* 渐显动画 */
+.fade-in-enter-active {
+    animation: fadeIn 2s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 </style>

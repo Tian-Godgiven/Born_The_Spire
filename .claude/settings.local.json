@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(grep -n \"@/core/objects/item/Card\" *.ts)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(cd /d D:tianBorn_The_Spireborn_the_spire)",
+      "Bash(dir /b)"
     ]
   }
 }

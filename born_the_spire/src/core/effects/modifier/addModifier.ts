@@ -1,6 +1,8 @@
-import { handleEventEntity, doEvent } from "@/core/objects/system/ActionEvent";
+import { handleEventEntity, doEvent, ActionEvent } from "@/core/objects/system/ActionEvent";
 import { EffectFunc } from "@/core/objects/system/effect/EffectFunc";
 import { newError } from "@/ui/hooks/global/alert";
+import { isEntity } from "@/core/utils/typeGuards";
+import { Effect } from "@/core/objects/system/effect/Effect";
 
 /**
  * 添加状态修饰器到目标
@@ -29,6 +31,9 @@ export const addStatusModifier: EffectFunc = (event, effect) => {
     }
 
     handleEventEntity(target, (entity) => {
+        if (!isEntity(entity)) return;
+
+        const statusKey = String(effect.params.statusKey);
         const status = entity.status[statusKey];
         if (!status) {
             console.warn(`[addStatusModifier] 实体 ${entity.label} 没有属性 ${statusKey}，跳过修饰器`);
@@ -37,11 +42,11 @@ export const addStatusModifier: EffectFunc = (event, effect) => {
 
         // 添加修饰器并获取 remover
         const remover = status.addByJSON(event.source, {
-            targetLayer,
-            modifierType,
-            applyMode,
+            targetLayer: String(targetLayer) as "base" | "current",
+            modifierType: String(modifierType) as "additive" | "multiplicative" | "function",
+            applyMode: String(applyMode) as "absolute" | "snapshot",
             modifierValue: Number(modifierValue),
-            modifierFunc
+            modifierFunc: modifierFunc as ((value: number) => number) | undefined
         });
 
         // 收集副作用
@@ -78,44 +83,50 @@ export const addTriggerToTarget: EffectFunc = (event, effect) => {
         return;
     }
 
+    // 类型转换
+    const whenStr = String(when) as "before" | "after";
+    const howStr = String(how) as "make" | "via" | "take";
+    const keyStr = String(key);
+    const levelNum = Number(level);
+
     handleEventEntity(target, (entity) => {
+        if (!isEntity(entity)) return;
+
         const remover = entity.appendTrigger({
-            when,
-            how,
-            key,
-            level,
-            callback: (triggerEvent, triggerEffect, triggerLevel) => {
+            when: whenStr,
+            how: howStr,
+            key: keyStr,
+            level: levelNum,
+            callback: (triggerEvent: ActionEvent, _triggerEffect: Effect | null, _triggerLevel: number = 0) => {
                 // 确定事件目标
                 let eventTarget = entity;
-                if (triggerEvent.targetType === "eventSource") {
-                    eventTarget = triggerEvent.source;
-                } else if (triggerEvent.targetType === "eventMedium") {
-                    eventTarget = triggerEvent.medium;
-                } else if (triggerEvent.targetType === "eventTarget") {
-                    eventTarget = Array.isArray(triggerEvent.target)
-                        ? triggerEvent.target[0]
-                        : triggerEvent.target;
-                } else if (triggerEvent.targetType === "triggerSource") {
-                    eventTarget = source;
-                } else if (triggerEvent.targetType === "triggerOwner") {
-                    eventTarget = entity;
-                } else if (typeof triggerEvent.targetType === "object") {
-                    eventTarget = triggerEvent.targetType;
+                const triggerEventConfig = effect.params.triggerEvent as Record<string, any>;
+
+                // 使用 resolveTriggerEventTarget 解析目标
+                if (triggerEventConfig.targetType) {
+                    const { resolveTriggerEventTarget } = require("@/core/objects/system/trigger/Trigger");
+                    eventTarget = resolveTriggerEventTarget(
+                        triggerEventConfig.targetType,
+                        triggerEvent,
+                        _triggerEffect,
+                        source,
+                        entity
+                    );
                 }
 
                 // 触发事件
                 doEvent({
-                    key: effect.params.triggerEvent.key,
+                    key: triggerEventConfig.key,
                     source,
                     medium: source,
                     target: eventTarget,
-                    info: effect.params.triggerEvent.info || {},
-                    effectUnits: effect.params.triggerEvent.effect || []
+                    info: triggerEventConfig.info || {},
+                    effectUnits: triggerEventConfig.effect || []
                 });
             }
         });
 
         // 收集副作用
-        event.collectSideEffect(remover);
+        event.collectSideEffect(remover.remove);
     });
 };

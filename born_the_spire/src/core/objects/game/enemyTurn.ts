@@ -34,6 +34,12 @@ export async function executeEnemyTurn(
     if (!enemy.intent) {
         console.warn(`[EnemyTurn] 敌人 ${enemy.label} 没有设置意图，尝试重新选择行动`)
 
+        // 检查是否有行为配置
+        if (!enemy.behavior) {
+            console.error(`[EnemyTurn] 敌人 ${enemy.label} 没有行为配置`)
+            return
+        }
+
         // 如果没有意图，尝试重新选择（容错处理）
         const selectedCards = selectAction(
             enemy.behavior,
@@ -106,6 +112,12 @@ export function prepareEnemyIntents(
     for (const enemy of enemies) {
         // 跳过已死亡的敌人
         if (enemy.current.isAlive?.value !== 1) {
+            continue
+        }
+
+        // 检查是否有行为配置
+        if (!enemy.behavior) {
+            console.warn(`[prepareEnemyIntents] 敌人 ${enemy.label} 没有行为配置`)
             continue
         }
 

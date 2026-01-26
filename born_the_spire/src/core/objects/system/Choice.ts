@@ -15,7 +15,7 @@ export interface ChoiceConfig {
     title: string                   // 选项标题
     description?: string            // 选项描述
     icon?: string                   // 选项图标
-    component?: Component           // 自定义 Vue 组件（可选）
+    component?: Component | string  // 自定义 Vue 组件（可选）
     onSelect?: () => void | Promise<void>  // 选择时的回调
     customData?: Record<string, any> // 自定义数据
 }
@@ -29,7 +29,7 @@ export class Choice {
     public readonly title: string
     public readonly description?: string
     public readonly icon?: string
-    public readonly component?: Component
+    public readonly component?: Component | string
     public readonly customData?: Record<string, any>
     public state: ChoiceState
     private onSelectCallback?: () => void | Promise<void>

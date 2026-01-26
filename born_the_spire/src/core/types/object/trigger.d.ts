@@ -57,6 +57,7 @@ export interface TriggerEventConfig{
         "triggerSource"|//触发器的来源对象
         "triggerOwner"|//持有该触发器的对象
         "triggerEffect"|//触发这个触发器的效果对象
+        "owner"|//持有者（别名，等同于 triggerOwner）
         Entity//某个指定的对象
     effect:EffectUnit[]
 }

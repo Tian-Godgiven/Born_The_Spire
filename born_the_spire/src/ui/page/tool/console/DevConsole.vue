@@ -144,12 +144,12 @@ async function enterRoom(roomKey: string, layer: number = 1) {
         return
     }
 
-    if (!nowGameRun.value) {
+    if (!nowGameRun) {
         addOutput('游戏未开始，请先点击"开始游戏"', 'error')
         return
     }
 
-    await nowGameRun.value.enterRoom(room)
+    await nowGameRun.enterRoom(room)
     addOutput(`✓ 成功进入房间: ${roomKey}`, 'result')
 
     // 如果不在 running 页面，跳转过去

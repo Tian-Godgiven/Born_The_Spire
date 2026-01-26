@@ -91,8 +91,9 @@ export class Chara extends Target{
     }
     getEnergy(){
         //找到其属性
-        const max = getStatusRefValue(this,"max-energy")
-        const now = getCurrentRefValue(this,"energy",0)
-        return {max,now}
+        return reactive({
+            max: getStatusRefValue(this,"max-energy"),
+            now: getCurrentRefValue(this,"energy",0)
+        })
     }
 }

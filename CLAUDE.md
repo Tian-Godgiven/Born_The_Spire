@@ -400,6 +400,49 @@ When player loses/sells an organ, all associated modifiers are auto-removed.
 Relics typically add triggers to the player that respond to game events.
 Use `player.appendTrigger()` with appropriate when/how/key combinations.
 
+### Room System
+
+**Room Types:**
+- `battle`: Combat encounters with enemies
+- `event`: Story events with choices
+- `pool`: Rest area (absorb materials, upgrade organs, blood mark)
+- `blackStore`: Shop for buying items
+- `roomSelect`: Choose next room to enter
+
+**Room Lifecycle:**
+1. `enter()`: Initialize room, display UI
+2. `process()`: Handle room logic (may be UI-driven)
+3. `complete()`: Finish room, trigger rewards/cleanup
+4. `exit()`: Clean up resources
+
+**Room Completion Flow:**
+```typescript
+// In UI component (e.g., PoolRoom.vue)
+async function leaveRoom() {
+  // Complete current room
+  await nowGameRun.completeCurrentRoom()
+
+  // Create and enter room selection
+  const roomSelectRoom = new RoomSelectRoom({
+    type: "roomSelect",
+    layer: currentRoom.layer + 1,
+    targetLayer: currentRoom.layer + 1,
+    roomCount: 3
+  })
+
+  await nowGameRun.enterRoom(roomSelectRoom)
+}
+```
+
+**Pool Room Features:**
+- **Absorb**: Gain materials (amount scales with layer)
+- **Upgrade**: Spend materials to upgrade organs (repeatable)
+- **Blood Mark**: One-time global choice that reduces max HP but grants power
+  - Tracked via `ifBloodMark` status (0 = not marked, 1 = marked)
+  - UI shows "已染血" indicator in top bar after marking
+  - Blood mark option removed from future pool rooms
+  - Option dynamically removed from current room after selection
+
 ## Type Safety
 
 - Run `npm run build` to check TypeScript errors
@@ -411,6 +454,32 @@ Use `player.appendTrigger()` with appropriate when/how/key combinations.
 - Entity objects use Vue's `reactive()` for UI updates
 - Status and Current values are reactive
 - Changes through the effect system automatically trigger UI updates
+
+### CRITICAL: Protecting Internal Structures with markRaw
+
+**Problem:** When Entity objects are wrapped with `reactive()`, Vue's reactivity system will recursively convert all nested objects, including Status objects. This breaks Status objects because their internal `_baseValue` and `_value` ref objects get "unwrapped" into plain numbers.
+
+**Solution:** Always use `markRaw()` when storing Status objects in Entity:
+
+```typescript
+// CORRECT - In appendStatus function
+entity.status[key] = markRaw(status)
+
+// CORRECT - In ensureStatusExists function
+entity.status[statusKey] = markRaw(status)
+```
+
+**Why this matters:**
+- Status objects contain private `ref()` fields: `_baseValue = ref(0)` and `_value = ref(0)`
+- When Status is made reactive, Vue unwraps these refs, turning them into plain numbers
+- This causes errors like "Cannot create property 'value' on number '50'"
+- `markRaw()` tells Vue to skip reactivity conversion for that object
+
+**Where to use markRaw:**
+- ✅ Status objects when adding to `entity.status`
+- ✅ Any object with internal ref/reactive structures that shouldn't be converted
+- ❌ Don't use on Entity itself (Entity needs to be reactive for UI updates)
+- ❌ Don't use on simple data objects that should be reactive
 
 ## UI Design Style
 
@@ -485,3 +554,152 @@ Claude: [Implements solution]
 User: [Tests and reports: "还是有Y问题" or "可以，继续下一个"]
 Claude: [Waits for next instruction]
 ```
+
+## Documentation Guidelines
+
+**Target Audience:**
+- Future self
+- Open-source mod developers
+- Anyone who needs to use the open interfaces, registries, and data formats
+
+**Documentation Principles:**
+
+1. **Extreme Simplicity in Format**
+   - Use headings to separate sections
+   - Use code blocks to wrap example code
+   - Avoid complex markdown (no bold, italic, quotes, tables, nested lists)
+   - Keep it minimal and scannable
+
+2. **Clear Structure**
+   - Level 1 heading: Main topic (e.g., "触发器 Trigger")
+   - Level 2 heading: Subtopics (e.g., "获取", "起效", "结构")
+   - Level 3 heading: Detailed parts (e.g., "触发组", "触发器对象")
+   - Code blocks directly show structure and examples
+
+3. **Content Organization**
+   - Start with brief concept definition
+   - Organize by function/purpose
+   - Include code examples in each section
+   - List important API functions with signatures and usage
+   - Put practical usage examples at the end
+
+4. **Writing Style**
+   - Concise and direct, no verbosity
+   - Primarily Chinese
+   - Keep technical terms in English
+   - Short code comments
+
+5. **Developer-Focused**
+   - List all open interfaces
+   - Show data formats
+   - Provide complete usage examples
+   - Explain important considerations
+
+**Documentation Structure Template:**
+
+```markdown
+# 主题名称
+
+简短的概念定义（1-2句话）
+
+## 获取/创建
+
+如何获取或创建这个对象
+
+## 结构
+
+对象的数据结构（用代码块展示）
+
+## 核心方法/API
+
+列出主要的函数签名和用法
+
+```typescript
+functionName(param1, param2)
+```
+
+参数说明（简短）
+
+## 使用示例
+
+实际的代码示例
+
+## 注意事项
+
+重要的使用注意事项
+```
+
+**Example Reference:**
+See existing documentation in `文档/` directory, particularly:
+- `文档/对象/系统/触发器Trigger.md`
+- `文档/对象/系统/属性Status.md`
+- `文档/对象/系统/修饰器Modifier.md`
+- `文档/对象/物品/卡牌.md`
+
+## API Design Philosophy
+
+**High-Level Hooks for Common Operations**
+
+The project provides high-level hooks (in `src/core/hooks/`) that wrap common operations for easier use by both internal developers and mod creators.
+
+**Design Principles:**
+
+1. **Two-Layer API Structure**
+   - **High-Level Hooks**: Simple, common-case functions for quick usage
+   - **Low-Level APIs**: Detailed control for advanced scenarios
+
+2. **Documentation Organization**
+   - Show high-level hooks first (recommended approach)
+   - Show low-level APIs second (advanced usage)
+   - Example: Room switching uses `completeAndGoNext()` before showing `GameRun.enterRoom()`
+
+3. **Internal Consistency**
+   - We use the same hooks internally that we expose to mod developers
+   - This ensures the APIs are well-tested and practical
+   - Keeps codebase consistent and maintainable
+
+4. **Hook Categories** (current and planned)
+   - **step.ts**: Room navigation and transitions
+     - `goToNextStep()` - Go to next floor room selection
+     - `completeAndGoNext()` - Complete room and go to next step
+     - `goToRoomType(type, config)` - Directly enter a room type
+     - `completeAndGoToRoomType(type, config)` - Complete and enter room
+
+   - **variance.ts**: Random number utilities
+     - `applyVariance(value, config)` - Apply random variance to values
+     - `randomInt(min, max)` - Random integer
+     - `randomChance(probability)` - Probability check
+
+   - **chara.ts**: Character operations
+     - `kill(event, target, info)` - Kill a character/organ
+
+   - **Future hooks to consider**:
+     - Battle operations (start battle, end turn, etc.)
+     - Item operations (gain card, gain relic, etc.)
+     - Status operations (add status, remove status, etc.)
+     - Effect operations (deal damage, heal, draw cards, etc.)
+
+5. **Benefits**
+   - **Easier onboarding**: New developers can use simple functions
+   - **Less boilerplate**: Common patterns are pre-packaged
+   - **Centralized logic**: Changes only need to happen in one place
+   - **Better documentation**: Clear recommended patterns
+
+**Example: Room Switching**
+
+```typescript
+// Recommended: High-level hook
+import { completeAndGoNext } from "@/core/hooks/step"
+await completeAndGoNext()
+
+// Advanced: Low-level API
+await nowGameRun.completeCurrentRoom()
+const roomSelectRoom = new RoomSelectRoom({ ... })
+await nowGameRun.enterRoom(roomSelectRoom)
+```
+
+When creating new systems, consider:
+- What are the common operations users will need?
+- Can we provide a simple hook for the 80% use case?
+- Is the low-level API still accessible for the 20% edge cases?
+

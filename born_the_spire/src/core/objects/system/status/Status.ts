@@ -4,7 +4,7 @@ import { Modifier } from "../modifier/Modifier"
 import { StatusModifier } from "./StatusModifier"
 import { ModifierFunc, ModifierOptions, ModifierType, TargetLayer } from "./type"
 import { newError } from "@/ui/hooks/global/alert"
-import { ref } from "vue"
+import { ref, markRaw } from "vue"
 import { getRefValue } from "@/core/hooks/refValue"
 
 export type StatusOptions = {
@@ -105,7 +105,8 @@ export function appendStatus(entity:Entity,status:Status){
         newError([entity,"已具备属性",key])
     }
     //添加到对象的属性值中
-    entity.status[key] = status
+    // 使用 markRaw 防止 Status 对象被 reactive 处理（保护内部的 ref）
+    entity.status[key] = markRaw(status)
 }
 // 获取目标属性的值，如果目标不具备这个属性则报错，通过safe设置项在不具备属性时返回设定值
 export function getStatusValue(entity:Entity,statusKey:string,defaultValue?:number){
@@ -131,6 +132,16 @@ export function getStatusRefValue(entity:Entity,statusKey:string){
 //判断目标是否具备属性
 export function ifHaveStatus(entity:Entity,statusKey:string){
     return entity.status[statusKey] ? true:false
+}
+
+//确保实体具备某个属性，如果不存在则创建
+export function ensureStatusExists(entity:Entity, statusKey:string, initialValue:number = 0): void {
+    if (!ifHaveStatus(entity, statusKey)) {
+        // 使用 createStatusFromMap 创建 Status 对象（会自动添加默认值修饰器）
+        const status = createStatusFromMap(entity, statusKey, initialValue)
+        // 使用 markRaw 标记 Status 对象，防止被 reactive 处理（保护内部的 ref）
+        entity.status[statusKey] = markRaw(status)
+    }
 }
 //为目标的属性值添加新的修饰器，返回移除函数
 export function changeStatusValue(entity:Entity,statusKey:string,source:any,{value,type="additive",target="base",modifierFunc}:{value:number,type?:ModifierType,target?:TargetLayer,modifierFunc?:ModifierFunc}):()=>void{

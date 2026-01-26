@@ -1,6 +1,5 @@
 import { Card } from "@/core/objects/item/Subclass/Card"
 import { getStatusValue, ifHaveStatus } from "@/core/objects/system/status/Status"
-import { EffectUnit } from "@/core/objects/system/effect/EffectUnit"
 import { simulateDamage, simulateBlock } from "./SimulateEvent"
 import { Entity } from "./Entity"
 

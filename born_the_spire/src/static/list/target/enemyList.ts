@@ -236,6 +236,6 @@ export const enemyList:EnemyMap[] = [
 export function getEnemyByKey(key:string){
     const data = enemyList.find(value=>value.key == key)
     if(!data)throw new Error("没有指定的敌人存在")
-    const enemy = reactive(new Enemy(data)) as Enemy
+    const enemy = reactive(new Enemy(data as any)) as unknown as Enemy
     return enemy
 }

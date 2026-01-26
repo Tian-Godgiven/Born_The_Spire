@@ -38,7 +38,7 @@ export class PotionReward extends Reward {
         const potionList = getLazyModule<PotionMap[]>('potionList')
         const config = potionList.find((p: PotionMap) => p.key === key)
         if (!config) {
-            console.warn(`[PotionReward] 未找到药水配置: ${key}`)
+            throw new Error(`[PotionReward] 未找到药水配置: ${key}`)
         }
         return config
     }

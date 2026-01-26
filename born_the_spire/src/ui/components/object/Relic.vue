@@ -1,6 +1,6 @@
 <template>
 <div class="relic">
-    <div>{{ relic.name }}</div>
+    <div>{{ relic.label }}</div>
 </div>
 </template>
 

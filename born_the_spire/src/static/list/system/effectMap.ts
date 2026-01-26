@@ -15,6 +15,7 @@ import { addCurrent, addStatusBaseCurrentValue } from "@/core/effects/current/ch
 import { gainReserve, spendReserve } from "@/core/effects/reserve/reserve"
 import { killTarget, reviveTarget } from "@/core/effects/life/lifeControl"
 import { replaceOrgan } from "@/core/effects/organ/organEffects"
+import { isEntity } from "@/core/utils/typeGuards"
 
 type EffectData = {
     label?:string,
@@ -60,17 +61,19 @@ export const effectMap:EffectData[] = [
 //收到伤害时，减少受到的伤害
 {
     label:"受到伤害时，减少受到的伤害",
-    key:"take_reduce_damage",   
+    key:"take_reduce_damage",
     effect:(event,effect)=>{
         handleEventEntity(event.target,(e)=>{
-            e.appendTrigger({
-                when:"before",
-                how:"take",
-                key:"damage",
-                callback:async (event:ActionEvent)=>{
-                    reduceDamageFor(event,effect)
-                }
-            })
+            if (isEntity(e)) {
+                e.appendTrigger({
+                    when:"before",
+                    how:"take",
+                    key:"damage",
+                    callback:async (event:ActionEvent)=>{
+                        reduceDamageFor(event,effect)
+                    }
+                })
+            }
         })
     }
 },

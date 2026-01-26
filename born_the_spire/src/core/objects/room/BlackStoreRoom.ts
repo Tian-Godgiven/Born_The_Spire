@@ -7,6 +7,8 @@ import { Room, RoomConfig } from "./Room"
 import { nowPlayer } from "@/core/objects/game/run"
 import { newLog } from "@/ui/hooks/global/log"
 import { OrganMap } from "@/static/list/target/organList"
+import { Organ } from "@/core/objects/target/Organ"
+import { Relic } from "@/core/objects/item/Subclass/Relic"
 import { RelicMap } from "@/static/list/item/relicList"
 import { PotionMap } from "@/static/list/item/potionList"
 import {
@@ -22,7 +24,6 @@ import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
 import { getRelicModifier } from "@/core/objects/system/modifier/RelicModifier"
 import { getCurrentValue } from "@/core/objects/system/Current/current"
 import { doEvent } from "@/core/objects/system/ActionEvent"
-import { roomRegistry } from "@/static/registry/roomRegistry"
 
 /**
  * 商品类型
@@ -179,7 +180,7 @@ export class BlackStoreRoom extends Room {
     /**
      * 计算遗物价格
      */
-    private calculateRelicPrice(relic: RelicMap): number {
+    private calculateRelicPrice(_relic: RelicMap): number {
         // TODO: 根据遗物稀有度计算
         return 200
     }
@@ -187,7 +188,7 @@ export class BlackStoreRoom extends Room {
     /**
      * 计算药水价格
      */
-    private calculatePotionPrice(potion: PotionMap): number {
+    private calculatePotionPrice(_potion: PotionMap): number {
         // 药水价格相对便宜
         return 75
     }
@@ -258,10 +259,10 @@ export class BlackStoreRoom extends Room {
         // 给予商品
         switch (item.type) {
             case "organ": {
-                const organList = getLazyModule<OrganMap[]>('organList')
                 const organData = item.data as OrganMap
-                const organ = organList.find(o => o.key === organData.key)
-                if (!organ) throw new Error(`未找到器官: ${organData.key}`)
+                // 使用 getOrganByKey 创建 Organ 实例
+                const { getOrganByKey } = await import("@/static/list/target/organList")
+                const organ = getOrganByKey(organData.key)
                 const organModifier = getOrganModifier(nowPlayer)
                 organModifier.acquireOrgan(organ, nowPlayer)
                 newLog([`获得器官: ${item.name}`])
@@ -270,8 +271,11 @@ export class BlackStoreRoom extends Room {
             case "relic": {
                 const relicList = getLazyModule<RelicMap[]>('relicList')
                 const relicData = item.data as RelicMap
-                const relic = relicList.find(r => r.key === relicData.key)
-                if (!relic) throw new Error(`未找到遗物: ${relicData.key}`)
+                const relicConfig = relicList.find(r => r.key === relicData.key)
+                if (!relicConfig) throw new Error(`未找到遗物: ${relicData.key}`)
+
+                // 创建 Relic 实例
+                const relic = new Relic(relicConfig)
                 const relicModifier = getRelicModifier(nowPlayer)
                 relicModifier.acquireRelic(relic, nowPlayer)
                 newLog([`获得遗物: ${item.name}`])

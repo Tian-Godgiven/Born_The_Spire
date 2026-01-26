@@ -250,16 +250,3 @@ enemy.setIntent(cards)
 - `EnemyBehavior.ts` - 敌人行为系统
 - `SimulateEvent.ts` - 事件模拟系统
 
-## Display 组件系列
-
-意图显示组件是 Display 组件系列的一部分，其他组件包括：
-
-- `EntryDisplay.vue` - 词条显示
-- `StateDisplay.vue` - 状态显示
-- `IntentDisplay.vue` - 意图显示（本组件）
-
-所有 Display 组件都遵循相同的设计风格：
-- 简洁的黑色边框
-- 白色背景
-- 悬停显示详情
-- 无阴影效果

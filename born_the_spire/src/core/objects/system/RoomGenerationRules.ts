@@ -147,7 +147,7 @@ export const defaultRoomGenerationRules: RoomGenerationRule[] = [
             return last === secondLast
         },
         effect: (weights) => {
-            const lastType = weights as any
+            // const _lastType = weights as any
             // 这里需要获取上一个房间类型，然后降低其权重
             // 简化实现：降低所有权重，增加多样性
             return {
