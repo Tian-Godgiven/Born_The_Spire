@@ -7,7 +7,7 @@ import { ActionEvent, handleEventEntity } from "@/core/objects/system/ActionEven
 import { drawFromDrawPile } from "@/core/effects/card/drawCard"
 import { costEnergy, emptyEnergy, getEnergy, pay_costEnergy } from "@/core/effects/energy"
 import { newError } from "@/ui/hooks/global/alert"
-import { discardCard, pay_discardCard, pay_exhaustCard } from "@/core/effects/card/discard"
+import { discardCard, pay_discardCard, pay_exhaustCard, discardAllCard } from "@/core/effects/card/discard"
 import { voidExhaust, moveInherentToHand } from "@/core/effects/card/entryEffects"
 import { applyState, removeState, changeStateStack } from "@/core/effects/state/stateControl"
 import { addStatusBase } from "@/core/effects/status/changeStatus"
@@ -134,6 +134,10 @@ export const effectMap:EffectData[] = [
     label:"消耗卡牌",
     key:"pay_exhaust",
     effect:pay_exhaustCard
+},{
+    label:"弃掉所有卡牌",
+    key:"discardAllCard",
+    effect:discardAllCard
 },{
     label:"基础属性改变：加减",
     key:"addStatusBase",

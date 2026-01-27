@@ -7,11 +7,10 @@ import { Room, RoomConfig } from "./Room"
 import { Choice, ChoiceGroup } from "../system/Choice"
 import { nowPlayer } from "@/core/objects/game/run"
 import { newLog } from "@/ui/hooks/global/log"
-import { getStatusValue, changeStatusValue, ensureStatusExists } from "@/core/objects/system/status/Status"
 import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
 import { showComponent } from "@/core/hooks/componentManager"
-import { doEvent } from "@/core/objects/system/ActionEvent"
+import { gainMark, hasMark } from "@/core/hooks/mark"
 
 /**
  * 水池房间配置
@@ -41,7 +40,7 @@ export class PoolRoom extends Room {
         this.allowBloodMark = config.allowBloodMark ?? true
 
         // 从玩家状态检查是否已染血
-        this.hasBloodMark = getStatusValue(nowPlayer, "ifBloodMark", 0) === 1
+        this.hasBloodMark = hasMark(nowPlayer, "mark_blood")
 
         // 创建选项
         const choices = this.createChoices()
@@ -194,35 +193,8 @@ export class PoolRoom extends Room {
      * 染血行为
      */
     private async onBloodMark(): Promise<void> {
-        newLog(["获得了红色印记！"])
-
-        // 给玩家添加红色印记效果
-        // 红色印记：提升攻击力，但降低最大生命值
-
-        // 降低最大生命值（例如 -10）
-        doEvent({
-            key: "bloodMark",
-            source: nowPlayer,
-            medium: nowPlayer,
-            target: nowPlayer,
-            effectUnits: [{
-                key: "addStatusBaseCurrentValue",
-                params: {
-                    value: -10,
-                    statusKey: "max-health",
-                    currentKey: "health"
-                }
-            }]
-        })
-
-        // 标记玩家已染血状态
-        // 确保玩家具备 ifBloodMark 属性，如果不存在则创建
-        ensureStatusExists(nowPlayer, "ifBloodMark", 0)
-        changeStatusValue(nowPlayer, "ifBloodMark", nowPlayer, {
-            target: "base",
-            type: "additive",
-            value: 1  // 使用 1 表示有标记，0 表示无标记
-        })
+        // 使用新的印记系统
+        gainMark(nowPlayer, "mark_blood")
         this.hasBloodMark = true
 
         // 从当前选项组中移除染血选项
@@ -232,9 +204,6 @@ export class PoolRoom extends Room {
                 this.choiceGroup.choices.splice(index, 1)
             }
         }
-
-        newLog(["最大生命值 -10"])
-        newLog(["（红色印记的其他效果待实现）"])
     }
 
     /**

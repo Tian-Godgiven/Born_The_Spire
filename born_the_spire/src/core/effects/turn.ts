@@ -29,26 +29,7 @@ export async function startPlayerTurn(player:Player,battle:Battle){
 }
 //结束玩家的回合
 export function endPlayerTurn(player:Player,battle:Battle){
-    //丢弃手牌：未完成：回合结束丢弃所有的手牌
-        // const handPile = player.cardPiles.handPile
-        // switch(end.discard.type){
-        //     //丢弃所有手牌
-        //     case "all":{
-        //         for (let i = handPile.length - 1; i >= 0; i--) {
-        //             const card = handPile[i];
-        //             turnEndDiscardCard(handPile,card,player)
-        //         }
-        //         break;
-        //     }
-        //     case "choose":{
-        //         //未完成
-        //         break
-        //     }
-        //     case "random":{
-        //         //未完成
-        //         break
-        //     }
-        // }
+    // 弃牌逻辑已通过触发器系统实现（在 Player.startBattle 中添加）
     endTurn(player,battle)
 }
 

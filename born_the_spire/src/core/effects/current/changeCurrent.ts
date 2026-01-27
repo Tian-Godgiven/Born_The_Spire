@@ -29,7 +29,7 @@ export const addCurrent:EffectFunc = (event,effect)=>{
 //同时改变属性值和对应的当前值
 export const addStatusBaseCurrentValue:EffectFunc = (event,effect)=>{
     //获取目标
-    const {target,source,medium} = event;
+    const {target,source} = event;
     //获取修改的目标属性和修改值
     let {value=0,currentKey,statusKey} = effect.params
     //任一缺少都不继续

@@ -1,6 +1,6 @@
 /**
  * 楼层管理器
- * 负责追踪楼层、房间历史，并根据规则生成房间选项
+ * 负责追踪层级、房间历史，并根据层级配置和规则生成房间选项
  */
 
 import { RoomType } from "@/core/objects/room/Room"
@@ -8,30 +8,67 @@ import {
     RoomWeightConfig,
     RoomGenerationContext,
     defaultRoomWeights,
-    getAllRoomGenerationRules
+    getAllRoomGenerationRules,
+    RoomGenerationRule
 } from "./RoomGenerationRules"
 import { roomRegistry } from "@/static/registry/roomRegistry"
+import { floorRegistry } from "@/static/registry/floorRegistry"
+import type { FloorConfig } from "@/core/types/FloorConfig"
 
 /**
  * 楼层管理器类
  */
 export class FloorManager {
     private currentFloor: number = 0
+    private currentFloorKey: string | null = null  // 当前层级key
     private roomHistory: RoomType[] = []
 
     /**
-     * 获取当前楼层
+     * 获取当前楼层数
      */
     getCurrentFloor(): number {
         return this.currentFloor
     }
 
     /**
-     * 前进到下一层
+     * 获取当前层级key
+     */
+    getCurrentFloorKey(): string | null {
+        return this.currentFloorKey
+    }
+
+    /**
+     * 获取当前层级配置
+     */
+    getCurrentFloorConfig(): FloorConfig | null {
+        if (!this.currentFloorKey) {
+            return null
+        }
+        return floorRegistry.getFloor(this.currentFloorKey) || null
+    }
+
+    /**
+     * 设置当前层级
+     * @param floorKey 层级key
+     */
+    setCurrentFloor(floorKey: string): void {
+        const floor = floorRegistry.getFloor(floorKey)
+        if (!floor) {
+            console.error(`[FloorManager] 未找到层级: ${floorKey}`)
+            return
+        }
+
+        this.currentFloorKey = floorKey
+        this.roomHistory = []  // 切换层级时重置房间历史
+        console.log(`[FloorManager] 切换到层级: ${floorKey} (${floor.name})`)
+    }
+
+    /**
+     * 前进到下一层房间
      */
     advanceFloor(): void {
         this.currentFloor++
-        console.log(`[FloorManager] 前进到第 ${this.currentFloor} 层`)
+        console.log(`[FloorManager] 前进到第 ${this.currentFloor} 层房间`)
     }
 
     /**
@@ -107,11 +144,14 @@ export class FloorManager {
     }
 
     /**
-     * 根据规则计算房间权重
+     * 根据规则计算房间权重或固定房间列表
+     * @param customRules 自定义规则（可选，来自层级配置）
      */
-    private calculateRoomWeights(): RoomWeightConfig | RoomType {
+    private calculateRoomWeights(customRules?: RoomGenerationRule[]): RoomWeightConfig | RoomType | string[] {
         const context = this.generateContext()
-        const rules = getAllRoomGenerationRules()
+
+        // 使用自定义规则或全局规则
+        const rules = customRules || getAllRoomGenerationRules()
 
         let weights: RoomWeightConfig = { ...defaultRoomWeights }
 
@@ -121,7 +161,13 @@ export class FloorManager {
                 console.log(`[FloorManager] 应用规则: ${rule.name}`)
                 const result = rule.effect(weights)
 
-                // 如果规则返回强制类型，直接返回
+                // 如果规则返回固定房间列表（string[]）
+                if (Array.isArray(result)) {
+                    console.log(`[FloorManager] 固定房间列表:`, result)
+                    return result
+                }
+
+                // 如果规则返回强制类型（string）
                 if (typeof result === "string") {
                     console.log(`[FloorManager] 强制房间类型: ${result}`)
                     return result as RoomType
@@ -160,19 +206,30 @@ export class FloorManager {
     }
 
     /**
-     * 生成下一层的房间选项（3个）
+     * 生成下一层的房间选项
+     * @param count 房间数量（默认3个）
      */
     generateNextFloorRoomOptions(count: number = 3): string[] {
-        const weightsOrType = this.calculateRoomWeights()
+        // 获取当前层级配置
+        const floorConfig = this.getCurrentFloorConfig()
+
+        // 使用层级特定的规则（如果有）
+        const customRules = floorConfig?.roomGenerationRules
+        const weightsOrTypeOrList = this.calculateRoomWeights(customRules)
+
+        // 如果返回固定房间列表
+        if (Array.isArray(weightsOrTypeOrList)) {
+            return weightsOrTypeOrList
+        }
 
         // 如果是强制类型，生成该类型的房间
-        if (typeof weightsOrType === "string") {
-            const forcedType = weightsOrType as RoomType
-            return this.selectRoomsByType(forcedType, count)
+        if (typeof weightsOrTypeOrList === "string") {
+            const forcedType = weightsOrTypeOrList as RoomType
+            return this.selectRoomsByType(forcedType, count, floorConfig)
         }
 
         // 否则根据权重随机生成
-        const weights = weightsOrType as RoomWeightConfig
+        const weights = weightsOrTypeOrList as RoomWeightConfig
         const selectedTypes: RoomType[] = []
 
         for (let i = 0; i < count; i++) {
@@ -183,7 +240,7 @@ export class FloorManager {
         // 为每个类型选择具体的房间配置
         const roomKeys: string[] = []
         for (const type of selectedTypes) {
-            const roomKey = this.selectRandomRoomByType(type)
+            const roomKey = this.selectRandomRoomByType(type, floorConfig)
             if (roomKey) {
                 roomKeys.push(roomKey)
             }
@@ -194,15 +251,42 @@ export class FloorManager {
 
     /**
      * 根据类型选择多个房间
+     * @param roomType 房间类型
+     * @param count 数量
+     * @param floorConfig 层级配置（可选，用于从层级房间池选择）
      */
-    private selectRoomsByType(roomType: RoomType, count: number): string[] {
-        const availableRooms = roomRegistry.getRoomConfigsByType(roomType)
-        const selectedKeys: string[] = []
+    private selectRoomsByType(roomType: RoomType, count: number, floorConfig?: FloorConfig | null): string[] {
+        let availableRooms: string[] = []
 
+        // 优先从层级房间池选择
+        if (floorConfig) {
+            switch (roomType) {
+                case "battle":
+                    availableRooms = floorConfig.roomPools.battles
+                    break
+                case "event":
+                    availableRooms = floorConfig.roomPools.events
+                    break
+                case "pool":
+                    availableRooms = floorConfig.roomPools.pools
+                    break
+                case "blackStore":
+                    availableRooms = floorConfig.roomPools.blackStores
+                    break
+            }
+        }
+
+        // 如果层级房间池为空，从全局房间注册表选择
+        if (availableRooms.length === 0) {
+            const roomConfigs = roomRegistry.getRoomConfigsByType(roomType)
+            availableRooms = roomConfigs.map(config => config.key)
+        }
+
+        const selectedKeys: string[] = []
         for (let i = 0; i < count; i++) {
             if (availableRooms.length > 0) {
                 const randomIndex = Math.floor(Math.random() * availableRooms.length)
-                selectedKeys.push(availableRooms[randomIndex].key)
+                selectedKeys.push(availableRooms[randomIndex])
             }
         }
 
@@ -211,9 +295,35 @@ export class FloorManager {
 
     /**
      * 根据类型随机选择一个房间配置
+     * @param roomType 房间类型
+     * @param floorConfig 层级配置（可选，用于从层级房间池选择）
      */
-    private selectRandomRoomByType(roomType: RoomType): string | null {
-        const availableRooms = roomRegistry.getRoomConfigsByType(roomType)
+    private selectRandomRoomByType(roomType: RoomType, floorConfig?: FloorConfig | null): string | null {
+        let availableRooms: string[] = []
+
+        // 优先从层级房间池选择
+        if (floorConfig) {
+            switch (roomType) {
+                case "battle":
+                    availableRooms = floorConfig.roomPools.battles
+                    break
+                case "event":
+                    availableRooms = floorConfig.roomPools.events
+                    break
+                case "pool":
+                    availableRooms = floorConfig.roomPools.pools
+                    break
+                case "blackStore":
+                    availableRooms = floorConfig.roomPools.blackStores
+                    break
+            }
+        }
+
+        // 如果层级房间池为空，从全局房间注册表选择
+        if (availableRooms.length === 0) {
+            const roomConfigs = roomRegistry.getRoomConfigsByType(roomType)
+            availableRooms = roomConfigs.map(config => config.key)
+        }
 
         if (availableRooms.length === 0) {
             console.warn(`[FloorManager] 没有可用的 ${roomType} 类型房间`)
@@ -221,7 +331,7 @@ export class FloorManager {
         }
 
         const randomIndex = Math.floor(Math.random() * availableRooms.length)
-        return availableRooms[randomIndex].key
+        return availableRooms[randomIndex]
     }
 
     /**
@@ -229,6 +339,7 @@ export class FloorManager {
      */
     reset(): void {
         this.currentFloor = 0
+        this.currentFloorKey = null
         this.roomHistory = []
         console.log("[FloorManager] 楼层管理器已重置")
     }

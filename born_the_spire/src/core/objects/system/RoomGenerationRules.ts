@@ -23,7 +23,7 @@ export interface RoomGenerationRule {
     description?: string            // 规则描述
     priority: number                // 优先级（数字越大越优先）
     condition: (context: RoomGenerationContext) => boolean  // 触发条件
-    effect: (weights: RoomWeightConfig) => RoomWeightConfig | RoomType  // 效果（修改权重或强制类型）
+    effect: (weights: RoomWeightConfig) => RoomWeightConfig | RoomType | string[]  // 效果（修改权重、强制类型、或固定房间列表）
 }
 
 /**

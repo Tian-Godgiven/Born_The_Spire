@@ -13,6 +13,7 @@ import { getStatusValue } from "../system/status/Status";
 import { getPotionModifier } from "../system/modifier/PotionModifier";
 import { getCardModifier } from "../system/modifier/CardModifier";
 import { getOrganModifier } from "../system/modifier/OrganModifier";
+import { doEvent } from "../system/ActionEvent";
 
 export type CardPiles = {
     handPile:Card[],
@@ -104,6 +105,28 @@ export class Player extends Chara{
         this.initState()
         //初始化属性：所有属性变成默认值
         // refreshAllStatus(this)
+
+        //添加默认弃牌触发器（回合结束时弃掉所有手牌）
+        this.trigger.appendTrigger({
+            when: "after",
+            how: "take",  // 玩家作为目标被结束回合时
+            key: "turnEnd",
+            importantKey: "discardOnTurnEnd",
+            onlyKey: "discardAll",
+            callback: (event) => {
+                // 弃掉所有手牌
+                doEvent({
+                    key: "discardAllHandCard",
+                    source: this,
+                    medium: this,
+                    target: this,
+                    effectUnits: [{
+                        key: "discardAllCard",
+                        params: { pileName: "handPile" }
+                    }]
+                })
+            }
+        })
     }
     //从抽牌堆中抽牌
     drawCard(number:number,medium:Entity){

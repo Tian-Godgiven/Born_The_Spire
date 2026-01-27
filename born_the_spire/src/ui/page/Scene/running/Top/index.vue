@@ -5,7 +5,7 @@
             <div class="text">{{ nowPlayer.label }}</div>
             <div class="state">
                 <transition-group name="fade-in" tag="div">
-                    <div class="stateText" :style="{color: value.color}" v-for="(value, index) in stateList" :key="value.text">
+                    <div class="stateText" :style="{color: value.color}" v-for="value in stateList" :key="value.text">
                         &nbsp;&nbsp;{{ value.text }}
                     </div>
                 </transition-group>
@@ -48,6 +48,7 @@
     import { getStatusValue } from '@/core/objects/system/status/Status';
     import type { Potion } from '@/core/objects/item/Subclass/Potion';
     import { getPotionModifier } from '@/core/objects/system/modifier/PotionModifier';
+    import { markRegistry } from '@/static/registry/markRegistry';
     // import { toggleMap } from '@/ui/hooks/global/mapDisplay';
 
     const health = computed(()=>{
@@ -66,21 +67,17 @@
             return states
         }
 
-        // 检查染血状态
-        if (getStatusValue(nowPlayer, "ifBloodMark", 0) === 1) {
-            states.push({
-                text: "已染血",
-                color: "red"
-            })
+        // 遍历所有注册的印记，动态显示
+        const allMarks = markRegistry.getAllMarks()
+        for (const mark of allMarks) {
+            // 检查玩家是否拥有该印记
+            if (getStatusValue(nowPlayer, mark.statusKey, 0) === 1) {
+                states.push({
+                    text: mark.displayText,
+                    color: mark.displayColor
+                })
+            }
         }
-
-        // 未来可以添加其他状态检查
-        // if (getStatusValue(nowPlayer, "ifPoison", 0) === 1) {
-        //     states.push({
-        //         text: "已浸毒",
-        //         color: "green"
-        //     })
-        // }
 
         return states
     })

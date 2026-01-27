@@ -29,6 +29,22 @@ preloadAllLazyModules().then(() => {
         })
     })
 
+    // 注册所有印记（需要在懒加载完成后）
+    console.log('[Main] 注册印记...')
+    import('@/static/registry/markRegistry').then(({ initAllMarks }) => {
+        initAllMarks().then(() => {
+            console.log('[Main] 印记注册完成')
+        })
+    })
+
+    // 注册所有层级（需要在懒加载完成后）
+    console.log('[Main] 注册层级...')
+    import('@/static/registry/floorRegistry').then(({ initAllFloors }) => {
+        initAllFloors().then(() => {
+            console.log('[Main] 层级注册完成')
+        })
+    })
+
     console.log('[Main] 启动 Vue 应用...')
     createApp(App)
         .use(router)

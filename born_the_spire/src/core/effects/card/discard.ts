@@ -77,6 +77,8 @@ export const discardAllCard:EffectFunc = async(event,effect)=>{
     const pileName = effect.params.pileName as keyof CardPiles
     const pile = player.cardPiles[pileName]
     if(pile.length == 0) return;
+    //复制数组，避免在遍历时修改原数组
+    const cardsToDiscard = [...pile]
     //丢弃这些卡牌,每一张卡牌都会响应一次触发器
     doEvent({
         key:"discardAllCard",
@@ -84,7 +86,7 @@ export const discardAllCard:EffectFunc = async(event,effect)=>{
         effectUnits:[{
             "key":"discard",
             "describe":[`丢弃卡牌`],
-            "params":{sourcePileName:pileName,card:pile}
+            "params":{sourcePileName:pileName,card:cardsToDiscard}
         }]
     })
 }

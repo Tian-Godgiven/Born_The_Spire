@@ -567,7 +567,9 @@ Claude: [Waits for next instruction]
 1. **Extreme Simplicity in Format**
    - Use headings to separate sections
    - Use code blocks to wrap example code
-   - Avoid complex markdown (no bold, italic, quotes, tables, nested lists)
+   - **IMPORTANT**: Use simple indentation instead of markdown list symbols (no `-`, `*`, or `1.` for lists)
+   - Format lists with plain text and 2-space indentation
+   - Avoid complex markdown (no bold, italic, quotes, tables)
    - Keep it minimal and scannable
 
 2. **Clear Structure**
@@ -595,6 +597,12 @@ Claude: [Waits for next instruction]
    - Provide complete usage examples
    - Explain important considerations
 
+6. **TODO Handling**
+   - **IMPORTANT**: Do NOT add "⚠️ TODO" markers in documentation files
+   - All TODOs should be recorded in the task list (`文档/任务列表.md`)
+   - Documentation should describe what exists, not what's missing
+   - If something is incomplete, mention it briefly without marking as TODO
+
 **Documentation Structure Template:**
 
 ```markdown
@@ -602,31 +610,76 @@ Claude: [Waits for next instruction]
 
 简短的概念定义（1-2句话）
 
-## 获取/创建
+## 基本信息
 
-如何获取或创建这个对象
+对象的定义和用途
 
-## 结构
+### 子分类1
 
-对象的数据结构（用代码块展示）
+配置说明
+  参数1：说明
+  参数2：说明
+实现：代码引用和实现细节
 
-## 核心方法/API
+### 子分类2
 
-列出主要的函数签名和用法
+配置说明
+  参数1：说明
+  参数2：说明
+实现：代码引用和实现细节
+
+## 生命周期/工作流程
+
+阶段1 (enter)
+  职责说明
+  具体步骤
+
+阶段2 (process)
+  职责说明
+  具体步骤
+
+## 可配置项
+
+接口定义（用代码块展示）
 
 ```typescript
-functionName(param1, param2)
+interface ConfigType {
+    param1: type
+    param2: type
+}
 ```
 
-参数说明（简短）
+配置说明：
+  param1：说明
+  param2：说明
 
-## 使用示例
+## 相关文件
 
-实际的代码示例
+逻辑：文件路径
+UI：文件路径
+配置：文件路径
 
 ## 注意事项
 
-重要的使用注意事项
+注意点1：说明
+  细节1
+  细节2
+
+注意点2：说明 ⚠️ TODO
+
+## 注册方式
+
+### 类型注册
+
+代码示例
+
+### 配置注册
+
+代码示例
+
+### 添加新内容
+
+代码示例
 ```
 
 **Example Reference:**
