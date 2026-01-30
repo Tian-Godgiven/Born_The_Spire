@@ -3,7 +3,7 @@ import { Organ } from "../../target/Organ"
 import { Item } from "../../item/Item"
 import { ItemModifier } from "./ItemModifier"
 import { newLog } from "@/ui/hooks/global/log"
-import { doEvent, ActionEvent } from "../ActionEvent"
+import { doEvent } from "../ActionEvent"
 import { EffectUnit } from "../effect/EffectUnit"
 import { computed, toRaw } from "vue"
 import { resolveTriggerEventTarget } from "../trigger/Trigger"
@@ -32,7 +32,7 @@ export class OrganModifier extends ItemModifier {
      * 获得器官
      *
      * 完整流程（使用新的副作用收集系统）：
-     * 0. 检查部位互斥，如果有冲突则自动吞噬旧器官
+     * 0. 检查部位互斥，如果有冲突则显示确认弹窗
      * 1. 创建 ItemModifierUnit 用于收集副作用的清理函数
      * 2. 触发 possessOrgan 事件处理 possess 交互
      *    - 在事件中添加 triggers 和 modifiers
@@ -41,9 +41,7 @@ export class OrganModifier extends ItemModifier {
      * 3. 处理器官提供的卡牌（添加到牌组）
      * 4. 触发 get 交互（一次性效果）
      */
-    acquireOrgan(organ: Organ, source: Entity) {
-        const parentLog = newLog([this.owner, "获得了器官", organ])
-
+    async acquireOrgan(organ: Organ, source: Entity) {
         // 0. 检查部位互斥
         if (organ.part) {
             const maxCount = getPartMaxCount(organ.part)
@@ -54,11 +52,29 @@ export class OrganModifier extends ItemModifier {
             // 如果超过限制，需要吞噬旧器官
             if (samePartOrgans.length >= maxCount) {
                 const oldOrgan = samePartOrgans[0]  // 吞噬第一个（最旧的）
-                newLog([`部位 ${organ.part} 已满，吞噬旧器官`, oldOrgan])
 
                 // 计算吞噬获得的物质
-                const reserveModifier = getReserveModifier(this.owner)
                 const materialGain = this.calculateDevourMaterial(oldOrgan)
+
+                // 显示确认弹窗
+                const { showConfirm } = await import("@/ui/hooks/interaction/confirmModal")
+                const confirmed = await showConfirm(
+                    `部位${organ.part}已满`,
+                    `获取 ${organ.label} 将会吞噬旧器官 ${oldOrgan.label}，是否继续？`,
+                    oldOrgan,
+                    materialGain
+                )
+
+                // 如果用户取消，直接返回
+                if (!confirmed) {
+                    newLog(["取消获取器官", organ.label])
+                    return
+                }
+
+                newLog([`部位 ${organ.part} 已满，吞噬旧器官`, oldOrgan])
+
+                // 发放物质奖励
+                const reserveModifier = getReserveModifier(this.owner)
                 reserveModifier.gainReserve("material", materialGain, this.owner)
                 newLog([`吞噬获得 ${materialGain} 物质`])
 
@@ -66,6 +82,8 @@ export class OrganModifier extends ItemModifier {
                 this.loseOrgan(oldOrgan, false)
             }
         }
+
+        const parentLog = newLog([this.owner, "获得了器官", organ])
 
         // 设置器官持有者
         organ.owner = this.owner
@@ -98,7 +116,7 @@ export class OrganModifier extends ItemModifier {
                                     how,
                                     key,
                                     level,
-                                    callback: (event, effect, triggerLevel) => {
+                                    callback: (event, effect, _triggerLevel) => {
                                         // 使用公共的目标解析函数
                                         const target = resolveTriggerEventTarget(
                                             eventConfig.targetType,
@@ -108,20 +126,15 @@ export class OrganModifier extends ItemModifier {
                                             this.owner    // triggerOwner: 拥有者
                                         )
 
-                                        // 创建新事件（不自动 happen）
-                                        const newEvent = new ActionEvent(
-                                            eventConfig.key,
-                                            organ,
-                                            organ,
+                                        // 使用 doEvent 创建事件，确保正确触发触发器
+                                        doEvent({
+                                            key: eventConfig.key,
+                                            source: organ,
+                                            medium: organ,
                                             target,
-                                            {...eventConfig.info || {}},
-                                            eventConfig.effect
-                                        )
-
-                                        // 将新事件关联到触发事件的事务中
-                                        event.spawnEvent(newEvent)
-                                        // 手动 happen，传递 triggerLevel
-                                        newEvent.happen(() => {}, triggerLevel)
+                                            info: {...eventConfig.info || {}},
+                                            effectUnits: eventConfig.effect || []
+                                        })
                                     }
                                 })
 

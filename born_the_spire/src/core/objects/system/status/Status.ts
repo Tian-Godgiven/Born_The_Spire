@@ -43,14 +43,19 @@ export class Status extends Modifier<StatusModifier>{
     //刷新，重新计算当前值和基础值
     refresh(): void {
         super.refresh()
-        //刷新基础值
-        this._baseValue.value = countBaseModifier(this.owner,this.baseValue,this.store)
-        //刷新当前值
+        //先刷新基础值，从0开始
+        this._baseValue.value = countBaseModifier(this.owner,0,this.store)
+        //再用基础值刷新当前值，从基础值开始
         this._value.value = countCurrentModifier(this.owner,this.baseValue,this.value,this.store)
     }
     //获得响应式值
     getRefValue(){
         return this._value
+    }
+    //清除可清理的修饰器（clearable: true）
+    clearClearableModifiers(){
+        const toRemove = this.store.filter(modifier => modifier.clearable)
+        toRemove.forEach(modifier => this.delete(modifier.id))
     }
 }
 //计算基础值
@@ -92,7 +97,8 @@ export function createStatusFromMap(owner:Entity,key:string,mapData:StatusMap):S
     }
     //添加默认值修饰器
     status.addByJSON(owner,{
-        modifierValue:value
+        modifierValue:value,
+        clearable: false  // 默认值是永久的，不应该被清理
     })
 
     return status
@@ -155,6 +161,7 @@ export function changeStatusValue(entity:Entity,statusKey:string,source:any,{val
                 "applyMode":"absolute",
                 "modifierType":type,
                 "targetLayer":target,
+                "clearable": false,  // base 层修改是永久的
                 modifierFunc
             })
         }
@@ -164,6 +171,7 @@ export function changeStatusValue(entity:Entity,statusKey:string,source:any,{val
                 "applyMode":"snapshot",
                 "modifierType":type,
                 "targetLayer":target,
+                "clearable": true,  // current 层修改是临时的
                 modifierFunc
             })
         }

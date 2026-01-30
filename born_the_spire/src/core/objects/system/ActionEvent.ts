@@ -1,5 +1,4 @@
 import { Effect } from "./effect/Effect";
-import { gatherToTransaction } from "../game/transaction";
 import { newLog, LogUnit, LogData } from "@/ui/hooks/global/log";
 import { EffectUnit, createEffectByUnit } from "./effect/EffectUnit";
 import { nanoid } from "nanoid";
@@ -7,6 +6,12 @@ import { isArray } from "lodash";
 import { newError } from "@/ui/hooks/global/alert";
 import { EventParticipant } from "@/core/types/event/EventParticipant";
 import { isEntity } from "@/core/utils/typeGuards";
+import {
+    getEventCollector,
+    getCurrentTransaction,
+    beginTransaction,
+    endTransaction
+} from "../game/transaction";
 
 // 使得一个阶段事件产生并发生:阶段事件是指单个事件过程中的多个效果会分阶段执行，在每个阶段开始时判断条件后记录效果的返回值。每个效果都对应一个阶段
 type EventPhaseBase= {
@@ -46,9 +51,13 @@ export class ActionEvent<
     private _sideEffects:Array<()=>void> = []//副作用收集器，用于收集effect执行时产生的副作用（如修饰器的remover）
     private transactionCollector?:(e:ActionEvent,triggerLevel?:number)=>void//该事件所属的事务的收集器，通过该收集器可以将任意事件添加到该事务中，从而完成事件的内部收集
     public logUnit?:LogUnit//该事件的日志单元，用于收集子日志
-    private parentEvent?:ActionEvent//父事件，用于建立日志的父子关系
+    public parentEvent?:ActionEvent//父事件，用于建立日志的父子关系
     //是否为模拟事件（模拟事件不会实际执行效果，只触发触发器）
     public simulate:boolean = false
+    //所属事务
+    public transaction?: any  // Transaction 类型，避免循环依赖
+    //是否已取消（用于复活等机制）
+    private _cancelled:boolean = false
     constructor(
         key:string,//触发key
         source:s,medium:m,target:t|t[],
@@ -115,43 +124,13 @@ export class ActionEvent<
             effect.announce(triggerLevel)
         }
     }
-    //发生这个事件,收集到当前事务中
-    happen(doEvent:()=>void,triggerLevel?:number){
-        this.onExecute = doEvent
-        // 创建日志并保存引用，供后续添加子日志
-        // 如果有父事件，作为子日志创建；否则作为顶层日志创建
-        const logData = {
-            main:["发生了事件",this],
-            detail:[
-                "来源:",this.source," | ",
-                "媒介:",this.medium," | ",
-                "目标:",this.target," | "
-            ]
-        }
-
-        if(this.parentEvent?.logUnit){
-            // 作为父事件的子日志
-            this.logUnit = newLog(logData, this.parentEvent.logUnit)
-        } else {
-            // 作为顶层日志
-            this.logUnit = newLog(logData)
-        }
-
-        //判断这个事件是否具备事务收集器(将与该事件有关的事件收集在同一个事务内)
-        const transactionCollector = this.transactionCollector
-        if(transactionCollector){
-            //收集到收集器中
-            this.innerGatherToSameTransaction(this,triggerLevel)
-        }
-        //否则，收集到事务队列中
-        else{
-            gatherToTransaction(this,triggerLevel)
-        }
-
-
-    }
     //执行这个事件
     async excute(){
+        // 检查事件是否已被取消
+        if(this._cancelled){
+            return
+        }
+
         //触发事件的执行时函数
         if(this.onExecute){
             this.onExecute(this)
@@ -252,6 +231,14 @@ export class ActionEvent<
             return newLog(logData)
         }
     }
+    //取消事件（用于复活等机制）
+    cancel(){
+        this._cancelled = true
+    }
+    //检查事件是否已取消
+    isCancelled(){
+        return this._cancelled
+    }
 }
 
 // 当前正在执行的事件（用于传递模拟标记）
@@ -277,24 +264,49 @@ type DoEventType = {
     doWhat?:()=>void,//可选，在事件执行时进行的函数
     onComplete?:(event:ActionEvent)=>void//可选，在事件执行完成后的回调
 }
+
+type DoEventOptions = {
+    position?: number | "top" | "bottom"  // 插入位置，默认 "top"
+}
+
 export function doEvent(
-    {key,source,medium,target,info={},effectUnits=[],phase=[],doWhat=()=>{},onComplete}:DoEventType
-){
+    {key,source,medium,target,info={},effectUnits=[],phase=[],doWhat=()=>{},onComplete}:DoEventType,
+    options?: DoEventOptions
+): ActionEvent {
     //创建行为事件
     const event = new ActionEvent(key,source,medium,target,info,effectUnits,phase)
     if(onComplete){
         event.onComplete = onComplete
+    }
+    if(doWhat){
+        event.onExecute = doWhat
     }
 
     // 如果当前有正在执行的事件，且该事件是模拟模式，则继承模拟标记
     if (currentExecutingEvent && currentExecutingEvent.simulate) {
         event.simulate = true
         // 模拟模式下，不收集到事务，但返回事件对象供触发器使用
-        console.log("[doEvent] 模拟模式下创建了模拟事件:", key)
         return event
     }
 
-    event.happen(()=>{doWhat()})
+    const eventCollector = getEventCollector()
+    const currentTransaction = getCurrentTransaction()
+
+
+    if (eventCollector) {
+        // before/after 触发器中：加到收集器（立即执行）
+        eventCollector.push(event)
+    } else if (currentTransaction) {
+        // 效果函数中：插入到指定位置
+        const pos = options?.position ?? "top"
+        currentTransaction.insertAt(event, pos)
+    } else {
+        // 没有当前事务，创建新事务并通过队列执行
+        const tx = beginTransaction()
+        tx.add(event)
+        endTransaction()  // 这会自动加入队列并处理（返回 Promise 但我们不等待）
+    }
+
     return event
 }
 

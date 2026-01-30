@@ -8,29 +8,41 @@ import { EffectUnit } from "../objects/system/effect/EffectUnit";
 export async function startCharaTurn(chara:Chara,battle:Battle){
     //如果是玩家
     if(chara instanceof Player){
-        startPlayerTurn(chara,battle)
+        await startPlayerTurn(chara,battle)
         return;
     }
-    startTurn(chara,battle)
+    await startTurn(chara,battle)
 }
 //角色结束回合
-export function endCharaTurn(chara:Chara,battle:Battle){
+export async function endCharaTurn(chara:Chara,battle:Battle){
     //如果是玩家
     if(chara instanceof Player){
-        endPlayerTurn(chara,battle)
+        await endPlayerTurn(chara,battle)
         return;
     }
-    endTurn(chara,battle)
+    await endTurn(chara,battle)
 }
 
 //玩家开始回合
 export async function startPlayerTurn(player:Player,battle:Battle){
-    startTurn(player,battle)
+    // 回合开始时的效果
+    const turnStartEffects: EffectUnit[] = [
+        // 恢复能量到最大值
+        {
+            key: "getEnergy",
+            describe: ["恢复能量"],
+            params: { value: "max" }
+        }
+        // 注意：抽牌通过玩家的默认触发器实现（playerList.ts 中定义）
+        // 这样可以被其他效果修改（如遗物、器官等）
+    ]
+
+    await startTurn(player, battle, turnStartEffects)
 }
 //结束玩家的回合
-export function endPlayerTurn(player:Player,battle:Battle){
+export async function endPlayerTurn(player:Player,battle:Battle){
     // 弃牌逻辑已通过触发器系统实现（在 Player.startBattle 中添加）
-    endTurn(player,battle)
+    await endTurn(player,battle)
 }
 
 //开始回合行为
@@ -40,11 +52,10 @@ export async function startTurn(chara:Chara,battle:Battle,effectUnits:EffectUnit
         source:chara,
         medium:chara,
         target:chara,
-        info:{turn:battle.turnNumber},  
+        info:{turn:battle.turnNumber},
         doWhat,
         effectUnits
     })
-    
 }
 //结束回合行为
 export async function endTurn(chara:Chara,battle:Battle,effectUnits:EffectUnit[]=[],doWhat?:()=>void){
@@ -53,7 +64,7 @@ export async function endTurn(chara:Chara,battle:Battle,effectUnits:EffectUnit[]
         source:chara,
         medium:chara,
         target:chara,
-        info:{turn:battle.turnNumber},  
+        info:{turn:battle.turnNumber},
         doWhat,
         effectUnits
     })

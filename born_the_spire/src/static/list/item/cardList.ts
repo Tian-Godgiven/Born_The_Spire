@@ -243,6 +243,29 @@ export const cardList:CardMap[] = [{
             }]
         }
     }
+},{
+    label:"发现",
+    tags:["skill"],
+    status:{
+        cost:0,
+    },
+    describe:["发现一张攻击牌加入手牌"],
+    key:"original_card_00013",
+    interaction:{
+        use:{
+            target:{key:"self"},
+            effects:[{
+                key:"discoverCard",
+                params:{
+                    count:3,
+                    selectCount:1,
+                    tags:["attack"],
+                    allowDuplicate:false,
+                    addToHand:true
+                },
+            }]
+        }
+    }
 }]
 
 export function getCardByKey(key:string){

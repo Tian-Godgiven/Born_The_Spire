@@ -229,21 +229,6 @@ TypeError: Cannot create property 'value' on number '50'
 - ❌ Entity 本身（Entity 需要是 reactive 的）
 - ❌ 简单的数据对象
 
-### 旧版 API（已废弃）
-
-- 添加：`addStatusModifier(target, statusKey, modifier)`
-  - 分配 `timestamp`（时间序或自增序号）。
-  - 首次添加时按需记录快照（`snapshotValue/snapshotBaseValue`）。
-  - 添加后立即 `refresh()`。
-
-- 移除：`removeStatusModifier(target, statusKey, modifierId)`
-  - 移除后立即 `refresh()`。
-
-- 清理：
-  - 回合/战斗阶段边界调用：`removeByDuration(target, statusKey, duration)` → `refresh()`。
-
-- 只读：外部禁止直接写 `Status.value`，统一通过修饰器 + `refresh()` 维护一致性。
-
 # 实体的属性
 
 属性Status作为实体的重要属性之一，通常会在实体构建时为其创建一些默认的属性，这些属性以如下结构定义在实体的数据内

@@ -69,7 +69,7 @@ export const organList:OrganMap[] = [
     },{
         label:"石芯",
         key:"original_organ_00002",
-        describe:["获得3点最大生命"],
+        describe:["最大生命+3"],
         quality: OrganQuality.Uncommon,
         part: OrganPart.Heart,
         status: {
@@ -77,12 +77,14 @@ export const organList:OrganMap[] = [
         },
         current: ["mass"],
         interaction:{
-            get:{
-                "target":{"key":"self"},
-                effects:[{
-                    "key":"addStatusBaseCurrentValue",
-                    params:{value:3,statusKey:"max-health",currentKey:"health"},
-                    "describe":["获得3点最大生命"],
+            possess:{
+                target:{"key":"self"},
+                effects:[],
+                modifiers:[{
+                    statusKey:"max-health",
+                    targetLayer:"base",
+                    modifierType:"additive",
+                    modifierValue:3
                 }]
             }
         },

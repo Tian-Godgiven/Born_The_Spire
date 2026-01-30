@@ -11,11 +11,9 @@ import { PoolRoom } from "@/core/objects/room/PoolRoom"
  * 注册水池房间类型和默认配置
  */
 export async function initPoolRooms(): Promise<void> {
-    console.log('[initPoolRooms] 开始注册水池房间...')
 
     // 注册水池房间类型
     roomRegistry.registerRoomType("pool", PoolRoom)
-    console.log('[initPoolRooms] 水池房间类型注册完成')
 
     // 注册默认水池房间配置
     roomRegistry.registerRoomConfig({
@@ -25,5 +23,4 @@ export async function initPoolRooms(): Promise<void> {
         description: "可以休息和提升的地方"
     })
 
-    console.log('[initPoolRooms] 水池房间配置注册完成')
 }

@@ -16,6 +16,8 @@ import { gainReserve, spendReserve } from "@/core/effects/reserve/reserve"
 import { killTarget, reviveTarget } from "@/core/effects/life/lifeControl"
 import { replaceOrgan } from "@/core/effects/organ/organEffects"
 import { isEntity } from "@/core/utils/typeGuards"
+import { discoverCard, chooseRandomCard, chooseCardUpgrade, chooseCardRemove, chooseCardDuplicate, customCardChoice } from "@/core/effects/card/cardChoice"
+import { cancelEvent, cancelCurrentEvent } from "@/core/effects/event/cancelEvent"
 
 type EffectData = {
     label?:string,
@@ -178,5 +180,37 @@ export const effectMap:EffectData[] = [
     label:"替换器官",
     key:"replaceOrgan",
     effect:replaceOrgan
+},{
+    label:"发现卡牌",
+    key:"discoverCard",
+    effect:discoverCard
+},{
+    label:"从随机卡牌中选择",
+    key:"chooseRandomCard",
+    effect:chooseRandomCard
+},{
+    label:"选择卡牌升级",
+    key:"chooseCardUpgrade",
+    effect:chooseCardUpgrade
+},{
+    label:"选择卡牌移除",
+    key:"chooseCardRemove",
+    effect:chooseCardRemove
+},{
+    label:"选择卡牌复制",
+    key:"chooseCardDuplicate",
+    effect:chooseCardDuplicate
+},{
+    label:"自定义卡牌选择",
+    key:"customCardChoice",
+    effect:customCardChoice
+},{
+    label:"取消事件",
+    key:"cancelEvent",
+    effect:cancelEvent
+},{
+    label:"取消当前事件",
+    key:"cancelCurrentEvent",
+    effect:cancelCurrentEvent
 }]
 

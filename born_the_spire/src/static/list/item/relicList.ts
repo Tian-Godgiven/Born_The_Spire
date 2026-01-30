@@ -94,6 +94,28 @@ export const relicList: RelicMap[] = [
                 }
             ]
         }
+    },
+    // 示例：修改抽牌数量的遗物
+    {
+        label: "学者之戒",
+        describe: ["每回合多抽", { key: ["status", "extra-draw"] }, "张牌"],
+        key: "original_relic_00004",
+        status: {
+            "extra-draw": 2
+        },
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                effects: [{
+                    key: "addStatusBase",
+                    params: {
+                        statusKey: "draw-per-turn",
+                        value: 2,
+                        type: "additive"
+                    }
+                }]
+            }
+        }
     }
 ]
 

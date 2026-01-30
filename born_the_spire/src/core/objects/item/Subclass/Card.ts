@@ -2,6 +2,7 @@ import { CardMap } from "@/static/list/item/cardList";
 import { Target } from "@/core/objects/target/Target";
 import { Item } from "@/core/objects/item/Item";
 import { doEvent, ActionEvent } from "@/core/objects/system/ActionEvent";
+import { beginTransaction, endTransaction } from "@/core/objects/game/transaction";
 import { CardPiles, Player } from "@/core/objects/target/Player";
 import { Entity } from "@/core/objects/system/Entity";
 import { EffectUnit } from "@/core/objects/system/effect/EffectUnit";
@@ -104,50 +105,52 @@ export async function useCard(card:Card,fromPile:Card[],source:Player,targets:Ta
     }
     const cardEffects = cardUse.effects
 
-    //消耗卡牌对应的费用，事件成功时才会触发卡牌效果
-    doEvent({
-        key:"useCard",
+    // 创建事务并等待支付能量的结果
+    const tx = beginTransaction()
+    const payEvent = new ActionEvent(
+        "payEnergy",
         source,
-        medium:card,
-        target:targets,
-        phase:[{
-            entityMap:{
-                target:"source"//消耗自身的能量
-            },
-            effectUnits:[costEffect],
-        },{
-            // 如果支付成功，创建 cardEffect 事件
-            effectUnits:[],
-            condition:(useCardEvent)=>{
-                const success = useCardEvent.getEventResult("costEnergyResult") == true
-                if(success){
-                    // 创建卡牌效果事件
-                    const cardEffectEvent = new ActionEvent(
-                        "cardEffect",
-                        source,
-                        card,
-                        targets,
-                        {},
-                        [...cardEffects]
-                    )
-                    // 继承 useCard 事件的事务收集器
-                    useCardEvent.spawnEvent(cardEffectEvent)
-                    // 收集到事务中
-                    cardEffectEvent.happen(()=>{})
-                }
-                else{
-                    // 费用不足，取消事件
-                    return "break"
-                }
-                return true
-            }
-        },{
-            // 使用后处理（弃牌/消耗等），由卡牌的 getAfterUseEffect 方法决定
-            effectUnits:[card.getAfterUseEffect(fromPile)],
-            entityMap:{
-                target:"medium"
-            }
-        }]
+        card,
+        source,  // 支付能量的目标是玩家自己
+        {},
+        [costEffect]
+    )
+    tx.add(payEvent)
+    await endTransaction()
+
+    // 检查支付结果
+    const paySuccess = payEvent.getEventResult("costEnergyResult")
+    if (!paySuccess) {
+        // 支付失败，不执行后续操作
+        return
+    }
+
+    // 支付成功，触发 useCard 事件（用于触发器）
+    doEvent({
+        key: "useCard",
+        source,
+        medium: card,
+        target: targets,
+        effectUnits: []  // 没有直接效果，只用于触发器
+    })
+
+    // 执行卡牌效果
+    doEvent({
+        key: "cardEffect",
+        source,
+        medium: card,
+        target: targets,
+        effectUnits: cardEffects
+    })
+
+    // 使用后处理（弃牌/消耗等）
+    const afterUseEffect = card.getAfterUseEffect(fromPile)
+    doEvent({
+        key: "afterUseCard",
+        source,
+        medium: card,
+        target: card,
+        effectUnits: [afterUseEffect]
     })
 }
 

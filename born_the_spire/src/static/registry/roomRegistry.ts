@@ -73,7 +73,6 @@ class RoomRegistry {
             defaultComponent
         })
 
-        console.log(`[RoomRegistry] 注册房间类型: ${type}`)
     }
 
     /**
@@ -86,7 +85,6 @@ class RoomRegistry {
         }
 
         this.roomConfigs.set(config.key, config)
-        console.log(`[RoomRegistry] 注册房间配置: ${config.key}`)
     }
 
     /**
@@ -161,7 +159,6 @@ class RoomRegistry {
         // 创建房间实例
         try {
             const room = new typeRegistration.roomClass(fullConfig)
-            console.log(`[RoomRegistry] 创建房间实例: ${key} (${config.type})`)
             return room
         } catch (error) {
             console.error(`[RoomRegistry] 创建房间实例失败: ${key}`, error)
@@ -218,7 +215,6 @@ export type { RoomTypeRegistration }
  * 在懒加载完成后调用，依次调用各个房间类型的注册模块
  */
 export async function initAllRooms(): Promise<void> {
-    console.log('[RoomRegistry] 开始注册所有房间类型...')
 
     // 导入各个房间类型的注册模块
     const { initBattleRooms } = await import('./rooms/initBattleRooms')
@@ -234,6 +230,5 @@ export async function initAllRooms(): Promise<void> {
     await initBlackStoreRooms()
     await initRoomSelectRooms()
 
-    console.log('[RoomRegistry] 所有房间类型和配置注册完成')
 }
 

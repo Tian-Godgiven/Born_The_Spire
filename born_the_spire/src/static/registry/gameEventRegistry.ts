@@ -36,7 +36,6 @@ class GameEventRegistry {
         }
 
         this.eventTypes.set(type, { eventClass })
-        console.log(`[GameEventRegistry] 注册事件类型: ${type}`)
     }
 
     /**
@@ -60,7 +59,6 @@ class GameEventRegistry {
 
         try {
             const event = new typeRegistration.eventClass(config)
-            console.log(`[GameEventRegistry] 创建事件实例: ${config.type}`)
             return event
         } catch (error) {
             console.error(`[GameEventRegistry] 创建事件实例失败: ${config.type}`, error)

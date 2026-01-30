@@ -60,7 +60,6 @@ class ComponentManager {
     registerComponent(name: string, component: Component): void {
         // 使用 markRaw 避免 Vue 将组件对象变成响应式
         this.componentRegistry.set(name, markRaw(component))
-        console.log(`[ComponentManager] 注册组件: ${name}`)
     }
 
     /**

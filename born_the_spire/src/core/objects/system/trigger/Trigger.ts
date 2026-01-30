@@ -1,4 +1,4 @@
-import { ActionEvent } from "../ActionEvent";
+import { ActionEvent, doEvent } from "../ActionEvent";
 import { nanoid } from "nanoid";
 import { TriggerEventConfig, TriggerFunc, TriggerMap, TriggerObj, TriggerType, TriggerUnit } from "@/core/types/object/trigger";
 import { Effect } from "../effect/Effect";
@@ -93,13 +93,22 @@ export class Trigger{
 export function createTriggerByTriggerMap(source:Entity,target:Entity, item:TriggerMap[number]){
     const {when ="before", how, key, level} = item
 
-    const callback:TriggerFunc = async(triggerEvent,triggerEffect,triggerLevel)=>{
+    const callback:TriggerFunc = async(triggerEvent,triggerEffect,_triggerLevel)=>{
         //回调函数将会创建并发生n个事件
         for(let eventConfig of item.event){
-            const event = createEventFromTrigger({source,target,triggerEvent,triggerEffect},eventConfig)
-            //这个事件会继承触发事件的收集函数
-            triggerEvent.spawnEvent(event)
-            event.happen(()=>{},triggerLevel)
+            const {key:eventKey,info={},targetType,effect:effectUnit} = eventConfig
+            //获取目标
+            const eventTarget = resolveTriggerEventTarget(targetType, triggerEvent, triggerEffect, source, target)
+
+            // 使用 doEvent 创建事件，会自动添加到 eventCollector
+            doEvent({
+                key: eventKey,
+                source: source,  // 触发器来源
+                medium: target,  // 触发器持有者
+                target: eventTarget,  // 该触发器的目标
+                info: info,
+                effectUnits: effectUnit ?? []
+            })
         }
     }
     if(item.importantKey){
@@ -118,26 +127,6 @@ export function createTrigger({when,how,key,callback,level}:TriggerObj):TriggerO
     return {
         when,how,key,callback,level
     }
-}
-
-//工具函数，用于创建触发器事件
-function createEventFromTrigger(
-    {source,target,triggerEvent,triggerEffect}:{source:Entity,target:Entity,triggerEvent:ActionEvent,triggerEffect:Effect|null},
-    eventConfig:TriggerEventConfig
-){
-    const {key:eventKey,info={},targetType,effect:effectUnit} = eventConfig
-    //获取目标
-    const eventTarget = resolveTriggerEventTarget(targetType, triggerEvent, triggerEffect, source, target)
-
-    const newEvent = new ActionEvent(
-        eventKey,
-        source,//触发器来源
-        target,//触发器持有者
-        eventTarget,//该触发器的目标
-        info,
-        effectUnit
-    )
-    return newEvent
 }
 
 /**

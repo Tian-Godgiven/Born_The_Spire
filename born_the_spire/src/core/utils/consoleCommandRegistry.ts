@@ -22,7 +22,6 @@ class ConsoleCommandRegistry {
             console.warn(`[ConsoleCommand] 命令 "${command.name}" 已存在，将被覆盖`)
         }
         this.commands.set(command.name, command)
-        console.log(`[ConsoleCommand] 注册命令: ${command.name}`)
     }
 
     /**

@@ -1,5 +1,5 @@
 <template>
-<ChooseSource :onSuccess :key="card.__id" ref="chooseSource" @click="startChoose">
+<ChooseSource :onSuccess :key="card.__id" ref="chooseSource" @click="startChoose" class="hand-card-wrapper">
     <CardVue :class="{useAble}" :card="card"/>
 </ChooseSource>
 </template>
@@ -35,6 +35,15 @@
 </script>
 
 <style scoped lang='scss'>
+.hand-card-wrapper {
+    position: relative;
+    z-index: 10;
+
+    &:hover {
+        z-index: 200;
+    }
+}
+
 .useAble{
     box-shadow: 0px 0px 8px rgb(0, 0, 0);
 }

@@ -88,14 +88,12 @@ export async function getLazyModuleAsync<T>(key: string): Promise<T> {
  * 应该在游戏启动时调用，提前加载所有数据
  */
 export async function preloadAllLazyModules(): Promise<void> {
-    console.log('[LazyLoader] 开始预加载所有数据模块...')
 
     const promises: Promise<void>[] = []
 
     for (const [key, lazyModule] of lazyModules.entries()) {
         if (lazyModule.module === null && !lazyModule.loading) {
             const promise = (async () => {
-                console.log(`[LazyLoader] 预加载模块: ${key}`)
                 lazyModule.loading = lazyModule.loader()
                 lazyModule.module = await lazyModule.loading
                 lazyModule.loading = null
@@ -105,7 +103,6 @@ export async function preloadAllLazyModules(): Promise<void> {
     }
 
     await Promise.all(promises)
-    console.log('[LazyLoader] 所有数据模块预加载完成')
 }
 
 /**

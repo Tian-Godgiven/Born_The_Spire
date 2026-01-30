@@ -20,7 +20,7 @@ export interface OrganSelectRewardConfig extends RewardConfig {
 export class OrganSelectReward extends Reward {
     public readonly organOptions: OrganMap[]
     public readonly selectCount: number
-    private selectedOrgans: Organ[] = []
+    public selectedOrgans: string[] = []  // 存储选择的器官 key
 
     constructor(config: OrganSelectRewardConfig) {
         super(config)
@@ -51,7 +51,7 @@ export class OrganSelectReward extends Reward {
 
     /**
      * 领取器官选择奖励
-     * 打开器官选择界面
+     * 将选择的器官添加到玩家
      */
     async claim(): Promise<void> {
         if (!this.isAvailable()) {
@@ -59,27 +59,35 @@ export class OrganSelectReward extends Reward {
             return
         }
 
-        newLog(["打开器官选择界面..."])
+        if (this.selectedOrgans.length === 0) {
+            console.warn("[OrganSelectReward] 没有选择任何器官")
+            this.markAsClaimed()
+            return
+        }
 
-        // TODO: 打开器官选择 UI
-        // 这里应该触发一个全局事件或调用 UI 系统
-        // 暂时先模拟选择第一个器官
-        if (this.organOptions.length > 0) {
-            const selectedOrgan = new Organ(this.organOptions[0])
-            this.selectedOrgans.push(selectedOrgan)
-            newLog([`选择了器官: ${selectedOrgan.label}`])
+        // 动态导入避免循环依赖
+        const { nowPlayer } = await import("@/core/objects/game/run")
+        const { getOrganModifier } = await import("@/core/objects/system/modifier/OrganModifier")
+        const { Organ } = await import("@/core/objects/target/Organ")
 
-            // TODO: 将器官添加到玩家
-            // nowPlayer.addOrgan(selectedOrgan)
+        // 将选择的器官添加到玩家
+        const organModifier = getOrganModifier(nowPlayer)
+        for (const organKey of this.selectedOrgans) {
+            const organConfig = this.organOptions.find(o => o.key === organKey)
+            if (organConfig) {
+                const organ = new Organ(organConfig)
+                organModifier.acquireOrgan(organ, nowPlayer)
+                newLog([`获得器官: ${organConfig.label}`])
+            }
         }
 
         this.markAsClaimed()
     }
 
     /**
-     * 获取已选择的器官
+     * 获取已选择的器官 key 列表
      */
-    getSelectedOrgans(): Organ[] {
+    getSelectedOrganKeys(): string[] {
         return this.selectedOrgans
     }
 

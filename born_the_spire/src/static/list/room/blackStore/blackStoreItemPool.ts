@@ -46,7 +46,6 @@ export const blackStorePotionPool: ItemPoolConfig<PotionMap> = {
  * 从全局列表中加载物品
  */
 export function initBlackStoreItemPools(): void {
-    console.log("[BlackStorePool] 开始初始化黑市物品池")
 
     // 加载器官（使用懒加载）
     const organList = getLazyModule<OrganMap[]>('organList')
@@ -63,9 +62,6 @@ export function initBlackStoreItemPools(): void {
     blackStorePotionPool.items = [...potionList]
     blackStorePotionPool.weights = new Array(potionList.length).fill(1)
 
-    console.log(`[BlackStorePool] 器官池: ${blackStoreOrganPool.items.length} 个`)
-    console.log(`[BlackStorePool] 遗物池: ${blackStoreRelicPool.items.length} 个`)
-    console.log(`[BlackStorePool] 药水池: ${blackStorePotionPool.items.length} 个`)
 }
 
 /**
@@ -76,7 +72,6 @@ export function initBlackStoreItemPools(): void {
 export function addOrganToBlackStorePool(organ: OrganMap, weight: number = 1): void {
     blackStoreOrganPool.items.push(organ)
     blackStoreOrganPool.weights?.push(weight)
-    console.log(`[BlackStorePool] 添加器官到黑市池: ${organ.label}`)
 }
 
 /**
@@ -85,7 +80,6 @@ export function addOrganToBlackStorePool(organ: OrganMap, weight: number = 1): v
 export function addRelicToBlackStorePool(relic: RelicMap, weight: number = 1): void {
     blackStoreRelicPool.items.push(relic)
     blackStoreRelicPool.weights?.push(weight)
-    console.log(`[BlackStorePool] 添加遗物到黑市池: ${relic.label}`)
 }
 
 /**
@@ -94,7 +88,6 @@ export function addRelicToBlackStorePool(relic: RelicMap, weight: number = 1): v
 export function addPotionToBlackStorePool(potion: PotionMap, weight: number = 1): void {
     blackStorePotionPool.items.push(potion)
     blackStorePotionPool.weights?.push(weight)
-    console.log(`[BlackStorePool] 添加药水到黑市池: ${potion.label}`)
 }
 
 /**

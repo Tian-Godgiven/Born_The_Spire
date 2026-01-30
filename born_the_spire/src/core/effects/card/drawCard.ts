@@ -5,6 +5,7 @@ import { handleEventEntity } from "@/core/objects/system/ActionEvent";
 import { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import { CardPiles, Player } from "@/core/objects/target/Player"
 import { cardMove } from ".";
+import { getStatusValue } from "@/core/objects/system/status/Status";
 
 //从任意牌堆中抽取卡牌到手牌中
 export const drawCard:EffectFunc = (event,effect)=>{
@@ -30,8 +31,20 @@ export const drawFromDrawPile:EffectFunc = (event,effect)=>{
     const player = target
     const sourcePile = player.cardPiles.drawPile
     const length = sourcePile.length//还剩多少牌
-    //抽取数量
-    const number = effect.params.value as number;
+
+    //抽取数量 - 支持从属性读取
+    let number: number
+    const valueParam = effect.params.value
+
+    if (typeof valueParam === 'object' && valueParam !== null && 'fromStatus' in valueParam) {
+        // 从属性读取：{ fromStatus: "draw-per-turn" }
+        const statusKey = valueParam.fromStatus as string
+        number = getStatusValue(player, statusKey, 5)  // 默认5张
+    } else {
+        // 直接使用数字
+        number = valueParam as number
+    }
+
     //牌堆数量不足：先洗牌
     if(length < number){
         if(length>0){

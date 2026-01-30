@@ -1,4 +1,4 @@
-/**
+ /* 
  * 层级注册表系统
  * 管理所有层级配置，支持 mod 制作者注册自定义层级
  */
@@ -22,7 +22,6 @@ class FloorRegistry {
         }
 
         this.floors.set(config.key, config)
-        console.log(`[FloorRegistry] 注册层级: ${config.key}`)
     }
 
     /**
@@ -79,7 +78,6 @@ export const floorRegistry = new FloorRegistry()
  * 在懒加载完成后调用
  */
 export async function initAllFloors(): Promise<void> {
-    console.log('[FloorRegistry] 开始注册所有层级...')
 
     // 导入层级列表
     const { floorList } = await import('@/static/list/floor/floorList')
@@ -87,5 +85,4 @@ export async function initAllFloors(): Promise<void> {
     // 注册所有层级
     floorRegistry.registerFloors(floorList)
 
-    console.log('[FloorRegistry] 所有层级注册完成')
 }

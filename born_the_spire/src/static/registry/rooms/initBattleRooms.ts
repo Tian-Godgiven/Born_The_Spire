@@ -12,11 +12,9 @@ import { battleList } from "@/static/list/room/battle/battleList"
  * 注册战斗房间类型和所有战斗房间配置
  */
 export async function initBattleRooms(): Promise<void> {
-    console.log('[initBattleRooms] 开始注册战斗房间...')
 
     // 注册战斗房间类型
     roomRegistry.registerRoomType("battle", BattleRoom)
-    console.log('[initBattleRooms] 战斗房间类型注册完成')
 
     // 注册战斗房间配置
     battleList.forEach(battle => {
@@ -32,5 +30,4 @@ export async function initBattleRooms(): Promise<void> {
         })
     })
 
-    console.log(`[initBattleRooms] 已注册 ${battleList.length} 个战斗房间配置`)
 }

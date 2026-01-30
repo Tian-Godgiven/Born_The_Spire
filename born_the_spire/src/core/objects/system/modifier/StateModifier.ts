@@ -2,7 +2,7 @@ import { Entity } from "../Entity"
 import { Target } from "../../target/Target"
 import { State, StateData } from "../State"
 import { newLog, LogUnit } from "@/ui/hooks/global/log"
-import { doEvent, ActionEvent } from "../ActionEvent"
+import { doEvent } from "../ActionEvent"
 import { resolveTriggerEventTarget } from "../trigger/Trigger"
 import { nanoid } from "nanoid"
 import _ from "lodash"
@@ -201,21 +201,15 @@ export class StateModifier {
                             this.owner  // triggerOwner: 拥有者
                         )
 
-                        // 执行事件
-
-                        // 创建新事件
-                        const newEvent = new ActionEvent(
-                            clonedEventConfig.key,
-                            state as any,
-                            state as any,
+                        // 使用 doEvent 创建事件，确保正确触发触发器
+                        doEvent({
+                            key: clonedEventConfig.key,
+                            source: state as any,
+                            medium: state as any,
                             target,
-                            {...clonedEventConfig.info},
-                            clonedEventConfig.effect
-                        )
-
-                        // 关联到父事件并传递 triggerLevel
-                        event.spawnEvent(newEvent)
-                        newEvent.happen(() => {}, _triggerLevel)
+                            info: {...clonedEventConfig.info},
+                            effectUnits: clonedEventConfig.effect || []
+                        })
                     }
                 })
 
@@ -242,7 +236,7 @@ export class StateModifier {
                 how: "take",    // 承受时间事件（监听 turnStart, turnEnd 等）
                 key: timing,    // 监听的事件 key
                 level: 0,
-                callback: (event, _effect, triggerLevel) => {
+                callback: (_event, _effect, _triggerLevel) => {
                     // 构建 effect
                     const effectUnits = []
 
@@ -271,19 +265,15 @@ export class StateModifier {
                         })
                     }
 
-                    // 创建自动衰减事件
-                    const newEvent = new ActionEvent(
-                        `${state.key}_stackChange`,
-                        state as any,      // source: 状态自己
-                        state as any,      // medium: 状态自己
-                        this.owner, // target: 持有者
-                        { level: 0 },
-                        effectUnits
-                    )
-
-                    // 关联到父事件并传递 triggerLevel
-                    event.spawnEvent(newEvent)
-                    newEvent.happen(() => {}, triggerLevel)
+                    // 使用 doEvent 创建自动衰减事件
+                    doEvent({
+                        key: `${state.key}_stackChange`,
+                        source: state as any,
+                        medium: state as any,
+                        target: this.owner,
+                        info: { level: 0 },
+                        effectUnits: effectUnits
+                    })
                 }
             })
 

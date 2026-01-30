@@ -3,6 +3,8 @@ import { doEffectFunc, EffectFunc, EffectParams, resolveEffectParams } from "./E
 import { EventParticipant } from "@/core/types/event/EventParticipant";
 import { isEntity } from "@/core/utils/typeGuards";
 import { nanoid } from "nanoid";
+import { validateEffectParams } from "@/core/effects/validateEffectParams";
+import { newError } from "@/ui/hooks/global/alert";
 type EffectConstructor = {
     label?:string,
     key:string,
@@ -34,6 +36,21 @@ export class Effect implements EventParticipant{
 
         // 立即解析参数中的 $ 语法
         this.resolveParams()
+
+        // 解析后再次验证参数（确保动态值解析后的类型正确）
+        const validationResult = validateEffectParams(key, this.params)
+        if (!validationResult.valid) {
+            console.error(`[Effect] 效果参数解析后验证失败:`, validationResult.errors)
+            newError([
+                `效果 "${key}" 参数解析后验证失败:`,
+                ...validationResult.errors
+            ])
+            // 使用验证后的参数（可能包含默认值）
+            this.params = validationResult.params
+        } else {
+            // 使用验证后的规范化参数
+            this.params = validationResult.params
+        }
     }
 
     /**

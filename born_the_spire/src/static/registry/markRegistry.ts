@@ -22,7 +22,6 @@ class MarkRegistry {
         }
 
         this.marks.set(config.key, config)
-        console.log(`[MarkRegistry] 注册印记: ${config.key}`)
     }
 
     /**
@@ -72,7 +71,6 @@ export const markRegistry = new MarkRegistry()
  * 在懒加载完成后调用
  */
 export async function initAllMarks(): Promise<void> {
-    console.log('[MarkRegistry] 开始注册所有印记...')
 
     // 导入印记列表
     const { markList } = await import('@/static/list/mark/markList')
@@ -80,5 +78,4 @@ export async function initAllMarks(): Promise<void> {
     // 注册所有印记
     markRegistry.registerMarks(markList)
 
-    console.log('[MarkRegistry] 所有印记注册完成')
 }

@@ -14,6 +14,7 @@ import { showDisplayMessage } from "@/ui/hooks/global/displayMessage"
 export class Battle {
     public readonly __key:string = nanoid()
     public isEnded: boolean = false  // 战斗是否已结束
+    public nowTurn: "player" | "enemy" = "player"  // 当前回合归属
 
     constructor(
         public turnNumber:number,
@@ -72,14 +73,14 @@ export class Battle {
     async startTurn(team:"player"|"enemy"){
         const theTeam = team=="player"?this.playerTeam:this.enemyTeam
         for(let chara of theTeam){
-            startCharaTurn(chara,this)
+            await startCharaTurn(chara,this)
         }
     }
 
     async endTurn(team:"player"|"enemy"){
         const theTeam = team=="player"?this.playerTeam:this.enemyTeam
         for(let chara of theTeam){
-            endCharaTurn(chara,this)
+            await endCharaTurn(chara,this)
         }
     }
 
@@ -101,7 +102,8 @@ export class Battle {
             return
         }
 
-        // 3. 敌人回合
+        // 3. 切换到敌人回合
+        this.nowTurn = "enemy"
         newLog(["===== 敌人回合开始 ====="])
         const aliveEnemies = this.getAliveEnemies()
         const player = this.getAlivePlayers()[0]  // 假设单个玩家
@@ -137,7 +139,8 @@ export class Battle {
             prepareEnemyIntents(aliveEnemies, player, this.turnNumber)
         }
 
-        // 7. 开始新的玩家回合
+        // 7. 切换到玩家回合
+        this.nowTurn = "player"
         newLog(["===== 玩家回合开始 =====", `回合 ${this.turnNumber}`])
 
         // 显示"回合开始"提示（1.5秒），然后等待1.5秒
@@ -215,7 +218,6 @@ export async function startNewBattle(playerTeam:(Player|Chara)[],enemyTeam:(Enem
         nowPlayer.startBattle()
 
         // 触发 battleStart 事件
-        console.log('[startNewBattle] 触发 battleStart 事件')
         doEvent({
             key: "battleStart",
             source: nowPlayer,

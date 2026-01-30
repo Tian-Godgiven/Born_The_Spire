@@ -12,11 +12,9 @@ import { getLazyModule } from "@/core/utils/lazyLoader"
  * 注册事件房间类型和所有事件房间配置
  */
 export async function initEventRooms(): Promise<void> {
-    console.log('[initEventRooms] 开始注册事件房间...')
 
     // 注册事件房间类型
     roomRegistry.registerRoomType("event", EventRoom)
-    console.log('[initEventRooms] 事件房间类型注册完成')
 
     // 获取事件列表
     const eventList = getLazyModule<any[]>('eventList')
@@ -34,5 +32,4 @@ export async function initEventRooms(): Promise<void> {
         })
     })
 
-    console.log(`[initEventRooms] 已注册 ${eventList.length} 个事件房间配置`)
 }

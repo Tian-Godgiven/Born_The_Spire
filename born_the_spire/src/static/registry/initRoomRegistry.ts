@@ -15,12 +15,10 @@ import { BlackStoreRoom } from "@/core/objects/room/BlackStoreRoom"
  * 在应用启动时调用
  */
 export function initRoomRegistry(): void {
-    console.log("[initRoomRegistry] 开始初始化房间注册表")
 
     // 注册基础房间类型
     registerBaseRoomTypes()
 
-    console.log("[initRoomRegistry] 房间注册表初始化完成")
 }
 
 /**
@@ -42,7 +40,6 @@ function registerBaseRoomTypes(): void {
     // 注册黑市房间类型
     roomRegistry.registerRoomType("blackStore", BlackStoreRoom)
 
-    console.log("[initRoomRegistry] 基础房间类型注册完成")
 }
 
 /**

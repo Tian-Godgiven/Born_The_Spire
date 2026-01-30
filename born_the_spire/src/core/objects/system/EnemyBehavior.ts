@@ -338,14 +338,12 @@ export function selectAction(
         // 条件满足，选择卡牌
         const selectedCards = selectActionCards(pattern, availableCards)
         if (selectedCards.length > 0) {
-            console.log("[EnemyBehavior] 使用行为模式:", pattern.describe || "未命名")
             return selectedCards
         }
     }
 
     // 所有条件都不满足，使用默认行为
     if (behaviorConfig.fallback) {
-        console.log("[EnemyBehavior] 使用默认行为")
         return selectActionCards(behaviorConfig.fallback, availableCards)
     }
 

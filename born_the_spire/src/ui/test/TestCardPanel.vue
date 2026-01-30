@@ -62,13 +62,11 @@ function addCardToDrawPile(cardKey: string) {
     // 添加到抽牌堆
     nowPlayer.cardPiles.drawPile.push(card)
 
-    console.log(`添加了 ${card.label} 到抽牌堆`)
 }
 
 // 清空抽牌堆
 function clearDrawPile() {
     nowPlayer.cardPiles.drawPile.length = 0
-    console.log('已清空抽牌堆')
 }
 </script>
 

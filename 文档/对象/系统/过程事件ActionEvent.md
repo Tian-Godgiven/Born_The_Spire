@@ -4,132 +4,230 @@
 过程事件是一个带有记录性质的对象，其本身并不直接影响游戏进程（造成影响的始终是效果）
 
 作用：
-1.统一管理事件的触发与日志
-2.用于触发对象的触发器，并且是【唯一一个】调用触发器的接口
+  统一管理事件的触发与日志
+  用于触发对象的触发器，并且是【唯一一个】调用触发器的接口
+  通过队列机制管理事件的执行顺序
 
 ## 结构
 
-{   
-    key:string,//事件key
-    source:Entity,//执行该事件的目标
-    medium:Entity,//参与事件的媒介
-    target:Entity,//接受该事件的目标
-    info:Record<string,any>,//该事件执行全程的信息
-    effect?:Effect,//其会携带该事件将会产生的效果，当该事件触发时，这些效果也会发生
+```typescript
+{
+    key: string                    // 事件key
+    uuId: string                   // 唯一识别码
+    source: EventParticipant       // 执行该事件的来源
+    medium: EventParticipant       // 参与事件的媒介
+    target: EventParticipant|EventParticipant[]  // 接受该事件的目标
+    info: Record<string,any>       // 该事件执行全程的信息
+    effects: Effect[]              // 该事件将会产生的效果
+    phase: EventPhase[]            // 事件的多个阶段
+    transaction?: Transaction      // 所属事务
+    simulate: boolean              // 是否为模拟事件（不实际执行效果）
+    onExecute?: (event) => void    // 事件执行时的回调
+    onComplete?: (event) => void   // 事件执行完成后的回调
 }
+```
 
 ## 流程
 
-过程事件的完整作用流程
-创建：创建过程事件实例，存储该事件相关的各种信息
-发生+收集：该过程事件将会发生，发生时，将其收集到当前事务Transaction中
-宣布：宣布该过程事件将会发生，等待其他触发器的响应
-整理：为事务中的各个过程事件排序
-执行：事务整理完毕后，按顺序依次让各个过程事件起效，产生其存储的效果以及可能传入的回调函数
+过程事件采用队列机制，完整流程如下：
+
+创建 (doEvent)
+  创建 ActionEvent 实例
+  存储事件相关的各种信息（source, medium, target, effects, phase）
+
+收集到队列
+  根据上下文决定收集方式：
+    在 before/after 触发器中：添加到 eventCollector（立即递归执行）
+    在效果函数中：插入到当前事务的指定位置（top/bottom/index）
+    没有当前事务：创建新事务并加入事务队列
+
+事务处理 (Transaction.process)
+  按顺序从队列中取出事件
+  依次执行每个事件
+
+执行单个事件 (Transaction.executeEvent)
+  Event before 触发器
+    收集触发器产生的新事件到 eventCollector
+    递归执行这些新事件
+  执行每个 Effect
+    Effect before 触发器 → 递归执行新事件
+    Effect.apply() 应用效果
+    Effect after 触发器 → 递归执行新事件
+  Event after 触发器
+    收集触发器产生的新事件到 eventCollector
+    递归执行这些新事件
+  执行 Phase 阶段（如果有）
+    按顺序执行每个阶段
+    每个阶段包含：条件判断 → 效果执行（before → apply → after）
 
 ## 过程事件与触发器
 
-过程事件在被宣布时，会令参与事件的各个实体对象的，该事件key的触发器被触发。
-理论上，这是你唯一的触发触发器的方法(效果对象也可以触发触发器，但这个过程往往是全自动的)
-请尽可能地使用过程事件与实体的触发器交互
+过程事件在执行时会触发参与实体的触发器，触发时机分为：
+  Event before：事件执行前触发
+  Effect before：每个效果执行前触发
+  Effect after：每个效果执行后触发
+  Event after：事件执行后触发
 
-## 事件阶段 eventPhase
+触发器产生的新事件会根据上下文处理：
+  在 before/after 触发器中：新事件立即递归执行（通过 eventCollector）
+  在效果函数中：新事件插入到当前事务队列（可指定位置）
 
-一个过程事件可以存在多个不同的阶段，阶段应该是线性的，且后续阶段可以使用前面阶段的结果
-例如，在使用卡牌时包含2个阶段：
-1.消耗卡牌对应的能量
-2.消耗成功时，执行卡牌的效果
+这是触发触发器的唯一方法，请始终通过过程事件与实体的触发器交互
 
-事件阶段在过程事件中如下定义：
+## 事件阶段 Phase
 
+一个过程事件可以存在多个不同的阶段，阶段是线性的，严格按照顺序执行
+后续阶段可以使用前面阶段的结果
+
+使用场景示例：
+  使用卡牌事件包含2个阶段：
+    阶段1：消耗卡牌对应的能量
+    阶段2：消耗成功时，执行卡牌的效果
+
+阶段结构：
+
+```typescript
 {
-    effectUnits:EffectUnit[],//该阶段中将会启用的效果单元
-    condition?:(event:ActionEvent)=>bool,//该阶段在进行前的判断效果，返回true时进行该阶段
-    onFalse?:()=>any,//该阶段未能正确进行时的回调函数
+    effectUnits: EffectUnit[]      // 该阶段中将会启用的效果单元
+    condition?: (event) => boolean | "break"  // 阶段执行前的判断
+    onFalse?: () => void           // 条件不满足时的回调
+    entityMap?: {                  // 效果对象映射
+        target?: "source" | "medium"  // 将该阶段的目标映射到事件的 source 或 medium
+    }
 }
+```
 
-注意：
-1.过程是单向流动的，严格按照顺序执行
-2.如果一个事件同时具备“effects”和eventPhase，那么会先执行effects中的效果，再按顺序执行eventPhase
+condition 返回值：
+  true：执行该阶段
+  false：跳过该阶段，继续下一阶段
+  "break"：跳过该阶段，并提前结束整个事件
+
+执行顺序：
+  先执行 effects 中的效果
+  再按顺序执行 phase 中的各个阶段
+  每个阶段的效果都会触发 before/after 触发器
 
 
-<!-- ## 批量事件与子事件
 
-ps:暂时弃用
+## 核心方法
 
-批量事件是一种独特的事件对象，其本身是一个事件，但其发生的同时，也会收集其包含的各个子事件
-你可以理解为其是一个会影响多个对象的事件
+### trigger(when, triggerLevel)
 
-批量事件的结构如下
+触发该事件的触发器
 
-{
-    key:string,
-    source:Entity,
-    medium:Entity,
-    target:Entity,
-    info:Record<string,any> = [],
-    effectUnit:EffectUnit[],
-    childEvents:{
-        childKey?:string,
-        source?:Entity,
-        medium?:Entity,
-        target?:Entity,
-        effectUnit:EffectUnit[]
-    }[],
-    genericChildKey?:string,//通用子事件key
-}
+参数：
+  when: "before" | "after"  // 触发时机
+  triggerLevel: number      // 触发等级
 
-其具备一个事件应有的所有结构，同时还有一个包含了大量可选项的子事件数组。
-子事件缺乏的参数会从亲事件中尝试获取，例如没有source的子事件对象会使用亲事件的source，没有childKey的子事件会使用genericChildKey的值
+行为：
+  调用 source.makeEvent(when, key, event, null, triggerLevel)
+  调用 medium.viaEvent(when, key, event, null, triggerLevel)
+  调用 target.takeEvent(when, key, event, null, triggerLevel)
 
-对于其子事件：
-    1.不会作为一个单独事件对象在日志中显示
-    2.会在亲事件宣布时依次宣布，但不会作为一个单独事件对象被收集/执行
-    3.会在亲事件执行时按顺序依次执行 -->
+### excute()
 
-## 方法
+执行该事件（由 Transaction 调用）
 
-triggerEvent("after"|"before")：触发该过程事件的某个时刻的触发器
-happen(doEvent:()=>void)：使得该过程事件发生
+执行顺序：
+  调用 onExecute 回调
+  执行 effects 中的所有效果
+  依次执行 phase 中的各个阶段
+  调用 onComplete 回调
 
-## 设置
+### spawnEvent(event)
 
-可以对过程事件添加一些设置，从而快速实现一些内置的效果
-{
-    noTrigger:bool,//该过程事件将不再触发触发器
-    stop:bool,//该过程事件将不再发生
-}
+标记另一个事件为该事件的子事件
 
-## 函数
+行为：
+  设置父子关系（用于日志嵌套）
+  继承 simulate 标记
+  共享事务收集器
 
-doAction()：创建并发生一个过程事件，用于快速发生某个事件，这也是大部分情况下处理对象效果的所用的函数
+## 核心函数
 
-doActionGroup()：创建并发生一个过程事件，但还会为其中的每个子对象分别执行一次子事件，s,m,t会各自分别组合进行一次子事件，这些子事件会被包装在总事件中
+### doEvent(config, options?)
 
-## 事件堆栈
+创建并发生一个过程事件，这是创建事件的主要方式
 
-在开始执行任意一个过程事件时都会向全局的事件堆栈中push该过程事件，随后在触发before=>执行onEvent=>触发after后pop该过程事件
+```typescript
+doEvent({
+    key: string                    // 事件key
+    source: EventParticipant       // 事件来源
+    medium: EventParticipant       // 事件媒介
+    target: EventParticipant | EventParticipant[]  // 事件目标
+    info?: Record<string,any>      // 事件信息
+    effectUnits?: EffectUnit[]     // 效果单元数组
+    phase?: EventPhase[]           // 事件阶段数组
+    doWhat?: () => void            // 事件执行时的回调
+    onComplete?: (event) => void   // 事件完成后的回调
+}, {
+    position?: number | "top" | "bottom"  // 插入位置（仅在效果函数中有效）
+})
+```
 
-如果pop得到的不是该过程事件，则会报错，因此【禁止随意操作事件堆栈】(或者至少你要明白你的操作过程！)
+收集行为：
+  在 before/after 触发器中：添加到 eventCollector（立即递归执行）
+  在效果函数中：插入到当前事务的指定位置
+    "top"：队首（默认，优先执行）
+    "bottom"：队尾（最后执行）
+    数字：指定索引位置
+  没有当前事务：创建新事务并加入事务队列
 
-事件堆栈的作用是获取链式发生的事件，即当事件A的触发/执行导致了事件B的发生时，可以在事件B中获取事件A的信息
-如果事件B的执行在事件A的执行之前（事件A触发before=>执行事件B），那么事件B还可以通过操作事件A的信息来修改事件A的执行效果
+返回值：
+  返回创建的 ActionEvent 对象
 
-通过清除事件堆栈，还可以在特定的时机阻止剩余的事件产生效果
+## 模拟模式
 
-通过访问事件堆栈，还可以获知特定的行为/效果的触发顺序，例如可以借此判断回调的过程事件是否在某个事件链上
+模拟事件用于预测效果，不会实际修改游戏状态
 
-## 中断事件
+特性：
+  simulate 标记会自动继承给子事件
+  模拟事件不会收集到事务队列
+  触发器仍然会被触发（用于预测）
+  效果函数中应检查 simulate 标记，避免实际修改状态
 
-如果你希望阻止某个对象上的某个事件发生，则需要为该对象添加事件拦截器
-事件拦截器本质上是一个
-    1.绑定在指定对象上的(需要指定take,make,on)
-    2.该事件key的
-    3.优先级最大的
-    4.before触发器
+使用场景：
+  预测伤害/治疗量
+  检查条件是否满足
+  AI 决策模拟
 
-当该事件发生时，事件拦截器总是会最先被调用，其会修改事件的设置使得该事件有关的触发器都不会触发，并且不再执行doEvent，在日志中也会打印事件终止的情报
+## 事件收集器 EventCollector
 
-### 中断一个中断事件？
+事件收集器用于在触发器中收集新事件，并立即递归执行
 
-该需求尚未验证……
+工作流程：
+  Transaction.executeEvent 执行事件时：
+    设置 eventCollector 为空数组
+    触发 before/after 触发器
+    触发器中调用 doEvent 会将新事件添加到 eventCollector
+    清除 eventCollector
+    递归执行收集到的所有新事件
+
+相关函数：
+  setEventCollector(collector)：设置当前收集器
+  getEventCollector()：获取当前收集器
+  clearEventCollector()：清除当前收集器
+
+## 注意事项
+
+事件执行是异步的
+  所有事件执行方法都是 async
+  需要使用 await 等待事件完成
+
+触发器中的事件立即执行
+  before/after 触发器中创建的事件会立即递归执行
+  这保证了触发器的响应是同步的
+
+效果函数中的事件插入队列
+  效果函数中创建的事件会插入到当前事务队列
+  可以通过 position 参数控制插入位置
+  默认插入队首（优先执行）
+
+避免无限递归
+  触发器中创建的事件可能再次触发同一触发器
+  需要在触发器中添加条件判断，避免无限循环
+
+模拟模式的限制
+  模拟事件不会实际修改状态
+  效果函数需要检查 event.simulate 标记
+  模拟事件不会收集到事务队列

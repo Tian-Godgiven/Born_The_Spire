@@ -70,9 +70,7 @@ export function initDefaultGameObjects() {
     // 暴露测试函数到全局
     ;(window as any).enterRoom = enterRoom
     ;(window as any).testEnterRoom = async (roomKey: string, layer: number = 1) => {
-        console.log(`[Test] 尝试进入房间: ${roomKey}, 层级: ${layer}`)
         await enterRoom(roomKey, layer)
-        console.log(`[Test] 成功进入房间: ${roomKey}`)
     }
 
     // 列出所有可用房间
@@ -100,11 +98,9 @@ export function initDefaultGameObjects() {
 
         const enemies = nowBattle.value.getAliveEnemies()
         if (enemies.length === 0) {
-            console.log('[killAllEnemies] 没有存活的敌人')
             return
         }
 
-        console.log(`[killAllEnemies] 杀死 ${enemies.length} 个敌人`)
 
         const { doEvent } = await import("@/core/objects/system/ActionEvent")
         for (const enemy of enemies) {
@@ -121,18 +117,13 @@ export function initDefaultGameObjects() {
             })
         }
 
-        console.log('[killAllEnemies] 所有敌人已被杀死')
     }
 
-    console.log('[Debug] 测试函数已暴露到全局:')
-    console.log('  - enterRoom(roomKey, layer) - 进入指定房间（独立函数）')
-    console.log('  - testEnterRoom(roomKey, layer?) - 进入指定房间（带日志）')
-    console.log('  - listRooms(type?) - 列出所有房间（可选按类型筛选）')
-    console.log('  - killAllEnemies() - 杀死当前战斗中的所有敌人')
-    console.log('  例如: enterRoom("battle_normal_slime", 1)')
-    console.log('  例如: testEnterRoom("battle_normal_slime", 1)')
-    console.log('  例如: listRooms("battle")')
-    console.log('  例如: killAllEnemies()')
+    // 触发游戏失败
+    ;(window as any).gameOver = async () => {
+        const { gameOver } = await import("@/core/hooks/game")
+        await gameOver()
+    }
 }
 
 //开始一局新游戏

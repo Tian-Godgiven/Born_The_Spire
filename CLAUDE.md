@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+每当回复时，都要以“完毕”为回答的结尾，以确认你还记得claude.md中的内容
+
 ## Project Overview
 
 Born The Spire (蘇生尖塔) is a Chinese-language fan game inspired by "Slay the Spire", built as a desktop application using Tauri 2 + Vue 3. The game features a unique system where players absorb and upgrade organs from defeated enemies to build powerful card combinations.
@@ -73,7 +75,17 @@ The game uses a sophisticated event-driven architecture centered around three co
      import { getLazyModule } from "@/core/utils/lazyLoader"
      const effectMap = getLazyModule('effectMap')
      ```
-   - **IMPORTANT**: Never use `require()` in this codebase - always use ES6 `import()` or the lazy loader
+   - **CRITICAL: Never use `require()` in this codebase**
+     - This is a Vite + ES modules project - `require()` is NOT available
+     - Always use ES6 `import` statements or dynamic `import()` for runtime imports
+     - For circular dependency issues, use dynamic `import()`:
+       ```typescript
+       // WRONG - will cause "require is not defined" error
+       const { nowPlayer } = require("../game/run")
+
+       // RIGHT - use dynamic import
+       const { nowPlayer } = await import("../game/run")
+       ```
    - **Registered modules**: effectMap, organList, cardList, relicList, potionList, enemyList, eventList
    - All data modules are preloaded in `main.ts` before the app starts
 
@@ -755,4 +767,134 @@ When creating new systems, consider:
 - What are the common operations users will need?
 - Can we provide a simple hook for the 80% use case?
 - Is the low-level API still accessible for the 20% edge cases?
+
+## In-Game Developer Console
+
+**IMPORTANT:** When the user mentions "控制台" (console), they are referring to the **in-game developer console**, NOT the browser's developer console.
+
+### Overview
+
+The game has a built-in developer console for testing and debugging during development. It provides a command-line interface within the game for executing commands.
+
+**Location:**
+- UI Component: `src/ui/page/tool/console/DevConsole.vue`
+- Command Registry: `src/core/utils/consoleCommandRegistry.ts`
+
+**Opening the Console:**
+- Press the designated hotkey in-game (implementation-specific)
+- Or call `window.openConsole()` from browser console
+
+### Console Architecture
+
+**Two Systems:**
+
+1. **Simple Command System (Current)**
+   - Commands are defined directly in `DevConsole.vue`
+   - Uses function call syntax: `commandName(arg1, arg2)`
+   - Examples: `enterRoom("battle_normal_slime", 1)`, `gameOver()`
+
+2. **Registry System (Available but not yet used)**
+   - `consoleCommandRegistry` in `src/core/utils/consoleCommandRegistry.ts`
+   - Allows mods to register custom commands
+   - More structured with metadata (name, description, usage, examples)
+
+### Adding New Console Commands
+
+**Method 1: Direct Implementation (Current Approach)**
+
+Add to `DevConsole.vue`:
+
+```typescript
+// 1. Add the function implementation
+async function myNewCommand(arg1: string, arg2?: number) {
+    addOutput(`Executing command with ${arg1}, ${arg2}`, 'info')
+    // ... command logic
+    addOutput('✓ Command completed', 'result')
+}
+
+// 2. Add to executeFunction switch
+async function executeFunction(funcName: string, args: any[]) {
+    switch (funcName) {
+        // ... existing cases
+        case 'myNewCommand':
+            await myNewCommand(args[0], args[1])
+            break
+        // ...
+    }
+}
+
+// 3. Add to help text
+function showHelp() {
+    // ... existing help
+    addOutput('myNewCommand("arg1", arg2?) - Description of command', 'info')
+    addOutput('  例如: myNewCommand("test", 123)', 'info')
+}
+```
+
+**Method 2: Using Registry System (Future)**
+
+```typescript
+import { registerConsoleCommand } from '@/core/utils/consoleCommandRegistry'
+
+registerConsoleCommand({
+    name: 'myCommand',
+    description: 'Does something useful',
+    usage: 'myCommand(arg1, arg2?)',
+    examples: ['myCommand("test", 123)'],
+    execute: async (args, addOutput) => {
+        addOutput(`Executing with ${args[0]}`, 'info')
+        // ... command logic
+        addOutput('✓ Done', 'result')
+    }
+})
+```
+
+### Available Console Commands
+
+Current commands in the game console:
+
+```
+listRooms() - 列出所有房间
+listRooms("类型") - 列出指定类型的房间
+  例如: listRooms("battle")
+
+enterRoom("房间key") - 进入指定房间
+enterRoom("房间key", 层级) - 进入指定房间并设置层级
+  例如: enterRoom("battle_normal_slime", 1)
+
+gameOver() - 触发游戏失败
+  例如: gameOver()
+
+clear - 清空控制台
+help - 显示帮助信息
+```
+
+### Console vs Browser Console
+
+**In-Game Console:**
+- User-facing debugging tool
+- Simplified command syntax
+- Integrated with game UI
+- Safe for players to use
+- Commands added here should be useful for testing/debugging
+
+**Browser Console:**
+- Developer-only tool
+- Full JavaScript access
+- Can break the game if misused
+- Used for deep debugging and development
+- Global functions exposed via `window` object (e.g., `window.openConsole()`)
+
+### When Adding Game Hooks
+
+When creating new hooks (like `game.ts`, `reward.ts`), consider:
+1. Should this be accessible from the in-game console?
+2. If yes, add a command to `DevConsole.vue`
+3. Keep command names simple and intuitive
+4. Provide clear help text with examples
+
+**Example from `game.ts` hook:**
+- Created `gameOver()` hook in `src/core/hooks/game.ts`
+- Added `gameOver()` command to in-game console
+- Added help text: `gameOver() - 触发游戏失败`
 

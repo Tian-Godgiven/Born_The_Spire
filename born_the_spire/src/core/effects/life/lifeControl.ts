@@ -4,6 +4,7 @@ import { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import { isEntity } from "@/core/utils/typeGuards"
 import { newError } from "@/ui/hooks/global/alert"
 import { newLog } from "@/ui/hooks/global/log"
+import { nowBattle } from "@/core/objects/game/battle"
 
 /**
  * 杀死目标
@@ -41,6 +42,30 @@ export const killTarget: EffectFunc = (event: ActionEvent, effect) => {
 
         // 将 isAlive 设置为 0
         changeCurrentValue(t, "isAlive", 0, event)
+
+        // 检查战斗是否应该结束
+        if (nowBattle.value && !nowBattle.value.isEnded) {
+            const battleResult = nowBattle.value.checkBattleEnd()
+            if (battleResult) {
+                // 使用私有方法访问需要改成公开方法，或者直接在这里处理
+                // 暂时通过设置 isEnded 标志，让 UI 响应
+                nowBattle.value.isEnded = true
+
+                // 触发 battleEnd 事件
+                import('@/core/objects/game/run').then(({ nowPlayer }) => {
+                    import('@/core/objects/system/ActionEvent').then(({ doEvent }) => {
+                        doEvent({
+                            key: "battleEnd",
+                            source: nowPlayer,
+                            medium: nowPlayer,
+                            target: nowPlayer,
+                            info: { result: battleResult === 'player_win' ? 'win' : 'lose' },
+                            effectUnits: []
+                        })
+                    })
+                })
+            }
+        }
     })
 
     return true

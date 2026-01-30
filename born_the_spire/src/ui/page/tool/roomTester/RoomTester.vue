@@ -64,7 +64,6 @@ onMounted(() => {
 
 // 进入指定房间
 async function enterRoom(roomKey: string) {
-    console.log(`[RoomTester] 进入房间: ${roomKey}, 层级: ${layer.value}`)
 
     const room = roomRegistry.createRoom(roomKey, layer.value)
 
@@ -81,7 +80,6 @@ async function enterRoom(roomKey: string) {
     }
 
     await nowGameRun.enterRoom(room)
-    console.log(`[RoomTester] 成功进入房间: ${roomKey}`)
 
     // 如果不在 running 页面，跳转过去
     if (router.currentRoute.value.path !== '/running') {

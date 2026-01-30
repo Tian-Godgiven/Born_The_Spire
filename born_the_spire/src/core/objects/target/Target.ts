@@ -40,24 +40,25 @@ export class Chara extends Target{
         super(map)
 
         // 添加默认的死亡触发器
+        // 监听 healthReachMin 事件，触发 dead 事件
         // 使用 onlyKey 机制，允许被子类或配置覆盖
-        this.appendTrigger({
+        this.trigger.appendTrigger({
             when: "after",
             how: "take",
             key: "healthReachMin",
-            onlyKey: "default_death_on_health_zero",
             importantKey: "death_behavior",
+            onlyKey: "default_death_on_health_zero",
             callback: (event) => {
-                // 默认行为：生命归0时立即死亡
+                // 默认行为：生命归0时触发死亡事件
                 doEvent({
-                    key: "kill",
+                    key: "dead",
                     source: event.source,
                     medium: event.medium,
                     target: this,
-                    info: { reason: "生命值达到下限" },
+                    info: { reason: "生命值归0" },
                     effectUnits: [{
-                        key: "kill",
-                        params: { reason: "生命值达到下限" }
+                        key: "kill",  // 使用 effectMap 中注册的 key
+                        params: {}
                     }]
                 })
             }

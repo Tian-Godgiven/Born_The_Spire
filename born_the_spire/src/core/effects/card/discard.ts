@@ -8,35 +8,37 @@ import { isCard } from "@/core/utils/typeGuards";
 
 //从指定牌堆丢弃指定的卡牌到弃牌堆
 export const discardCard:EffectFunc = (event,effect)=>{
-    const {target} = event
+    const {medium, target} = event
     //只有玩家对象具备卡牌
-    if(target instanceof Player == false) return;
+    if(medium instanceof Player == false) return;
     //来源的牌堆存储在params中
     const pileName = effect.params.sourcePileName as keyof CardPiles
     const pile = effect.params.sourcePile as Card[]
-    const sourcePile = pile??target.cardPiles[pileName]
-    //丢弃的目标存储在params中
-    const card = effect.params.card as Card|Card[]
-    handleEventEntity(card,(e)=>{
-        //移动到弃牌堆
-        cardMove(sourcePile,e,target.cardPiles.discardPile)
+    const sourcePile = pile??medium.cardPiles[pileName]
+    //丢弃的目标是 event.target（卡牌或卡牌数组）
+    handleEventEntity(target,(card)=>{
+        if (isCard(card)) {
+            //移动到弃牌堆
+            cardMove(sourcePile,card,medium.cardPiles.discardPile)
+        }
     })
 }
 
 //指定的卡牌使用完毕
 export const pay_discardCard:EffectFunc = (event,effect)=>{
-    const {source} = event
+    const {source, target} = event
     //只有玩家对象具备卡牌
     if(source instanceof Player == false) return;
     //来源的牌堆存储在params中
     const pileName = effect.params.sourcePileName as keyof CardPiles
     const pile = effect.params.sourcePile as Card[]
     const sourcePile = pile??source.cardPiles[pileName]
-    //丢弃的目标存储在params中
-    const card = effect.params.card as Card|Card[]
-    handleEventEntity(card,(e)=>{
-        //移动到弃牌堆
-        cardMove(sourcePile,e,source.cardPiles.discardPile)
+    //丢弃的目标是 event.target（卡牌或卡牌数组）
+    handleEventEntity(target,(card)=>{
+        if (isCard(card)) {
+            //移动到弃牌堆
+            cardMove(sourcePile,card,source.cardPiles.discardPile)
+        }
     })
 }
 
@@ -70,7 +72,7 @@ export const pay_exhaustCard:EffectFunc = (event,effect)=>{
 
 //丢弃目标的所有卡牌
 export const discardAllCard:EffectFunc = async(event,effect)=>{
-    const {source,medium,target} = event
+    const {source,target} = event
     //只有玩家对象具备卡牌
     if(target instanceof Player == false) return;
     const player = target
@@ -79,14 +81,16 @@ export const discardAllCard:EffectFunc = async(event,effect)=>{
     if(pile.length == 0) return;
     //复制数组，避免在遍历时修改原数组
     const cardsToDiscard = [...pile]
-    //丢弃这些卡牌,每一张卡牌都会响应一次触发器
+    //创建一个 discard 事件，target 是卡牌数组
     doEvent({
-        key:"discardAllCard",
-        source,medium,target,
+        key:"discard",
+        source,
+        medium:player,
+        target:cardsToDiscard,
         effectUnits:[{
             "key":"discard",
             "describe":[`丢弃卡牌`],
-            "params":{sourcePileName:pileName,card:cardsToDiscard}
+            "params":{sourcePileName:pileName}
         }]
     })
 }

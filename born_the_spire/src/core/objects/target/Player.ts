@@ -12,7 +12,6 @@ import { getReserveModifier } from "../system/modifier/ReserveModifier";
 import { getStatusValue } from "../system/status/Status";
 import { getPotionModifier } from "../system/modifier/PotionModifier";
 import { getCardModifier } from "../system/modifier/CardModifier";
-import { getOrganModifier } from "../system/modifier/OrganModifier";
 import { doEvent } from "../system/ActionEvent";
 
 export type CardPiles = {
@@ -39,9 +38,6 @@ export class Player extends Chara{
     constructor(map:PlayerMap){
         super(map)
 
-        console.log('[Player] 构造函数开始，map.organ:', map.organ)
-        console.log('[Player] 构造函数开始，map.card:', map.card)
-
         //玩家特有内容的初始化
 
         // 初始化储备（金钱等）
@@ -61,13 +57,7 @@ export class Player extends Chara{
 
         //获取初始拥有的卡组（来源是玩家自身）
         const cardModifier = getCardModifier(this)
-        const addedCards = cardModifier.addCardsFromSource(this, map.card)
-        console.log('[Player] 构造函数结束，添加的卡牌数量:', addedCards.length)
-
-        // 检查器官
-        const organModifier = getOrganModifier(this)
-        console.log('[Player] 构造函数结束，器官数量:', organModifier.getOrgans().length)
-        console.log('[Player] 构造函数结束，卡组总数:', cardModifier.getAllCards().length)
+        cardModifier.addCardsFromSource(this, map.card)
     }
     
     //获取自身
@@ -99,34 +89,15 @@ export class Player extends Chara{
 
     //战斗开始
     startBattle(){
+        //清理所有可清理的属性修饰器（双重保险，防止异常残留）
+        for(const statusKey in this.status){
+            this.status[statusKey].clearClearableModifiers()
+        }
+
         //初始化牌堆:洗牌+清空牌堆
         this.initCardPile()
         //初始化状态：清空状态栏
         this.initState()
-        //初始化属性：所有属性变成默认值
-        // refreshAllStatus(this)
-
-        //添加默认弃牌触发器（回合结束时弃掉所有手牌）
-        this.trigger.appendTrigger({
-            when: "after",
-            how: "take",  // 玩家作为目标被结束回合时
-            key: "turnEnd",
-            importantKey: "discardOnTurnEnd",
-            onlyKey: "discardAll",
-            callback: (event) => {
-                // 弃掉所有手牌
-                doEvent({
-                    key: "discardAllHandCard",
-                    source: this,
-                    medium: this,
-                    target: this,
-                    effectUnits: [{
-                        key: "discardAllCard",
-                        params: { pileName: "handPile" }
-                    }]
-                })
-            }
-        })
     }
     //从抽牌堆中抽牌
     drawCard(number:number,medium:Entity){

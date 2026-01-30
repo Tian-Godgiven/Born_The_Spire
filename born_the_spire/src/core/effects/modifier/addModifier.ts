@@ -3,6 +3,8 @@ import { EffectFunc } from "@/core/objects/system/effect/EffectFunc";
 import { newError } from "@/ui/hooks/global/alert";
 import { isEntity } from "@/core/utils/typeGuards";
 import { Effect } from "@/core/objects/system/effect/Effect";
+import { resolveTriggerEventTarget } from "@/core/objects/system/trigger/Trigger";
+import { Entity } from "@/core/objects/system/Entity";
 
 /**
  * 添加状态修饰器到目标
@@ -99,19 +101,24 @@ export const addTriggerToTarget: EffectFunc = (event, effect) => {
             level: levelNum,
             callback: (triggerEvent: ActionEvent, _triggerEffect: Effect | null, _triggerLevel: number = 0) => {
                 // 确定事件目标
-                let eventTarget = entity;
+                let eventTarget: Entity | Entity[] = entity;
                 const triggerEventConfig = effect.params.triggerEvent as Record<string, any>;
 
                 // 使用 resolveTriggerEventTarget 解析目标
                 if (triggerEventConfig.targetType) {
-                    const { resolveTriggerEventTarget } = require("@/core/objects/system/trigger/Trigger");
-                    eventTarget = resolveTriggerEventTarget(
+                    const resolved = resolveTriggerEventTarget(
                         triggerEventConfig.targetType,
                         triggerEvent,
                         _triggerEffect,
-                        source,
+                        source as Entity,
                         entity
                     );
+                    // 确保 resolved 是 Entity 或 Entity[]
+                    if (Array.isArray(resolved)) {
+                        eventTarget = resolved.filter(e => isEntity(e)) as Entity[];
+                    } else if (isEntity(resolved)) {
+                        eventTarget = resolved;
+                    }
                 }
 
                 // 触发事件

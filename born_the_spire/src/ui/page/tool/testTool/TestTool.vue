@@ -114,22 +114,7 @@
     },{
         text:"获得生命药剂",
         click:()=>{
-            const modifier1 = getPotionModifier(nowPlayer)
-            console.log("获得前 modifier:", modifier1, "units:", modifier1.getUnits().length)
-
             nowPlayer.getPotion("original_potion_00001")
-
-            const modifier2 = getPotionModifier(nowPlayer)
-            console.log("获得后 modifier:", modifier2, "units:", modifier2.getUnits().length)
-            console.log("是同一个实例?", modifier1 === modifier2)
-        }
-    },{
-        text:"调试：打印药水状态",
-        click:()=>{
-            const potionModifier = getPotionModifier(nowPlayer)
-            console.log("PotionModifier units:", potionModifier.getUnits())
-            console.log("Potions computed:", potionModifier.potions.value)
-            // console.log("Player.potions (旧):", nowPlayer.potions)
         }
     }]
 </script>

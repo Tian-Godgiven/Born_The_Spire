@@ -14,7 +14,7 @@ export const healthMap: CurrentMap<Chara> = {
             source: event.source,
             medium: event.medium,
             target: owner,
-            info: { reason: "生命值达到下限" },
+            info: { reason: "生命值归0" },
             effectUnits: []
         })
     }

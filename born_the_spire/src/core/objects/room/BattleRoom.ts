@@ -4,9 +4,8 @@ import { Enemy } from "../target/Enemy"
 import { EnemyMap } from "@/static/list/target/enemyList"
 import { newLog } from "@/ui/hooks/global/log"
 import { getLazyModule } from "@/core/utils/lazyLoader"
-import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
-import { nowPlayer } from "@/core/objects/game/run"
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
+import { nowPlayer } from "@/core/objects/game/run"
 
 /**
  * 战斗房间配置
@@ -123,11 +122,21 @@ export class BattleRoom extends Room {
      * 离开战斗房间
      */
     async exit(): Promise<void> {
-        // 清理战斗状态
+        newLog([`===== 离开${this.getDisplayName()} =====`])
+
+        // 清理 targetManager 中的目标
+        const { targetManager } = await import("@/ui/interaction/target/targetManager")
+        this.enemies.forEach(enemy => {
+            targetManager.removeTarget(enemy)
+        })
+
+        // 清理全局战斗状态
+        const { endNowBattle } = await import("../game/battle")
+        endNowBattle()
+
+        // 清理本地战斗状态
         this.battle = null
         this.enemies = []
-
-        newLog([`===== 离开${this.getDisplayName()} =====`])
     }
 
     /**
@@ -154,103 +163,166 @@ export class BattleRoom extends Room {
      * 普通战斗奖励
      * - 吞噬物质
      * - 同化器官（3选1）
+     * - 药水（概率掉落）
      */
     private async handleNormalRewards(): Promise<void> {
         newLog(["普通战斗奖励："])
 
-        // 1. 计算并给予物质奖励（根据层级）
-        const materialReward = this.calculateMaterialReward()
-        newLog([`吞噬物质: +${materialReward}`])
+        const rewards = []
 
-        const reserveModifier = getReserveModifier(nowPlayer)
-        reserveModifier.gainReserve("material", materialReward, nowPlayer)
+        // 1. 计算物质奖励（根据层级）
+        const materialReward = this.calculateMaterialReward()
+
+        // 创建物质奖励对象
+        const { rewardRegistry } = await import("@/static/registry/rewardRegistry")
+        const materialRewardObj = rewardRegistry.createReward({
+            type: "material",
+            amount: materialReward
+        })
+        if (materialRewardObj) {
+            rewards.push(materialRewardObj)
+        }
 
         // 2. 收集所有敌人的器官
         const allOrganKeys = this.collectEnemyOrgans()
 
-        if (allOrganKeys.length === 0) {
+        if (allOrganKeys.length > 0) {
+            // 3. 随机选择3个器官（如果不足3个则全部显示）
+            const selectedOrganKeys = this.selectRandomOrgans(allOrganKeys, 3)
+
+            // 4. 创建器官选择奖励
+            const organReward = rewardRegistry.createReward({
+                type: "organSelect",
+                organOptions: selectedOrganKeys,
+                selectCount: 1
+            })
+
+            if (organReward) {
+                rewards.push(organReward)
+            }
+        } else {
             newLog(["敌人没有可同化的器官"])
-            return
         }
 
-        // 3. 随机选择3个器官（如果不足3个则全部显示）
-        const selectedOrganKeys = this.selectRandomOrgans(allOrganKeys, 3)
-        newLog([`可同化器官（${selectedOrganKeys.length}选1）:`])
+        // 5. 药水掉落（概率）
+        const potionReward = await this.tryGeneratePotionReward()
+        if (potionReward) {
+            rewards.push(potionReward)
+        }
 
-        const organList = getLazyModule<any[]>('organList')
-        selectedOrganKeys.forEach(key => {
-            try {
-                const organ = organList.find(o => o.key === key)
-                if (organ) {
-                    newLog([`  - ${organ.label}`])
-                } else {
-                    newLog([`  - ${key} (未找到)`])
-                }
-            } catch (e) {
-                newLog([`  - ${key} (未找到)`])
-            }
-        })
-
-        // TODO: 显示奖励选择UI
-        newLog(["器官选择 UI 尚未实现，请等待后续开发"])
+        // 6. 显示奖励页面并等待玩家完成选择
+        if (rewards.length > 0) {
+            const { showRewards } = await import("@/ui/hooks/interaction/rewardDisplay")
+            await showRewards(rewards, "战斗胜利", "选择你的奖励")
+        }
     }
 
     /**
      * 精英战斗奖励
      * - 普通奖励
-     * - 遗物奖励
+     * - 遗物奖励（3选1）
      */
     private async handleEliteRewards(): Promise<void> {
         newLog(["精英战斗奖励："])
 
-        // 先给予普通奖励
-        await this.handleNormalRewards()
+        const rewards = []
 
-        // 额外给予遗物奖励
-        newLog(["遗物奖励（3选1）:"])
-        // TODO: 实现遗物选择逻辑
-        newLog(["遗物选择 UI 尚未实现，请等待后续开发"])
+        // 1. 计算物质奖励（根据层级）
+        const materialReward = this.calculateMaterialReward()
+
+        // 创建物质奖励对象
+        const { rewardRegistry } = await import("@/static/registry/rewardRegistry")
+        const materialRewardObj = rewardRegistry.createReward({
+            type: "material",
+            amount: materialReward
+        })
+        if (materialRewardObj) {
+            rewards.push(materialRewardObj)
+        }
+
+        // 2. 器官选择
+        const allOrganKeys = this.collectEnemyOrgans()
+        if (allOrganKeys.length > 0) {
+            const selectedOrganKeys = this.selectRandomOrgans(allOrganKeys, 3)
+            const organReward = rewardRegistry.createReward({
+                type: "organSelect",
+                organOptions: selectedOrganKeys,
+                selectCount: 1
+            })
+            if (organReward) {
+                rewards.push(organReward)
+            }
+        }
+
+        // 3. 遗物选择（3选1）
+        const relicReward = await this.generateRelicSelectReward(3, 1)
+        if (relicReward) {
+            rewards.push(relicReward)
+        }
+
+        // 4. 药水掉落（概率）
+        const potionReward = await this.tryGeneratePotionReward()
+        if (potionReward) {
+            rewards.push(potionReward)
+        }
+
+        // 5. 显示奖励页面
+        if (rewards.length > 0) {
+            const { showRewards } = await import("@/ui/hooks/interaction/rewardDisplay")
+            await showRewards(rewards, "精英战斗胜利", "选择你的奖励")
+        }
     }
 
     /**
      * Boss战斗奖励
-     * - 吞噬物质
-     * - Boss器官（指定选择1个）
+     * - 吞噬物质（双倍）
+     * - Boss器官（所有器官选1）
      * - Boss遗物（3选1）
      */
     private async handleBossRewards(): Promise<void> {
         newLog(["Boss战斗奖励："])
 
-        // 1. 给予更多物质奖励
-        const materialReward = this.calculateMaterialReward() * 2
-        newLog([`吞噬物质: +${materialReward}`])
+        const rewards = []
 
-        const reserveModifier = getReserveModifier(nowPlayer)
-        reserveModifier.gainReserve("material", materialReward, nowPlayer)
+        // 1. 给予更多物质奖励（双倍）
+        const materialReward = this.calculateMaterialReward() * 2
+
+        // 创建物质奖励对象
+        const { rewardRegistry } = await import("@/static/registry/rewardRegistry")
+        const materialRewardObj = rewardRegistry.createReward({
+            type: "material",
+            amount: materialReward
+        })
+        if (materialRewardObj) {
+            rewards.push(materialRewardObj)
+        }
 
         // 2. Boss器官（所有器官都可选择）
         const allOrganKeys = this.collectEnemyOrgans()
-        newLog([`Boss器官（${allOrganKeys.length}选1）:`])
-
-        const organList = getLazyModule<any[]>('organList')
-        allOrganKeys.forEach(key => {
-            try {
-                const organ = organList.find(o => o.key === key)
-                if (organ) {
-                    newLog([`  - ${organ.label}`])
-                } else {
-                    newLog([`  - ${key} (未找到)`])
-                }
-            } catch (e) {
-                newLog([`  - ${key} (未找到)`])
+        if (allOrganKeys.length > 0) {
+            const organReward = rewardRegistry.createReward({
+                type: "organSelect",
+                organOptions: allOrganKeys,
+                selectCount: 1,
+                title: "Boss器官",
+                description: "选择一个强大的Boss器官"
+            })
+            if (organReward) {
+                rewards.push(organReward)
             }
-        })
+        }
 
-        // 3. Boss遗物
-        newLog(["Boss遗物（3选1）:"])
+        // 3. Boss遗物（3选1）
+        const relicReward = await this.generateRelicSelectReward(3, 1, "Boss遗物")
+        if (relicReward) {
+            rewards.push(relicReward)
+        }
 
-        // TODO: 显示奖励选择UI
-        newLog(["Boss奖励选择 UI 尚未实现，请等待后续开发"])
+        // 4. 显示奖励页面
+        if (rewards.length > 0) {
+            const { showRewards } = await import("@/ui/hooks/interaction/rewardDisplay")
+            await showRewards(rewards, "Boss战斗胜利", "选择你的奖励")
+        }
     }
 
     /**
@@ -293,6 +365,80 @@ export class BattleRoom extends Room {
         // 随机打乱并选择前 count 个
         const shuffled = [...organKeys].sort(() => Math.random() - 0.5)
         return shuffled.slice(0, count)
+    }
+
+    /**
+     * 生成遗物选择奖励
+     * @param optionCount 可选遗物数量
+     * @param selectCount 可选择数量
+     * @param title 标题（可选）
+     */
+    private async generateRelicSelectReward(
+        optionCount: number,
+        selectCount: number,
+        title?: string
+    ): Promise<any> {
+        const relicList = getLazyModule<any[]>('relicList')
+
+        // 随机选择遗物
+        const shuffled = [...relicList].sort(() => Math.random() - 0.5)
+        const selectedRelics = shuffled.slice(0, optionCount)
+
+        if (selectedRelics.length === 0) {
+            console.warn("[BattleRoom] 没有可用的遗物")
+            return null
+        }
+
+        const { rewardRegistry } = await import("@/static/registry/rewardRegistry")
+        return rewardRegistry.createReward({
+            type: "relicSelect",
+            relicOptions: selectedRelics,
+            selectCount,
+            title: title || "选择遗物",
+            description: `从 ${selectedRelics.length} 个遗物中选择 ${selectCount} 个`
+        })
+    }
+
+    /**
+     * 尝试生成药水奖励（基于掉落概率）
+     */
+    private async tryGeneratePotionReward(): Promise<any> {
+        // 获取药水掉落概率
+        const potionDropChance = this.getPotionDropChance()
+
+        // 随机判断是否掉落
+        if (Math.random() > potionDropChance) {
+            return null
+        }
+
+        // 随机选择一个药水
+        const potionList = getLazyModule<any[]>('potionList')
+        if (potionList.length === 0) {
+            return null
+        }
+
+        const randomPotion = potionList[Math.floor(Math.random() * potionList.length)]
+
+        const { rewardRegistry } = await import("@/static/registry/rewardRegistry")
+        return rewardRegistry.createReward({
+            type: "potion",
+            potionConfig: randomPotion
+        })
+    }
+
+    /**
+     * 获取药水掉落概率
+     * 优先从玩家属性读取，否则使用默认值
+     */
+    private getPotionDropChance(): number {
+        // 尝试从玩家的 status 中读取药水掉落概率
+        const potionChanceStatus = nowPlayer.status["potion-drop-chance"]
+        if (potionChanceStatus) {
+            return potionChanceStatus.value
+        }
+
+        // 默认掉落概率：40%
+        return 0.4
     }
 
     /**

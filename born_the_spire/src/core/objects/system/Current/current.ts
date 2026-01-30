@@ -139,12 +139,17 @@ function getCurrentMaxOrMin(owner:Entity,maxOrMin:string|number){
 export function changeCurrentValue(target:Entity,key:string,newValue:number,event:ActionEvent):false|number{
     const current = target.current[key]
     if(current){
+
         //超出上限的情况
         let result = changeCurrentOverMax(target,current,newValue,event)
-        if(result !== true)return result
+        if(result !== true){
+            return result
+        }
         //超出下限的情况
         let result2 = changeCurrentOverMin(target,current,newValue,event)
-        if(result2 !== true)return result2
+        if(result2 !== true){
+            return result2
+        }
 
         //没有提前结束，则修改为新的值，并返回修改值
         const nowValue = current.value
@@ -192,21 +197,22 @@ function changeCurrentOverMax(target:Entity,current:Current,newValue:number,even
 //修改超出下限值
 function changeCurrentOverMin(target:Entity,current:Current,newValue:number,event:ActionEvent):boolean|number{
     const minBy = current.options.minBy
-    //没有上限返回true即可
-    if(!minBy)return true
-    //当前值上限和当前值
+    //没有下限返回true即可
+    if(minBy === undefined || minBy === null)return true
+    //当前值下限和当前值
     const minValue = getCurrentMaxOrMin(target,minBy)
     const nowValue = current._value.value
-    
+
+
     let res:boolean|number = true
     //超过了下限
     if(newValue < minValue){
         switch(current.options.allowOverMin){
             case false:
-                //禁止超过上限的修改
+                //禁止超过下限的修改
                 return false;
             case true:
-                //允许超过，但返回值是当前值和最大值的差值
+                //允许超过，但返回值是当前值和最小值的差值
                 res = nowValue - minValue
                 break;
             case "breakdown":
@@ -215,9 +221,9 @@ function changeCurrentOverMin(target:Entity,current:Current,newValue:number,even
                 break;
         }
     }
-    //达到上限
+    //达到下限
     if(newValue <= minValue){
-        //触发上限回调
+        //触发下限回调
         current.options.reachMin?.(event,target,current)
     }
     return res

@@ -78,7 +78,7 @@ export const entryDefinitions: Record<string, EntryDefinition> = {
                 player,  // target (触发器持有者)
                 {
                     when: "before",  // 在回合结束前，卡牌被丢弃之前
-                    how: "make",
+                    how: "take",     // 玩家被结束回合
                     key: "turnEnd",
                     event: [{
                         key: "voidExhaust",

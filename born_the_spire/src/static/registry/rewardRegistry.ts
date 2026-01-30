@@ -36,7 +36,6 @@ class RewardRegistry {
         }
 
         this.rewardTypes.set(type, { rewardClass })
-        console.log(`[RewardRegistry] 注册奖励类型: ${type}`)
     }
 
     /**
@@ -60,7 +59,6 @@ class RewardRegistry {
 
         try {
             const reward = new typeRegistration.rewardClass(config)
-            console.log(`[RewardRegistry] 创建奖励实例: ${config.type}`)
             return reward
         } catch (error) {
             console.error(`[RewardRegistry] 创建奖励实例失败: ${config.type}`, error)

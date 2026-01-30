@@ -12,45 +12,36 @@ registerComponent("OrganUpgradeChoice", OrganUpgradeChoice);
 
 // 预加载所有数据层模块（避免循环依赖）
 preloadAllLazyModules().then(() => {
-    console.log('[Main] 数据预加载完成')
 
     // 初始化依赖懒加载数据的对象
-    console.log('[Main] 初始化黑市物品池...')
     initBlackStoreItemPools()
 
-    console.log('[Main] 初始化默认游戏对象...')
     initDefaultGameObjects()
 
     // 注册所有房间类型（需要在懒加载完成后）
-    console.log('[Main] 注册房间类型...')
     import('@/static/registry/roomRegistry').then(({ initAllRooms }) => {
-        initAllRooms().then(() => {
-            console.log('[Main] 房间注册完成')
-        })
+        initAllRooms()
     })
 
     // 注册所有印记（需要在懒加载完成后）
-    console.log('[Main] 注册印记...')
     import('@/static/registry/markRegistry').then(({ initAllMarks }) => {
-        initAllMarks().then(() => {
-            console.log('[Main] 印记注册完成')
-        })
+        initAllMarks()
     })
 
     // 注册所有层级（需要在懒加载完成后）
-    console.log('[Main] 注册层级...')
     import('@/static/registry/floorRegistry').then(({ initAllFloors }) => {
-        initAllFloors().then(() => {
-            console.log('[Main] 层级注册完成')
-        })
+        initAllFloors()
     })
 
-    console.log('[Main] 启动 Vue 应用...')
+    // 注册所有奖励类型（需要在懒加载完成后）
+    import('@/static/registry/initRewardRegistry').then(({ initRewardRegistry }) => {
+        initRewardRegistry()
+    })
+
     createApp(App)
         .use(router)
         .mount("#app");
 
-    console.log('[Main] 应用启动完成')
 }).catch(error => {
     console.error('[Main] 数据预加载失败:', error)
 });

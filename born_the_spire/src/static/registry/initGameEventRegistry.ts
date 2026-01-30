@@ -12,7 +12,6 @@ import { RoomSelectEvent } from "@/core/objects/system/RoomSelectEvent"
  * 在应用启动时调用
  */
 export function initGameEventRegistry(): void {
-    console.log("[initGameEventRegistry] 开始初始化事件注册表")
 
     // 注册基础事件类型
     gameEventRegistry.registerEventType("choice", ChoiceEvent)
@@ -23,7 +22,6 @@ export function initGameEventRegistry(): void {
     // gameEventRegistry.registerEventType("storeEvent", StoreEvent)
     // gameEventRegistry.registerEventType("randomEvent", RandomEvent)
 
-    console.log("[initGameEventRegistry] 事件注册表初始化完成")
 }
 
 /**

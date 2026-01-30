@@ -21,20 +21,33 @@ export const playerList:Record<string,PlayerMap> = {
             "max-health":50,//最大生命值
             "max-energy":3,//最大能量
             "max-potion":3,//最大药水数量
+            "draw-per-turn":5,//每回合抽牌数
         },
         current:["health","energy","isAlive"],
-        //默认触发器：回合开始时抽5张卡牌
+        //默认触发器：回合开始时抽牌（数量由 draw-per-turn 属性决定）
         trigger:[
             {when:"after",how:"take",key:"turnStart","event":[{
                 key:"turnStartDrawCard",
                 label:"回合开始时抽卡",
                 targetType:"triggerOwner",
                 effect:[
-                    {key:"drawFromDrawPile",params:{value:5}}
+                    {key:"drawFromDrawPile",params:{value:{fromStatus:"draw-per-turn"}}}
                 ]
             }],
             importantKey:"turnStart_drawCard",
             onlyKey:"turnStart_drawCard"
+        },
+        // 回合结束时弃掉所有手牌
+        {when:"after",how:"take",key:"turnEnd","event":[{
+            key:"discardAllHandCard",
+            label:"回合结束时弃牌",
+            targetType:"triggerOwner",
+            effect:[
+                {key:"discardAllCard",params:{pileName:"handPile"}}
+            ]
+        }],
+        importantKey:"discardOnTurnEnd",
+        onlyKey:"discardAll"
         }
         ],
         potion:{
@@ -45,9 +58,11 @@ export const playerList:Record<string,PlayerMap> = {
             "test_organ_cards_002",  // 狂暴腺体 - 提供消耗打击和肌肉强化
         ],
         card:[
+                "original_card_00013",  // 发现 - 测试卡牌选择
+                "original_card_00013",  // 发现 x2 - 方便测试
                 "original_card_00010",  // 虚弱诅咒 - 测试虚弱状态
                 "original_card_00011",  // 易伤打击 - 测试易伤状态
-                "original_card_00001",  // 打击 x10 - 测试基础卡牌
+                "original_card_00001",  // 打击 x3
                 "original_card_00001",
                 "original_card_00001",
                 "original_card_00012",  // 固有打击 - 测试固有词条

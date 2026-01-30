@@ -60,7 +60,6 @@ export class FloorManager {
 
         this.currentFloorKey = floorKey
         this.roomHistory = []  // 切换层级时重置房间历史
-        console.log(`[FloorManager] 切换到层级: ${floorKey} (${floor.name})`)
     }
 
     /**
@@ -68,7 +67,6 @@ export class FloorManager {
      */
     advanceFloor(): void {
         this.currentFloor++
-        console.log(`[FloorManager] 前进到第 ${this.currentFloor} 层房间`)
     }
 
     /**
@@ -76,7 +74,6 @@ export class FloorManager {
      */
     recordRoom(roomType: RoomType): void {
         this.roomHistory.push(roomType)
-        console.log(`[FloorManager] 记录房间: ${roomType}`)
     }
 
     /**
@@ -158,18 +155,15 @@ export class FloorManager {
         // 按优先级应用规则
         for (const rule of rules) {
             if (rule.condition(context)) {
-                console.log(`[FloorManager] 应用规则: ${rule.name}`)
                 const result = rule.effect(weights)
 
                 // 如果规则返回固定房间列表（string[]）
                 if (Array.isArray(result)) {
-                    console.log(`[FloorManager] 固定房间列表:`, result)
                     return result
                 }
 
                 // 如果规则返回强制类型（string）
                 if (typeof result === "string") {
-                    console.log(`[FloorManager] 强制房间类型: ${result}`)
                     return result as RoomType
                 }
 
@@ -341,7 +335,6 @@ export class FloorManager {
         this.currentFloor = 0
         this.currentFloorKey = null
         this.roomHistory = []
-        console.log("[FloorManager] 楼层管理器已重置")
     }
 }
 

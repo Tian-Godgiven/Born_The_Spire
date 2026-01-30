@@ -171,7 +171,6 @@ export const customRoomGenerationRules: RoomGenerationRule[] = []
  */
 export function registerRoomGenerationRule(rule: RoomGenerationRule): void {
     customRoomGenerationRules.push(rule)
-    console.log(`[RoomGeneration] 注册自定义规则: ${rule.name}`)
 }
 
 /**

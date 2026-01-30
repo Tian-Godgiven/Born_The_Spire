@@ -5,6 +5,8 @@
     </div>
     <!-- 动态组件容器 -->
     <DynamicComponentContainer />
+    <!-- 确认弹窗 -->
+    <ConfirmModal />
   </main>
 </template>
 
@@ -14,6 +16,7 @@ import { RouterView } from 'vue-router';
 import router from './ui/router';
 import { onMousemove } from './ui/hooks/global/mousePosition';
 import DynamicComponentContainer from './ui/components/global/DynamicComponentContainer.vue';
+import ConfirmModal from './ui/components/interaction/ConfirmModal.vue';
 
 onMounted(()=>{
     router.replace("/")

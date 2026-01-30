@@ -5,8 +5,10 @@
 
 import { rewardRegistry } from "./rewardRegistry"
 import { GoldReward } from "@/core/objects/reward/GoldReward"
+import { MaterialReward } from "@/core/objects/reward/MaterialReward"
 import { OrganSelectReward } from "@/core/objects/reward/OrganSelectReward"
 import { RelicReward } from "@/core/objects/reward/RelicReward"
+import { RelicSelectReward } from "@/core/objects/reward/RelicSelectReward"
 import { PotionReward } from "@/core/objects/reward/PotionReward"
 
 /**
@@ -14,15 +16,15 @@ import { PotionReward } from "@/core/objects/reward/PotionReward"
  * 在应用启动时调用
  */
 export function initRewardRegistry(): void {
-    console.log("[initRewardRegistry] 开始初始化奖励注册表")
 
     // 注册基础奖励类型
     rewardRegistry.registerRewardType("gold", GoldReward)
+    rewardRegistry.registerRewardType("material", MaterialReward)
     rewardRegistry.registerRewardType("organSelect", OrganSelectReward)
     rewardRegistry.registerRewardType("relic", RelicReward)
+    rewardRegistry.registerRewardType("relicSelect", RelicSelectReward)
     rewardRegistry.registerRewardType("potion", PotionReward)
 
-    console.log("[initRewardRegistry] 奖励注册表初始化完成")
 }
 
 /**

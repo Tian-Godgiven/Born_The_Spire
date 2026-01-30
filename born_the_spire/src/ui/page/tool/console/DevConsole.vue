@@ -114,6 +114,9 @@ async function executeFunction(funcName: string, args: any[]) {
         case 'listRooms':
             listRooms(args[0])
             break
+        case 'gameOver':
+            await triggerGameOver()
+            break
         case 'help':
             showHelp()
             break
@@ -176,6 +179,16 @@ function listRooms(type?: string) {
     addOutput('使用 enterRoom("房间key") 进入房间', 'info')
 }
 
+// 触发游戏失败
+async function triggerGameOver() {
+    addOutput('触发游戏失败...', 'info')
+
+    const { gameOver } = await import('@/core/hooks/game')
+    await gameOver()
+
+    addOutput('✓ 游戏失败已触发', 'result')
+}
+
 // 显示帮助
 function showHelp() {
     addOutput('=== 可用命令 ===', 'info')
@@ -187,6 +200,9 @@ function showHelp() {
     addOutput('enterRoom("房间key") - 进入指定房间', 'info')
     addOutput('enterRoom("房间key", 层级) - 进入指定房间并设置层级', 'info')
     addOutput('  例如: enterRoom("battle_normal_slime", 1)', 'info')
+    addOutput('', 'info')
+    addOutput('gameOver() - 触发游戏失败', 'info')
+    addOutput('  例如: gameOver()', 'info')
     addOutput('', 'info')
     addOutput('clear - 清空控制台', 'info')
     addOutput('help - 显示此帮助信息', 'info')

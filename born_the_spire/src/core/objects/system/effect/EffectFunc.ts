@@ -149,11 +149,9 @@ export async function doEffectFunc(effect: Effect, override_event?:Partial<Actio
 
         if (isModifyingEffect) {
             // 目标是效果对象，允许执行（修改参数）
-            console.log("[doEffectFunc] 模拟模式：执行参数修改效果", effect.key)
             // 继续执行...
         } else {
             // 目标是实体，跳过执行（修改状态）
-            console.log("[doEffectFunc] 模拟模式：跳过状态修改效果", effect.key)
             return undefined
         }
     }

@@ -3,7 +3,6 @@ import { EffectParams } from "./EffectFunc"
 import { ActionEvent } from "../ActionEvent"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { newError } from "@/ui/hooks/global/alert"
-import _ from "lodash"
 
 
 // 效果单元类型，这是效果对象存储在JSON中的格式
@@ -46,11 +45,12 @@ export function createEffectByUnit(event:ActionEvent,unit:EffectUnit):Effect{
         clonedParams = {...params}
     }
 
+    // 创建 Effect 对象（会在构造函数中解析参数并验证）
     const effectObj = new Effect({
         label:data.label,
         key,
         effectFunc:data.effect,
-        params: clonedParams,  // 深拷贝 params，避免污染原始数据
+        params: clonedParams,
         describe,
         triggerEvent:event,
         resultStoreAs
