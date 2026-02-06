@@ -49,19 +49,24 @@
     import { nowBattle } from '@/core/objects/game/battle';
     import { showCardPile } from '@/ui/interaction/cardPile';
     import { nowPlayer, nowGameRun } from '@/core/objects/game/run';
-    import { computed, watch } from 'vue';
+    import { computed, watch, ref } from 'vue';
     import HandPile from './HandPile.vue';
     import Faction from '@/ui/components/object/Target/Faction.vue';
     import AllFactions from '@/ui/components/object/Target/AllFactions.vue';
     import TurnDisplay from '@/ui/components/display/TurnDisplay.vue';
     import RewardPage from '@/ui/components/interaction/RewardPage.vue';
 
+    // 防止重复完成房间
+    const hasCompleted = ref(false)
+
     // 监听战斗结束
     watch(() => nowBattle.value?.isEnded, async (isEnded) => {
-        if (isEnded && nowBattle.value) {
+        if (isEnded && nowBattle.value && !hasCompleted.value) {
             // 检查战斗结果
             const result = nowBattle.value.checkBattleEnd()
             if (result === 'player_win') {
+                // 标记为已完成，防止重复触发
+                hasCompleted.value = true
                 // 胜利：完成房间，显示奖励
                 await nowGameRun.completeCurrentRoom()
             } else if (result === 'player_lose') {

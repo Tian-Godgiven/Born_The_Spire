@@ -178,7 +178,7 @@ export class BattleRoom extends Room {
         const materialRewardObj = rewardRegistry.createReward({
             type: "material",
             amount: materialReward
-        })
+        } as any)
         if (materialRewardObj) {
             rewards.push(materialRewardObj)
         }
@@ -235,7 +235,7 @@ export class BattleRoom extends Room {
         const materialRewardObj = rewardRegistry.createReward({
             type: "material",
             amount: materialReward
-        })
+        } as any)
         if (materialRewardObj) {
             rewards.push(materialRewardObj)
         }
@@ -292,7 +292,7 @@ export class BattleRoom extends Room {
         const materialRewardObj = rewardRegistry.createReward({
             type: "material",
             amount: materialReward
-        })
+        } as any)
         if (materialRewardObj) {
             rewards.push(materialRewardObj)
         }
@@ -302,11 +302,11 @@ export class BattleRoom extends Room {
         if (allOrganKeys.length > 0) {
             const organReward = rewardRegistry.createReward({
                 type: "organSelect",
-                organOptions: allOrganKeys,
-                selectCount: 1,
                 title: "Boss器官",
-                description: "选择一个强大的Boss器官"
-            })
+                description: "选择一个强大的Boss器官",
+                organOptions: allOrganKeys,
+                selectCount: 1
+            } as any)
             if (organReward) {
                 rewards.push(organReward)
             }
@@ -392,10 +392,12 @@ export class BattleRoom extends Room {
         const { rewardRegistry } = await import("@/static/registry/rewardRegistry")
         return rewardRegistry.createReward({
             type: "relicSelect",
-            relicOptions: selectedRelics,
-            selectCount,
             title: title || "选择遗物",
-            description: `从 ${selectedRelics.length} 个遗物中选择 ${selectCount} 个`
+            description: `从 ${selectedRelics.length} 个遗物中选择 ${selectCount} 个`,
+            customData: {
+                relicOptions: selectedRelics,
+                selectCount
+            }
         })
     }
 

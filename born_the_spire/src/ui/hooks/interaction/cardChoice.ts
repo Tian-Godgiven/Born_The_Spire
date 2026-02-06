@@ -4,6 +4,7 @@ import { showComponent } from "@/core/hooks/componentManager"
 import CardChoice from "@/ui/components/interaction/CardChoice.vue"
 import { Player } from "@/core/objects/target/Player"
 import { getCardByKey } from "@/static/list/item/cardList"
+import { getContextRandom, randomChoices } from "@/core/hooks/random"
 
 /**
  * 卡牌选择配置
@@ -92,19 +93,20 @@ export async function chooseFromRandomCards(
   description?: string,
   allowDuplicate: boolean = false
 ): Promise<Card[]> {
+  // 使用基于游戏状态的确定性随机数生成器
+  const rng = getContextRandom("chooseFromRandomCards")
+
   let selectedKeys: string[]
 
   if (allowDuplicate) {
     // 允许重复：随机抽取（可能重复）
     selectedKeys = []
     for (let i = 0; i < count; i++) {
-      const randomIndex = Math.floor(Math.random() * cardKeys.length)
-      selectedKeys.push(cardKeys[randomIndex])
+      selectedKeys.push(rng.choice(cardKeys))
     }
   } else {
-    // 不允许重复：洗牌后抽取
-    const shuffled = [...cardKeys].sort(() => Math.random() - 0.5)
-    selectedKeys = shuffled.slice(0, Math.min(count, cardKeys.length))
+    // 不允许重复：使用确定性洗牌
+    selectedKeys = rng.shuffle(cardKeys).slice(0, Math.min(count, cardKeys.length))
   }
 
   // 创建卡牌实例

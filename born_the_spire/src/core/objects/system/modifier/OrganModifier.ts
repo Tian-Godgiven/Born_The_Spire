@@ -84,12 +84,14 @@ export class OrganModifier extends ItemModifier {
         }
 
         const parentLog = newLog([this.owner, "获得了器官", organ])
+        console.log(`[OrganModifier] ${this.owner.label} 获得器官 ${organ.label}`)
 
         // 设置器官持有者
         organ.owner = this.owner
 
         // 1. 创建 ItemModifierUnit
         const unit = this.add(organ as unknown as Item)
+        console.log(`[OrganModifier] 创建 ItemModifierUnit, 当前器官数量: ${this.getOrgans().length}`)
 
         // 2. 处理 possess 交互（持有期间的持续效果）
         const possessInteraction = organ.getInteraction("possess")
@@ -146,6 +148,7 @@ export class OrganModifier extends ItemModifier {
 
                     // 2.2. 处理 modifiers - 添加属性修饰器
                     if (possessInteraction.modifiers) {
+                        console.log(`[OrganModifier] ${organ.label} 添加 ${possessInteraction.modifiers.length} 个修饰器`)
                         for (const modifierDef of possessInteraction.modifiers) {
                             const statusKey = modifierDef.statusKey
                             const label = modifierDef.label || statusKey
@@ -157,18 +160,25 @@ export class OrganModifier extends ItemModifier {
                                 continue
                             }
 
+                            console.log(`[OrganModifier] 为 ${statusKey} 添加修饰器:`, {
+                                value: modifierDef.modifierValue,
+                                targetLayer: modifierDef.targetLayer,
+                                applyMode: modifierDef.applyMode
+                            })
+
                             // 添加修饰器
                             const remover = status.addByJSON(organ, {
                                 targetLayer: modifierDef.targetLayer || "current",
                                 modifierType: modifierDef.modifierType || "additive",
-                                applyMode: modifierDef.applyMode || "absolute",
+                                applyMode: modifierDef.applyMode,
                                 modifierValue: modifierDef.modifierValue || 0,
-                                clearable: modifierDef.clearable,
+                                clearable: modifierDef.clearable ?? false,  // 器官修饰器默认不可清理
                                 modifierFunc: modifierDef.modifierFunc
                             })
 
                             // 收集 remover
                             unit.registerModifierRemover(remover, label)
+                            console.log(`[OrganModifier] 修饰器已注册到 ItemModifierUnit`)
                         }
                     }
                 }
@@ -207,6 +217,8 @@ export class OrganModifier extends ItemModifier {
                 }, `卡牌组 (${addedCards.length}张)`)
             }
         }
+
+        console.log(`[OrganModifier] ${this.owner.label} 器官获取完成，当前器官列表:`, this.getOrgans().map(o => o.label))
     }
 
     /**
@@ -221,6 +233,7 @@ export class OrganModifier extends ItemModifier {
     loseOrgan(organ: Organ, triggerLoseEffect: boolean = false) {
         // 创建父日志
         const parentLog = newLog([this.owner, "失去了器官", organ])
+        console.log(`[OrganModifier] ${this.owner.label} 失去器官 ${organ.label}`)
 
         // 1. 移除 work 触发器（在清理副作用之前）
         organ.removeWorkTriggers()
@@ -229,7 +242,11 @@ export class OrganModifier extends ItemModifier {
         const removed = this.removeByItem(organ as unknown as Item, parentLog)
         if (!removed) {
             console.warn(`[OrganModifier] 未找到器官 ${organ.label}，可能已经被移除`)
+        } else {
+            console.log(`[OrganModifier] 器官 ${organ.label} 的修饰器已清理`)
         }
+
+        console.log(`[OrganModifier] ${this.owner.label} 当前器官列表:`, this.getOrgans().map(o => o.label))
 
         // 3. 可选：触发 lose 交互（失去器官时的一次性效果）
         if (triggerLoseEffect) {

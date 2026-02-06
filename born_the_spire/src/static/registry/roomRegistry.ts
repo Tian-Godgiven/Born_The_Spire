@@ -17,6 +17,29 @@ export type RoomComponent =
     | { path: string }             // 明确指定为组件路径
 
 /**
+ * 房间出现条件配置
+ */
+export interface RoomAvailableCondition {
+    // 层级限制
+    floorKeys?: string[]           // 可出现的层级key列表，如 ["floor_1", "floor_2"]
+    floorOrders?: number[]         // 可出现的层级顺序，如 [1, 2, 3]
+    floorOrderRange?: { min?: number, max?: number }  // 层级顺序范围
+
+    // 步数限制
+    steps?: number[]               // 可出现的步数列表，如 [1] 表示只在第一个房间
+    stepRange?: { min?: number, max?: number }   // 步数范围
+
+    // 自定义条件
+    custom?: (context: {
+        floorKey: string,          // 当前层级key
+        floorOrder: number,        // 当前层级顺序
+        step: number,              // 当前步数
+        player: any,               // Player 对象
+        roomHistory: any[]         // Room 历史记录
+    }) => boolean
+}
+
+/**
  * 房间配置映射
  * 定义房间的数据配置
  */
@@ -27,6 +50,7 @@ export interface RoomMap {
     description?: string           // 房间描述
     component?: RoomComponent      // 房间组件（支持 Vue 组件、HTML、路径）
     customData?: Record<string, any> // 自定义数据（供 mod 使用）
+    availableCondition?: RoomAvailableCondition  // 出现条件（可选）
 }
 
 /**
@@ -217,13 +241,15 @@ export type { RoomTypeRegistration }
 export async function initAllRooms(): Promise<void> {
 
     // 导入各个房间类型的注册模块
+    const { initInitRooms } = await import('./rooms/initInitRooms')
     const { initBattleRooms } = await import('./rooms/initBattleRooms')
     const { initEventRooms } = await import('./rooms/initEventRooms')
     const { initPoolRooms } = await import('./rooms/initPoolRooms')
     const { initBlackStoreRooms } = await import('./rooms/initBlackStoreRooms')
     const { initRoomSelectRooms } = await import('./rooms/initRoomSelectRooms')
 
-    // 依次初始化各个房间类型
+    // 依次初始化各个房间类型（初始化房间优先）
+    await initInitRooms()
     await initBattleRooms()
     await initEventRooms()
     await initPoolRooms()

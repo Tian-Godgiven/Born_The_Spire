@@ -4,7 +4,7 @@ import { reactive } from "vue"
 /**
  * 房间类型
  */
-export type RoomType = "battle" | "event" | "pool" | "blackStore" | "roomSelect"
+export type RoomType = "init" | "battle" | "event" | "pool" | "blackStore" | "roomSelect" | "floorSelect" | "eliteBattle" | "treasure"
 
 /**
  * 房间状态
@@ -25,6 +25,7 @@ export interface RoomConfig {
     layer: number            // 所在层级
     name?: string            // 房间名称（可选）
     description?: string     // 房间描述（可选）
+    roomKey?: string         // 房间配置key（用于地图系统，可选）
 }
 
 /**
@@ -38,6 +39,7 @@ export abstract class Room {
     public readonly name?: string       // 房间名称
     public readonly description?: string // 房间描述
     public state: RoomState             // 房间状态
+    public roomKey?: string             // 房间配置key（用于地图系统）
 
     constructor(config: RoomConfig) {
         this.__key = config.key || nanoid()
@@ -46,6 +48,7 @@ export abstract class Room {
         this.name = config.name
         this.description = config.description
         this.state = "pending"
+        this.roomKey = config.roomKey
 
         // 使用 Vue 响应式包装（如果需要在 UI 中显示状态）
         return reactive(this) as this
@@ -99,6 +102,7 @@ export abstract class Room {
 
         // 默认根据类型返回名称
         const typeNameMap: Record<RoomType, string> = {
+            "init": "初始化",
             "battle": "战斗",
             "event": "事件",
             "pool": "水池",
@@ -114,6 +118,7 @@ export abstract class Room {
      */
     getIcon(): string {
         const iconMap: Record<RoomType, string> = {
+            "init": "✦",
             "battle": "⚔️",
             "event": "?",
             "pool": "〜",

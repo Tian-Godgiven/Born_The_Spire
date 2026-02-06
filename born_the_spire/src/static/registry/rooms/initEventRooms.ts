@@ -26,6 +26,7 @@ export async function initEventRooms(): Promise<void> {
             type: "event",
             name: event.title,
             description: event.description,
+            availableCondition: event.availableCondition,  // 传递出现条件
             customData: {
                 eventKey: event.key
             }

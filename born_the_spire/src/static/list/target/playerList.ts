@@ -8,6 +8,7 @@ export type PlayerMap = CharaMap & {
     }
     organ:string[]
     card:string[],
+    relic?:string[]  // 初始拥有的遗物
 }
 export const playerList:Record<string,PlayerMap> = {
     "default":{
@@ -58,16 +59,15 @@ export const playerList:Record<string,PlayerMap> = {
             "test_organ_cards_002",  // 狂暴腺体 - 提供消耗打击和肌肉强化
         ],
         card:[
-                "original_card_00013",  // 发现 - 测试卡牌选择
-                "original_card_00013",  // 发现 x2 - 方便测试
-                "original_card_00010",  // 虚弱诅咒 - 测试虚弱状态
-                "original_card_00011",  // 易伤打击 - 测试易伤状态
-                "original_card_00001",  // 打击 x3
+                "test_card_kill",       // 终结一击 - 快速击杀敌人
+                "original_card_00001",  // 打击 x2
                 "original_card_00001",
-                "original_card_00001",
-                "original_card_00012",  // 固有打击 - 测试固有词条
-                "original_card_00003",  // 虚无打击 - 测试虚无词条
-                "original_card_00002",  // 消耗打击 - 测试消耗词条
+                "original_card_00014",  // 防御 - 测试护甲
+                "original_card_00015",  // 铁壁 - 测试护甲
             ],
+        relic:[
+            "original_relic_00001",  // 回血石 - 战斗结束时回复生命
+            "original_relic_00005",  // 先手之戒 - 第一回合额外抽2张牌
+        ]
     }
 }

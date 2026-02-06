@@ -12,6 +12,7 @@ import { EnemyBehaviorConfig, selectAction } from "../system/EnemyBehavior";
 export class Enemy extends Chara{
     public intent?: Intent  // 当前意图（下回合要执行的行动）
     public behavior?: EnemyBehaviorConfig  // 敌人行为配置
+    public exclusiveCards: string[] = []  // 敌人专属卡牌key列表
     constructor(
         map:EnemyMap
     ){
@@ -38,19 +39,26 @@ export class Enemy extends Chara{
 
         // 初始化行为配置
         this.behavior = map.behavior
+
+        // 初始化专属卡牌
+        if (map.cards) {
+            this.exclusiveCards = map.cards
+        }
     }
 
     /**
      * 获取敌人当前可用的卡牌列表
      *
-     * 从所有器官获取卡牌，过滤掉损坏器官提供的卡牌
+     * 从器官和专属卡牌列表获取卡牌
+     * 如果没有可用卡牌，返回兜底的"挣扎"卡牌
      * @returns 可用卡牌列表
      */
     getAvailableCards(): Card[] {
+        const availableCards: Card[] = []
+
+        // 1. 从器官获取卡牌
         const organModifier = getOrganModifier(this)
         const organs = organModifier.getOrgans()
-
-        const availableCards: Card[] = []
 
         for (const organ of organs) {
             // 跳过损坏的器官
@@ -68,9 +76,35 @@ export class Enemy extends Chara{
                         card.owner = this
                         availableCards.push(card)
                     } catch (error) {
-                        console.warn(`[Enemy.getAvailableCards] 无法创建卡牌 ${cardKey}:`, error)
+                        console.warn(`[Enemy.getAvailableCards] 无法创建器官卡牌 ${cardKey}:`, error)
                     }
                 }
+            }
+        }
+
+        // 2. 添加敌人专属卡牌
+        for (const cardKey of this.exclusiveCards) {
+            try {
+                const card = getCardByKey(cardKey)
+                // 设置卡牌来源为敌人自己
+                card.source = this
+                card.owner = this
+                availableCards.push(card)
+            } catch (error) {
+                console.warn(`[Enemy.getAvailableCards] 无法创建专属卡牌 ${cardKey}:`, error)
+            }
+        }
+
+        // 3. 兜底机制：如果没有可用卡牌，使用"挣扎"
+        if (availableCards.length === 0) {
+            console.warn(`[Enemy.getAvailableCards] ${this.label} 没有可用卡牌，使用兜底"挣扎"`)
+            try {
+                const struggleCard = getCardByKey("fallback_struggle")
+                struggleCard.source = this
+                struggleCard.owner = this
+                availableCards.push(struggleCard)
+            } catch (error) {
+                console.error(`[Enemy.getAvailableCards] 无法创建兜底卡牌:`, error)
             }
         }
 

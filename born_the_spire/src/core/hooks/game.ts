@@ -108,7 +108,7 @@ export async function retryCurrentRoom() {
 
         newLog(["成功重试房间"])
     } catch (error) {
-        newError(["重试房间失败", error])
+        newError(["重试房间失败", String(error)])
         console.error("[retryCurrentRoom] 错误:", error)
     }
 }

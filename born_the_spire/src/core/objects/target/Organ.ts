@@ -1,6 +1,5 @@
 import type { OrganMap, OrganUpgradeConfig } from "@/static/list/target/organList";
 import { Entity } from "../system/Entity";
-import { Chara } from "./Target";
 import { Interaction } from "../item/Item";
 import { getOrganModifier } from "../system/modifier/OrganModifier";
 import { doEvent } from "../system/ActionEvent";
@@ -155,65 +154,65 @@ export class Organ extends Entity{
 }
 
 /**
- * 角色获得器官（包装函数）
+ * 实体获得器官（包装函数）
  */
-export function getOrgan(chara: Chara, source: Entity, organ: Organ) {
-    const organModifier = getOrganModifier(chara)
+export function getOrgan(entity: Entity, source: Entity, organ: Organ) {
+    const organModifier = getOrganModifier(entity)
     organModifier.acquireOrgan(organ, source)
 }
 
 /**
- * 角色失去器官（包装函数）
+ * 实体失去器官（包装函数）
  */
-export function removeOrgan(chara: Chara, organ: Organ, triggerLoseEffect: boolean = false) {
-    const organModifier = getOrganModifier(chara)
+export function removeOrgan(entity: Entity, organ: Organ, triggerLoseEffect: boolean = false) {
+    const organModifier = getOrganModifier(entity)
     organModifier.loseOrgan(organ, triggerLoseEffect)
 }
 
 /**
- * 角色使用器官（包装函数）
+ * 实体使用器官（包装函数）
  */
-export function useOrgan(chara: Chara, organ: Organ, targets: Entity[]) {
-    const organModifier = getOrganModifier(chara)
+export function useOrgan(entity: Entity, organ: Organ, targets: Entity[]) {
+    const organModifier = getOrganModifier(entity)
     return organModifier.useOrgan(organ, targets)
 }
 
 /**
  * 损坏器官（包装函数）
  */
-export function breakOrgan(chara: Chara, organ: Organ) {
-    const organModifier = getOrganModifier(chara)
+export function breakOrgan(entity: Entity, organ: Organ) {
+    const organModifier = getOrganModifier(entity)
     return organModifier.breakOrgan(organ)
 }
 
 /**
  * 修复器官（包装函数）
  */
-export function repairOrgan(chara: Chara, organ: Organ) {
-    const organModifier = getOrganModifier(chara)
+export function repairOrgan(entity: Entity, organ: Organ) {
+    const organModifier = getOrganModifier(entity)
     return organModifier.repairOrgan(organ)
 }
 
 /**
  * 同化器官（包装函数）
  */
-export function assimilateOrgan(chara: Chara, organ: Organ) {
-    const organModifier = getOrganModifier(chara)
+export function assimilateOrgan(entity: Entity, organ: Organ) {
+    const organModifier = getOrganModifier(entity)
     return organModifier.assimilateOrgan(organ)
 }
 
 /**
  * 吞噬器官（包装函数）
  */
-export function devourOrgan(chara: Chara, organ: Organ) {
-    const organModifier = getOrganModifier(chara)
+export function devourOrgan(entity: Entity, organ: Organ) {
+    const organModifier = getOrganModifier(entity)
     return organModifier.devourOrgan(organ)
 }
 
 /**
  * 升级器官（包装函数）
  */
-export function upgradeOrgan(chara: Chara, organ: Organ) {
-    const organModifier = getOrganModifier(chara)
+export function upgradeOrgan(entity: Entity, organ: Organ) {
+    const organModifier = getOrganModifier(entity)
     return organModifier.upgradeOrgan(organ)
 }

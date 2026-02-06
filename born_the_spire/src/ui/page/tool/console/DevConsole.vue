@@ -117,6 +117,9 @@ async function executeFunction(funcName: string, args: any[]) {
         case 'gameOver':
             await triggerGameOver()
             break
+        case 'unlockAllRooms':
+            unlockAllRooms()
+            break
         case 'help':
             showHelp()
             break
@@ -189,6 +192,37 @@ async function triggerGameOver() {
     addOutput('✓ 游戏失败已触发', 'result')
 }
 
+// 解锁所有房间
+function unlockAllRooms() {
+    if (!nowGameRun) {
+        addOutput('游戏未开始，请先点击"开始游戏"', 'error')
+        return
+    }
+
+    const floorMap = nowGameRun.floorManager.getCurrentMap()
+    if (!floorMap) {
+        addOutput('当前没有地图', 'error')
+        return
+    }
+
+    // 启用开发模式
+    floorMap.devMode = true
+
+    const allNodes = floorMap.getAllNodes()
+    let unlockedCount = 0
+
+    for (const node of allNodes) {
+        if (node.state === 'locked') {
+            node.state = 'available'
+            unlockedCount++
+        }
+    }
+
+    addOutput(`✓ 已解锁 ${unlockedCount} 个房间`, 'result')
+    addOutput('✓ 已启用开发模式（可自由移动到任何房间）', 'result')
+    addOutput('现在可以在地图上点击任何房间进入', 'info')
+}
+
 // 显示帮助
 function showHelp() {
     addOutput('=== 可用命令 ===', 'info')
@@ -199,7 +233,10 @@ function showHelp() {
     addOutput('', 'info')
     addOutput('enterRoom("房间key") - 进入指定房间', 'info')
     addOutput('enterRoom("房间key", 层级) - 进入指定房间并设置层级', 'info')
-    addOutput('  例如: enterRoom("battle_normal_slime", 1)', 'info')
+    addOutput('  例如: enterRoom("battle_elite_hydra", 1)', 'info')
+    addOutput('', 'info')
+    addOutput('unlockAllRooms() - 解锁地图上所有房间', 'info')
+    addOutput('  例如: unlockAllRooms()', 'info')
     addOutput('', 'info')
     addOutput('gameOver() - 触发游戏失败', 'info')
     addOutput('  例如: gameOver()', 'info')

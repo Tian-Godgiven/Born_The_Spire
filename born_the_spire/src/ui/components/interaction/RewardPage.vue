@@ -205,20 +205,9 @@ async function handleProceed() {
   // 关闭奖励界面
   confirmRewards()
 
-  // 进入下一步（房间选择）
-  const { nowGameRun } = await import('@/core/objects/game/run')
-  const { RoomSelectRoom } = await import('@/core/objects/room/RoomSelectRoom')
-
-  const currentRoom = nowGameRun.currentRoom
-  if (currentRoom) {
-    const roomSelectRoom = new RoomSelectRoom({
-      type: "roomSelect",
-      layer: currentRoom.layer + 1,
-      targetLayer: currentRoom.layer + 1,
-      roomCount: 3
-    })
-    await nowGameRun.enterRoom(roomSelectRoom)
-  }
+  // 完成当前房间并前往下一步（显示地图）
+  const { completeAndGoNext } = await import('@/core/hooks/step')
+  await completeAndGoNext()
 }
 </script>
 

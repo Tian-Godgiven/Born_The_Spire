@@ -16,12 +16,22 @@ export const floorList: FloorConfig[] = [
         name: "底层",
         order: 1,
         roomPools: {
-            battles: [],           // TODO: 添加战斗房间
+            battles: ["battle_normal_rocker"],
+            eliteBattles: ["battle_elite_berserker", "battle_elite_hydra"],
             bossBattles: [],       // TODO: 添加Boss战斗
-            events: [],            // TODO: 添加事件房间
+            events: [],            // 事件池（不包含苏生事件）
             blackStores: [],       // TODO: 添加黑市房间
             pools: ["pool_default"]
         },
+        // 房间布局：第1步固定为苏生初始化房间
+        roomLayout: [
+            {
+                step: 1,           // 第1步
+                roomKey: "init_game_start",  // 固定为苏生初始化房间
+                priority: 100      // 高优先级确保生效
+            }
+            // 第2步及之后使用默认的权重随机生成
+        ],
         nextFloors: ["floor_2"],
         nextFloorSelectionMode: "auto"
     },
@@ -32,7 +42,8 @@ export const floorList: FloorConfig[] = [
         name: "中层",
         order: 2,
         roomPools: {
-            battles: [],
+            battles: ["battle_normal_rocker"],
+            eliteBattles: ["battle_elite_berserker", "battle_elite_hydra"],
             bossBattles: [],
             events: [],
             blackStores: [],
@@ -52,7 +63,8 @@ export const floorList: FloorConfig[] = [
         name: "高层",
         order: 3,
         roomPools: {
-            battles: [],
+            battles: ["battle_normal_rocker"],
+            eliteBattles: ["battle_elite_berserker", "battle_elite_hydra"],
             bossBattles: [],
             events: [],
             blackStores: [],
@@ -72,7 +84,8 @@ export const floorList: FloorConfig[] = [
         name: "终层",
         order: 4,
         roomPools: {
-            battles: [],
+            battles: ["battle_normal_rocker"],
+            eliteBattles: ["battle_elite_berserker", "battle_elite_hydra"],
             bossBattles: [],
             events: [],
             blackStores: [],

@@ -28,11 +28,18 @@ export const battleList: BattleRoomConfig[] = [
         battleType: "normal",
         enemyConfigs: ["original_enemy_00001"]
     },
-    // {
-    //     key: "battle_elite_berserker",
-    //     name: "狂战士领地",
-    //     description: "强大的狂战士守护着这里",
-    //     battleType: "elite",
-    //     enemyConfigs: ["test_enemy_berserker"]
-    // }
+    {
+        key: "battle_elite_berserker",
+        name: "狂战士领地",
+        description: "强大的狂战士守护着这里",
+        battleType: "elite",
+        enemyConfigs: ["test_enemy_berserker"]
+    },
+    {
+        key: "battle_elite_hydra",
+        name: "双头蛇巢穴",
+        description: "危险的双头蛇盘踞在此",
+        battleType: "elite",
+        enemyConfigs: ["test_enemy_elite"]
+    }
 ]

@@ -5,18 +5,20 @@
 import { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import { newLog } from "@/ui/hooks/global/log"
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
-import { getOrganByKey } from "@/static/list/target/organList"
-import { Organ } from "@/core/objects/target/Organ"
+import { getLazyModule } from "@/core/utils/lazyLoader"
 import { isEntity } from "@/core/utils/typeGuards"
 
 /**
  * 替换器官效果
  * 将旧器官替换为新器官（保留等级）
  */
-export const replaceOrgan: EffectFunc = (event, effect) => {
+export const replaceOrgan: EffectFunc = async (event, effect) => {
     const { target, medium } = event
     const { organKey } = effect.params
     const keepLevel = effect.params.keepLevel !== false // 默认为 true
+
+    // 动态导入避免循环依赖
+    const { Organ } = await import("@/core/objects/target/Organ")
 
     // 验证 target 是 Entity（不能是数组）
     if (Array.isArray(target)) {
@@ -44,8 +46,14 @@ export const replaceOrgan: EffectFunc = (event, effect) => {
         return
     }
 
-    // 创建新器官
-    const newOrgan = getOrganByKey(String(organKey))
+    // 通过懒加载获取器官列表并创建新器官
+    const organList = getLazyModule<any[]>('organList')
+    const organData = organList.find((o: any) => o.key === organKey)
+    if (!organData) {
+        newLog(["错误：未找到器官", organKey])
+        return
+    }
+    const newOrgan = new Organ(organData)
 
     // 如果保留等级，设置新器官的等级
     if (keepLevel) {

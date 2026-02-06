@@ -143,10 +143,7 @@ export class Battle {
         this.nowTurn = "player"
         newLog(["===== 玩家回合开始 =====", `回合 ${this.turnNumber}`])
 
-        // 显示"回合开始"提示（1.5秒），然后等待1.5秒
-        showDisplayMessage("回合开始", 1500)
-        await new Promise(resolve => setTimeout(resolve, 3000))
-
+        // 直接开始回合，抽牌动画会自然展示
         await this.startTurn("player")
     }
 

@@ -13,6 +13,43 @@ Born The Spire (蘇生尖塔) is a Chinese-language fan game inspired by "Slay t
 - Languages: TypeScript, HTML, SASS, Rust
 - Platform: Windows desktop application
 
+### Core Project Principles
+
+**CRITICAL: These principles guide ALL development decisions**
+
+1. **Mod-First Architecture**
+   - The project is designed from the ground up to support extensive modding
+   - All systems must provide clean, well-documented interfaces for mod creators
+   - Provide convenient hook functions that simplify common modding tasks
+   - Internal code should use the same APIs we expose to modders (dogfooding ensures quality)
+
+2. **Accessibility for Non-Programmers**
+   - Mod creation should be accessible to people without coding experience
+   - Use declarative, data-driven approaches (JSON/TypeScript objects) over imperative code
+   - Example: TriggerMap system allows defining triggers in data rather than writing callbacks
+   - Provide clear examples and templates for common mod patterns
+   - Documentation should explain concepts in simple terms with practical examples
+
+3. **Non-Profit Fan Project**
+   - This is a fan-made tribute to "Slay the Spire", not a commercial product
+   - All development is for educational and community purposes
+   - Open-source friendly architecture to encourage community contributions
+   - Respect intellectual property - this is transformative fan work
+
+4. **Maximum Extensibility**
+   - Every system should be designed for extension, not just the current use case
+   - Use registry patterns for all content types (cards, organs, relics, enemies, rooms, events)
+   - Avoid hardcoding - make everything data-driven where possible
+   - Support adding new content types, not just new instances of existing types
+   - Design APIs that can grow without breaking existing mods
+
+**Development Implications:**
+- When adding features, always ask: "How would a modder use this?"
+- Prefer configuration over code, data over logic
+- Document all public interfaces thoroughly
+- Create high-level hooks for common operations
+- Keep the barrier to entry low while allowing advanced customization
+
 ## Development Commands
 
 All commands should be run from the `born_the_spire` directory:
@@ -416,10 +453,12 @@ Use `player.appendTrigger()` with appropriate when/how/key combinations.
 
 **Room Types:**
 - `battle`: Combat encounters with enemies
+- `eliteBattle`: Elite combat encounters
 - `event`: Story events with choices
 - `pool`: Rest area (absorb materials, upgrade organs, blood mark)
 - `blackStore`: Shop for buying items
-- `roomSelect`: Choose next room to enter
+- `roomSelect`: Choose next room to enter (legacy, use map UI instead)
+- `floorSelect`: Choose next floor theme (e.g., forest vs volcano)
 
 **Room Lifecycle:**
 1. `enter()`: Initialize room, display UI
@@ -427,24 +466,93 @@ Use `player.appendTrigger()` with appropriate when/how/key combinations.
 3. `complete()`: Finish room, trigger rewards/cleanup
 4. `exit()`: Clean up resources
 
-**Room Completion Flow:**
+### Map System (NEW)
+
+The game uses a pre-generated map system similar to Slay the Spire:
+
+**Core Components:**
+- `FloorMap`: Manages the entire floor map (15 layers of nodes)
+- `MapNode`: Individual node in the map (contains room type, connections, state)
+- `MapGenerator`: Generates maps based on configuration
+- `MapView.vue`: UI component for displaying and interacting with the map
+
+**Map Generation:**
 ```typescript
-// In UI component (e.g., PoolRoom.vue)
-async function leaveRoom() {
-  // Complete current room
-  await nowGameRun.completeCurrentRoom()
+// Generate map at game start
+const floorMap = nowGameRun.floorManager.generateMap(config)
 
-  // Create and enter room selection
-  const roomSelectRoom = new RoomSelectRoom({
-    type: "roomSelect",
-    layer: currentRoom.layer + 1,
-    targetLayer: currentRoom.layer + 1,
-    roomCount: 3
-  })
+// Map is automatically generated in startNewRun()
+// Uses FloorMapConfig for customization
+```
 
-  await nowGameRun.enterRoom(roomSelectRoom)
+**Room Assignment Strategies:**
+- **Lazy Types** (battle, event): Room key assigned when player enters
+  - Supports deduplication (no repeats until pool exhausted)
+  - Pool exhaustion strategies: reset, allow-repeat, error
+- **Eager Types** (pool, blackStore): Room key assigned at map generation
+  - Uses seed for deterministic generation
+
+**Map Navigation:**
+```typescript
+// Get next available nodes
+const nextNodes = floorManager.getNextMapNodes()
+
+// Move to a node
+floorManager.moveToMapNode(nodeId)
+
+// Get current node
+const currentNode = floorManager.getCurrentMapNode()
+```
+
+**Room Completion Flow (NEW):**
+```typescript
+// In UI component (e.g., BattleRoom.vue)
+import { completeAndGoNext } from '@/core/hooks/step'
+
+async function onBattleComplete() {
+  // Complete current room and show map
+  await completeAndGoNext()
+  // Map UI will automatically display
+  // Player clicks a node to continue
 }
 ```
+
+**Map UI Integration:**
+```vue
+<!-- In running.vue -->
+<script setup>
+import { ref, onMounted } from 'vue'
+import MapOverlay from './MapOverlay.vue'
+import { setShowMapCallback } from '@/core/hooks/step'
+
+const mapOverlay = ref(null)
+
+onMounted(() => {
+  setShowMapCallback(() => mapOverlay.value?.show())
+})
+</script>
+
+<template>
+  <MapOverlay ref="mapOverlay" />
+</template>
+```
+
+**Floor Selection:**
+- Use `FloorSelectRoom` to let players choose between different floor themes
+- Each floor has its own map configuration, room pools, and modifiers
+- Example: Forest (easy) vs Volcano (hard) with different rewards
+
+**Legacy Room Selection:**
+- `RoomSelectRoom` is deprecated for map system
+- Still available for special events or compatibility
+- Set `useMapNodes: false` to use legacy mode
+
+**Related Documentation:**
+- `FloorMapConfig.usage.md` - Map configuration guide
+- `MapView.integration.md` - Map UI integration guide
+- `FloorSelectRoom.usage.md` - Floor selection guide
+- `MIGRATION_GUIDE.md` - Migration from old system
+- `LEGACY_SYSTEM.md` - Legacy system file list
 
 **Pool Room Features:**
 - **Absorb**: Gain materials (amount scales with layer)
@@ -614,6 +722,12 @@ Claude: [Waits for next instruction]
    - All TODOs should be recorded in the task list (`文档/任务列表.md`)
    - Documentation should describe what exists, not what's missing
    - If something is incomplete, mention it briefly without marking as TODO
+
+7. **Documentation Location**
+   - **IMPORTANT**: All new documentation should be placed in `文档/未归档/` directory
+   - The user will review and organize documentation into proper categories later
+   - Do NOT place documentation directly in organized folders (`文档/对象/`, `文档/系统/`, etc.)
+   - This allows the user to maintain consistent organization structure
 
 **Documentation Structure Template:**
 

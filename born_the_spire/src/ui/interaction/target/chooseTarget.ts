@@ -1,5 +1,6 @@
 import { Reactive, ref } from "vue";
 import { Target } from "@/core/objects/target/Target";
+import { Entity } from "@/core/objects/system/Entity";
 import { getSpecificTargetsByTargetType, TargetType } from "@/static/list/registry/chooseTargetType";
 import { nowBattle } from "@/core/objects/game/battle";
 import { targetManager } from "./targetManager";
@@ -11,6 +12,8 @@ type Position = Reactive<{left:number,top:number}|null>
 export type ChooseOption = {
     //本次选择行为的交互要求
     targetType:TargetType,
+    //使用者（用于判断opponent阵营）
+    source?:Entity,
     //是否显示连接线条，默认为true
     ifShowConnectLine?:boolean;
     //选中了合适的target时
@@ -31,16 +34,25 @@ type ChooseRule = {
 }
 
 //根据targetType计算当前场上对某次选择行为的规则影响，选择行为会使用这些规则来生成规则框和判断可选对象
-export function resolveTargetTypeRules(targetType:TargetType):ChooseRule{
+export function resolveTargetTypeRules(targetType:TargetType, source?:Entity):ChooseRule{
     //特定规则下的目标
     let specificTargets:Target[]|null = null
     if(targetType?.key){
-        specificTargets = getSpecificTargetsByTargetType(targetType as Required<TargetType>)
+        specificTargets = getSpecificTargetsByTargetType(targetType as Required<TargetType>, source)
     }
     //是否无需选中目标,没有可选目标,需要选择的次数
     const {noNeedChoose,noValidTargets,needChooseNum} = checkChooseNum(targetType,specificTargets)
+
+    // 处理 opponent 阵营
+    let actualFaction = targetType?.faction ?? "enemy"
+    if (actualFaction === "opponent" && source) {
+        const playerTeam = nowBattle.value?.getTeam("player") ?? []
+        const isPlayerSide = playerTeam.includes(source as any)
+        actualFaction = isPlayerSide ? "enemy" : "player"
+    }
+
     return {
-        faction:targetType?.faction??"enemy",//默认为enemy
+        faction:actualFaction as "enemy"|"player"|"all",
         chooseAll:targetType?.number == "all"?true:false,
         specificTargets: specificTargets,
         noNeedChoose,
@@ -117,9 +129,9 @@ function initStartChooseTarget(){
 export function startChooseTarget(option:ChooseOption,position:Position){
     //初始化开始选择状态
     initStartChooseTarget()
-    const {targetType,onSuccess,onStop=()=>{},ifShowConnectLine} = option
+    const {targetType,source,onSuccess,onStop=()=>{},ifShowConnectLine} = option
     //解析选择规则
-    const rule = resolveTargetTypeRules(targetType)
+    const rule = resolveTargetTypeRules(targetType, source)
 
  
 

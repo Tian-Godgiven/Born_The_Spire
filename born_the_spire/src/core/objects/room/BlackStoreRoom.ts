@@ -6,16 +6,17 @@
 import { Room, RoomConfig } from "./Room"
 import { nowPlayer } from "@/core/objects/game/run"
 import { newLog } from "@/ui/hooks/global/log"
-import { OrganMap } from "@/static/list/target/organList"
-import { Organ } from "@/core/objects/target/Organ"
-import { Relic } from "@/core/objects/item/Subclass/Relic"
-import { RelicMap } from "@/static/list/item/relicList"
-import { PotionMap } from "@/static/list/item/potionList"
+import type { OrganMap } from "@/static/list/target/organList"
+import type { Organ } from "@/core/objects/target/Organ"
+import type { Relic } from "@/core/objects/item/Subclass/Relic"
+import type { RelicMap } from "@/static/list/item/relicList"
+import type { PotionMap } from "@/static/list/item/potionList"
 import {
     blackStoreOrganPool,
     blackStoreRelicPool,
     blackStorePotionPool,
-    selectRandomItemsFromPool
+    selectRandomItemsFromPool,
+    RarityWeights
 } from "@/static/list/room/blackStore/blackStoreItemPool"
 import { calculateBlackStorePrice } from "@/static/list/target/organQuality"
 import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
@@ -41,6 +42,18 @@ export interface StoreItem {
     price: number                   // 价格（金钱）
     data: OrganMap | RelicMap | PotionMap  // 商品数据
     isPurchased: boolean            // 是否已购买
+    rarity?: string                 // 稀有度
+}
+
+/**
+ * 可出售器官信息
+ */
+export interface SellableOrgan {
+    organ: Organ                    // 器官实例
+    basePrice: number               // 基础价格
+    sellPrice: number               // 实际售价
+    discount: number                // 折扣（0-1，例如 0.6 表示 60% 折扣）
+    discountPercent: string         // 折扣百分比显示（例如 "60%"）
 }
 
 /**
@@ -53,6 +66,41 @@ export interface BlackStoreRoomConfig extends RoomConfig {
     potionCount?: number            // 药水数量（默认 3）
     allowSellOrgan?: boolean        // 是否允许出售器官（默认 true）
     allowSellHealth?: boolean       // 是否允许出售生命值（默认 true）
+
+    // 稀有度权重配置
+    rarityWeights?: {
+        organ?: RarityWeights       // 器官稀有度权重
+        relic?: RarityWeights       // 遗物稀有度权重
+        potion?: RarityWeights      // 药水稀有度权重
+    }
+
+    // 器官折扣范围
+    organDiscountRange?: {
+        min?: number                // 最小折扣（默认 0.5，即 50%）
+        max?: number                // 最大折扣（默认 0.7，即 70%）
+    }
+
+    // 遗物不重复配置
+    relicUnique?: {
+        enabled?: boolean           // 是否启用遗物不重复（默认 true）
+        scope?: "global" | "room"   // 不重复范围：global=全局，room=单个房间（默认 global）
+    }
+
+    // 黑白名单配置
+    filters?: {
+        organ?: {
+            whitelist?: string[]    // 器官白名单
+            blacklist?: string[]    // 器官黑名单
+        }
+        relic?: {
+            whitelist?: string[]    // 遗物白名单
+            blacklist?: string[]    // 遗物黑名单
+        }
+        potion?: {
+            whitelist?: string[]    // 药水白名单
+            blacklist?: string[]    // 药水黑名单
+        }
+    }
 }
 
 /**
@@ -66,11 +114,23 @@ export class BlackStoreRoom extends Room {
     public readonly allowSellOrgan: boolean
     public readonly allowSellHealth: boolean
 
+    // 配置
+    private readonly rarityWeights: BlackStoreRoomConfig["rarityWeights"]
+    private readonly organDiscountRange: { min: number, max: number }
+    private readonly relicUniqueConfig: { enabled: boolean, scope: "global" | "room" }
+    private readonly filters: BlackStoreRoomConfig["filters"]
+
     // 商品列表
     private storeItems: StoreItem[] = []
 
     // 出售生命值的次数（用于计算贬值）
     private healthSoldCount: number = 0
+
+    // 器官折扣缓存（器官ID -> 折扣）
+    private organDiscounts: Map<string, number> = new Map()
+
+    // 本房间已出现的遗物（用于 room scope）
+    private roomAppearedRelics: Set<string> = new Set()
 
     constructor(config: BlackStoreRoomConfig) {
         super(config)
@@ -80,6 +140,24 @@ export class BlackStoreRoom extends Room {
         this.potionCount = config.potionCount ?? 3
         this.allowSellOrgan = config.allowSellOrgan ?? true
         this.allowSellHealth = config.allowSellHealth ?? true
+
+        // 稀有度权重配置
+        this.rarityWeights = config.rarityWeights
+
+        // 器官折扣范围配置
+        this.organDiscountRange = {
+            min: config.organDiscountRange?.min ?? 0.5,
+            max: config.organDiscountRange?.max ?? 0.7
+        }
+
+        // 遗物不重复配置
+        this.relicUniqueConfig = {
+            enabled: config.relicUnique?.enabled ?? true,
+            scope: config.relicUnique?.scope ?? "global"
+        }
+
+        // 黑白名单配置
+        this.filters = config.filters
 
         // 生成商品列表
         this.generateStoreItems()
@@ -101,7 +179,8 @@ export class BlackStoreRoom extends Room {
                 description: organ.describe ? this.formatDescribe(organ.describe) : undefined,
                 price: this.calculateOrganPrice(organ),
                 data: organ,
-                isPurchased: false
+                isPurchased: false,
+                rarity: organ.rarity
             })
         })
 
@@ -115,7 +194,8 @@ export class BlackStoreRoom extends Room {
                 description: relic.describe ? this.formatDescribe(relic.describe) : undefined,
                 price: this.calculateRelicPrice(relic),
                 data: relic,
-                isPurchased: false
+                isPurchased: false,
+                rarity: relic.rarity
             })
         })
 
@@ -129,7 +209,8 @@ export class BlackStoreRoom extends Room {
                 description: potion.describe ? this.formatDescribe(potion.describe) : undefined,
                 price: this.calculatePotionPrice(potion),
                 data: potion,
-                isPurchased: false
+                isPurchased: false,
+                rarity: potion.rarity
             })
         })
     }
@@ -151,21 +232,57 @@ export class BlackStoreRoom extends Room {
      * 从黑市器官池中随机选择器官
      */
     private selectRandomOrgans(count: number): OrganMap[] {
-        return selectRandomItemsFromPool(blackStoreOrganPool, count, false)
+        return selectRandomItemsFromPool(
+            blackStoreOrganPool,
+            count,
+            false,
+            "blackStore:organ",
+            {
+                rarityWeights: this.rarityWeights?.organ,
+                whitelist: this.filters?.organ?.whitelist,
+                blacklist: this.filters?.organ?.blacklist,
+                uniqueConfig: undefined // 器官不需要不重复配置
+            }
+        )
     }
 
     /**
      * 随机选择遗物
      */
     private selectRandomRelics(count: number): RelicMap[] {
-        return selectRandomItemsFromPool(blackStoreRelicPool, count, false)
+        return selectRandomItemsFromPool(
+            blackStoreRelicPool,
+            count,
+            false,
+            "blackStore:relic",
+            {
+                rarityWeights: this.rarityWeights?.relic,
+                whitelist: this.filters?.relic?.whitelist,
+                blacklist: this.filters?.relic?.blacklist,
+                uniqueConfig: this.relicUniqueConfig.enabled ? {
+                    scope: this.relicUniqueConfig.scope,
+                    roomAppearedSet: this.roomAppearedRelics
+                } : undefined
+            }
+        )
     }
 
     /**
      * 随机选择药水
      */
     private selectRandomPotions(count: number): PotionMap[] {
-        return selectRandomItemsFromPool(blackStorePotionPool, count, false)
+        return selectRandomItemsFromPool(
+            blackStorePotionPool,
+            count,
+            false,
+            "blackStore:potion",
+            {
+                rarityWeights: this.rarityWeights?.potion,
+                whitelist: this.filters?.potion?.whitelist,
+                blacklist: this.filters?.potion?.blacklist,
+                uniqueConfig: undefined // 药水不需要不重复配置
+            }
+        )
     }
 
     /**
@@ -331,16 +448,68 @@ export class BlackStoreRoom extends Room {
 
     /**
      * 计算器官售价
-     * 售价是购买价的 50-70%（随机）
+     * 售价是购买价的配置范围内随机折扣（但对同一器官固定）
      */
     private calculateOrganSellPrice(organ: Organ): number {
         // 基础购买价格
         const baseBuyPrice = this.calculateOrganPrice(organ as any)
 
-        // 售价是购买价的 50-70%
-        const sellRatio = 0.5 + Math.random() * 0.2
+        // 检查是否已有缓存的折扣
+        let discount = this.organDiscounts.get(organ.__key)
 
-        return Math.floor(baseBuyPrice * sellRatio)
+        if (discount === undefined) {
+            // 使用确定性随机数生成折扣
+            const { randomFloat } = require("@/core/hooks/random")
+            discount = randomFloat(
+                this.organDiscountRange.min,
+                this.organDiscountRange.max,
+                `organDiscount:${organ.__key}`
+            )
+            this.organDiscounts.set(organ.__key, discount)
+        }
+
+        return Math.floor(baseBuyPrice * discount)
+    }
+
+    /**
+     * 获取器官的折扣信息
+     */
+    private getOrganDiscount(organ: Organ): number {
+        let discount = this.organDiscounts.get(organ.__key)
+
+        if (discount === undefined) {
+            const { randomFloat } = require("@/core/hooks/random")
+            discount = randomFloat(
+                this.organDiscountRange.min,
+                this.organDiscountRange.max,
+                `organDiscount:${organ.__key}`
+            )
+            this.organDiscounts.set(organ.__key, discount)
+        }
+
+        return discount
+    }
+
+    /**
+     * 获取可出售的器官列表（带折扣信息）
+     */
+    getSellableOrgans(): SellableOrgan[] {
+        const organModifier = getOrganModifier(nowPlayer)
+        const playerOrgans = organModifier.getOrgans()
+
+        return playerOrgans.map(organ => {
+            const basePrice = this.calculateOrganPrice(organ as any)
+            const discount = this.getOrganDiscount(organ)
+            const sellPrice = Math.floor(basePrice * discount)
+
+            return {
+                organ,
+                basePrice,
+                sellPrice,
+                discount,
+                discountPercent: `${Math.round(discount * 100)}%`
+            }
+        })
     }
 
     /**

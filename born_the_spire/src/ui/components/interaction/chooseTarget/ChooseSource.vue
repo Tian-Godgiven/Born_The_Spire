@@ -10,6 +10,7 @@
 
 <script setup lang='ts'>
     import { Target } from '@/core/objects/target/Target';
+import { Entity } from '@/core/objects/system/Entity';
 import { TargetType } from '@/static/list/registry/chooseTargetType';
 import { startChooseTarget } from '@/ui/interaction/target/chooseTarget';
     import { reactive, ref, useTemplateRef } from 'vue';
@@ -39,12 +40,13 @@ import { startChooseTarget } from '@/ui/interaction/target/chooseTarget';
         }
     }
     //开始选择目标
-    function startChoose({targetType,ifShowConnectLine}:{targetType:TargetType,ifShowConnectLine?:boolean}){
+    function startChoose({targetType,source,ifShowConnectLine}:{targetType:TargetType,source?:Entity,ifShowConnectLine?:boolean}){
         state.value = "choosing"
         getPosition()
         startChooseTarget({
             ifShowConnectLine,
             targetType,
+            source,
             onSuccess:(targets)=>{
                 onSuccess(targets)
                 state.value = "none"

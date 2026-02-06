@@ -66,14 +66,16 @@ export class RelicSelectReward extends Reward {
 
         // 动态导入避免循环依赖
         const { nowPlayer } = await import("@/core/objects/game/run")
-        const { getItemModifier } = await import("@/core/objects/system/modifier/ItemModifier")
+        const { Relic } = await import("@/core/objects/item/Subclass/Relic")
+        const { getRelicModifier } = await import("@/core/objects/system/modifier/RelicModifier")
 
         // 将选择的遗物添加到玩家
-        const itemModifier = getItemModifier(nowPlayer)
+        const relicModifier = getRelicModifier(nowPlayer)
         for (const relicKey of this.selectedRelics) {
             const relicConfig = this.relicOptions.find(r => r.key === relicKey)
             if (relicConfig) {
-                itemModifier.acquireItem(relicKey, nowPlayer)
+                const relic = new Relic(relicConfig)
+                relicModifier.acquireRelic(relic, nowPlayer)
                 newLog([`获得遗物: ${relicConfig.label}`])
             }
         }

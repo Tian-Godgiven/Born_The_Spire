@@ -49,7 +49,17 @@
     import type { Potion } from '@/core/objects/item/Subclass/Potion';
     import { getPotionModifier } from '@/core/objects/system/modifier/PotionModifier';
     import { markRegistry } from '@/static/registry/markRegistry';
-    // import { toggleMap } from '@/ui/hooks/global/mapDisplay';
+    import { getShowMapCallback } from '@/core/hooks/step';
+
+    // 打开地图（用于战斗中查看地图）
+    function openMap() {
+        const showMapCallback = getShowMapCallback()
+        if (showMapCallback) {
+            showMapCallback()
+        } else {
+            console.warn('[Top] 地图回调未注册')
+        }
+    }
 
     const health = computed(()=>{
         // 检查 nowPlayer 是否已初始化
@@ -97,7 +107,7 @@
     })
 
     const abilities = [
-        // {label:"地图",click:()=>toggleMap()}, // 暂时隐藏，等待后续器官/遗物交互
+        {label:"地图",click:()=>openMap()},
         {label:"卡组",click:()=>showCardPile()},
         {label:"返回",click:()=>endRun()}
     ]

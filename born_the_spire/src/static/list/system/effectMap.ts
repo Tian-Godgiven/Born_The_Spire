@@ -18,6 +18,8 @@ import { replaceOrgan } from "@/core/effects/organ/organEffects"
 import { isEntity } from "@/core/utils/typeGuards"
 import { discoverCard, chooseRandomCard, chooseCardUpgrade, chooseCardRemove, chooseCardDuplicate, customCardChoice } from "@/core/effects/card/cardChoice"
 import { cancelEvent, cancelCurrentEvent } from "@/core/effects/event/cancelEvent"
+import { gainArmor } from "@/core/effects/gainArmor"
+import { addFirstTurnDraw } from "@/core/effects/card/addFirstTurnDraw"
 
 type EffectData = {
     label?:string,
@@ -212,5 +214,13 @@ export const effectMap:EffectData[] = [
     label:"取消当前事件",
     key:"cancelCurrentEvent",
     effect:cancelCurrentEvent
+},{
+    label:"获得护甲",
+    key:"gainArmor",
+    effect:gainArmor
+},{
+    label:"第一回合额外抽牌",
+    key:"addFirstTurnDraw",
+    effect:addFirstTurnDraw
 }]
 

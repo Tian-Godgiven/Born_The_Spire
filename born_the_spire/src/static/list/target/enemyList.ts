@@ -7,6 +7,7 @@ export type EnemyMap = CharaMap & {
     key:string
     status:Record<string,number|boolean>,
     behavior?: EnemyBehaviorConfig  // 敌人行为配置
+    cards?: string[]  // 敌人专属卡牌（不通过器官提供）
 }
 
 export const enemyList:EnemyMap[] = [
@@ -18,9 +19,22 @@ export const enemyList:EnemyMap[] = [
             "max-health":30
         },
         organ:[
-            "original_organ_00002",
-            "original_organ_00003"
-        ]
+            "original_organ_00002",  // 石芯 - 增加生命
+            "original_organ_00003"   // 石肤 - 减伤
+        ],
+        cards:[
+            "enemy_stone_strike"  // 专属攻击：石击
+        ],
+        behavior: {
+            patterns: [],
+            fallback: {
+                action: {
+                    selector: { tags: ["attack"] },
+                    mode: "random"
+                },
+                describe: "随机攻击"
+            }
+        }
     },
 
     // 示例1：史莱姆 - 简单随机攻击

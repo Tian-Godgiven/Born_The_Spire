@@ -22,10 +22,11 @@
         const interaction = card.getInteraction("use")
         if(!interaction){
             //未完成，无法使用的卡牌的提示效果
-            return 
+            return
         }
         chooseSourceRef.value.startChoose({
             targetType:interaction.target,
+            source:nowPlayer.getSelf(),  // 传递使用者信息
         })
     }
     //选择完成时使用卡牌效果

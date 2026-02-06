@@ -15,12 +15,29 @@ export async function initBattleRooms(): Promise<void> {
 
     // 注册战斗房间类型
     roomRegistry.registerRoomType("battle", BattleRoom)
+    roomRegistry.registerRoomType("eliteBattle", BattleRoom)
+    roomRegistry.registerRoomType("bossBattle", BattleRoom)
 
     // 注册战斗房间配置
     battleList.forEach(battle => {
+        // 根据 battleType 确定房间类型
+        let roomType: string
+        switch (battle.battleType) {
+            case "elite":
+                roomType = "eliteBattle"
+                break
+            case "boss":
+                roomType = "bossBattle"
+                break
+            case "normal":
+            default:
+                roomType = "battle"
+                break
+        }
+
         roomRegistry.registerRoomConfig({
             key: battle.key,
-            type: "battle",
+            type: roomType,
             name: battle.name,
             description: battle.description,
             customData: {

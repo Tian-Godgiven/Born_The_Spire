@@ -12,7 +12,7 @@ import { getReserveModifier } from "../system/modifier/ReserveModifier";
 import { getStatusValue } from "../system/status/Status";
 import { getPotionModifier } from "../system/modifier/PotionModifier";
 import { getCardModifier } from "../system/modifier/CardModifier";
-import { doEvent } from "../system/ActionEvent";
+import { getRelicModifier } from "../system/modifier/RelicModifier";
 
 export type CardPiles = {
     handPile:Card[],
@@ -58,6 +58,12 @@ export class Player extends Chara{
         //获取初始拥有的卡组（来源是玩家自身）
         const cardModifier = getCardModifier(this)
         cardModifier.addCardsFromSource(this, map.card)
+
+        //获取初始拥有的遗物
+        if(map.relic && map.relic.length > 0) {
+            const relicModifier = getRelicModifier(this)
+            relicModifier.acquireRelicsFromKeys(map.relic, this)
+        }
     }
     
     //获取自身

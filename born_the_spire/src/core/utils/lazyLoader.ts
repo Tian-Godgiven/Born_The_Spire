@@ -91,7 +91,7 @@ export async function preloadAllLazyModules(): Promise<void> {
 
     const promises: Promise<void>[] = []
 
-    for (const [key, lazyModule] of lazyModules.entries()) {
+    for (const [, lazyModule] of lazyModules.entries()) {
         if (lazyModule.module === null && !lazyModule.loading) {
             const promise = (async () => {
                 lazyModule.loading = lazyModule.loader()
@@ -172,6 +172,14 @@ registerLazyModule('enemyList', async () => {
 registerLazyModule('eventList', async () => {
     const module = await import('@/static/list/room/event/eventList')
     return module.eventList
+})
+
+/**
+ * 注册 initList
+ */
+registerLazyModule('initList', async () => {
+    const module = await import('@/static/list/room/init/initList')
+    return module.initList
 })
 
 // 可以继续添加更多数据层模块...

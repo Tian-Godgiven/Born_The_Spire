@@ -2,6 +2,7 @@ import { nanoid } from "nanoid"
 import { Room } from "../room/Room"
 import { floorManager } from "./FloorManager"
 import { cloneDeep } from "lodash"
+import { SeededRandom } from "@/core/utils/SeededRandom"
 
 /**
  * 玩家状态快照
@@ -27,6 +28,10 @@ export class GameRun{
     public towerFire:number = 0//当前进阶
     public __key:string = nanoid()
 
+    // 种子系统
+    public seed: string  // 游戏种子
+    public rng: SeededRandom  // 全局随机数生成器
+
     // 房间相关
     public roomHistory: Room[] = []  // 已完成的房间历史
     public currentRoom: Room | null = null  // 当前所在房间（不使用 ref，由外层 reactive 提供响应式）
@@ -37,11 +42,14 @@ export class GameRun{
     // 楼层管理器
     public floorManager = floorManager
 
-    constructor(
+    constructor(seed?: string){
+        // 初始化种子系统
+        this.seed = seed || Date.now().toString()
+        this.rng = new SeededRandom(this.seed)
 
-    ){
         // 重置楼层管理器
         this.floorManager.reset()
+        this.floorManager.resetMap()
     }
 
     /**
@@ -74,11 +82,23 @@ export class GameRun{
             return
         }
 
+        // 防止重复完成
+        if (room.state === "completed") {
+            console.warn("[GameRun] 房间已完成，跳过重复完成")
+            return
+        }
+
         room.state = "completed"
         await room.complete()
 
         // 将房间加入历史记录
         this.roomHistory.push(room)
+
+        // 完成地图节点（解锁下一层）
+        const currentMap = this.floorManager.getCurrentMap()
+        if (currentMap) {
+            currentMap.completeCurrentNode()
+        }
 
         await room.exit()
 

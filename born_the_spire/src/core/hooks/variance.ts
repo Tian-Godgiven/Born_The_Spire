@@ -3,6 +3,8 @@
  * 为游戏内的数值提供随机波动，增加游戏体验的多样性
  */
 
+import { getContextRandom } from "./random"
+
 /**
  * 波动配置
  */
@@ -10,6 +12,7 @@ export interface VarianceConfig {
     min?: number        // 最小倍率（默认 0.9，即 -10%）
     max?: number        // 最大倍率（默认 1.1，即 +10%）
     variance?: number   // 对称波动范围（0-1），例如 0.1 表示 ±10%，会覆盖 min/max
+    context?: string    // 随机数上下文（用于确定性随机）
 }
 
 /**
@@ -27,6 +30,9 @@ export interface VarianceConfig {
  *
  * // 只有下限
  * applyVariance(100, { min: 0.5 })  // 50-110 之间随机
+ *
+ * // 指定上下文（用于确定性随机）
+ * applyVariance(100, { variance: 0.1, context: "cardDamage" })
  */
 export function applyVariance(baseValue: number, config?: VarianceConfig): number {
     if (!config) {
@@ -49,7 +55,10 @@ export function applyVariance(baseValue: number, config?: VarianceConfig): numbe
     // 计算波动后的值
     const minValue = baseValue * minMultiplier
     const maxValue = baseValue * maxMultiplier
-    const randomValue = minValue + Math.random() * (maxValue - minValue)
+
+    // 使用确定性随机数生成器
+    const rng = getContextRandom(config.context || "variance")
+    const randomValue = minValue + rng.next() * (maxValue - minValue)
 
     return Math.floor(randomValue)
 }
@@ -96,27 +105,33 @@ export const VariancePresets = {
  * 在指定范围内生成随机整数
  * @param min 最小值（包含）
  * @param max 最大值（包含）
+ * @param context 随机数上下文（用于确定性随机）
  * @returns 随机整数
  */
-export function randomInt(min: number, max: number): number {
-    return Math.floor(min + Math.random() * (max - min + 1))
+export function randomInt(min: number, max: number, context?: string): number {
+    const rng = getContextRandom(context || "randomInt")
+    return rng.nextInt(min, max)
 }
 
 /**
  * 在指定范围内生成随机浮点数
  * @param min 最小值（包含）
  * @param max 最大值（包含）
+ * @param context 随机数上下文（用于确定性随机）
  * @returns 随机浮点数
  */
-export function randomFloat(min: number, max: number): number {
-    return min + Math.random() * (max - min)
+export function randomFloat(min: number, max: number, context?: string): number {
+    const rng = getContextRandom(context || "randomFloat")
+    return min + rng.next() * (max - min)
 }
 
 /**
  * 根据概率返回 true 或 false
  * @param probability 概率（0-1）
+ * @param context 随机数上下文（用于确定性随机）
  * @returns 是否触发
  */
-export function randomChance(probability: number): boolean {
-    return Math.random() < probability
+export function randomChance(probability: number, context?: string): boolean {
+    const rng = getContextRandom(context || "randomChance")
+    return rng.next() < probability
 }

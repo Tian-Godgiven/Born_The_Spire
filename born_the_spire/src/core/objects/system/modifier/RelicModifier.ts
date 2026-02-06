@@ -34,6 +34,30 @@ export class RelicModifier extends ItemModifier {
     }
 
     /**
+     * 批量获得遗物（通过 key 列表）
+     * @param relicKeys 遗物 key 列表
+     * @param source 来源实体
+     * @param parentLog 父日志
+     */
+    async acquireRelicsFromKeys(relicKeys: string[], source: Entity, parentLog?: LogUnit) {
+        // 动态导入避免循环依赖
+        const { getLazyModule } = await import("@/core/utils/lazyLoader")
+        const relicList = getLazyModule<any[]>('relicList')
+
+        for (const relicKey of relicKeys) {
+            const relicConfig = relicList.find((r: any) => r.key === relicKey)
+            if (!relicConfig) {
+                console.warn(`[RelicModifier] 未找到遗物: ${relicKey}`)
+                continue
+            }
+
+            // 创建遗物实例
+            const relic = new Relic(relicConfig)
+            this.acquireRelic(relic, source, parentLog)
+        }
+    }
+
+    /**
      * 失去遗物
      *
      * 完整流程：

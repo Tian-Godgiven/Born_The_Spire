@@ -7,8 +7,7 @@ import { getStatusRefValue } from "../system/status/Status";
 import { getCurrentRefValue } from "../system/Current/current";
 import { getOrganModifier } from "../system/modifier/OrganModifier";
 import { doEvent } from "../system/ActionEvent";
-import { getOrganByKey } from "@/static/list/target/organList";
-import { getOrgan } from "./Organ";
+import { voteMechanismForEntity } from "@/static/registry/mechanismRegistry";
 
 export type TargetMap = EntityMap & {
     label:string,
@@ -18,8 +17,8 @@ export class Target extends Entity{
     public label:string = "";//名称
     public readonly __key:string = nanoid() //唯一键
     public state:State[] = []//状态数组
-    constructor(map:TargetMap){
-        super(map)
+    constructor(map:TargetMap, beforeCurrentInit?: (this: Entity) => void){
+        super(map, beforeCurrentInit)
         //名称
         this.label = map.label
     }
@@ -37,7 +36,32 @@ export class Chara extends Target{
     })
 
     constructor(map:CharaMap){
-        super(map)
+        // 在 super 调用时传入回调，在 Current 初始化之前先初始化器官
+        super(map, async function(this: Entity) {
+            // 初始化器官（在 Current 初始化之前）
+            // 此时 this 指向正在构造的 Chara 实例
+            const chara = this as Chara
+            if (map.organ) {
+                // 动态导入避免循环依赖
+                const { getOrgan } = await import("./Organ")
+                const { getLazyModule } = await import("@/core/utils/lazyLoader")
+                const { Organ } = await import("./Organ")
+                const organList = getLazyModule<any[]>('organList')
+
+                for(let key of map.organ){
+                    const organData = organList.find((o: any) => o.key === key)
+                    if (!organData) {
+                        console.error(`[Chara] 未找到器官: ${key}`)
+                        continue
+                    }
+                    const organ = new Organ(organData)
+                    getOrgan(chara, chara, organ)
+                }
+            }
+        })
+
+        // 启用护甲机制（默认启用）
+        voteMechanismForEntity(this, "armor", "enable", "default", 0)
 
         // 添加默认的死亡触发器
         // 监听 healthReachMin 事件，触发 dead 事件
@@ -63,16 +87,24 @@ export class Chara extends Target{
                 })
             }
         })
-
-        // 初始化器官
-        this.initOrgans(map.organ)
     }
 
     // 添加器官的方法
-    protected initOrgans(organKeys: string[]) {
+    protected async initOrgans(organKeys: string[]) {
         if (organKeys) {
+            // 动态导入避免循环依赖
+            const { getOrgan } = await import("./Organ")
+            const { getLazyModule } = await import("@/core/utils/lazyLoader")
+            const { Organ } = await import("./Organ")
+            const organList = getLazyModule<any[]>('organList')
+
             for(let key of organKeys){
-                const organ = getOrganByKey(key)
+                const organData = organList.find((o: any) => o.key === key)
+                if (!organData) {
+                    console.error(`[Chara] 未找到器官: ${key}`)
+                    continue
+                }
+                const organ = new Organ(organData)
                 getOrgan(this, this, organ)
             }
         }

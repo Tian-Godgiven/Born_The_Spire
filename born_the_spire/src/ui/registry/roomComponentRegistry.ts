@@ -8,6 +8,7 @@ import type { RoomType } from '@/core/objects/room/Room'
 
 // 导入内置房间组件
 import Battle from '@/ui/page/Scene/running/Battle.vue'
+import InitRoom from '@/ui/page/Scene/running/InitRoom.vue'
 import EventRoom from '@/ui/page/Scene/running/EventRoom.vue'
 import PoolRoom from '@/ui/page/Scene/running/PoolRoom.vue'
 import BlackStoreRoom from '@/ui/page/Scene/running/BlackStoreRoom.vue'
@@ -22,7 +23,10 @@ const roomComponentMap = new Map<RoomType | string, Component>()
  * 初始化内置房间组件
  */
 function initBuiltInRoomComponents() {
+    roomComponentMap.set('init', InitRoom)
     roomComponentMap.set('battle', Battle)
+    roomComponentMap.set('eliteBattle', Battle)  // 精英战斗使用相同的战斗组件
+    roomComponentMap.set('bossBattle', Battle)   // Boss战斗使用相同的战斗组件
     roomComponentMap.set('event', EventRoom)
     roomComponentMap.set('pool', PoolRoom)
     roomComponentMap.set('blackStore', BlackStoreRoom)

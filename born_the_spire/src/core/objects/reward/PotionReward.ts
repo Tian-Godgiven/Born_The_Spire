@@ -55,8 +55,12 @@ export class PotionReward extends Reward {
         this.potion = new Potion(this.potionConfig)
         newLog([`获得药水: ${this.potion.label}`])
 
-        // TODO: 将药水添加到玩家背包
-        // nowPlayer.addPotion(this.potion)
+        // 将药水添加到玩家背包
+        const { nowPlayer } = await import("@/core/objects/game/run")
+        const { getPotionModifier } = await import("@/core/objects/system/modifier/PotionModifier")
+
+        const potionModifier = getPotionModifier(nowPlayer)
+        potionModifier.acquirePotion(this.potion, nowPlayer)
 
         this.markAsClaimed()
     }

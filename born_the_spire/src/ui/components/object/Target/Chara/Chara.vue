@@ -17,7 +17,11 @@
                 <div class="name">
                     {{ target.label }}
                 </div>
-                <BloodLine :target></BloodLine>
+                <div class="health-and-armor">
+                    <BloodLine :target></BloodLine>
+                    <!-- 动态渲染所有 healthBarRight 位置的机制 -->
+                    <MechanismDisplay :entity="target" position="healthBarRight" />
+                </div>
                 <div class="states" v-for="state in target.state" :key="state.key">
                     <State :state></State>
                 </div>
@@ -44,6 +48,7 @@
     import BloodLine from '@/ui/components/object/Target/Chara/components/BloodLine.vue';
     import State from '@/ui/components/object/State.vue';
     import StateDisplay from '@/ui/components/display/StateDisplay.vue';
+    import MechanismDisplay from '@/ui/components/display/MechanismDisplay.vue';
     import { formatIntentDisplay } from '@/core/objects/system/Intent';
 
     const {target,side} = defineProps<{target:Chara,side:'left'|"right"}>()
@@ -100,6 +105,12 @@
     .bottom{
         .name{
             text-align: center;
+        }
+        .health-and-armor {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         flex-shrink: 0;
         position: relative;

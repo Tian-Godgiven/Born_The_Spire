@@ -23,7 +23,7 @@ export const cardList:CardMap[] = [{
     key:"original_card_00001",
     interaction:{
         use:{
-            target:{faction:"enemy"},
+            target:{faction:"opponent"},  // 攻击敌对阵营
             effects:[{
                 key:"damage",
                 params:{value:5},
@@ -263,6 +263,118 @@ export const cardList:CardMap[] = [{
                     allowDuplicate:false,
                     addToHand:true
                 },
+            }]
+        }
+    }
+},{
+    label:"大发现",
+    tags:["skill"],
+    status:{
+        cost:1,
+    },
+    describe:["从30张随机卡牌中选择一张加入手牌"],
+    key:"original_card_00016",
+    interaction:{
+        use:{
+            target:{key:"self"},
+            effects:[{
+                key:"discoverCard",
+                params:{
+                    count:30,           // 随机抽取30张
+                    selectCount:1,      // 选择1张
+                    allowDuplicate:false,  // 不允许重复
+                    addToHand:true      // 加入手牌
+                },
+            }]
+        }
+    }
+},{
+    label:"防御",
+    tags:["skill", "basic"],
+    status:{
+        armor:5,
+        cost:1
+    },
+    describe:["获得",{key:["status","armor"]},"点护甲"],
+    key:"original_card_00014",
+    interaction:{
+        use:{
+            target:{key:"self"},
+            effects:[{
+                key:"gainArmor",
+                params:{value:5},
+            }]
+        }
+    }
+},{
+    label:"铁壁",
+    tags:["skill"],
+    status:{
+        armor:12,
+        cost:1
+    },
+    describe:["获得",{key:["status","armor"]},"点护甲"],
+    key:"original_card_00015",
+    interaction:{
+        use:{
+            target:{key:"self"},
+            effects:[{
+                key:"gainArmor",
+                params:{value:12},
+            }]
+        }
+    }
+},{
+    label:"终结一击",
+    tags:["attack", "test"],
+    status:{
+        damage:999,
+        cost:0
+    },
+    describe:["造成",{key:["status","damage"]},"点伤害","（测试用）"],
+    key:"test_card_kill",
+    interaction:{
+        use:{
+            target:{faction:"enemy"},
+            effects:[{
+                key:"damage",
+                params:{value:999},
+            }]
+        }
+    }
+},{
+    label:"挣扎",
+    tags:["attack", "fallback"],
+    status:{
+        damage:5,
+        cost:0
+    },
+    describe:["造成",{key:["status","damage"]},"点伤害","（兜底攻击）"],
+    key:"fallback_struggle",
+    interaction:{
+        use:{
+            target:{faction:"opponent"},  // 攻击敌对阵营
+            effects:[{
+                key:"damage",
+                params:{value:5},
+            }]
+        }
+    }
+},{
+    label:"石击",
+    tags:["attack", "enemy"],
+    status:{
+        damage:6,
+        cost:0
+    },
+    describe:["造成",{key:["status","damage"]},"点伤害"],
+    key:"enemy_stone_strike",
+    interaction:{
+        use:{
+            target:{faction:"opponent"},  // 攻击敌对阵营
+            effects:[{
+                key:"damage",
+                params:{value:6},
             }]
         }
     }

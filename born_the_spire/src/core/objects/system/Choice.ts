@@ -18,6 +18,7 @@ export interface ChoiceConfig {
     component?: Component | string  // 自定义 Vue 组件（可选）
     onSelect?: () => void | Promise<void>  // 选择时的回调
     customData?: Record<string, any> // 自定义数据
+    mutuallyExclusiveWith?: string[]  // 互斥的选项 key 列表（选择此选项后，这些选项将被禁用）
 }
 
 /**
@@ -31,6 +32,7 @@ export class Choice {
     public readonly icon?: string
     public readonly component?: Component | string
     public readonly customData?: Record<string, any>
+    public readonly mutuallyExclusiveWith?: string[]  // 互斥的选项 key 列表
     public state: ChoiceState
     private onSelectCallback?: () => void | Promise<void>
 
@@ -41,6 +43,7 @@ export class Choice {
         this.icon = config.icon
         this.component = config.component
         this.customData = config.customData
+        this.mutuallyExclusiveWith = config.mutuallyExclusiveWith
         this.onSelectCallback = config.onSelect
         this.state = "available"
 
@@ -190,6 +193,16 @@ export class ChoiceGroup {
         // 选择此选项
         await choice.select()
         this.selectedChoices.push(choice)
+
+        // 处理互斥选项：禁用与此选项互斥的其他选项
+        if (choice.mutuallyExclusiveWith && choice.mutuallyExclusiveWith.length > 0) {
+            for (const exclusiveKey of choice.mutuallyExclusiveWith) {
+                const exclusiveChoice = this.choices.find(c => c.__key === exclusiveKey)
+                if (exclusiveChoice && exclusiveChoice.isAvailable()) {
+                    exclusiveChoice.disable()
+                }
+            }
+        }
 
         // 如果达到最大选择数量，自动完成
         if (this.selectedChoices.length >= this.maxSelect) {

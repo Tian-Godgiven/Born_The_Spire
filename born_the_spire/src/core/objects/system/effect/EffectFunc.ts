@@ -4,6 +4,7 @@ import { isState } from "@/core/utils/typeGuards";
 import { getStatusValue } from "../status/Status";
 import { getCurrentValue } from "../Current/current";
 import { newError } from "@/ui/hooks/global/alert";
+import { getContextRandom } from "@/core/hooks/random";
 
 //效果参数
 export type EffectParams = {
@@ -66,12 +67,15 @@ export function resolveEffectParams(param: EffectParams[string], event: ActionEv
         // 判断是整数还是浮点数（如果 min 和 max 都是整数，则生成整数随机值）
         const isInteger = Number.isInteger(min) && Number.isInteger(max)
 
+        // 使用确定性随机数生成器
+        const rng = getContextRandom("effectParam")
+
         if (isInteger) {
             // 生成整数随机值 [min, max]
-            return Math.floor(Math.random() * (max - min + 1)) + min
+            return rng.nextInt(min, max)
         } else {
             // 生成浮点数随机值 [min, max)
-            return Math.random() * (max - min) + min
+            return min + rng.next() * (max - min)
         }
     }
 

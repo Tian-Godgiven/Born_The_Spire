@@ -29,7 +29,9 @@ export class Status extends Modifier<StatusModifier>{
     //通过JSON数据添加属性修饰器，默认配置下添加的是基础修饰器
     addByJSON(source:any,options:Partial<ModifierOptions>&{modifierValue:number}){
         const statusKey = this.key
-        const {modifierValue,targetLayer="base",applyMode="absolute",modifierType="additive",clearable,modifierFunc} = options
+        const {modifierValue,targetLayer="base",modifierType="additive",clearable,modifierFunc} = options
+        // 如果没有指定 applyMode，根据 targetLayer 设置默认值
+        const applyMode = options.applyMode ?? "absolute"
         const modifierObj = new StatusModifier(statusKey,source,{
             targetLayer,
             modifierType,
@@ -47,6 +49,22 @@ export class Status extends Modifier<StatusModifier>{
         this._baseValue.value = countBaseModifier(this.owner,0,this.store)
         //再用基础值刷新当前值，从基础值开始
         this._value.value = countCurrentModifier(this.owner,this.baseValue,this.value,this.store)
+
+        // 调试：如果是 max-health，打印修饰器信息
+        if(this.key === "max-health") {
+            console.log(`[Status] ${this.owner.label} max-health 刷新:`, {
+                baseValue: this.baseValue,
+                value: this.value,
+                modifiers: this.store.map(m => ({
+                    source: m.source?.label || 'unknown',
+                    value: m.value,
+                    applyMode: m.applyMode,
+                    targetLayer: m.targetLayer,
+                    snapshotBaseValue: m.snapshotBaseValue,
+                    snapshotValue: m.snapshotValue
+                }))
+            })
+        }
     }
     //获得响应式值
     getRefValue(){
@@ -64,16 +82,22 @@ function countBaseModifier(owner:Entity,baseValue:number,modifierArr:StatusModif
     //排序
     const sortedModifiers = [...modifierArr].sort((a, b) => a.timeStamp - b.timeStamp)
     for(let i of sortedModifiers){
-        newValue = i.applyBase(owner,newValue,i)
+        // 只应用 targetLayer 为 "base" 的修饰器
+        if(i.targetLayer === "base") {
+            newValue = i.applyBase(owner,newValue,i)
+        }
     }
     return newValue
 }
 //计算当前值
-function countCurrentModifier(owner:Entity,baseValue:number,currentValue:number,modifierArr:StatusModifier[]){
+function countCurrentModifier(owner:Entity,baseValue:number,_currentValue:number,modifierArr:StatusModifier[]){
     let newValue = baseValue
     const sortedModifiers = [...modifierArr].sort((a, b) => a.timeStamp - b.timeStamp)
     for(let i of sortedModifiers){
-        newValue = i.applyCurrent(owner,baseValue,currentValue,i)
+        // 只应用 targetLayer 为 "current" 的修饰器
+        if(i.targetLayer === "current") {
+            newValue = i.applyCurrent(owner,baseValue,newValue,i)
+        }
     }
     return newValue
 }

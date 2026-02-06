@@ -116,6 +116,34 @@ export const relicList: RelicMap[] = [
                 }]
             }
         }
+    },
+    // 第一回合额外抽牌
+    {
+        label: "先手之戒",
+        describe: ["第一回合", "额外抽", { key: ["status", "first-turn-draw"] }, "张牌"],
+        key: "original_relic_00005",
+        status: {
+            "first-turn-draw": 2
+        },
+        interaction: {
+            possess: {
+                target: { key: "self" },
+                effects: [],
+                triggers: [{
+                    when: "after",
+                    how: "make",
+                    key: "battleStart",
+                    event: [{
+                        targetType: "owner",
+                        key: "addFirstTurnDrawBonus",
+                        effect: [{
+                            key: "addFirstTurnDraw",
+                            params: { value: 2 }
+                        }]
+                    }]
+                }]
+            }
+        }
     }
 ]
 

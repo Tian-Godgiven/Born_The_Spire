@@ -42,14 +42,23 @@ export function registeChooseTargetType({key,func,number}:{key:string,func:Regis
 }
 
 export type TargetType = {
-    faction?:"player"|"enemy"|"all",//可选的阵营,默认为敌方
+    faction?:"player"|"enemy"|"all"|"opponent",//可选的阵营,默认为敌方。opponent表示使用者的敌对阵营
     number?:number|"all",//可选的数量,默认为1
     key?:keyof typeof chooseTargetType,//判断关键字
 }
 
 //根据targetType来判断当前场上哪些对象满足key对应的约束函数要求
-export function getSpecificTargetsByTargetType(targetType:TargetType&{key:string}):Target[]{
+export function getSpecificTargetsByTargetType(targetType:TargetType&{key:string}, source?: Entity):Target[]{
     let nowTargetArr:Target[]
+
+    // 处理 opponent 阵营：根据 source 确定敌对阵营
+    let actualFaction = targetType.faction
+    if (actualFaction === "opponent" && source) {
+        // 判断 source 属于哪个阵营
+        const playerTeam = nowBattle.value?.getTeam("player") ?? []
+        const isPlayerSide = playerTeam.includes(source as any)
+        actualFaction = isPlayerSide ? "enemy" : "player"
+    }
 
     // 如果有key约束，先从全局目标池中应用key过滤
     // 这样像"self"这种key就不会受faction限制
@@ -66,9 +75,9 @@ export function getSpecificTargetsByTargetType(targetType:TargetType&{key:string
         nowTargetArr = func(allTargets, true)
 
         // 如果指定了faction，再按faction进一步过滤
-        if(targetType?.faction && targetType.faction !== "all"){
+        if(actualFaction && actualFaction !== "all"){
             nowTargetArr = nowTargetArr.filter(t => {
-                if(targetType.faction === "player"){
+                if(actualFaction === "player"){
                     return nowBattle.value?.getTeam("player")?.includes(t as any)
                 } else {
                     return nowBattle.value?.getTeam("enemy")?.includes(t as any)
@@ -78,7 +87,7 @@ export function getSpecificTargetsByTargetType(targetType:TargetType&{key:string
     }
     // 如果没有key约束，只按照阵营获取可选对象
     else {
-        switch(targetType?.faction){
+        switch(actualFaction){
             case "player":
                 nowTargetArr = nowBattle.value?.getTeam("player") ?? []
                 break;
