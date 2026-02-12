@@ -1,14 +1,5 @@
 
-import { Card } from "@/core/objects/item/Subclass/Card"
-import { ItemMap } from "@/core/objects/item/Item"
-
-export type CardMap = ItemMap & {
-    status:{
-        cost:number|null
-    }
-    entry?:string[],
-    tags?:string[],  // 卡牌标签（用于分类和筛选）
-}
+import { CardMap } from "@/core/objects/item/Subclass/Card"
 
 export const cardList:CardMap[] = [{
     label:"打击",
@@ -380,7 +371,8 @@ export const cardList:CardMap[] = [{
     }
 }]
 
-export function getCardByKey(key:string){
+export async function getCardByKey(key:string){
+    const { Card } = await import("@/core/objects/item/Subclass/Card")
     const data = cardList.find(value=>value.key == key)
     if(!data)throw new Error("不存在的卡牌")
     const card = new Card(data)

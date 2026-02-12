@@ -11,7 +11,7 @@ import Battle from '@/ui/page/Scene/running/Battle.vue'
 import InitRoom from '@/ui/page/Scene/running/InitRoom.vue'
 import EventRoom from '@/ui/page/Scene/running/EventRoom.vue'
 import PoolRoom from '@/ui/page/Scene/running/PoolRoom.vue'
-import BlackStoreRoom from '@/ui/page/Scene/running/BlackStoreRoom.vue'
+// import BlackStoreRoom from '@/ui/page/Scene/running/BlackStoreRoom.vue'
 import RoomSelectRoom from '@/ui/page/Scene/running/RoomSelectRoom.vue'
 
 /**
@@ -29,7 +29,7 @@ function initBuiltInRoomComponents() {
     roomComponentMap.set('bossBattle', Battle)   // Boss战斗使用相同的战斗组件
     roomComponentMap.set('event', EventRoom)
     roomComponentMap.set('pool', PoolRoom)
-    roomComponentMap.set('blackStore', BlackStoreRoom)
+    // roomComponentMap.set('blackStore', BlackStoreRoom)
     roomComponentMap.set('roomSelect', RoomSelectRoom)
 }
 

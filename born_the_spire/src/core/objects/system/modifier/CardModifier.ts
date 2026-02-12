@@ -3,7 +3,6 @@ import { Entity } from "../Entity"
 import { Card } from "../../item/Subclass/Card"
 import { Player } from "../../target/Player"
 import { Chara } from "../../target/Target"
-import { getCardByKey, getAllCards } from "@/static/list/item/cardList"
 import { newLog, LogUnit } from "@/ui/hooks/global/log"
 import { Organ } from "../../target/Organ"
 import { nowBattle } from "../../game/battle"
@@ -31,7 +30,8 @@ export class CardModifier {
      * @param parentLog 可选的父日志，用于嵌套显示
      * @returns 添加的卡牌对象数组
      */
-    addCardsFromSource(source: Entity, cardKeys: string[], parentLog?: LogUnit): Card[] {
+    async addCardsFromSource(source: Entity, cardKeys: string[], parentLog?: LogUnit): Promise<Card[]> {
+        const { getCardByKey, getAllCards } = await import("@/static/list/item/cardList")
         const addedCards: Card[] = []
 
         // 检查是否在战斗中
@@ -39,7 +39,7 @@ export class CardModifier {
 
         for (const cardKey of cardKeys) {
             // 创建卡牌实例
-            const card = getCardByKey(cardKey)
+            const card = await getCardByKey(cardKey)
 
             // 从 cardList 获取 CardMap 以获取词条定义
             const cardMap = getAllCards().find(c => c.key === cardKey)

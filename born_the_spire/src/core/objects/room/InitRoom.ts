@@ -6,7 +6,7 @@
 
 import { Room, RoomConfig } from "./Room"
 import { Choice, ChoiceGroup } from "../system/Choice"
-import { InitMap } from "@/static/list/room/init/initList"
+import { InitMap } from "@/core/types/InitMapData"
 import { executeEventEffects } from "@/static/list/room/event/eventEffectMap"
 import { newLog } from "@/ui/hooks/global/log"
 import { Component } from "vue"

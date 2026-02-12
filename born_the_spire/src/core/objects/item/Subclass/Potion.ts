@@ -1,9 +1,14 @@
-import { PotionMap } from "@/static/list/item/potionList";
-import { Item } from "../Item";
+import { Item, ItemMap } from "../Item";
 import { Entity } from "../../system/Entity";
 import { getPotionModifier } from "../../system/modifier/PotionModifier";
 
+export type PotionMap = ItemMap & {
+    targetType:"player"|"enemy"|"all",
+    canDrop?: boolean  // 是否可丢弃，默认 true
+}
+
 export class Potion extends Item{
+    public readonly itemType = 'potion' as const  // 类型标识
     public targetType:"player"|"enemy"|"all"
     public canDrop:boolean // 是否可丢弃
 

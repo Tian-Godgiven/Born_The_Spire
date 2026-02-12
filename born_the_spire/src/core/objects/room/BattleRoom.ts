@@ -1,7 +1,6 @@
 import { Room, RoomConfig, BattleRoomType } from "./Room"
 import { startNewBattle, Battle } from "../game/battle"
-import { Enemy } from "../target/Enemy"
-import { EnemyMap } from "@/static/list/target/enemyList"
+import { Enemy, EnemyMap } from "../target/Enemy"
 import { newLog } from "@/ui/hooks/global/log"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"

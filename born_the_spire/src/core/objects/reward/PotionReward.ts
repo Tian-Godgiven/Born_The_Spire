@@ -1,6 +1,5 @@
 import { Reward, RewardConfig } from "./Reward"
-import { Potion } from "@/core/objects/item/Subclass/Potion"
-import { PotionMap } from "@/static/list/item/potionList"
+import { Potion, PotionMap } from "@/core/objects/item/Subclass/Potion"
 import { newLog } from "@/ui/hooks/global/log"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 

@@ -1,5 +1,5 @@
-import { CurrentMap } from "./currentMap"
-import { Chara } from "@/core/objects/target/Target"
+import { CurrentMap } from "@/core/types/CurrentMapData"
+import type { Chara } from "@/core/objects/target/Target"
 import { doEvent } from "@/core/objects/system/ActionEvent"
 
 export const healthMap: CurrentMap<Chara> = {

@@ -1,10 +1,10 @@
 import { GameRun } from "@/core/objects/system/GameRun";
 import { Player } from "@/core/objects/target/Player";
 import router from "@/ui/router";
-import { playerList } from "@/static/list/target/playerList";
 import { reactive } from "vue";
 import { addToPlayerTeam } from "./battle";
 import type { Room } from "../room/Room";
+import { getLazyModule } from "@/core/utils/lazyLoader";
 
 //当前的局（使用 reactive 包装，内部属性自动响应式）
 export const nowGameRun = reactive<GameRun>(new GameRun())
@@ -72,6 +72,7 @@ export async function enterRoom(room: Room | string, layer?: number): Promise<vo
 // 初始化函数，在懒加载完成后调用
 export function initDefaultGameObjects() {
     // nowPlayer 已经在模块初始化时创建，这里只需要重新赋值
+    const playerList = getLazyModule<Record<string, any>>('playerList')
     const defaultPlayer = new Player(playerList["default"])
     nowPlayer = reactive(defaultPlayer) as unknown as Player
 
@@ -147,6 +148,7 @@ export async function startNewRun(seed?: string){
     Object.assign(nowGameRun, gameRun)
 
     //创建本局角色
+    const playerList = getLazyModule<Record<string, any>>('playerList')
     const map = playerList["default"]
     const player = new Player(map)
     nowPlayer = reactive(player) as unknown as Player  // 重新赋值，不要用 Object.assign
@@ -161,7 +163,7 @@ export async function startNewRun(seed?: string){
     await import("@/core/objects/room/EventRoom")
     await import("@/core/objects/room/BattleRoom")
     await import("@/core/objects/room/PoolRoom")
-    await import("@/core/objects/room/BlackStoreRoom")
+    // await import("@/core/objects/room/BlackStoreRoom")
     await import("@/core/objects/room/RoomSelectRoom")
     await import("@/core/objects/room/FloorSelectRoom")
     await import("@/core/objects/room/TreasureRoom")

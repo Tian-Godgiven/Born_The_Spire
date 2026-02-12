@@ -6,11 +6,11 @@
 import { Room, RoomConfig } from "./Room"
 import { nowPlayer } from "@/core/objects/game/run"
 import { newLog } from "@/ui/hooks/global/log"
-import type { OrganMap } from "@/static/list/target/organList"
+import type { OrganMap } from "@/core/objects/target/Organ"
 import type { Organ } from "@/core/objects/target/Organ"
 import type { Relic } from "@/core/objects/item/Subclass/Relic"
-import type { RelicMap } from "@/static/list/item/relicList"
-import type { PotionMap } from "@/static/list/item/potionList"
+import type { RelicMap } from "@/core/objects/item/Subclass/Relic"
+import type { PotionMap } from "@/core/objects/item/Subclass/Potion"
 import {
     blackStoreOrganPool,
     blackStoreRelicPool,

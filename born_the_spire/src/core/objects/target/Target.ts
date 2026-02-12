@@ -14,6 +14,7 @@ export type TargetMap = EntityMap & {
 }
 //可被选中和作用的目标
 export class Target extends Entity{
+    public readonly targetType: string = 'target'  // 类型标识，子类应该覆盖
     public label:string = "";//名称
     public readonly __key:string = nanoid() //唯一键
     public state:State[] = []//状态数组

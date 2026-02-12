@@ -1,6 +1,6 @@
 import { Card } from "@/core/objects/item/Subclass/Card"
 import { getStatusValue, ifHaveStatus } from "@/core/objects/system/status/Status"
-import { Organ } from "@/core/objects/target/Organ"
+// import { Organ } from "@/core/objects/target/Organ"  // 移除以避免循环依赖
 
 /**
  * 卡牌筛选器（通用工具）
@@ -53,8 +53,10 @@ export function selectCards(
     if (selector.organ) {
         filtered = filtered.filter(card => {
             if (!card.source) return false
-            if (card.source instanceof Organ) {
-                return card.source.key === selector.organ
+            // 使用 __key 属性判断，避免 instanceof 导致的循环依赖
+            // Organ 对象有 __key 属性，可以用来判断
+            if ('__key' in card.source && typeof (card.source as any).__key === 'string') {
+                return (card.source as any).__key === selector.organ
             }
             return false
         })

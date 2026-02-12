@@ -1,13 +1,64 @@
-import type { OrganMap, OrganUpgradeConfig } from "@/static/list/target/organList";
 import { Entity } from "../system/Entity";
-import { Interaction } from "../item/Item";
+import { Interaction, ItemMap } from "../item/Item";
 import { getOrganModifier } from "../system/modifier/OrganModifier";
 import { doEvent } from "../system/ActionEvent";
 import { resolveTriggerEventTarget } from "../system/trigger/Trigger";
-import { OrganQuality, calculateAbsorbValue } from "@/static/list/target/organQuality";
-import { OrganPart } from "@/static/list/target/organPart";
+import { OrganQuality, OrganPart } from "@/core/types/OrganTypes";
+import { calculateAbsorbValue } from "@/static/list/target/organQuality";
+import { TargetMap } from "./Target";
+import { Describe } from "@/ui/hooks/express/describe";
+import { EffectUnit } from "../system/effect/EffectUnit";
+import { Component } from "vue";
+
+/**
+ * 器官升级里程碑配置
+ */
+export interface OrganUpgradeMilestone {
+    level: number                   // 达到此等级时触发
+    effects?: EffectUnit[]          // 效果列表
+    component?: string | Component  // 自定义组件
+    componentData?: any             // 传递给组件的数据
+}
+
+/**
+ * 器官升级配置
+ */
+export interface OrganUpgradeConfig {
+    // 自定义升级成本（可选，不填则使用稀有度默认值）
+    cost?: number | ((organ: any) => number)
+
+    // 每级通用效果（可选）
+    perLevel?: {
+        effects: EffectUnit[]
+    }
+
+    // 特定等级的里程碑（可选）
+    milestones?: OrganUpgradeMilestone[]
+}
+
+export type OrganMap = ItemMap&TargetMap&{
+    label:string,
+    key:string,
+    describe?:Describe,
+    cards?: string[]  // 器官提供的卡牌列表（卡牌的 key）
+    entry?: string[]  // 器官的词条列表（词条的 key）
+
+    // 新增属性
+    quality: OrganQuality  // 稀有度（必填）
+    level?: number         // 等级（默认为 1）
+    part?: OrganPart       // 部位（可选，不填表示不占据部位）
+    absorbValue?: number   // 吞噬获取量（可选，不填则使用稀有度的默认值）
+
+    // 升级配置（可选）
+    upgrade?: OrganUpgradeConfig
+
+    // 质量系统（可选）
+    // 如果 status 中定义了 "max-mass"，则器官具有质量属性
+    // current 中需要包含 "mass" 来存储当前质量值
+}
 
 export class Organ extends Entity{
+    public readonly targetType = 'organ' as const  // 类型标识
     public readonly label:string
     public readonly key:string
     public interaction:Interaction[]

@@ -1,7 +1,7 @@
 import { Describe } from "@/ui/hooks/express/describe";
 import { Entity, EntityMap } from "../system/Entity";
 import { EffectUnit } from "../system/effect/EffectUnit";
-import { TargetType } from "@/static/list/registry/chooseTargetType";
+import { TargetType } from "@/core/types/TargetType";
 import { newLog } from "@/ui/hooks/global/log";
 import { TriggerMap } from "@/core/types/object/trigger";
 import { ModifierOptions } from "../system/status/type";
@@ -30,6 +30,7 @@ export type ItemMap = EntityMap & {
 
 // 物品：一系列可以被玩家交互的对象
 export class Item extends Entity{
+    public readonly itemType: string = 'item'  // 类型标识，子类应该覆盖
     public label:string;
     public readonly key:string;
     public interaction:Interaction[]//交互

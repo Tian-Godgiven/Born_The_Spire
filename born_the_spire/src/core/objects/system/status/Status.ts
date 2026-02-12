@@ -1,4 +1,4 @@
-import { StatusMap } from "@/static/list/system/statusMap"
+import { StatusMap } from "@/core/types/StatusMapData"
 import { Entity } from "../Entity"
 import { Modifier } from "../modifier/Modifier"
 import { StatusModifier } from "./StatusModifier"

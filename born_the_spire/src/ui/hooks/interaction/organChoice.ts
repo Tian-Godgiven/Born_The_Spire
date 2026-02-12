@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { OrganMap } from '@/static/list/target/organList'
+import { OrganMap } from '@/core/objects/target/Organ'
 
 /**
  * 器官选择 UI 交互系统

@@ -78,10 +78,10 @@ export async function goToRoomType(roomType: RoomType, config?: any){
             const { PoolRoom } = await import("@/core/objects/room/PoolRoom")
             room = new PoolRoom({ type: "pool", layer, ...config })
             break
-        case "blackStore":
-            const { BlackStoreRoom } = await import("@/core/objects/room/BlackStoreRoom")
-            room = new BlackStoreRoom({ type: "blackStore", layer, ...config })
-            break
+        // case "blackStore":
+        //     const { BlackStoreRoom } = await import("@/core/objects/room/BlackStoreRoom")
+        //     room = new BlackStoreRoom({ type: "blackStore", layer, ...config })
+        //     break
         case "roomSelect":
             const { RoomSelectRoom } = await import("@/core/objects/room/RoomSelectRoom")
             room = new RoomSelectRoom({ type: "roomSelect", layer, roomCount: 3, ...config })

@@ -1,10 +1,8 @@
 import { Card, drawCardFromDrawPile } from "../item/Subclass/Card";
 import type { Potion } from "../item/Subclass/Potion"
 import type { Relic } from "../item/Subclass/Relic"
-import { PlayerMap } from "@/static/list/target/playerList";
-import { getPotionByKey } from "@/static/list/item/potionList";
 import { nanoid } from "nanoid";
-import { Chara } from "./Target";
+import { Chara, CharaMap } from "./Target";
 import { Entity } from "../system/Entity";
 import { washPile } from "@/core/effects/card";
 import { reactive } from "vue";
@@ -13,6 +11,17 @@ import { getStatusValue } from "../system/status/Status";
 import { getPotionModifier } from "../system/modifier/PotionModifier";
 import { getCardModifier } from "../system/modifier/CardModifier";
 import { getRelicModifier } from "../system/modifier/RelicModifier";
+
+export type PlayerMap = CharaMap & {
+    key:string
+    reserves?:Record<string,number>,  // 储备（金钱等）
+    potion:{
+        now:string[]  // 初始拥有的药水
+    }
+    organ:string[]
+    card:string[],
+    relic?:string[]  // 初始拥有的遗物
+}
 
 export type CardPiles = {
     handPile:Card[],
@@ -23,6 +32,7 @@ export type CardPiles = {
 
 // 每一局游戏中，玩家扮演的角色
 export class Player extends Chara{
+    public readonly targetType = 'player' as const  // 类型标识
     //唯一键
     public readonly __key:string = nanoid()
     //当前的各个卡组的情况
@@ -71,7 +81,7 @@ export class Player extends Chara{
         return this
     }
     //获取药水,一次一瓶
-    getPotion(potionKey:string){
+    async getPotion(potionKey:string){
         const maxNum = getStatusValue(this, "max-potion")
         const potionModifier = getPotionModifier(this)
         const nowNum = potionModifier.getPotions().length
@@ -80,7 +90,8 @@ export class Player extends Chara{
         }
         else{
             //获取药水对象的数据
-            const potion = getPotionByKey(potionKey)
+            const { getPotionByKey } = await import("@/static/list/item/potionList")
+            const potion = await getPotionByKey(potionKey)
             // 使用 PotionModifier 系统添加药水
             potionModifier.acquirePotion(potion, this)
             return true

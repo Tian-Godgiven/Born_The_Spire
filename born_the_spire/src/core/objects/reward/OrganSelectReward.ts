@@ -1,5 +1,5 @@
 import { Reward, RewardConfig } from "./Reward"
-import type { OrganMap } from "@/static/list/target/organList"
+import type { OrganMap } from "@/core/objects/target/Organ"
 import { newLog } from "@/ui/hooks/global/log"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 

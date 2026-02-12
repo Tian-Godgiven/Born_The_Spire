@@ -1,10 +1,4 @@
-import { Potion } from "@/core/objects/item/Subclass/Potion";
-import { ItemMap } from "@/core/objects/item/Item";
-
-export type PotionMap = ItemMap & {
-    targetType:"player"|"enemy"|"all",
-    canDrop?: boolean  // 是否可丢弃，默认 true
-}
+import { PotionMap } from "@/core/objects/item/Subclass/Potion";
 
 export const potionList:PotionMap[] = [
     // 简单药水 - 单个 use
@@ -122,7 +116,8 @@ export const potionList:PotionMap[] = [
 ]
 
 //获取药水对象
-export function getPotionByKey(potionKey:string):Potion{
+export async function getPotionByKey(potionKey:string){
+    const { Potion } = await import("@/core/objects/item/Subclass/Potion")
     //获取数据
     const map = potionList.find(item=>item.key == potionKey)
     if(!map){

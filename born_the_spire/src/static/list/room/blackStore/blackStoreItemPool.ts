@@ -3,9 +3,9 @@
  * 定义黑市中可以出现的器官、遗物、药水
  */
 
-import type { OrganMap } from "@/static/list/target/organList"
-import type { RelicMap } from "@/static/list/item/relicList"
-import type { PotionMap } from "@/static/list/item/potionList"
+import type { OrganMap } from "@/core/objects/target/Organ"
+import type { RelicMap } from "@/core/objects/item/Subclass/Relic"
+import type { PotionMap } from "@/core/objects/item/Subclass/Potion"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { getContextRandom } from "@/core/hooks/random"
 

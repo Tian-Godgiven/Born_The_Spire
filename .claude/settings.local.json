@@ -4,7 +4,10 @@
       "Bash(grep -n \"@/core/objects/item/Card\" *.ts)",
       "WebSearch",
       "Bash(cd /d D:tianBorn_The_Spireborn_the_spire)",
-      "Bash(dir /b)"
+      "Bash(dir /b)",
+      "Bash(\"D:\\\\tian\\\\Born_The_Spire\\\\born_the_spire\\\\src\\\\core\\\\types\\\\CurrentMapData.ts\" << 'EOF'\nimport { Current } from \"@/core/objects/system/Current/current\"\nimport { Entity } from \"@/core/objects/system/Entity\"\nimport { TriggerMap } from \"@/core/types/object/trigger\"\nimport { ActionEvent } from \"@/core/objects/system/ActionEvent\"\n\nexport type CurrentMap<T extends Entity> = {\n    startValue:\"max\"|\"min\"|number//初始值\n    triggers?:TriggerMap,\n    //设置选项\n    allowOverMin?:boolean|\"breakdown\",//是否允许某次修改超出下限值,默认为true\n    allowOverMax?:boolean|\"breakdown\",//是否允许某次修改超出上限值,默认为true\n    maxBy?:string|number,//上限为属性值/特定值,默认无限大\n    minBy?:string|number,//下限为属性值/特点值，默认为0\n    reachMax?:\\(event:ActionEvent,ownner:T,current:Current\\)=>void,//达到上限时的回调函数\n    reachMin?:\\(event:ActionEvent,ownner:T,current:Current\\)=>void,//达到下限时的回调函数\n    onShow?:string|number|\\(\\(ownner:T,current:Current\\)=>number|string\\)//显示时的返回值\n}\n\nexport type CurrentMapData<T extends Entity> = \\(\\(Partial<CurrentMap<T>>&{key:string}\\)|string\\)[]\nEOF)",
+      "Bash(find:*)",
+      "Bash(npm run build:*)"
     ]
   }
 }

@@ -3,7 +3,7 @@ import { Entity } from "../Entity";
 import { TriggerMap } from "@/core/types/object/trigger";
 import { createTriggerByTriggerMap } from "../trigger/Trigger";
 import { newError } from "@/ui/hooks/global/alert";
-import { CurrentMapData, getMetaFromCurrentMap } from "@/static/list/system/currents/currentMap";
+// import { CurrentMapData, getMetaFromCurrentMap } from "@/static/list/system/currents/currentMap";
 import { getStatusValue } from "../status/Status";
 import { ActionEvent } from "../ActionEvent";
 import { getRefValue, setRefValue } from "@/core/hooks/refValue";
@@ -55,7 +55,10 @@ export class Current{
 }
 
 //初始化当前值
-export function initCurrentFromMap<T extends Entity>(owner:Entity,mapData:CurrentMapData<T>){
+export async function initCurrentFromMap<T extends Entity>(owner:Entity,mapData:any){
+    // 动态导入以避免循环依赖
+    const { getMetaFromCurrentMap } = await import("@/static/list/system/currents/currentMap")
+
     //从map里找到当前值
     for(let i of mapData){
         let key:string = typeof i == "string" ? i:i.key

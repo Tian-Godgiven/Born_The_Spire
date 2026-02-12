@@ -1,15 +1,5 @@
-import { CharaMap } from "@/core/objects/target/Target"
+import { PlayerMap } from "@/core/objects/target/Player"
 
-export type PlayerMap = CharaMap & {
-    key:string
-    reserves?:Record<string,number>,  // 储备（金钱等）
-    potion:{
-        now:string[]  // 初始拥有的药水
-    }
-    organ:string[]
-    card:string[],
-    relic?:string[]  // 初始拥有的遗物
-}
 export const playerList:Record<string,PlayerMap> = {
     "default":{
         label:"你",

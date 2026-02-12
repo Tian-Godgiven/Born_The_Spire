@@ -1,7 +1,4 @@
-import { Relic, RelicMap } from "@/core/objects/item/Subclass/Relic";
-
-// 重新导出 RelicMap 类型供其他模块使用
-export type { RelicMap }
+import type { RelicMap } from "@/core/objects/item/Subclass/Relic";
 
 export const relicList: RelicMap[] = [
     // 被动遗物 - 只有 possess
@@ -150,7 +147,8 @@ export const relicList: RelicMap[] = [
 /**
  * 获取遗物对象
  */
-export function getRelicByKey(relicKey: string): Relic {
+export async function getRelicByKey(relicKey: string) {
+    const { Relic } = await import("@/core/objects/item/Subclass/Relic")
     // 获取数据
     const map = relicList.find(item => item.key == relicKey)
     if (!map) {

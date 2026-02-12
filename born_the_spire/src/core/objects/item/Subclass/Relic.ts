@@ -15,6 +15,8 @@ export type RelicMap = ItemMap & {
  * 能够在获取后的游戏全局中产生各种效果的强力道具，以被动效果为主，少数遗物能够主动使用。
  */
 export class Relic extends Item {
+    public readonly itemType = 'relic' as const  // 类型标识
+
     constructor(map: RelicMap) {
         super(map)
     }

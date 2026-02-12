@@ -3,32 +3,7 @@
  */
 
 import { applyVariance } from "@/core/hooks/variance"
-
-/**
- * 器官稀有度枚举
- */
-export enum OrganQuality {
-    Common = "common",          // 普通
-    Uncommon = "uncommon",      // 罕见
-    Rare = "rare",              // 稀有
-    Epic = "epic",              // 史诗
-    Legendary = "legendary"     // 传说
-}
-
-/**
- * 稀有度配置
- */
-export type QualityConfig = {
-    key: OrganQuality           // 稀有度标识
-    label: string               // 显示名称
-    color: string               // 颜色代码（用于 UI 显示）
-    baseAbsorbValue: number     // 基础吞噬获取量
-    upgradeCostMultiplier: number   // 升级成本倍率（相对于吞噬获取量）
-    upgradeVariance?: number    // 升级成本波动范围（可选，默认 ±10%）
-    repairCostMultiplier: number    // 修复成本倍率
-    assimilateCostMultiplier: number // 同化成本倍率
-    blackStorePrice: number     // 黑市基础价格
-}
+import { OrganQuality, QualityConfig } from "@/core/types/OrganTypes"
 
 /**
  * 稀有度配置列表

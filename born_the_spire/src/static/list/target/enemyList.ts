@@ -1,14 +1,5 @@
-import { Enemy } from "@/core/objects/target/Enemy"
-import { CharaMap } from "@/core/objects/target/Target"
-import { EnemyBehaviorConfig } from "@/core/objects/system/EnemyBehavior"
+import { Enemy, EnemyMap } from "@/core/objects/target/Enemy"
 import { reactive } from "vue"
-
-export type EnemyMap = CharaMap & {
-    key:string
-    status:Record<string,number|boolean>,
-    behavior?: EnemyBehaviorConfig  // 敌人行为配置
-    cards?: string[]  // 敌人专属卡牌（不通过器官提供）
-}
 
 export const enemyList:EnemyMap[] = [
     // 原有的小石怪

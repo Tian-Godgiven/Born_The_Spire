@@ -9,7 +9,7 @@ import { EventParticipant } from "@/core/types/event/EventParticipant"
 import { Entity } from "@/core/objects/system/Entity"
 import { State } from "@/core/objects/system/State"
 import { Effect } from "@/core/objects/system/effect/Effect"
-import { Card } from "@/core/objects/item/Subclass/Card"
+import type { Card } from "@/core/objects/item/Subclass/Card"  // type-only import 避免循环依赖
 
 /**
  * 检查对象是否为 Entity 类型
@@ -61,8 +61,9 @@ export function assertEffect(participant: EventParticipant, context: string = ""
 
 /**
  * 检查对象是否为 Card 类型
+ * 使用类型标识而不是 instanceof 以避免循环依赖
  */
 export function isCard(participant: EventParticipant): participant is Card {
     if (!isEntity(participant)) return false
-    return participant instanceof Card
+    return 'itemType' in participant && (participant as any).itemType === 'card'
 }

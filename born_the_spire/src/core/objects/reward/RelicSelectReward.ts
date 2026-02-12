@@ -1,5 +1,5 @@
 import { Reward, RewardConfig } from "./Reward"
-import { RelicMap } from "@/static/list/item/relicList"
+import { RelicMap } from "@/core/objects/item/Subclass/Relic"
 import { newLog } from "@/ui/hooks/global/log"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 

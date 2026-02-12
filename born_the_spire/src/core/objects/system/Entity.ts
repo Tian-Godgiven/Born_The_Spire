@@ -1,4 +1,4 @@
-import { StatusMap } from "@/static/list/system/statusMap";
+import { StatusMap } from "@/core/types/StatusMapData";
 import { Trigger } from "./trigger/Trigger";
 import { ActionEvent } from "./ActionEvent";
 import { Describe } from "@/ui/hooks/express/describe";
@@ -6,8 +6,8 @@ import { TriggerMap, TriggerObj } from "@/core/types/object/trigger";
 import { Effect } from "./effect/Effect";
 import { nanoid } from "nanoid";
 import { appendStatus, createStatusFromMap, Status } from "./status/Status";
-import { Current, initCurrentFromMap } from "./Current/current";
-import { CurrentMapData } from "@/static/list/system/currents/currentMap";
+// import { Current, initCurrentFromMap } from "./Current/current";
+// import { CurrentMapData } from "@/static/list/system/currents/currentMap";
 import { EventParticipant } from "@/core/types/event/EventParticipant";
 import { MechanismManager } from "./mechanism/MechanismManager";
 
@@ -19,7 +19,7 @@ export class Entity implements EventParticipant{
     //属性值:相对静态的，受修饰器管理的值
     public status:Record<string,Status> = {}
     //当前值：非常动态的，范围内频繁变化的值
-    public current:Record<string,Current> = {}
+    public current:Record<string,any> = {}  // 改用 any 避免导入 Current
     public describe:Describe = [] //描述
     //触发器
     public trigger:Trigger
@@ -49,10 +49,13 @@ export class Entity implements EventParticipant{
             beforeCurrentInit.call(this)
             console.log(`[Entity] ${map.label} beforeCurrentInit 回调完成`)
         }
-        //初始化当前值
+        //初始化当前值 - 使用动态导入避免循环依赖
         if(map.current){
             console.log(`[Entity] ${map.label} 初始化 Current`)
-            initCurrentFromMap<typeof this>(this,map.current)
+            // 动态导入以避免循环依赖
+            import("./Current/current").then(({ initCurrentFromMap }) => {
+                initCurrentFromMap<typeof this>(this,map.current!)
+            })
         }
         //初始化描述
         this.describe = map.describe??[]
@@ -82,5 +85,5 @@ export type EntityMap<T extends Entity = Entity> = {
     status?:Record<string,StatusMap|number>;
     trigger?:TriggerMap;
     describe?:Describe;
-    current?:CurrentMapData<T>//需要挂载的当前值对象的key及其起始值
+    current?:any//需要挂载的当前值对象的key及其起始值 - 改用 any 避免导入 CurrentMapData
 }

@@ -3,6 +3,7 @@ import { nowPlayer } from "@/core/objects/game/run";
 import { Entity } from "@/core/objects/system/Entity";
 import { Target } from "@/core/objects/target/Target";
 import { newError } from "@/ui/hooks/global/alert";
+import { TargetType } from "@/core/types/TargetType";
 
 type RegistryItem = (target:Entity)=>boolean
 interface RegistryValue{
@@ -39,12 +40,6 @@ export function registeChooseTargetType({key,func,number}:{key:string,func:Regis
             return selectTarget(targets,func,number)
         }
     }
-}
-
-export type TargetType = {
-    faction?:"player"|"enemy"|"all"|"opponent",//可选的阵营,默认为敌方。opponent表示使用者的敌对阵营
-    number?:number|"all",//可选的数量,默认为1
-    key?:keyof typeof chooseTargetType,//判断关键字
 }
 
 //根据targetType来判断当前场上哪些对象满足key对应的约束函数要求

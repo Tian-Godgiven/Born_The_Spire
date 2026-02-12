@@ -1,6 +1,5 @@
-import { CardMap } from "@/static/list/item/cardList";
 import { Target } from "@/core/objects/target/Target";
-import { Item } from "@/core/objects/item/Item";
+import { Item, ItemMap } from "@/core/objects/item/Item";
 import { doEvent, ActionEvent } from "@/core/objects/system/ActionEvent";
 import { beginTransaction, endTransaction } from "@/core/objects/game/transaction";
 import { CardPiles, Player } from "@/core/objects/target/Player";
@@ -10,6 +9,14 @@ import { newError } from "@/ui/hooks/global/alert";
 import { getStatusValue } from "@/core/objects/system/status/Status";
 import { getCardModifier } from "@/core/objects/system/modifier/CardModifier";
 import { getEntryModifier } from "@/core/objects/system/modifier/EntryModifier";
+
+export type CardMap = ItemMap & {
+    status:{
+        cost:number|null
+    }
+    entry?:string[],
+    tags?:string[],  // 卡牌标签（用于分类和筛选）
+}
 
 /**
  * 卡牌对象
@@ -21,6 +28,7 @@ import { getEntryModifier } from "@/core/objects/system/modifier/EntryModifier";
  * - void 词条：回合结束时的特殊处理
  */
 export class Card extends Item{
+    public readonly itemType = 'card' as const  // 类型标识，用于类型守卫
     public source?: Entity  // 卡牌来源（可能是器官、遗物或其他来源）
     public owner?: Entity   // 卡牌持有者（通常是 Player）
     public tags?: string[]  // 卡牌标签（用于分类和筛选）

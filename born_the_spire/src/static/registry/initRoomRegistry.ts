@@ -8,7 +8,7 @@ import { BattleRoom } from "@/core/objects/room/BattleRoom"
 import { RoomSelectRoom } from "@/core/objects/room/RoomSelectRoom"
 import { PoolRoom } from "@/core/objects/room/PoolRoom"
 import { EventRoom } from "@/core/objects/room/EventRoom"
-import { BlackStoreRoom } from "@/core/objects/room/BlackStoreRoom"
+// import { BlackStoreRoom } from "@/core/objects/room/BlackStoreRoom"
 
 /**
  * 初始化房间注册表
@@ -38,7 +38,7 @@ function registerBaseRoomTypes(): void {
     roomRegistry.registerRoomType("event", EventRoom)
 
     // 注册黑市房间类型
-    roomRegistry.registerRoomType("blackStore", BlackStoreRoom)
+    // roomRegistry.registerRoomType("blackStore", BlackStoreRoom)
 
 }
 

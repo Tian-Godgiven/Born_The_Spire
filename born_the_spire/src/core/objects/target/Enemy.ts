@@ -1,5 +1,4 @@
-import { EnemyMap } from "@/static/list/target/enemyList";
-import { Chara } from "./Target";
+import { Chara, CharaMap } from "./Target";
 import { newLog } from "@/ui/hooks/global/log";
 import { Card } from "../item/Subclass/Card";
 import { getOrganModifier } from "../system/modifier/OrganModifier";
@@ -9,7 +8,15 @@ import { doEvent } from "../system/ActionEvent";
 import { Player } from "./Player";
 import { EnemyBehaviorConfig, selectAction } from "../system/EnemyBehavior";
 
+export type EnemyMap = CharaMap & {
+    key:string
+    status:Record<string,number|boolean>,
+    behavior?: EnemyBehaviorConfig  // 敌人行为配置
+    cards?: string[]  // 敌人专属卡牌（不通过器官提供）
+}
+
 export class Enemy extends Chara{
+    public readonly targetType = 'enemy' as const  // 类型标识
     public intent?: Intent  // 当前意图（下回合要执行的行动）
     public behavior?: EnemyBehaviorConfig  // 敌人行为配置
     public exclusiveCards: string[] = []  // 敌人专属卡牌key列表

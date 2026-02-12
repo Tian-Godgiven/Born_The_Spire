@@ -2,35 +2,7 @@
  * 器官部位系统
  */
 
-/**
- * 器官部位枚举
- * 可以根据需要扩展更多部位
- */
-export enum OrganPart {
-    Heart = "heart",        // 心脏
-    Lung = "lung",          // 肺
-    Liver = "liver",        // 肝脏
-    Stomach = "stomach",    // 胃
-    Brain = "brain",        // 大脑
-    Eye = "eye",            // 眼睛
-    Skin = "skin",          // 皮肤
-    Bone = "bone",          // 骨骼
-    Muscle = "muscle",      // 肌肉
-    Blood = "blood",        // 血液
-    Nerve = "nerve",        // 神经
-    Gland = "gland",        // 腺体
-    Core = "core",          // 核心
-}
-
-/**
- * 部位配置
- */
-export type PartConfig = {
-    key: OrganPart          // 部位标识
-    label: string           // 显示名称
-    maxCount: number        // 该部位最多可装备几个器官
-    description?: string    // 部位描述
-}
+import { OrganPart, PartConfig } from "@/core/types/OrganTypes"
 
 /**
  * 部位配置列表
