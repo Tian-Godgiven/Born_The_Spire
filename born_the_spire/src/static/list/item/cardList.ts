@@ -1,0 +1,384 @@
+
+import { CardMap } from "@/core/objects/item/Subclass/Card"
+
+export const cardList:CardMap[] = [{
+    label:"打击",
+    tags:["attack", "basic"],
+    status:{
+        damage:5,
+        cost:1,
+    },
+    describe:[
+        "造成",{key:["status","damage","value"]},"点伤害"
+    ],
+    key:"original_card_00001",
+    interaction:{
+        use:{
+            target:{faction:"opponent"},  // 攻击敌对阵营
+            effects:[{
+                key:"damage",
+                params:{value:5},
+            }]
+        }
+    }
+},{
+    label:"消耗打击",
+    tags:["attack"],
+    status:{
+        damage:15,
+        cost:1,
+    },
+    entry:["exhaust"],
+    describe:[
+        "造成",{key:["status","damage"]},"点伤害"
+    ],
+    key:"original_card_00002",
+    interaction:{
+        use:{
+            target:{faction:"enemy"},
+            effects:[{
+                key:"damage",
+                params:{value:15},
+            }]
+        }
+    }
+},{
+    label:"虚无打击",
+    tags:["attack"],
+    status:{
+        damage:15,
+        cost:1,
+    },
+    entry:["void"],
+    describe:[
+        "造成",{key:["status","damage"]},"点伤害"
+    ],
+    key:"original_card_00003",
+    interaction:{
+        use:{
+            target:{faction:"enemy"},
+            effects:[{
+                key:"damage",
+                params:{value:15},
+            }]
+        }
+    }
+},{
+    label:"固有打击",
+    tags:["attack"],
+    status:{
+        damage:8,
+        cost:1,
+    },
+    entry:["inherent"],
+    describe:[
+        "造成",{key:["status","damage"]},"点伤害"
+    ],
+    key:"original_card_00012",
+    interaction:{
+        use:{
+            target:{faction:"enemy"},
+            effects:[{
+                key:"damage",
+                params:{value:8},
+            }]
+        }
+    }
+},{
+    label:"肌肉强化",
+    tags:["power"],
+    status:{
+        power:1,
+        cost:0
+    },
+    entry:["exhaust"],
+    describe:["获得",{key:["status","power"]},"层力量"],
+    key:"original_card_00004",
+    interaction:{
+        use:{
+            target:{faction:"player",key:"self"},
+            effects:[{
+                key:"applyState",
+                params:{stateKey:"power",stacks:1},
+            }]
+        }
+    }
+},{
+    label:"淬毒",
+    tags:["skill"],
+    status:{
+        poison:3,
+        cost:1
+    },
+    describe:["使目标获得",{key:["status","poison"]},"层中毒"],
+    key:"original_card_00008",
+    interaction:{
+        use:{
+            target:{faction:"enemy"},
+            effects:[{
+                key:"applyState",
+                params:{stateKey:"poison",stacks:3},
+            }]
+        }
+    }
+},{
+    label:"随机打击",
+    tags:["attack"],
+    status:{
+        cost:1,
+        minDamage:5,
+        maxDamage:10
+    },
+    describe:["造成",{key:["status","minDamage"]},"到",{key:["status","maxDamage"]},"点随机伤害"],
+    key:"original_card_00009",
+    interaction:{
+        use:{
+            target:{faction:"enemy"},
+            effects:[{
+                key:"damage",
+                params:{value:"$random[5,10]"},
+            }]
+        }
+    }
+},{
+    label:"虚弱诅咒",
+    tags:["curse"],
+    status:{
+        weak:2,
+        cost:0
+    },
+    describe:["使自己获得",{key:["status","weak"]},"层虚弱"],
+    key:"original_card_00010",
+    interaction:{
+        use:{
+            target:{faction:"player",key:"self"},
+            effects:[{
+                key:"applyState",
+                params:{stateKey:"weak",stacks:2},
+            }]
+        }
+    }
+},{
+    label:"易伤打击",
+    tags:["attack"],
+    status:{
+        vulnerable:2,
+        damage:8,
+        cost:1
+    },
+    describe:["造成",{key:["status","damage"]},"点伤害，使目标获得",{key:["status","vulnerable"]},"层易伤"],
+    key:"original_card_00011",
+    interaction:{
+        use:{
+            target:{faction:"enemy"},
+            effects:[{
+                key:"damage",
+                params:{value:8},
+            },{
+                key:"applyState",
+                params:{stateKey:"vulnerable",stacks:2},
+            }]
+        }
+    }
+},{
+    label:"旋风斩",
+    tags:["attack"],
+    status:{
+        cost:1,
+        damage:3
+    },
+    describe:["对敌方全体造成",{key:["status","damage"]},"点伤害"],
+    key:"original_card_00005",
+    interaction:{
+        use:{
+            target:{number:"all"},//阵营默认为敌人
+            effects:[{
+                key:"damage",
+                params:{value:3},
+            }]
+        }
+    }
+},{
+    label:"末日",
+    tags:["attack"],
+    status:{
+        cost:3,
+        damage:999,
+    },
+    describe:["对所有人造成",{key:["status","damage"]},"点伤害"],
+    key:"original_card_00006",
+    interaction:{
+        use:{
+            target:{faction:"all",number:"all"},
+            effects:[{
+                key:"damage",
+                params:{value:999},
+            }]
+        }
+    }
+},{
+    label:"接二连三",
+    tags:["attack"],
+    status:{
+        cost:1,
+        damage:2,
+    },
+    describe:["对至多3个敌人造成",{key:["status","damage"]},"点伤害"],
+    key:"original_card_00007",
+    interaction:{
+        use:{
+            target:{faction:"enemy",number:3},
+            effects:[{
+                key:"damage",
+                params:{value:2},
+            }]
+        }
+    }
+},{
+    label:"发现",
+    tags:["skill"],
+    status:{
+        cost:0,
+    },
+    describe:["发现一张攻击牌加入手牌"],
+    key:"original_card_00013",
+    interaction:{
+        use:{
+            target:{key:"self"},
+            effects:[{
+                key:"discoverCard",
+                params:{
+                    count:3,
+                    selectCount:1,
+                    tags:["attack"],
+                    allowDuplicate:false,
+                    addToHand:true
+                },
+            }]
+        }
+    }
+},{
+    label:"大发现",
+    tags:["skill"],
+    status:{
+        cost:1,
+    },
+    describe:["从30张随机卡牌中选择一张加入手牌"],
+    key:"original_card_00016",
+    interaction:{
+        use:{
+            target:{key:"self"},
+            effects:[{
+                key:"discoverCard",
+                params:{
+                    count:30,           // 随机抽取30张
+                    selectCount:1,      // 选择1张
+                    allowDuplicate:false,  // 不允许重复
+                    addToHand:true      // 加入手牌
+                },
+            }]
+        }
+    }
+},{
+    label:"防御",
+    tags:["skill", "basic"],
+    status:{
+        armor:5,
+        cost:1
+    },
+    describe:["获得",{key:["status","armor"]},"点护甲"],
+    key:"original_card_00014",
+    interaction:{
+        use:{
+            target:{key:"self"},
+            effects:[{
+                key:"gainArmor",
+                params:{value:5},
+            }]
+        }
+    }
+},{
+    label:"铁壁",
+    tags:["skill"],
+    status:{
+        armor:12,
+        cost:1
+    },
+    describe:["获得",{key:["status","armor"]},"点护甲"],
+    key:"original_card_00015",
+    interaction:{
+        use:{
+            target:{key:"self"},
+            effects:[{
+                key:"gainArmor",
+                params:{value:12},
+            }]
+        }
+    }
+},{
+    label:"终结一击",
+    tags:["attack", "test"],
+    status:{
+        damage:999,
+        cost:0
+    },
+    describe:["造成",{key:["status","damage"]},"点伤害","（测试用）"],
+    key:"test_card_kill",
+    interaction:{
+        use:{
+            target:{faction:"enemy"},
+            effects:[{
+                key:"damage",
+                params:{value:999},
+            }]
+        }
+    }
+},{
+    label:"挣扎",
+    tags:["attack", "fallback"],
+    status:{
+        damage:5,
+        cost:0
+    },
+    describe:["造成",{key:["status","damage"]},"点伤害","（兜底攻击）"],
+    key:"fallback_struggle",
+    interaction:{
+        use:{
+            target:{faction:"opponent"},  // 攻击敌对阵营
+            effects:[{
+                key:"damage",
+                params:{value:5},
+            }]
+        }
+    }
+},{
+    label:"石击",
+    tags:["attack", "enemy"],
+    status:{
+        damage:6,
+        cost:0
+    },
+    describe:["造成",{key:["status","damage"]},"点伤害"],
+    key:"enemy_stone_strike",
+    interaction:{
+        use:{
+            target:{faction:"opponent"},  // 攻击敌对阵营
+            effects:[{
+                key:"damage",
+                params:{value:6},
+            }]
+        }
+    }
+}]
+
+export async function getCardByKey(key:string){
+    const { Card } = await import("@/core/objects/item/Subclass/Card")
+    const data = cardList.find(value=>value.key == key)
+    if(!data)throw new Error("不存在的卡牌")
+    const card = new Card(data)
+    return card
+}
+
+export function getAllCards(){
+    return cardList
+}

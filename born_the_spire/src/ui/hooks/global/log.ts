@@ -1,0 +1,82 @@
+import dayjs from "dayjs";
+import { isArray, isBoolean, isNumber, isString } from "lodash";
+import { ref } from "vue";
+
+export const logList = ref<LogUnit[]>([])
+
+export type LogUnit = {
+    text:string,//直接在日志栏中输出的内容
+    detail:string,//在日志栏中作为上述内容的折叠内容，点一下才会显示(再点一下收起)
+    time:number
+    children?:LogUnit[],//子日志列表（嵌套日志）
+    level?:number//嵌套层级，用于缩进显示（0为顶层）
+}
+
+export type LogData = {
+    main:any[],//主內容
+    detail:any[]//详情內容
+}
+//在日志栏打印内容
+export function newLog(logData:LogData|any[], parent?:LogUnit):LogUnit{
+    const logUnit:LogUnit = {
+        text:"",
+        detail:"",
+        time:dayjs().valueOf()
+    }
+    if("main" in logData){
+        for(let i of logData.main){
+            logUnit.text += handleLogData(i)
+        }
+        for(let j of logData.detail){
+            logUnit.detail += handleLogData(j)
+        }
+    }
+    else{
+        for(let i of logData){
+            logUnit.text += handleLogData(i)
+        }
+    }
+
+    if(parent){
+        // 作为子日志添加到父日志
+        if(!parent.children) parent.children = []
+        parent.children.push(logUnit)
+        logUnit.level = (parent.level || 0) + 1
+    }
+    else{
+        // 作为顶层日志添加到列表
+        logList.value.push(logUnit)
+        logUnit.level = 0
+    }
+
+    return logUnit  // 返回日志单元，供后续添加子日志
+}
+
+//处理得到的日志数据，返回赋给日志单元的值
+function handleLogData(logData:any):string{
+    if(logData===null){
+        return "无(null)"
+    }
+    else if(logData === undefined){
+        return "未定义(undefined)"
+    }
+    else if(String(logData).trim() == ""){
+        return "空内容"
+    }
+    else if(logData?.label || logData?.key){
+        return logData?.label ?? logData.key
+    }
+    else if(isArray(logData)){
+        return String(logData.map(i=>handleLogData(i)))
+    }
+    else if(isString(logData)||isNumber(logData)){
+        return String(logData)
+    }
+    else if(isBoolean(logData)){
+        return logData?'成功(true)':'失败(false)'
+    }
+    else{
+        return "<无法识别对象>"
+        // logString += JSON.stringify(i)
+    }
+}

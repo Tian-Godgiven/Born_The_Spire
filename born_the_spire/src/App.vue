@@ -1,20 +1,29 @@
 <template>
   <main class="main" @mousemove="onMousemove">
-    <RouterView></RouterView>
+    <div class="router">
+      <RouterView></RouterView>
+    </div>
+    <!-- 动态组件容器 -->
+    <DynamicComponentContainer />
+    <!-- 确认弹窗 -->
+    <ConfirmModal />
   </main>
 </template>
 
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { RouterView } from 'vue-router';
-import router from './router';
-import { onMousemove } from './hooks/global/mousePosition';
+import router from './ui/router';
+import { onMousemove } from './ui/hooks/global/mousePosition';
+import DynamicComponentContainer from './ui/components/global/DynamicComponentContainer.vue';
+import ConfirmModal from './ui/components/interaction/ConfirmModal.vue';
+
 onMounted(()=>{
-  router.replace("/")
+    router.replace("/")
 })
 </script>
 
-<style>
+<style lang="scss">
 body{
   margin: 0;
 }
