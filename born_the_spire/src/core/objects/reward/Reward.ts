@@ -76,6 +76,13 @@ export abstract class Reward {
     }
 
     /**
+     * 标记为已领取（不执行 claim 逻辑）
+     */
+    markAsClaimed(): void {
+        this.state = "claimed"
+    }
+
+    /**
      * 获取显示标题
      */
     getDisplayTitle(): string {
@@ -115,13 +122,6 @@ export abstract class Reward {
      */
     protected getDefaultIcon(): string {
         return "?"
-    }
-
-    /**
-     * 标记为已领取
-     */
-    protected markAsClaimed(): void {
-        this.state = "claimed"
     }
 
     /**

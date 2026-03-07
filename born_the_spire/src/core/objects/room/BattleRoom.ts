@@ -113,7 +113,9 @@ export class BattleRoom extends Room {
             await this.handleVictoryRewards()
         } else if (battleResult === "player_lose") {
             newLog([`===== ${this.getDisplayName()}失败 =====`])
-            // TODO: 处理失败逻辑
+            // 显示战斗失败弹窗
+            const { showBattleDefeat } = await import("@/ui/hooks/interaction/battleDefeat")
+            showBattleDefeat()
         }
     }
 

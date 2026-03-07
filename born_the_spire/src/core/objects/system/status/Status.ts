@@ -15,8 +15,10 @@ export class Status extends Modifier<StatusModifier>{
     public key:string//唯一键名
     public label:string//属性名称
     public options?:StatusOptions//备注：功能未完成
+    private _originalBaseValue = ref(0)//原始基础值（不受修饰器影响）
     private _value = ref(0)//当前值
     private _baseValue = ref(0)//基础值
+    public get originalBaseValue():number{return getRefValue(this._originalBaseValue)}
     public get value():number{return getRefValue(this._value)}
     public get baseValue():number{return getRefValue(this._baseValue)}
     private owner:Entity
@@ -25,6 +27,15 @@ export class Status extends Modifier<StatusModifier>{
         this.key = key
         this.owner = owner
         this.label = label??key
+    }
+
+    /**
+     * 设置原始基础值（用于卡牌升级等场景）
+     * 修饰器会在此基础上继续生效
+     */
+    public setOriginalBaseValue(value: number): void {
+        this._originalBaseValue.value = value
+        this.refresh()  // 重新计算
     }
     //通过JSON数据添加属性修饰器，默认配置下添加的是基础修饰器
     addByJSON(source:any,options:Partial<ModifierOptions>&{modifierValue:number}){
@@ -45,8 +56,8 @@ export class Status extends Modifier<StatusModifier>{
     //刷新，重新计算当前值和基础值
     refresh(): void {
         super.refresh()
-        //先刷新基础值，从0开始
-        this._baseValue.value = countBaseModifier(this.owner,0,this.store)
+        //先刷新基础值，从原始基础值开始（而不是从0）
+        this._baseValue.value = countBaseModifier(this.owner,this.originalBaseValue,this.store)
         //再用基础值刷新当前值，从基础值开始
         this._value.value = countCurrentModifier(this.owner,this.baseValue,this.value,this.store)
 
@@ -119,11 +130,8 @@ export function createStatusFromMap(owner:Entity,key:string,mapData:StatusMap):S
         value = mapData.value
         status = new Status(owner,key,mapData?.label)
     }
-    //添加默认值修饰器
-    status.addByJSON(owner,{
-        modifierValue:value,
-        clearable: false  // 默认值是永久的，不应该被清理
-    })
+    //设置原始基础值（而不是添加修饰器）
+    status.setOriginalBaseValue(value)
 
     return status
 }
@@ -167,7 +175,7 @@ export function ifHaveStatus(entity:Entity,statusKey:string){
 //确保实体具备某个属性，如果不存在则创建
 export function ensureStatusExists(entity:Entity, statusKey:string, initialValue:number = 0): void {
     if (!ifHaveStatus(entity, statusKey)) {
-        // 使用 createStatusFromMap 创建 Status 对象（会自动添加默认值修饰器）
+        // 使用 createStatusFromMap 创建 Status 对象（会自动设置原始基础值）
         const status = createStatusFromMap(entity, statusKey, initialValue)
         // 使用 markRaw 标记 Status 对象，防止被 reactive 处理（保护内部的 ref）
         entity.status[statusKey] = markRaw(status)

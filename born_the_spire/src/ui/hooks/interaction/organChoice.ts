@@ -1,5 +1,4 @@
 import { ref } from 'vue'
-import { OrganMap } from '@/core/objects/target/Organ'
 
 /**
  * 器官选择 UI 交互系统
@@ -7,8 +6,10 @@ import { OrganMap } from '@/core/objects/target/Organ'
 
 // 器官选择配置
 export interface OrganChoiceConfig {
-    organOptions: OrganMap[]  // 可选器官列表
-    selectCount: number        // 需要选择的数量
+    organKeys: string[]        // 可选器官的 key 列表
+    minSelect?: number         // 最少选择数量（默认0）
+    maxSelect?: number         // 最多选择数量（默认1）
+    cancelable?: boolean       // 是否可取消（默认true）
     title?: string             // 标题
     description?: string       // 描述
 }

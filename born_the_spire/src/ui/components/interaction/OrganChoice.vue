@@ -20,8 +20,8 @@
           @click="toggleSelection(organ.key)"
         >
           <div class="organ-name">{{ organ.label }}</div>
-          <div v-if="organ.description" class="organ-description">
-            {{ organ.description }}
+          <div v-if="organ.describe" class="organ-description">
+            {{ organ.describe }}
           </div>
         </div>
       </div>
@@ -42,14 +42,25 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { currentOrganChoice, confirmOrganChoice } from '@/ui/hooks/interaction/organChoice'
+import { getLazyModule } from '@/core/utils/lazyLoader'
+import type { OrganMap } from '@/core/objects/target/Organ'
 
 const visible = computed(() => currentOrganChoice.value !== null)
 const config = computed(() => currentOrganChoice.value)
 
 const title = computed(() => config.value?.title || '选择器官')
 const description = computed(() => config.value?.description || '')
-const organOptions = computed(() => config.value?.organOptions || [])
-const selectCount = computed(() => config.value?.selectCount || 1)
+
+// 将 organKeys 转换为 OrganMap 对象
+const organOptions = computed(() => {
+  if (!config.value?.organKeys) return []
+  const organList = getLazyModule<OrganMap[]>('organList')
+  return config.value.organKeys
+    .map(key => organList.find(o => o.key === key))
+    .filter((o): o is OrganMap => o !== undefined)
+})
+
+const selectCount = computed(() => config.value?.maxSelect || 1)
 
 const selectedOrgans = ref<string[]>([])
 

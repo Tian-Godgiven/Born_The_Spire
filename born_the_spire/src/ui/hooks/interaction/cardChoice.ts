@@ -4,7 +4,7 @@ import { showComponent } from "@/core/hooks/componentManager"
 import CardChoice from "@/ui/components/interaction/CardChoice.vue"
 import { Player } from "@/core/objects/target/Player"
 import { getCardByKey } from "@/static/list/item/cardList"
-import { getContextRandom, randomChoices } from "@/core/hooks/random"
+import { getContextRandom } from "@/core/hooks/random"
 
 /**
  * 卡牌选择配置
@@ -110,9 +110,7 @@ export async function chooseFromRandomCards(
   }
 
   // 创建卡牌实例
-  const cards = selectedKeys.map(key => {
-    return getCardByKey(key)  // getCardByKey 已经返回 Card 实例
-  })
+  const cards = await Promise.all(selectedKeys.map(key => getCardByKey(key)))
 
   // 解析 selectCount
   let minSelect: number

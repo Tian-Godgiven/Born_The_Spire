@@ -79,6 +79,7 @@ export class Entity implements EventParticipant{
     }
 }
 
+// @ts-expect-error - T 用于类型约束但未在类型定义中使用
 export type EntityMap<T extends Entity = Entity> = {
     label:string
     key:string,//唯一识别码，决定这个对象是什么对象/哪种对象（同一种对象可以有多个）

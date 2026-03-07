@@ -32,7 +32,7 @@ export interface RoomSelectRoomConfig extends RoomConfig {
  */
 export class RoomSelectRoom extends Room {
     public readonly targetLayer: number
-    public readonly choiceGroup: ChoiceGroup
+    public choiceGroup!: ChoiceGroup  // 使用 ! 断言会被初始化
     private availableRooms: Room[] = []
     private selectedRoom: Room | null = null
     private useMapNodes: boolean

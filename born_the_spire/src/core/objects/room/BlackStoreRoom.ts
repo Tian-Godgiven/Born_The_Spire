@@ -8,7 +8,7 @@ import { nowPlayer } from "@/core/objects/game/run"
 import { newLog } from "@/ui/hooks/global/log"
 import type { OrganMap } from "@/core/objects/target/Organ"
 import type { Organ } from "@/core/objects/target/Organ"
-import type { Relic } from "@/core/objects/item/Subclass/Relic"
+import { Relic } from "@/core/objects/item/Subclass/Relic"
 import type { RelicMap } from "@/core/objects/item/Subclass/Relic"
 import type { PotionMap } from "@/core/objects/item/Subclass/Potion"
 import {
@@ -180,7 +180,7 @@ export class BlackStoreRoom extends Room {
                 price: this.calculateOrganPrice(organ),
                 data: organ,
                 isPurchased: false,
-                rarity: organ.rarity
+                rarity: organ.quality
             })
         })
 
@@ -195,7 +195,7 @@ export class BlackStoreRoom extends Room {
                 price: this.calculateRelicPrice(relic),
                 data: relic,
                 isPurchased: false,
-                rarity: relic.rarity
+                rarity: undefined  // RelicMap 暂无 rarity 属性
             })
         })
 
@@ -210,7 +210,7 @@ export class BlackStoreRoom extends Room {
                 price: this.calculatePotionPrice(potion),
                 data: potion,
                 isPurchased: false,
-                rarity: potion.rarity
+                rarity: undefined  // PotionMap 暂无 rarity 属性
             })
         })
     }
@@ -379,7 +379,7 @@ export class BlackStoreRoom extends Room {
                 const organData = item.data as OrganMap
                 // 使用 getOrganByKey 创建 Organ 实例
                 const { getOrganByKey } = await import("@/static/list/target/organList")
-                const organ = getOrganByKey(organData.key)
+                const organ = await getOrganByKey(organData.key)
                 const organModifier = getOrganModifier(nowPlayer)
                 organModifier.acquireOrgan(organ, nowPlayer)
                 newLog([`获得器官: ${item.name}`])
@@ -455,39 +455,41 @@ export class BlackStoreRoom extends Room {
         const baseBuyPrice = this.calculateOrganPrice(organ as any)
 
         // 检查是否已有缓存的折扣
-        let discount = this.organDiscounts.get(organ.__key)
+        let discount = this.organDiscounts.get(organ.key)
 
         if (discount === undefined) {
             // 使用确定性随机数生成折扣
             const { randomFloat } = require("@/core/hooks/random")
-            discount = randomFloat(
+            const discountValue = randomFloat(
                 this.organDiscountRange.min,
                 this.organDiscountRange.max,
-                `organDiscount:${organ.__key}`
-            )
-            this.organDiscounts.set(organ.__key, discount)
+                `organDiscount:${organ.key}`
+            ) ?? 0.5  // 添加默认值
+            discount = discountValue
+            this.organDiscounts.set(organ.key, discountValue)
         }
 
-        return Math.floor(baseBuyPrice * discount)
+        return Math.floor(baseBuyPrice * (discount ?? 0.5))
     }
 
     /**
      * 获取器官的折扣信息
      */
     private getOrganDiscount(organ: Organ): number {
-        let discount = this.organDiscounts.get(organ.__key)
+        let discount = this.organDiscounts.get(organ.key)
 
         if (discount === undefined) {
             const { randomFloat } = require("@/core/hooks/random")
-            discount = randomFloat(
+            const discountValue = randomFloat(
                 this.organDiscountRange.min,
                 this.organDiscountRange.max,
-                `organDiscount:${organ.__key}`
-            )
-            this.organDiscounts.set(organ.__key, discount)
+                `organDiscount:${organ.key}`
+            ) ?? 0.5  // 添加默认值
+            discount = discountValue
+            this.organDiscounts.set(organ.key, discountValue)
         }
 
-        return discount
+        return discount ?? 0.5
     }
 
     /**

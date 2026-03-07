@@ -5,6 +5,7 @@
 
 import { Entity } from "../Entity"
 import { MechanismVote, TriggerRemover } from "@/static/registry/mechanismRegistry"
+import { markRaw } from "vue"
 
 /**
  * 机制管理器类
@@ -137,7 +138,7 @@ export class MechanismManager {
      */
     clear(): void {
         // 移除所有触发器
-        for (const [key, triggerList] of this.triggers.entries()) {
+        for (const [_key, triggerList] of this.triggers.entries()) {
             triggerList.forEach(t => t.remove())
         }
 
@@ -183,7 +184,7 @@ export class MechanismManager {
  */
 export function getMechanismManager(entity: Entity): MechanismManager {
     if (!entity.mechanisms) {
-        entity.mechanisms = new MechanismManager(entity)
+        entity.mechanisms = markRaw(new MechanismManager(entity))
     }
     return entity.mechanisms
 }

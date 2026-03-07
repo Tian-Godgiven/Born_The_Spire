@@ -25,7 +25,6 @@
     import { getEnemyByKey } from '@/static/list/target/enemyList';
     import { nowPlayer } from '@/core/objects/game/run';
     import { doEvent } from '@/core/objects/system/ActionEvent';
-    import { getPotionModifier } from '@/core/objects/system/modifier/PotionModifier';
     import TestCardPanel from '@/ui/test/TestCardPanel.vue';
     import DevConsole from '@/ui/page/tool/console/DevConsole.vue';
 

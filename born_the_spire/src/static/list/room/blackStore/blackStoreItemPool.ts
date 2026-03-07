@@ -133,26 +133,22 @@ export function initBlackStoreItemPools(): void {
     // 加载器官（使用懒加载）
     const organList = getLazyModule<OrganMap[]>('organList')
     blackStoreOrganPool.items = [...organList]
-    // 根据稀有度设置权重
+    // 根据稀有度设置权重（器官使用 quality 属性）
     blackStoreOrganPool.weights = organList.map(organ =>
-        getRarityWeight(organ.rarity as Rarity, blackStoreOrganPool.rarityWeights)
+        getRarityWeight(organ.quality as Rarity, blackStoreOrganPool.rarityWeights)
     )
 
     // 加载遗物（使用懒加载）
     const relicList = getLazyModule<RelicMap[]>('relicList')
     blackStoreRelicPool.items = [...relicList]
-    // 根据稀有度设置权重
-    blackStoreRelicPool.weights = relicList.map(relic =>
-        getRarityWeight(relic.rarity as Rarity, blackStoreRelicPool.rarityWeights)
-    )
+    // 遗物暂无稀有度系统，使用默认权重
+    blackStoreRelicPool.weights = relicList.map(() => 1)
 
     // 加载药水（使用懒加载）
     const potionList = getLazyModule<PotionMap[]>('potionList')
     blackStorePotionPool.items = [...potionList]
-    // 根据稀有度设置权重
-    blackStorePotionPool.weights = potionList.map(potion =>
-        getRarityWeight(potion.rarity as Rarity, blackStorePotionPool.rarityWeights)
-    )
+    // 药水暂无稀有度系统，使用默认权重
+    blackStorePotionPool.weights = potionList.map(() => 1)
 
 }
 

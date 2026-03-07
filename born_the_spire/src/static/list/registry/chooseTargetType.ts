@@ -5,6 +5,9 @@ import { Target } from "@/core/objects/target/Target";
 import { newError } from "@/ui/hooks/global/alert";
 import { TargetType } from "@/core/types/TargetType";
 
+// 重新导出 TargetType 供外部使用
+export type { TargetType }
+
 type RegistryItem = (target:Entity)=>boolean
 interface RegistryValue{
     (targets:Entity[],ifFilter:false):boolean,

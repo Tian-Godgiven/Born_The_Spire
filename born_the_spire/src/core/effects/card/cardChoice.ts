@@ -118,10 +118,19 @@ export const chooseCardUpgrade: EffectFunc = async (event, effect) => {
 
   const selectedCards = await chooseCardsToUpgrade(target, Number(count))
 
-  // 升级选中的卡牌
+  // 对每张选中的卡牌创建升级事件
+  const { doEvent } = await import("@/core/objects/system/ActionEvent")
   for (const card of selectedCards) {
-    // TODO: 实现卡牌升级逻辑
-    console.log(`升级卡牌: ${card.label}`)
+    await doEvent({
+      key: "upgradeCard",
+      source: target,
+      medium: card,
+      target: target,
+      effectUnits: [{
+        key: "upgradeCard",
+        params: { card }
+      }]
+    })
   }
 }
 
@@ -141,12 +150,19 @@ export const chooseCardRemove: EffectFunc = async (event, effect) => {
 
   const selectedCards = await chooseCardsToRemove(target, Number(count), Number(minCount))
 
-  // 移除选中的卡牌
-  // const cardModifier = getCardModifier(target)
+  // 对每张选中的卡牌创建移除事件
+  const { doEvent } = await import("@/core/objects/system/ActionEvent")
   for (const card of selectedCards) {
-    // TODO: 实现 removeCard 方法
-    console.log(`移除卡牌: ${card.label}`)
-    // cardModifier.removeCard(card)
+    await doEvent({
+      key: "removeCard",
+      source: target,
+      medium: card,
+      target: target,
+      effectUnits: [{
+        key: "removeCard",
+        params: { card }
+      }]
+    })
   }
 }
 
@@ -209,9 +225,7 @@ export const customCardChoice: EffectFunc = async (event, effect) => {
   let cards: Card[]
   if (cardKeys && Array.isArray(cardKeys)) {
     // 使用指定的卡牌key列表
-    cards = (cardKeys as string[]).map((key: string) => {
-      return getCardByKey(key)
-    })
+    cards = await Promise.all((cardKeys as string[]).map((key: string) => getCardByKey(key)))
   } else if (fromPile === "all") {
     cards = target.getCardGroup()
   } else {
@@ -232,19 +246,38 @@ export const customCardChoice: EffectFunc = async (event, effect) => {
   // 执行操作
   const cardModifier = getCardModifier(target)
   const actionStr = String(action)
+
+  // 动态导入 doEvent
+  const { doEvent } = await import("@/core/objects/system/ActionEvent")
+
   for (const card of selectedCards) {
     switch (actionStr) {
       case "gain":
         cardModifier.addCardsFromSource(target, [card.key])
         break
       case "remove":
-        // TODO: 实现 removeCard 方法
-        console.log(`移除卡牌: ${card.label}`)
-        // cardModifier.removeCard(card)
+        await doEvent({
+          key: "removeCard",
+          source: target,
+          medium: card,
+          target: target,
+          effectUnits: [{
+            key: "removeCard",
+            params: { card }
+          }]
+        })
         break
       case "upgrade":
-        // TODO: 实现升级逻辑
-        console.log(`升级卡牌: ${card.label}`)
+        await doEvent({
+          key: "upgradeCard",
+          source: target,
+          medium: card,
+          target: target,
+          effectUnits: [{
+            key: "upgradeCard",
+            params: { card }
+          }]
+        })
         break
       case "duplicate":
         cardModifier.addCardsFromSource(target, [card.key])

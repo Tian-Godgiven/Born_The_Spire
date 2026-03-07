@@ -6,7 +6,6 @@
 import { FloorMap } from "./FloorMap"
 import { createMapNode, type MapNode } from "./MapNode"
 import type { FloorMapConfig, LayerLayout, RoomTypeWeights } from "@/core/types/FloorMapConfig"
-import { resolveLayerIndex } from "@/core/types/FloorMapConfig"
 import type { RoomType } from "@/core/objects/room/Room"
 import { SeededRandom } from "@/core/utils/SeededRandom"
 
@@ -338,7 +337,7 @@ export class MapGenerator {
   /**
    * 根据父节点分配房间类型
    */
-  private assignRoomTypeWithParents(node: MapNode, parents: MapNode[], layer: number): RoomType {
+  private assignRoomTypeWithParents(_node: MapNode, parents: MapNode[], layer: number): RoomType {
     // 获取该层的权重配置
     const weights = this.getLayerWeights(layer)
 
@@ -581,14 +580,14 @@ export class MapGenerator {
    * 按权重随机选择房间类型
    */
   private weightedRandomRoomType(
-    weights: Record<string, number>,
+    weights: RoomTypeWeights,
     options?: { exclude?: RoomType[] }
   ): RoomType {
     const exclude = options?.exclude || []
 
     // 过滤掉排除的类型和权重为0的类型
     const validTypes = Object.entries(weights).filter(
-      ([type, weight]) => !exclude.includes(type as RoomType) && weight > 0
+      ([type, weight]) => !exclude.includes(type as RoomType) && (weight ?? 0) > 0
     )
 
     if (validTypes.length === 0) {
@@ -597,13 +596,13 @@ export class MapGenerator {
     }
 
     // 计算总权重
-    const totalWeight = validTypes.reduce((sum, [, weight]) => sum + weight, 0)
+    const totalWeight = validTypes.reduce((sum, [, weight]) => sum + (weight ?? 0), 0)
 
     // 随机选择
     let random = this.rng.next() * totalWeight
 
     for (const [type, weight] of validTypes) {
-      random -= weight
+      random -= (weight ?? 0)
       if (random <= 0) {
         return type as RoomType
       }

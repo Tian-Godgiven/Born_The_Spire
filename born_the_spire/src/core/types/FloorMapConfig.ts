@@ -112,6 +112,7 @@ export interface RoomTypeWeights {
   event: number
   pool: number
   blackStore: number
+  [key: string]: number | undefined  // 添加索引签名以支持动态访问
 }
 
 /**

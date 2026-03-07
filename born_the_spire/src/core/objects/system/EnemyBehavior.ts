@@ -305,14 +305,14 @@ function selectBySequence(
  * @param turnCount 当前回合数
  * @returns 选择的卡牌列表
  */
-export function selectAction(
+export async function selectAction(
     behaviorConfig: EnemyBehaviorConfig,
     enemy: Enemy,
     player: Player,
     turnCount: number
-): Card[] {
+): Promise<Card[]> {
     // 获取可用卡牌
-    const availableCards = enemy.getAvailableCards()
+    const availableCards = await enemy.getAvailableCards()
 
     if (availableCards.length === 0) {
         console.warn("[EnemyBehavior] 敌人没有可用卡牌")

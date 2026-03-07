@@ -5,6 +5,10 @@ import { isEntity } from "@/core/utils/typeGuards";
 import { nanoid } from "nanoid";
 import { validateEffectParams } from "@/core/effects/validateEffectParams";
 import { newError } from "@/ui/hooks/global/alert";
+
+// 重新导出 EffectFunc 供外部使用
+export type { EffectFunc, EffectParams }
+
 type EffectConstructor = {
     label?:string,
     key:string,

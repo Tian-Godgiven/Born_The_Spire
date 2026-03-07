@@ -10,6 +10,7 @@ import { doEvent } from "../system/ActionEvent"
 import { prepareEnemyIntents, executeAllEnemiesTurn } from "./enemyTurn"
 import { newLog } from "@/ui/hooks/global/log"
 import { showDisplayMessage } from "@/ui/hooks/global/displayMessage"
+import { showBattleDefeat } from "@/ui/hooks/interaction/battleDefeat"
 
 export class Battle {
     public readonly __key:string = nanoid()
@@ -136,7 +137,7 @@ export class Battle {
 
         // 6. 准备下回合敌人意图
         if (player && aliveEnemies.length > 0) {
-            prepareEnemyIntents(aliveEnemies, player, this.turnNumber)
+            await prepareEnemyIntents(aliveEnemies, player, this.turnNumber)
         }
 
         // 7. 切换到玩家回合
@@ -186,9 +187,10 @@ export class Battle {
                 info: { result: "lose" },
                 effectUnits: []
             })
-        }
 
-        // TODO: 触发战斗结束的UI和逻辑
+            // 显示战斗失败弹窗
+            showBattleDefeat()
+        }
     }
 }
 
@@ -227,7 +229,7 @@ export async function startNewBattle(playerTeam:(Player|Chara)[],enemyTeam:(Enem
         const aliveEnemies = battle.getAliveEnemies()
         const alivePlayers = battle.getAlivePlayers()
         if (aliveEnemies.length > 0 && alivePlayers.length > 0) {
-            prepareEnemyIntents(aliveEnemies, alivePlayers[0], battle.turnNumber)
+            await prepareEnemyIntents(aliveEnemies, alivePlayers[0], battle.turnNumber)
         }
 
         //玩家阵容开始回合

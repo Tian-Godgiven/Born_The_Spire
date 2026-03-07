@@ -47,6 +47,28 @@ export class SeededRandom {
   }
 
   /**
+   * 生成 [0, 1) 范围的浮点数
+   */
+  nextFloat(): number {
+    return this.next()
+  }
+
+  /**
+   * 生成 [min, max) 范围的浮点数
+   */
+  nextFloatRange(min: number, max: number): number {
+    return this.next() * (max - min) + min
+  }
+
+  /**
+   * 根据概率返回 true/false
+   * @param probability 概率 [0, 1]
+   */
+  chance(probability: number): boolean {
+    return this.next() < probability
+  }
+
+  /**
    * 从数组中随机选择一个元素
    */
   choice<T>(array: T[]): T {
@@ -55,6 +77,32 @@ export class SeededRandom {
     }
     const index = this.nextInt(0, array.length - 1)
     return array[index]
+  }
+
+  /**
+   * 从数组中随机选择多个元素（不重复）
+   * @param array 源数组
+   * @param count 选择数量
+   */
+  choices<T>(array: T[], count: number): T[] {
+    if (count > array.length) {
+      throw new Error(`Cannot choose ${count} items from array of length ${array.length}`)
+    }
+    const shuffled = this.shuffle(array)
+    return shuffled.slice(0, count)
+  }
+
+  /**
+   * 从数组中随机选择多个元素（可重复）
+   * @param array 源数组
+   * @param count 选择数量
+   */
+  choicesWithReplacement<T>(array: T[], count: number): T[] {
+    const result: T[] = []
+    for (let i = 0; i < count; i++) {
+      result.push(this.choice(array))
+    }
+    return result
   }
 
   /**
@@ -70,6 +118,60 @@ export class SeededRandom {
   }
 
   /**
+   * 根据权重随机选择
+   * @param items 选项数组
+   * @param weights 权重数组（必须与 items 长度相同）
+   */
+  weightedChoice<T>(items: T[], weights: number[]): T {
+    if (items.length !== weights.length) {
+      throw new Error("Items and weights must have same length")
+    }
+    if (items.length === 0) {
+      throw new Error("Cannot choose from empty array")
+    }
+
+    const totalWeight = weights.reduce((sum, w) => sum + w, 0)
+    let random = this.nextFloat() * totalWeight
+
+    for (let i = 0; i < items.length; i++) {
+      random -= weights[i]
+      if (random < 0) {
+        return items[i]
+      }
+    }
+
+    return items[items.length - 1]
+  }
+
+  /**
+   * 根据权重随机选择多个元素（不重复）
+   * @param items 选项数组
+   * @param weights 权重数组
+   * @param count 选择数量
+   */
+  weightedChoices<T>(items: T[], weights: number[], count: number): T[] {
+    if (count > items.length) {
+      throw new Error(`Cannot choose ${count} items from array of length ${items.length}`)
+    }
+
+    const result: T[] = []
+    const remainingItems = [...items]
+    const remainingWeights = [...weights]
+
+    for (let i = 0; i < count; i++) {
+      const chosen = this.weightedChoice(remainingItems, remainingWeights)
+      result.push(chosen)
+
+      // 移除已选择的项
+      const index = remainingItems.indexOf(chosen)
+      remainingItems.splice(index, 1)
+      remainingWeights.splice(index, 1)
+    }
+
+    return result
+  }
+
+  /**
    * 创建一个新的派生种子生成器
    * 用于为不同的子系统创建独立但确定的随机序列
    */
@@ -79,9 +181,24 @@ export class SeededRandom {
   }
 
   /**
+   * 创建一个新的随机数生成器，使用当前状态作为种子
+   * 用于创建独立的随机流
+   */
+  fork(): SeededRandom {
+    return new SeededRandom(this.nextInt(0, 2147483647))
+  }
+
+  /**
    * 获取当前种子值
    */
   getSeed(): number {
     return this.seed
+  }
+
+  /**
+   * 设置种子（用于加载存档）
+   */
+  setSeed(seed: number): void {
+    this.seed = seed
   }
 }

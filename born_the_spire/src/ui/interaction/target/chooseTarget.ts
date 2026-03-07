@@ -73,7 +73,8 @@ function checkChooseNum(targetType:TargetType,specificTargets:Target[]|null){
         chooseAbleNum = (nowBattle.value?.getTeam("player")?.length ?? 0) + (nowBattle.value?.getTeam("enemy")?.length ?? 0)
     }
     else{
-        chooseAbleNum = nowBattle.value?.getTeam(targetType.faction ?? "enemy")?.length ?? 0
+        const faction = targetType.faction ?? "enemy"
+        chooseAbleNum = nowBattle.value?.getTeam(faction === "opponent" ? "enemy" : faction as "player" | "enemy")?.length ?? 0
     }
     
     
@@ -154,7 +155,7 @@ export function startChooseTarget(option:ChooseOption,position:Position){
 export function successChooseTarget(){
     //触发选择成功回调函数
     if(nowChooseAction.value.onSuccess){
-        nowChooseAction.value.onSuccess([...nowChooseAction.value.chosenTargets])
+        nowChooseAction.value.onSuccess([...nowChooseAction.value.chosenTargets] as any)
     };
     //结束选择
     endChooseTarget()
@@ -163,7 +164,7 @@ export function successChooseTarget(){
 export function endChooseTarget(){
     //触发结束回调
     if(nowChooseAction.value.onStop){
-        nowChooseAction.value.onStop([...nowChooseAction.value.chosenTargets])
+        nowChooseAction.value.onStop([...nowChooseAction.value.chosenTargets] as any)
     }
     //清除监听器
     nowChooseAction.value.removeListener()
@@ -225,7 +226,7 @@ export function chooseWrongTarget(){
     //结束选择
     endChooseTarget()
     //执行结束回调
-    onStop?.([...nowChooseAction.value.chosenTargets])
+    onStop?.([...nowChooseAction.value.chosenTargets] as any)
 }
 //自动选择目标
 function autoChooseTarget(){
@@ -337,7 +338,7 @@ function startListenClick(onStop:(targets:Target[])=>void){
         //右键点击时结束选择
         else if(event.button == 2){
             endChooseTarget()
-            onStop([...nowChooseAction.value.chosenTargets])
+            onStop([...nowChooseAction.value.chosenTargets] as any)
             removeListeners()
         }
         
@@ -345,7 +346,7 @@ function startListenClick(onStop:(targets:Target[])=>void){
     function handleContextMenu(event:MouseEvent){
         event.preventDefault()
         endChooseTarget()
-        onStop([...nowChooseAction.value.chosenTargets])
+        onStop([...nowChooseAction.value.chosenTargets] as any)
         removeListeners()
     }
     

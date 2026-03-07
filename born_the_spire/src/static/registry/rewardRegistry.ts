@@ -3,7 +3,7 @@
  * 支持 mod 制作者注册自定义奖励类型
  */
 
-import { Reward, RewardConfig } from "@/core/objects/reward/Reward"
+import { Reward } from "@/core/objects/reward/Reward"
 
 /**
  * 奖励类构造函数类型
@@ -48,9 +48,9 @@ class RewardRegistry {
 
     /**
      * 创建奖励实例
-     * @param config 奖励配置
+     * @param config 奖励配置（类型根据 type 字段动态确定）
      */
-    createReward(config: RewardConfig): Reward | null {
+    createReward(config: any): Reward | null {
         const typeRegistration = this.getRewardType(config.type)
         if (!typeRegistration) {
             console.error(`[RewardRegistry] 未注册奖励类型: ${config.type}`)
@@ -70,7 +70,7 @@ class RewardRegistry {
      * 批量创建奖励实例
      * @param configs 奖励配置数组
      */
-    createRewards(configs: RewardConfig[]): Reward[] {
+    createRewards(configs: any[]): Reward[] {
         return configs
             .map(config => this.createReward(config))
             .filter((reward): reward is Reward => reward !== null)

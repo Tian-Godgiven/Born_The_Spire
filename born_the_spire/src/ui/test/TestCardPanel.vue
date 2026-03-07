@@ -51,8 +51,8 @@ function getEntryLabel(entryKey: string): string {
 }
 
 // 添加卡牌到抽牌堆
-function addCardToDrawPile(cardKey: string) {
-    const card = getCardByKey(cardKey)
+async function addCardToDrawPile(cardKey: string) {
+    const card = await getCardByKey(cardKey)
 
     // 设置卡牌的 owner
     card.owner = nowPlayer

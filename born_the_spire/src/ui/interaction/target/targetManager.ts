@@ -144,7 +144,7 @@ class TargetManager {
     //否则返回选中的目标
     return Array.from(this.targets.values())
       .filter(target => target.chooseState.isSelected)
-      .map(t=>t.target)
+      .map(t=>t.target) as any
   }
   
   // 清空所有选择状态

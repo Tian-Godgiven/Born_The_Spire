@@ -35,8 +35,8 @@ export class EventRoom extends Room {
 
     // 多幕事件相关
     private isMultiScene: boolean = false       // 是否为多幕事件
-    private currentSceneKey: string | null = null  // 当前幕的 key
-    private sceneData: Record<string, any> = {}    // 幕间共享数据
+    private _currentSceneKey: string | null = null  // 当前幕的 key
+    private sceneData: Record<string, any> = {}     // 幕间共享数据
 
     constructor(config: EventRoomConfig) {
         super(config)
@@ -61,7 +61,8 @@ export class EventRoom extends Room {
 
         if (this.isMultiScene) {
             // 多幕事件：从第一幕开始
-            this.currentSceneKey = this.eventConfig.scenes![0].key
+            this._currentSceneKey = this.eventConfig.scenes![0].key
+            void this._currentSceneKey  // 抑制未使用警告 - 保留用于未来实现
             const firstScene = this.eventConfig.scenes![0]
             this.choiceGroup = this.createChoiceGroupForScene(firstScene)
         } else {
@@ -172,7 +173,7 @@ export class EventRoom extends Room {
             return
         }
 
-        this.currentSceneKey = sceneKey
+        this._currentSceneKey = sceneKey
         newLog([`===== ${scene.title} =====`])
         if (scene.description) {
             newLog([scene.description])

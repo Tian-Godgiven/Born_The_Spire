@@ -11,7 +11,7 @@ import { getCardModifier } from "./CardModifier"
 import { Player } from "../../target/Player"
 import { getPartMaxCount } from "@/static/list/target/organPart"
 import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
-import { getQualityConfig, calculateUpgradeCost } from "@/static/list/target/organQuality"
+import { getQualityConfig, calculateUpgradeCost, calculateBlackStorePrice, calculateRepairCost } from "@/static/list/target/organQuality"
 import { getCurrentValue } from "@/core/objects/system/Current/current"
 import { showComponent } from "@/core/hooks/componentManager"
 
@@ -208,7 +208,7 @@ export class OrganModifier extends ItemModifier {
         // 5. 处理器官提供的卡牌（如果 owner 是 Player）
         if (this.owner instanceof Player && organ.cards.length > 0) {
             const cardModifier = getCardModifier(this.owner)
-            const addedCards = cardModifier.addCardsFromSource(organ, organ.cards, parentLog)
+            const addedCards = await cardModifier.addCardsFromSource(organ, organ.cards, parentLog)
 
             // 注册卡牌移除函数到 ItemModifierUnit
             if (addedCards.length > 0) {
@@ -392,7 +392,7 @@ export class OrganModifier extends ItemModifier {
      * 修复器官
      * @param organ 要修复的器官
      */
-    repairOrgan(organ: Organ) {
+    async repairOrgan(organ: Organ) {
         // 检查是否拥有该器官
         if(!this.units.some(u => u.item === (organ as unknown as Item))) {
             newLog([this.owner, "未拥有器官", organ])
@@ -401,7 +401,32 @@ export class OrganModifier extends ItemModifier {
 
         // 如果未损坏，直接返回
         if(!organ.isDisabled) {
+            newLog([organ, "未损坏，无需修复"])
             return false
+        }
+
+        // 计算修复成本（60% 吞噬获取量）
+        const repairCost = calculateRepairCost(organ.quality, organ.absorbValue)
+
+        // 检查物质是否足够
+        const reserveModifier = getReserveModifier(this.owner)
+        const currentMaterial = reserveModifier.getReserve("material")
+
+        if (currentMaterial < repairCost) {
+            newLog([`物质不足，无法修复`, `需要 ${repairCost}，当前 ${currentMaterial}`])
+            return false
+        }
+
+        // 扣除物质
+        reserveModifier.spendReserve("material", repairCost)
+        newLog([this.owner, "消耗", repairCost, "物质修复器官", organ])
+
+        // 恢复质量到最大值（如果有质量系统）
+        if (organ.status["max-mass"]) {
+            const maxMass = organ.status["max-mass"].value
+            const { setCurrentValue } = await import("@/core/objects/system/Current/current")
+            setCurrentValue(organ, "mass", maxMass)
+            newLog([organ, `质量完全恢复到 ${maxMass}`])
         }
 
         // 设置修复状态
@@ -471,6 +496,35 @@ export class OrganModifier extends ItemModifier {
     }
 
     /**
+     * 售卖器官
+     * @param organ 要售卖的器官
+     * @returns 是否成功售卖
+     */
+    sellOrgan(organ: Organ): boolean {
+        // 检查是否拥有该器官
+        if (!this.units.some(u => u.item === (organ as unknown as Item))) {
+            newLog([this.owner, "未拥有器官", organ])
+            return false
+        }
+
+        // 计算售价：基础黑市价格 + 随机折扣（-20% ~ +10%）
+        const basePrice = calculateBlackStorePrice(organ.quality, organ.level)
+        const discountFactor = 0.8 + Math.random() * 0.3  // 0.8 ~ 1.1
+        const sellPrice = Math.floor(basePrice * discountFactor)
+
+        // 获得金钱
+        const reserveModifier = getReserveModifier(this.owner)
+        reserveModifier.gainReserve("gold", sellPrice, this.owner)
+
+        newLog([this.owner, "售卖器官", organ, `获得 ${sellPrice} 金钱`])
+
+        // 移除器官（不触发 lose 效果）
+        this.loseOrgan(organ, false)
+
+        return true
+    }
+
+    /**
      * 吞噬器官
      * 消耗指定的器官，获得物质
      * 获得量 = 吞噬获取量 * 等级 + 稀有度加成
@@ -532,31 +586,42 @@ export class OrganModifier extends ItemModifier {
             upgradeCost = calculateUpgradeCost(organ.quality, organ.absorbValue, true)
         }
 
-        // 检查生命值是否足够
-        const currentHealth = getCurrentValue(this.owner, "health")
+        // 获取储备管理器
+        const reserveModifier = getReserveModifier(this.owner)
+        const currentMaterial = reserveModifier.getReserve("material")
 
-        if (currentHealth <= upgradeCost) {
-            newLog(["生命值不足，无法升级", `需要 ${upgradeCost}，当前 ${currentHealth}`])
-            return false
+        // 优先消耗物质
+        if (currentMaterial >= upgradeCost) {
+            // 物质足够，消耗物质
+            reserveModifier.spendReserve("material", upgradeCost)
+            newLog([this.owner, "升级器官", organ, `消耗 ${upgradeCost} 物质`])
+        } else {
+            // 物质不足，消耗生命值
+            const currentHealth = getCurrentValue(this.owner, "health")
+
+            if (currentHealth <= upgradeCost) {
+                newLog(["生命值不足，无法升级", `需要 ${upgradeCost}，当前 ${currentHealth}`])
+                return false
+            }
+
+            newLog([this.owner, "升级器官", organ, `消耗 ${upgradeCost} 生命值（物质不足）`])
+
+            // 扣除生命值（当前值 + 最大值）
+            doEvent({
+                key: "upgradeOrgan",
+                source: this.owner,
+                medium: organ,
+                target: this.owner,
+                effectUnits: [{
+                    key: "addStatusBaseCurrentValue",
+                    params: {
+                        value: -upgradeCost,
+                        statusKey: "max-health",
+                        currentKey: "health"
+                    }
+                }]
+            })
         }
-
-        newLog([this.owner, "升级器官", organ, `消耗 ${upgradeCost} 生命值`])
-
-        // 扣除生命值（当前值 + 最大值）
-        doEvent({
-            key: "upgradeOrgan",
-            source: this.owner,
-            medium: organ,
-            target: this.owner,
-            effectUnits: [{
-                key: "addStatusBaseCurrentValue",
-                params: {
-                    value: -upgradeCost,
-                    statusKey: "max-health",
-                    currentKey: "health"
-                }
-            }]
-        })
 
         // 提升器官等级
         const oldLevel = organ.level

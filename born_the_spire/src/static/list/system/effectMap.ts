@@ -14,7 +14,12 @@ import { addStatusBase } from "@/core/effects/status/changeStatus"
 import { addCurrent, addStatusBaseCurrentValue } from "@/core/effects/current/changeCurrent"
 import { gainReserve, spendReserve } from "@/core/effects/reserve/reserve"
 import { killTarget, reviveTarget } from "@/core/effects/life/lifeControl"
-import { replaceOrgan } from "@/core/effects/organ/organEffects"
+import { replaceOrgan, chooseOrganRemove, damageOrgan, healOrgan } from "@/core/effects/organ/organEffects"
+import { removeOrganEffect } from "@/core/effects/organ/organRemoveEffect"
+import { upgradeCardEffect } from "@/core/effects/card/cardUpgradeEffect"
+import { removeCardEffect } from "@/core/effects/card/cardRemoveEffect"
+import { gainCard, gainPotion, gainRelic, gainOrgan } from "@/core/effects/item/gainItem"
+import { gainMaxHealth } from "@/core/effects/health/heal"
 import { isEntity } from "@/core/utils/typeGuards"
 import { discoverCard, chooseRandomCard, chooseCardUpgrade, chooseCardRemove, chooseCardDuplicate, customCardChoice } from "@/core/effects/card/cardChoice"
 import { cancelEvent, cancelCurrentEvent } from "@/core/effects/event/cancelEvent"
@@ -195,9 +200,17 @@ export const effectMap:EffectData[] = [
     key:"chooseCardUpgrade",
     effect:chooseCardUpgrade
 },{
+    label:"升级卡牌",
+    key:"upgradeCard",
+    effect:upgradeCardEffect
+},{
     label:"选择卡牌移除",
     key:"chooseCardRemove",
     effect:chooseCardRemove
+},{
+    label:"移除卡牌",
+    key:"removeCard",
+    effect:removeCardEffect
 },{
     label:"选择卡牌复制",
     key:"chooseCardDuplicate",
@@ -222,5 +235,41 @@ export const effectMap:EffectData[] = [
     label:"第一回合额外抽牌",
     key:"addFirstTurnDraw",
     effect:addFirstTurnDraw
+},{
+    label:"获得卡牌",
+    key:"gainCard",
+    effect:gainCard
+},{
+    label:"获得药水",
+    key:"gainPotion",
+    effect:gainPotion
+},{
+    label:"获得遗物",
+    key:"gainRelic",
+    effect:gainRelic
+},{
+    label:"获得器官",
+    key:"gainOrgan",
+    effect:gainOrgan
+},{
+    label:"选择器官移除",
+    key:"chooseOrganRemove",
+    effect:chooseOrganRemove
+},{
+    label:"移除器官",
+    key:"removeOrgan",
+    effect:removeOrganEffect
+},{
+    label:"增加最大生命",
+    key:"gainMaxHealth",
+    effect:gainMaxHealth
+},{
+    label:"对器官造成质量伤害",
+    key:"damageOrgan",
+    effect:damageOrgan
+},{
+    label:"恢复器官质量",
+    key:"healOrgan",
+    effect:healOrgan
 }]
 

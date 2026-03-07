@@ -1,5 +1,6 @@
-import { Describe } from "@/ui/hooks/express/describe"
 import { OrganMap } from "@/core/objects/target/Organ"
+import { OrganQuality, OrganPart } from "@/core/types/OrganTypes"
+import { OrganTags } from "./organTags"
 
 export const organList:OrganMap[] = [
     {
@@ -114,7 +115,7 @@ export const organList:OrganMap[] = [
         label:"旋风引擎",
         key:"test_organ_cards_003",
         describe:["提供1张【旋风斩】到牌组","损坏后卡牌无法使用"],
-        quality: OrganQuality.Epic,
+        quality: OrganQuality.Rare,  // 改为 Rare
         part: OrganPart.Core,
         status: {
             "max-mass": 35
@@ -152,7 +153,7 @@ export const organList:OrganMap[] = [
         label:"末日核心",
         key:"test_organ_cards_004",
         describe:["提供1张【末日】到牌组","危险而强大"],
-        quality: OrganQuality.Legendary,
+        quality: OrganQuality.Rare,  // 改为 Rare
         part: OrganPart.Core,
         // 无质量系统 - 无法被摧毁
         cards:["original_card_00006"],  // 提供"末日"
@@ -166,6 +167,43 @@ export const organList:OrganMap[] = [
                     targetLayer:"base",
                     modifierType:"additive",
                     modifierValue:1
+                }]
+            }
+        }
+    },{
+        label:"癌变心脏",
+        key:"example_organ_cursed_001",
+        describe:["每回合开始时失去1点生命","但获得1点能量"],
+        quality: OrganQuality.Common,
+        part: OrganPart.Heart,
+        tags: [OrganTags.CURSED, OrganTags.CANCER],  // 诅咒 + 癌变标签
+        status: {
+            "max-mass": 20
+        },
+        current: ["mass"],
+        interaction:{
+            work:{
+                target:{"key":"self"},
+                effects:[],
+                triggers:[{
+                    when:"after",
+                    how:"make",
+                    key:"turnStart",
+                    event:[{
+                        key:"damage",
+                        targetType:"triggerOwner",
+                        effect:[{
+                            key:"damage",
+                            params:{value:1}
+                        }]
+                    },{
+                        key:"gainEnergy",
+                        targetType:"triggerOwner",
+                        effect:[{
+                            key:"gainEnergy",
+                            params:{value:1}
+                        }]
+                    }]
                 }]
             }
         }

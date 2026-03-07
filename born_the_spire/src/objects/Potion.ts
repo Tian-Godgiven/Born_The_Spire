@@ -7,7 +7,7 @@ export class Potion{
     public readonly key:string
     private use:(target:Player|Enemy)=>void
     private targetType:"player"|"enemy"|"all"
-    private discard?:(player:Player,Enemy:Enemy)=>void = ()=>{}
+    private _discard?:(player:Player,Enemy:Enemy)=>void = ()=>{}
     constructor(
         map:PotionMap
     ){
@@ -15,7 +15,8 @@ export class Potion{
         this.key = map.key;
         this.use = map.use;
         this.targetType = map.targetType;
-        this.discard = map.disCard
+        this._discard = map.disCard
+        void this._discard  // 抑制未使用警告 - 保留用于未来实现
     }
     //选中某个目标
     focus(target:Player|Enemy){

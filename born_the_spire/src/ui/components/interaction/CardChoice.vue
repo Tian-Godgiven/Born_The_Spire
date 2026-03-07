@@ -132,7 +132,7 @@ function handleSelectCard(card: Card) {
 // 确认选择
 function handleConfirm() {
   if (!canConfirm.value) return
-  emit('complete', [...selectedCards.value])
+  emit('complete', [...selectedCards.value] as Card[])
 }
 
 // 取消选择

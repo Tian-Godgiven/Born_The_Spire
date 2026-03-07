@@ -162,3 +162,94 @@ export function randomFloat(context?: string): number {
 export function randomChance(probability: number, context?: string): boolean {
     return randomFloat(context) < probability
 }
+
+/**
+ * 生成随机浮点数 [min, max)
+ *
+ * @param min - 最小值（包含）
+ * @param max - 最大值（不包含）
+ * @param context - 上下文信息
+ * @returns 随机浮点数
+ *
+ * @example
+ * const multiplier = randomFloatRange(0.8, 1.2, "damageVariance")
+ */
+export function randomFloatRange(min: number, max: number, context?: string): number {
+    const rng = getContextRandom(context)
+    return rng.nextFloatRange(min, max)
+}
+
+/**
+ * 根据权重随机选择一个元素
+ *
+ * @param items - 选项数组
+ * @param weights - 权重数组
+ * @param context - 上下文信息
+ * @returns 随机选中的元素
+ *
+ * @example
+ * const rarity = randomWeightedChoice(
+ *     ["common", "uncommon", "rare"],
+ *     [70, 25, 5],
+ *     "cardRarity"
+ * )
+ */
+export function randomWeightedChoice<T>(items: T[], weights: number[], context?: string): T {
+    const rng = getContextRandom(context)
+    return rng.weightedChoice(items, weights)
+}
+
+/**
+ * 根据权重随机选择多个元素（不重复）
+ *
+ * @param items - 选项数组
+ * @param weights - 权重数组
+ * @param count - 选择数量
+ * @param context - 上下文信息
+ * @returns 随机选中的元素数组
+ *
+ * @example
+ * const cards = randomWeightedChoices(
+ *     allCards,
+ *     cardWeights,
+ *     3,
+ *     "rewardCards"
+ * )
+ */
+export function randomWeightedChoices<T>(items: T[], weights: number[], count: number, context?: string): T[] {
+    const rng = getContextRandom(context)
+    return rng.weightedChoices(items, weights, count)
+}
+
+/**
+ * 从数组中随机选择多个元素（可重复）
+ *
+ * @param array - 数组
+ * @param count - 选择数量
+ * @param context - 上下文信息
+ * @returns 随机选中的元素数组
+ *
+ * @example
+ * const enemies = randomChoicesWithReplacement(enemyPool, 3, "spawnEnemies")
+ */
+export function randomChoicesWithReplacement<T>(array: T[], count: number, context?: string): T[] {
+    const rng = getContextRandom(context)
+    return rng.choicesWithReplacement(array, count)
+}
+
+/**
+ * 获取全局随机数生成器（直接使用 GameRun 的 rng）
+ * 用于不需要上下文的场景
+ *
+ * @returns SeededRandom 实例
+ *
+ * @example
+ * const rng = getGlobalRandom()
+ * const value = rng.nextInt(1, 10)
+ */
+export function getGlobalRandom(): SeededRandom {
+    if (!nowGameRun?.rng) {
+        throw new Error("GameRun rng not initialized")
+    }
+    return nowGameRun.rng as SeededRandom
+}

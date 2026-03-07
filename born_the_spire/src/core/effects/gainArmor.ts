@@ -12,7 +12,7 @@ import { newLog } from "@/ui/hooks/global/log"
  * @param effect.params.value - 获得的护甲值
  */
 export const gainArmor: EffectFunc = (event, effect) => {
-    const amount = effect.params.value || 0
+    const amount = Number(effect.params.value ?? 0)
 
     if (amount <= 0) {
         return

@@ -129,7 +129,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { currentRewards, showRewardUI, rewardTitle, confirmRewards } from '@/ui/hooks/interaction/rewardDisplay'
+import { currentRewards, showRewardUI, confirmRewards } from '@/ui/hooks/interaction/rewardDisplay'
 
 const visible = computed(() => showRewardUI.value)
 const rewards = computed(() => currentRewards.value)

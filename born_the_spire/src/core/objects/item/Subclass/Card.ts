@@ -16,6 +16,18 @@ export type CardMap = ItemMap & {
     }
     entry?:string[],
     tags?:string[],  // 卡牌标签（用于分类和筛选）
+
+    // 升级配置
+    upgradeConfig?: {
+        maxLevel?: number  // 最大等级（不设置则无限升级）
+        levelConfigs?: {
+            [level: number]: {
+                status?: Record<string, number>  // 该等级的属性值
+                entries?: string[]  // 该等级的词条列表
+                describe?: any[]  // 该等级的描述（可选）
+            }
+        }
+    }
 }
 
 /**
@@ -32,6 +44,7 @@ export class Card extends Item{
     public source?: Entity  // 卡牌来源（可能是器官、遗物或其他来源）
     public owner?: Entity   // 卡牌持有者（通常是 Player）
     public tags?: string[]  // 卡牌标签（用于分类和筛选）
+    public level: number = 0  // 卡牌等级（用于升级系统）
 
     constructor(map:CardMap){
         super(map)

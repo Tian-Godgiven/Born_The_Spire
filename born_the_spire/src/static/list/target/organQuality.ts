@@ -41,28 +41,6 @@ export const qualityConfigList: QualityConfig[] = [
         repairCostMultiplier: 0.6,
         assimilateCostMultiplier: 0.2,
         blackStorePrice: 280
-    },
-    {
-        key: OrganQuality.Epic,
-        label: "史诗",
-        color: "#A335EE",           // 紫色
-        baseAbsorbValue: 80,
-        upgradeCostMultiplier: 1.1,
-        upgradeVariance: 0.1,
-        repairCostMultiplier: 0.6,
-        assimilateCostMultiplier: 0.2,
-        blackStorePrice: 400
-    },
-    {
-        key: OrganQuality.Legendary,
-        label: "传说",
-        color: "#FF8000",           // 橙色
-        baseAbsorbValue: 120,
-        upgradeCostMultiplier: 1.1,
-        upgradeVariance: 0.1,
-        repairCostMultiplier: 0.6,
-        assimilateCostMultiplier: 0.2,
-        blackStorePrice: 600
     }
 ]
 

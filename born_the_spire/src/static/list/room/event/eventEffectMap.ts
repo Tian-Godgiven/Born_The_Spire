@@ -4,6 +4,8 @@
  */
 
 import { newLog } from "@/ui/hooks/global/log"
+import { doEvent } from "@/core/objects/system/ActionEvent"
+import { nowPlayer } from "@/core/objects/game/run"
 
 /**
  * 事件效果函数类型
@@ -34,96 +36,203 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
      * 获得金钱
      */
     "gainGold": async (params: { amount: number }) => {
-        newLog([`获得 ${params.amount} 金钱`])
-        // TODO: nowPlayer.addGold(params.amount)
+        await doEvent({
+            key: "gainReserve",
+            source: nowPlayer,
+            medium: nowPlayer,
+            target: nowPlayer,
+            effectUnits: [{
+                key: "gainReserve",
+                params: { reserveKey: "gold", amount: params.amount }
+            }]
+        })
     },
 
     /**
      * 失去金钱
      */
     "loseGold": async (params: { amount: number }) => {
-        newLog([`失去 ${params.amount} 金钱`])
-        // TODO: nowPlayer.spendGold(params.amount)
+        await doEvent({
+            key: "spendReserve",
+            source: nowPlayer,
+            medium: nowPlayer,
+            target: nowPlayer,
+            effectUnits: [{
+                key: "spendReserve",
+                params: { reserveKey: "gold", amount: params.amount }
+            }]
+        })
     },
 
     /**
      * 回复生命
      */
     "healHealth": async (params: { amount: number }) => {
-        newLog([`回复 ${params.amount} 生命`])
-        // TODO: nowPlayer.heal(params.amount)
+        await doEvent({
+            key: "heal",
+            source: nowPlayer,
+            medium: nowPlayer,
+            target: nowPlayer,
+            effectUnits: [{
+                key: "heal",
+                params: { value: params.amount }
+            }]
+        })
     },
 
     /**
      * 失去生命
      */
     "loseHealth": async (params: { amount: number }) => {
-        newLog([`失去 ${params.amount} 生命`])
-        // TODO: nowPlayer.takeDamage(params.amount)
+        await doEvent({
+            key: "damage",
+            source: nowPlayer,
+            medium: nowPlayer,
+            target: nowPlayer,
+            effectUnits: [{
+                key: "damage",
+                params: { value: params.amount }
+            }]
+        })
     },
 
     /**
      * 获得最大生命
      */
     "gainMaxHealth": async (params: { amount: number }) => {
-        newLog([`获得 ${params.amount} 最大生命`])
-        // TODO: nowPlayer.addMaxHealth(params.amount)
+        await doEvent({
+            key: "gainMaxHealth",
+            source: nowPlayer,
+            medium: nowPlayer,
+            target: nowPlayer,
+            effectUnits: [{
+                key: "gainMaxHealth",
+                params: { value: params.amount }
+            }]
+        })
     },
 
     /**
      * 获得遗物
      */
     "gainRelic": async (params: { relicKey: string }) => {
-        newLog([`获得遗物: ${params.relicKey}`])
-        // TODO: nowPlayer.addRelic(params.relicKey)
+        await doEvent({
+            key: "gainRelic",
+            source: nowPlayer,
+            medium: nowPlayer,
+            target: nowPlayer,
+            effectUnits: [{
+                key: "gainRelic",
+                params: { relicKey: params.relicKey }
+            }]
+        })
     },
 
     /**
      * 获得药水
      */
     "gainPotion": async (params: { potionKey: string }) => {
-        newLog([`获得药水: ${params.potionKey}`])
-        // TODO: nowPlayer.addPotion(params.potionKey)
+        await doEvent({
+            key: "gainPotion",
+            source: nowPlayer,
+            medium: nowPlayer,
+            target: nowPlayer,
+            effectUnits: [{
+                key: "gainPotion",
+                params: { potionKey: params.potionKey }
+            }]
+        })
     },
 
     /**
      * 获得卡牌
      */
     "gainCard": async (params: { cardKey: string }) => {
-        newLog([`获得卡牌: ${params.cardKey}`])
-        // TODO: nowPlayer.addCard(params.cardKey)
+        await doEvent({
+            key: "gainCard",
+            source: nowPlayer,
+            medium: nowPlayer,
+            target: nowPlayer,
+            effectUnits: [{
+                key: "gainCard",
+                params: { cardKey: params.cardKey }
+            }]
+        })
     },
 
     /**
      * 移除卡牌
      */
-    "removeCard": async (params: { cardKey: string }) => {
-        newLog([`移除卡牌: ${params.cardKey}`])
-        // TODO: nowPlayer.removeCard(params.cardKey)
+    "removeCard": async (params: { count?: number, minCount?: number }) => {
+        // 使用 chooseCardRemove 让玩家选择
+        await doEvent({
+            key: "chooseCardRemove",
+            source: nowPlayer,
+            medium: nowPlayer,
+            target: nowPlayer,
+            effectUnits: [{
+                key: "chooseCardRemove",
+                params: {
+                    count: params.count ?? 1,
+                    minCount: params.minCount ?? 0
+                }
+            }]
+        })
     },
 
     /**
      * 升级卡牌
      */
-    "upgradeCard": async (params: { cardKey: string }) => {
-        newLog([`升级卡牌: ${params.cardKey}`])
-        // TODO: nowPlayer.upgradeCard(params.cardKey)
+    "upgradeCard": async (params: { count?: number }) => {
+        // 使用 chooseCardUpgrade 让玩家选择
+        await doEvent({
+            key: "chooseCardUpgrade",
+            source: nowPlayer,
+            medium: nowPlayer,
+            target: nowPlayer,
+            effectUnits: [{
+                key: "chooseCardUpgrade",
+                params: {
+                    count: params.count ?? 1
+                }
+            }]
+        })
     },
 
     /**
      * 获得器官
      */
     "gainOrgan": async (params: { organKey: string }) => {
-        newLog([`获得器官: ${params.organKey}`])
-        // TODO: nowPlayer.addOrgan(params.organKey)
+        await doEvent({
+            key: "gainOrgan",
+            source: nowPlayer,
+            medium: nowPlayer,
+            target: nowPlayer,
+            effectUnits: [{
+                key: "gainOrgan",
+                params: { organKey: params.organKey }
+            }]
+        })
     },
 
     /**
      * 移除器官
      */
-    "removeOrgan": async (params: { organKey: string }) => {
-        newLog([`移除器官: ${params.organKey}`])
-        // TODO: nowPlayer.removeOrgan(params.organKey)
+    "removeOrgan": async (params: { count?: number, minCount?: number }) => {
+        // 使用 chooseOrganRemove 让玩家选择
+        await doEvent({
+            key: "chooseOrganRemove",
+            source: nowPlayer,
+            medium: nowPlayer,
+            target: nowPlayer,
+            effectUnits: [{
+                key: "chooseOrganRemove",
+                params: {
+                    count: params.count ?? 1,
+                    minCount: params.minCount ?? 0
+                }
+            }]
+        })
     },
 
     /**
@@ -131,8 +240,25 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
      */
     "gainRandomRelic": async (params?: { count?: number }) => {
         const count = params?.count || 1
-        newLog([`随机获得 ${count} 个遗物`])
-        // TODO: 从遗物池中随机抽取
+        const { getLazyModule } = await import("@/core/utils/lazyLoader")
+        const relicList = getLazyModule<any[]>('relicList')
+        const { randomChoices } = await import("@/core/hooks/random")
+
+        // 随机选择遗物
+        const selected = randomChoices(relicList, count, "gainRandomRelic")
+
+        for (const relicData of selected) {
+            await doEvent({
+                key: "gainRelic",
+                source: nowPlayer,
+                medium: nowPlayer,
+                target: nowPlayer,
+                effectUnits: [{
+                    key: "gainRelic",
+                    params: { relicKey: relicData.key }
+                }]
+            })
+        }
     },
 
     /**
@@ -140,8 +266,25 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
      */
     "gainRandomPotion": async (params?: { count?: number }) => {
         const count = params?.count || 1
-        newLog([`随机获得 ${count} 个药水`])
-        // TODO: 从药水池中随机抽取
+        const { getLazyModule } = await import("@/core/utils/lazyLoader")
+        const potionList = getLazyModule<any[]>('potionList')
+        const { randomChoices } = await import("@/core/hooks/random")
+
+        // 随机选择药水
+        const selected = randomChoices(potionList, count, "gainRandomPotion")
+
+        for (const potionData of selected) {
+            await doEvent({
+                key: "gainPotion",
+                source: nowPlayer,
+                medium: nowPlayer,
+                target: nowPlayer,
+                effectUnits: [{
+                    key: "gainPotion",
+                    params: { potionKey: potionData.key }
+                }]
+            })
+        }
     },
 
     /**
@@ -149,8 +292,74 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
      */
     "gainRandomCard": async (params?: { count?: number, rarity?: string }) => {
         const count = params?.count || 1
-        newLog([`随机获得 ${count} 张卡牌`])
-        // TODO: 从卡牌池中随机抽取
+        const { getLazyModule } = await import("@/core/utils/lazyLoader")
+        const cardList = getLazyModule<any[]>('cardList')
+        const { randomChoices } = await import("@/core/hooks/random")
+
+        // 根据稀有度筛选（如果指定）
+        let filteredCards = cardList
+        if (params?.rarity) {
+            filteredCards = cardList.filter((c: any) => c.rarity === params.rarity)
+        }
+
+        // 随机选择卡牌
+        const selected = randomChoices(filteredCards, count, "gainRandomCard")
+
+        for (const cardData of selected) {
+            await doEvent({
+                key: "gainCard",
+                source: nowPlayer,
+                medium: nowPlayer,
+                target: nowPlayer,
+                effectUnits: [{
+                    key: "gainCard",
+                    params: { cardKey: cardData.key }
+                }]
+            })
+        }
+    },
+
+    /**
+     * 随机升级卡牌
+     * @param count 升级数量（默认1）
+     * @param tags 筛选标签（如 ["attack"]，可选）
+     */
+    "upgradeRandomCards": async (params?: { count?: number, tags?: string[] }) => {
+        const count = params?.count || 1
+        const tags = params?.tags || []
+        const { randomChoices } = await import("@/core/hooks/random")
+
+        // 获取玩家卡组
+        let cards = nowPlayer.getCardGroup()
+
+        // 按标签筛选
+        if (tags.length > 0) {
+            cards = cards.filter(card =>
+                card.tags?.some(tag => tags.includes(tag)) ?? false
+            )
+        }
+
+        if (cards.length === 0) {
+            newLog(["没有符合条件的卡牌可升级"])
+            return
+        }
+
+        // 随机选择卡牌
+        const selected = randomChoices(cards, Math.min(count, cards.length), "upgradeRandomCards")
+
+        // 对每张卡牌调用升级效果
+        for (const card of selected) {
+            await doEvent({
+                key: "upgradeCard",
+                source: nowPlayer,
+                medium: card,
+                target: nowPlayer,
+                effectUnits: [{
+                    key: "upgradeCard",
+                    params: { card }
+                }]
+            })
+        }
     },
 
     /**

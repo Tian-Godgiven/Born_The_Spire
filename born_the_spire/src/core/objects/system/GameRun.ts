@@ -3,6 +3,7 @@ import { Room } from "../room/Room"
 import { floorManager } from "./FloorManager"
 import { cloneDeep } from "lodash"
 import { SeededRandom } from "@/core/utils/SeededRandom"
+import { markRaw } from "vue"
 
 /**
  * 玩家状态快照
@@ -45,7 +46,7 @@ export class GameRun{
     constructor(seed?: string){
         // 初始化种子系统
         this.seed = seed || Date.now().toString()
-        this.rng = new SeededRandom(this.seed)
+        this.rng = markRaw(new SeededRandom(this.seed))
 
         // 重置楼层管理器
         this.floorManager.reset()

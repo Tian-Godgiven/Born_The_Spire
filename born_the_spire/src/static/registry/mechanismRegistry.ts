@@ -206,7 +206,7 @@ function createMechanismData(entity: Entity, config: MechanismConfig): void {
         // 在 current 中创建 Current 实例
         if (!entity.current[storageKey]) {
             console.log(`[createMechanismData] 创建新的 Current 实例: ${storageKey}`)
-            const current = new Current(
+            const _current = new Current(
                 entity,  // source
                 entity,  // owner
                 storageKey,  // key
@@ -220,6 +220,7 @@ function createMechanismData(entity: Entity, config: MechanismConfig): void {
                 []  // triggers
             )
             // Current 构造函数会自动调用 appendCurrent
+            void _current  // 抑制未使用警告 - 变量仅用于构造函数副作用
             console.log(`[createMechanismData] Current 创建完成，检查 entity.current[${storageKey}]:`, entity.current[storageKey])
         } else {
             console.log(`[createMechanismData] ${storageKey} 已存在，跳过创建`)
@@ -229,9 +230,10 @@ function createMechanismData(entity: Entity, config: MechanismConfig): void {
         if (!entity.status[storageKey]) {
             const status = new Status(
                 entity,  // owner
-                storageKey,  // key
-                defaultValue as number  // baseValue
+                storageKey  // key
             )
+            // 设置初始值
+            status.setOriginalBaseValue(defaultValue as number)
             appendStatus(entity, status)
         }
     } else if (location === "custom") {
@@ -263,17 +265,19 @@ function generateTriggersForMechanism(
             key: "damage",
             level: logic.absorbDamage.priority || 0,
             callback: async (event, effect) => {
+                if (!effect) return  // 添加 null 检查
+
                 const mechanismValue = entity.current[storageKey]?.value || 0
                 if (mechanismValue <= 0) return
 
-                const damageAmount = effect.params.value || 0
+                const damageAmount = Number(effect.params.value ?? 0)
                 const absorbed = logic.absorbDamage!.absorb(mechanismValue, damageAmount, event)
 
                 // 更新机制值
                 entity.current[storageKey].value -= absorbed
 
                 // 更新伤害值
-                effect.params.value -= absorbed
+                effect.params.value = Number(effect.params.value ?? 0) - absorbed
 
                 // 记录日志
                 if (absorbed > 0) {
@@ -396,7 +400,7 @@ registerMechanism({
         absorbDamage: {
             enabled: true,
             priority: 100,
-            absorb: (armorValue, damageAmount, event) => {
+            absorb: (armorValue, damageAmount, _event) => {
                 // 100% 吸收伤害
                 return Math.min(armorValue, damageAmount)
             }

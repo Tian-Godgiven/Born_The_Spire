@@ -48,6 +48,7 @@ export type OrganMap = ItemMap&TargetMap&{
     level?: number         // 等级（默认为 1）
     part?: OrganPart       // 部位（可选，不填表示不占据部位）
     absorbValue?: number   // 吞噬获取量（可选，不填则使用稀有度的默认值）
+    tags?: string[]        // 标签列表（可选）
 
     // 升级配置（可选）
     upgrade?: OrganUpgradeConfig
@@ -73,6 +74,7 @@ export class Organ extends Entity{
     public readonly part?: OrganPart       // 部位（可选）
     public readonly absorbValue: number    // 吞噬获取量
     public readonly upgradeConfig?: OrganUpgradeConfig  // 升级配置（可选）
+    public readonly tags: string[]         // 标签列表
 
     // 内部管理的触发器移除函数
     private workTriggerRemovers: Array<()=>void> = []
@@ -91,6 +93,7 @@ export class Organ extends Entity{
         this.part = map.part
         this.absorbValue = calculateAbsorbValue(map.quality, map.absorbValue)
         this.upgradeConfig = map.upgrade  // 升级配置
+        this.tags = map.tags || []  // 初始化标签列表
 
         const interaction:Interaction[] = []
         for(let key in map.interaction){
@@ -266,4 +269,12 @@ export function devourOrgan(entity: Entity, organ: Organ) {
 export function upgradeOrgan(entity: Entity, organ: Organ) {
     const organModifier = getOrganModifier(entity)
     return organModifier.upgradeOrgan(organ)
+}
+
+/**
+ * 售卖器官（包装函数）
+ */
+export function sellOrgan(entity: Entity, organ: Organ) {
+    const organModifier = getOrganModifier(entity)
+    return organModifier.sellOrgan(organ)
 }

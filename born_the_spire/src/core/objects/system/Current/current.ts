@@ -55,6 +55,7 @@ export class Current{
 }
 
 //初始化当前值
+// @ts-expect-error - T 用于类型约束但未在函数体中使用
 export async function initCurrentFromMap<T extends Entity>(owner:Entity,mapData:any){
     // 动态导入以避免循环依赖
     const { getMetaFromCurrentMap } = await import("@/static/list/system/currents/currentMap")
@@ -126,6 +127,17 @@ export function getCurrentRefValue(entity:Entity,key:string,defaultValue?:number
         return defaultValue
     }
     newError(["尝试在",entity,"上获取当前值",key,"但即不存在这个值，也没有设定默认值。"])
+}
+
+//设置某个当前值（直接设置，不触发事件）
+export function setCurrentValue(entity:Entity,key:string,value:number){
+    const current = entity.current[key]
+    if(current){
+        current.value = value
+    }
+    else{
+        newError(["尝试在",entity,"上设置当前值",key,"但该值不存在。"])
+    }
 }
 
 //工具函数：获取当前值的上下限值minBy或者maxBy对应的数值

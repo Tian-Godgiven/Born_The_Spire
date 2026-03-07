@@ -37,9 +37,7 @@ export type PartConfig = {
 export enum OrganQuality {
     Common = "common",          // 普通
     Uncommon = "uncommon",      // 罕见
-    Rare = "rare",              // 稀有
-    Epic = "epic",              // 史诗
-    Legendary = "legendary"     // 传说
+    Rare = "rare"               // 稀有
 }
 
 /**
@@ -56,3 +54,19 @@ export type QualityConfig = {
     assimilateCostMultiplier: number // 同化成本倍率
     blackStorePrice: number     // 黑市基础价格
 }
+
+/**
+ * 器官标签（用于标识特殊类型的器官）
+ */
+export type OrganTag = string
+
+/**
+ * 标签配置
+ */
+export type TagConfig = {
+    key: string         // 标签标识
+    label: string       // 显示名称
+    color: string       // 颜色代码（用于 UI 显示）
+    description?: string // 标签描述
+}
+

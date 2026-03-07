@@ -41,7 +41,7 @@ export async function executeEnemyTurn(
         }
 
         // 如果没有意图，尝试重新选择（容错处理）
-        const selectedCards = selectAction(
+        const selectedCards = await selectAction(
             enemy.behavior,
             enemy,
             player,
@@ -102,7 +102,7 @@ export async function executeAllEnemiesTurn(
  * @param player 玩家
  * @param turnCount 当前回合数
  */
-export function prepareEnemyIntents(
+export async function prepareEnemyIntents(
     enemies: Enemy[],
     player: Player,
     turnCount: number
@@ -122,7 +122,7 @@ export function prepareEnemyIntents(
         }
 
         // 选择行动
-        const selectedCards = selectAction(
+        const selectedCards = await selectAction(
             enemy.behavior,
             enemy,
             player,

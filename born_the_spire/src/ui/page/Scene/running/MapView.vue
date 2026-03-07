@@ -85,7 +85,8 @@ const emit = defineEmits<{
 }>()
 
 // 地图配置
-const nodeRadius = 20
+const _nodeRadius = 20
+void _nodeRadius  // 抑制未使用警告 - 保留用于未来实现
 const layerHeight = 80
 const nodeSpacing = 100
 const padding = 50
@@ -212,7 +213,8 @@ function getNodeIcon(node: MapNode): string {
     pool: '💤',
     blackStore: '🛒',
     roomSelect: '🚪',
-    floorSelect: '🗺️'
+    floorSelect: '🗺️',
+    treasure: '💎'
   }
   return iconMap[node.roomType] || '❓'
 }
@@ -227,7 +229,8 @@ function getNodeDisplayName(node: MapNode): string {
     pool: '休息点',
     blackStore: '商店',
     roomSelect: '房间选择',
-    floorSelect: '楼层选择'
+    floorSelect: '层级选择',
+    treasure: '宝箱'
   }
   return nameMap[node.roomType] || '未知'
 }

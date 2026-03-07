@@ -27,13 +27,13 @@ export class Enemy extends Chara{
         newLog(["创建了敌人",map])
         if(map.current){
             // 确保有 health
-            if(!map.current.find(i=>{
+            if(!map.current.find((i: any)=>{
                 return i === "health" || (typeof i === 'object' && i.key === "health");
             })){
                 map.current.push("health")
             }
             // 确保有 isAlive
-            if(!map.current.find(i=>{
+            if(!map.current.find((i: any)=>{
                 return i === "isAlive" || (typeof i === 'object' && i.key === "isAlive");
             })){
                 map.current.push("isAlive")
@@ -60,7 +60,7 @@ export class Enemy extends Chara{
      * 如果没有可用卡牌，返回兜底的"挣扎"卡牌
      * @returns 可用卡牌列表
      */
-    getAvailableCards(): Card[] {
+    async getAvailableCards(): Promise<Card[]> {
         const availableCards: Card[] = []
 
         // 1. 从器官获取卡牌
@@ -77,7 +77,7 @@ export class Enemy extends Chara{
             if (organ.cards && organ.cards.length > 0) {
                 for (const cardKey of organ.cards) {
                     try {
-                        const card = getCardByKey(cardKey)
+                        const card = await getCardByKey(cardKey)
                         // 设置卡牌来源
                         card.source = organ
                         card.owner = this
@@ -92,7 +92,7 @@ export class Enemy extends Chara{
         // 2. 添加敌人专属卡牌
         for (const cardKey of this.exclusiveCards) {
             try {
-                const card = getCardByKey(cardKey)
+                const card = await getCardByKey(cardKey)
                 // 设置卡牌来源为敌人自己
                 card.source = this
                 card.owner = this
@@ -106,7 +106,7 @@ export class Enemy extends Chara{
         if (availableCards.length === 0) {
             console.warn(`[Enemy.getAvailableCards] ${this.label} 没有可用卡牌，使用兜底"挣扎"`)
             try {
-                const struggleCard = getCardByKey("fallback_struggle")
+                const struggleCard = await getCardByKey("fallback_struggle")
                 struggleCard.source = this
                 struggleCard.owner = this
                 availableCards.push(struggleCard)
@@ -140,13 +140,13 @@ export class Enemy extends Chara{
      * @param player 玩家
      * @param turnCount 当前回合数
      */
-    updateIntent(player: Player, turnCount: number) {
+    async updateIntent(player: Player, turnCount: number) {
         if (!this.behavior) {
             console.warn(`[Enemy.updateIntent] 敌人 ${this.label} 没有行为配置`)
             return
         }
 
-        const selectedCards = selectAction(this.behavior, this, player, turnCount)
+        const selectedCards = await selectAction(this.behavior, this, player, turnCount)
 
         if (selectedCards.length > 0) {
             newLog(["敌人改变意图", this.label])

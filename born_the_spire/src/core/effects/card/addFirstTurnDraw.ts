@@ -10,7 +10,7 @@ import { isEntity } from "@/core/utils/typeGuards"
  * }
  */
 export const addFirstTurnDraw: EffectFunc = (event, effect) => {
-    const { value = 0 } = effect.params
+    const value = Number(effect.params.value ?? 0)
 
     if (value <= 0) return
 
@@ -32,7 +32,7 @@ export const addFirstTurnDraw: EffectFunc = (event, effect) => {
                     const effects = triggerEvent.effects
                     if (effects && effects.length > 0) {
                         // 找到 drawFromDrawPile 效果
-                        const drawEffect = effects.find(e => e.key === "drawFromDrawPile")
+                        const drawEffect = effects.find((e: any) => e.key === "drawFromDrawPile")
                         if (drawEffect && drawEffect.params.value !== undefined) {
                             // 增加抽牌数
                             drawEffect.params.value = Number(drawEffect.params.value) + value

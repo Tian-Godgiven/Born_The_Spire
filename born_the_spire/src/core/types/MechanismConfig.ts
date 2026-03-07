@@ -6,7 +6,7 @@
 import { Component } from "vue"
 import { Entity } from "@/core/objects/system/Entity"
 import { ActionEvent } from "@/core/objects/system/ActionEvent"
-import { Effect } from "@/core/objects/system/Effect"
+import { Effect } from "@/core/objects/system/effect/Effect"
 
 /**
  * 数据存储配置
@@ -53,7 +53,7 @@ export interface CustomTriggerConfig {
     when: "before" | "after"
     how: "make" | "via" | "take"
     key: string                                // 事件 key
-    callback: (event: ActionEvent, effect: Effect, mechanismValue: number, entity: Entity) => void | Promise<void>
+    callback: (event: ActionEvent, effect: Effect | null, mechanismValue: number, entity: Entity) => void | Promise<void>
     level?: number
 }
 
@@ -87,6 +87,7 @@ export interface MechanismUIConfig {
     position: UIPosition                       // 显示位置
     component?: Component | string             // 自定义 Vue 组件（可选）
     showWhen?: (mechanismValue: number, entity: Entity) => boolean  // 显示条件
+    icon?: string                              // 图标（可选）
 
     // 如果使用预设位置，可以配置相对偏移
     offset?: {
