@@ -2,6 +2,8 @@ import { Reward, RewardConfig } from "./Reward"
 import type { OrganMap } from "@/core/objects/target/Organ"
 import { newLog } from "@/ui/hooks/global/log"
 import { getLazyModule } from "@/core/utils/lazyLoader"
+import { organRewardActionRegistry } from "@/static/registry/organRewardActionRegistry"
+import type { OrganRewardActionContext } from "@/core/types/organRewardAction"
 
 /**
  * 器官选择奖励配置
@@ -10,6 +12,7 @@ export interface OrganSelectRewardConfig extends RewardConfig {
     type: "organSelect"
     organOptions: OrganMap[] | string[]  // 可选器官列表（配置或 key）
     selectCount?: number  // 可选择数量（默认 1）
+    battleType?: "normal" | "elite" | "boss"  // 战斗类型
 }
 
 /**
@@ -19,7 +22,9 @@ export interface OrganSelectRewardConfig extends RewardConfig {
 export class OrganSelectReward extends Reward {
     public readonly organOptions: OrganMap[]
     public readonly selectCount: number
+    public readonly battleType?: "normal" | "elite" | "boss"
     public selectedOrgans: string[] = []  // 存储选择的器官 key
+    public selectedActions: Map<string, string> = new Map()  // organKey -> actionKey
 
     constructor(config: OrganSelectRewardConfig) {
         super(config)
@@ -50,7 +55,7 @@ export class OrganSelectReward extends Reward {
 
     /**
      * 领取器官选择奖励
-     * 将选择的器官添加到玩家
+     * 根据选择的动作处理每个器官
      */
     async claim(): Promise<void> {
         if (!this.isAvailable()) {
@@ -66,17 +71,38 @@ export class OrganSelectReward extends Reward {
 
         // 动态导入避免循环依赖
         const { nowPlayer } = await import("@/core/objects/game/run")
-        const { getOrganModifier } = await import("@/core/objects/system/modifier/OrganModifier")
         const { Organ } = await import("@/core/objects/target/Organ")
 
-        // 将选择的器官添加到玩家
-        const organModifier = getOrganModifier(nowPlayer)
+        const player = nowPlayer
+        const context: OrganRewardActionContext = {
+            source: "battleReward",
+            battleType: this.battleType
+        }
+
+        // 对每个选择的器官执行对应的动作
         for (const organKey of this.selectedOrgans) {
             const organConfig = this.organOptions.find(o => o.key === organKey)
-            if (organConfig) {
-                const organ = new Organ(organConfig)
-                organModifier.acquireOrgan(organ, nowPlayer)
-                newLog([`获得器官: ${organConfig.label}`])
+            if (!organConfig) continue
+
+            const organ = new Organ(organConfig)
+
+            // 获取选择的动作
+            const actionKey = this.selectedActions.get(organKey)
+            if (!actionKey) {
+                console.warn(`[OrganSelectReward] 器官 ${organConfig.label} 没有选择动作，跳过`)
+                continue
+            }
+
+            // 执行动作
+            const success = await organRewardActionRegistry.executeAction(
+                actionKey,
+                organ,
+                player,
+                context
+            )
+
+            if (success) {
+                newLog([`对 ${organConfig.label} 执行了 ${actionKey}`])
             }
         }
 

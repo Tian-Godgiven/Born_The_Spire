@@ -51,6 +51,15 @@ export class Enemy extends Chara{
         if (map.cards) {
             this.exclusiveCards = map.cards
         }
+
+        // 触发敌人创建事件
+        doEvent({
+            key: "enemyCreation",
+            source: this,
+            medium: this,
+            target: this,
+            effectUnits: []
+        })
     }
 
     /**

@@ -133,9 +133,9 @@ export function initBlackStoreItemPools(): void {
     // 加载器官（使用懒加载）
     const organList = getLazyModule<OrganMap[]>('organList')
     blackStoreOrganPool.items = [...organList]
-    // 根据稀有度设置权重（器官使用 quality 属性）
+    // 根据稀有度设置权重
     blackStoreOrganPool.weights = organList.map(organ =>
-        getRarityWeight(organ.quality as Rarity, blackStoreOrganPool.rarityWeights)
+        getRarityWeight(organ.rarity as Rarity, blackStoreOrganPool.rarityWeights)
     )
 
     // 加载遗物（使用懒加载）

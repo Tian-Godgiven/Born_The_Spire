@@ -57,40 +57,6 @@
       </div>
     </div>
 
-    <!-- 器官选择弹窗 -->
-    <div v-if="showOrganChoice" class="choice-overlay" @click.self="closeOrganChoice">
-      <div class="choice-modal">
-        <div class="choice-title">选择器官</div>
-        <div class="choice-description">{{ currentChoiceReward?.getDisplayDescription() }}</div>
-
-        <div class="choice-grid">
-          <div
-            v-for="organ in currentChoiceReward?.organOptions"
-            :key="organ.key"
-            class="choice-card"
-            :class="{ selected: selectedOrganKey === organ.key }"
-            @click="selectedOrganKey = organ.key"
-          >
-            <div class="choice-name">{{ organ.label }}</div>
-            <div v-if="organ.description" class="choice-description">
-              {{ organ.description }}
-            </div>
-          </div>
-        </div>
-
-        <div class="choice-actions">
-          <button class="action-btn" @click="closeOrganChoice">取消</button>
-          <button
-            class="action-btn primary"
-            :disabled="!selectedOrganKey"
-            @click="confirmOrganChoice"
-          >
-            确认
-          </button>
-        </div>
-      </div>
-    </div>
-
     <!-- 遗物选择弹窗 -->
     <div v-if="showRelicChoice" class="choice-overlay" @click.self="closeRelicChoice">
       <div class="choice-modal">
@@ -130,33 +96,29 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { currentRewards, showRewardUI, confirmRewards } from '@/ui/hooks/interaction/rewardDisplay'
+import { showOrganChoice as openOrganRewardChoice } from '@/ui/hooks/interaction/organChoice'
 
 const visible = computed(() => showRewardUI.value)
 const rewards = computed(() => currentRewards.value)
 
-// 器官选择弹窗
-const showOrganChoice = ref(false)
 const currentChoiceReward = ref<any>(null)
-const selectedOrganKey = ref<string | null>(null)
 
-function openOrganChoice(reward: any) {
-  currentChoiceReward.value = reward
-  selectedOrganKey.value = null
-  showOrganChoice.value = true
-}
+async function openOrganChoice(reward: any) {
+  const result = await openOrganRewardChoice({
+    title: '选择器官',
+    description: reward.getDisplayDescription(),
+    organKeys: reward.organOptions.map((organ: any) => organ.key),
+    minSelect: reward.selectCount,
+    maxSelect: reward.selectCount,
+    cancelable: true,
+    actionMode: 'selectThenAction'
+  })
 
-function closeOrganChoice() {
-  showOrganChoice.value = false
-  currentChoiceReward.value = null
-  selectedOrganKey.value = null
-}
+  if (result.selectedKeys.length === 0) return
 
-async function confirmOrganChoice() {
-  if (!selectedOrganKey.value || !currentChoiceReward.value) return
-
-  currentChoiceReward.value.selectedOrgans = [selectedOrganKey.value]
-  await currentChoiceReward.value.claim()
-  closeOrganChoice()
+  reward.selectedOrgans = result.selectedKeys
+  reward.selectedActions = result.selectedActions ?? new Map()
+  await reward.claim()
 }
 
 // 遗物选择弹窗

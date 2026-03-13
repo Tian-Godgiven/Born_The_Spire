@@ -15,6 +15,8 @@ import { Entity } from "@/core/objects/system/Entity";
  * - targetLayer: 目标层级 ("base" | "current")
  * - modifierType: 修饰类型 ("additive" | "multiplicative" | "final")
  * - applyMode: 应用模式 ("absolute" | "snapshot")
+ * - onlyIfElite: 仅对精英生效（可选）
+ * - onlyIfBoss: 仅对Boss生效（可选）
  */
 export const addStatusModifier: EffectFunc = (event, effect) => {
     const { target } = event;
@@ -24,7 +26,9 @@ export const addStatusModifier: EffectFunc = (event, effect) => {
         targetLayer = "base",
         modifierType = "additive",
         applyMode = "absolute",
-        modifierFunc
+        modifierFunc,
+        onlyIfElite,
+        onlyIfBoss
     } = effect.params;
 
     if (!statusKey) {
@@ -34,6 +38,10 @@ export const addStatusModifier: EffectFunc = (event, effect) => {
 
     handleEventEntity(target, (entity) => {
         if (!isEntity(entity)) return;
+
+        // 条件检查
+        if (onlyIfElite && !(entity as any).isElite) return;
+        if (onlyIfBoss && !(entity as any).isBoss) return;
 
         const statusKey = String(effect.params.statusKey);
         const status = entity.status[statusKey];

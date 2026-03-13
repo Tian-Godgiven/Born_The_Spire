@@ -14,6 +14,7 @@ import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifi
 import { getQualityConfig, calculateUpgradeCost, calculateBlackStorePrice, calculateRepairCost } from "@/static/list/target/organQuality"
 import { getCurrentValue } from "@/core/objects/system/Current/current"
 import { showComponent } from "@/core/hooks/componentManager"
+import { getEntryModifier } from "./EntryModifier"
 
 /**
  * 器官管理器
@@ -210,12 +211,49 @@ export class OrganModifier extends ItemModifier {
             const cardModifier = getCardModifier(this.owner)
             const addedCards = await cardModifier.addCardsFromSource(organ, organ.cards, parentLog)
 
+            // 更新器官的describe，将卡牌索引替换为实例ID
+            if (addedCards.length > 0 && organ.describe) {
+                organ.describe = organ.describe.map(segment => {
+                    // 如果是卡牌引用且是索引类型
+                    if (typeof segment === 'object' && '@' in segment && typeof segment['@'] === 'number') {
+                        const index = segment['@']
+                        if (index >= 0 && index < addedCards.length) {
+                            // 替换为卡牌实例ID
+                            return { '@': addedCards[index].__id }
+                        }
+                    }
+                    return segment
+                })
+            }
+
             // 注册卡牌移除函数到 ItemModifierUnit
             if (addedCards.length > 0) {
                 unit.registerCustomRemover(() => {
                     cardModifier.removeCardsFromSource(organ)
                 }, `卡牌组 (${addedCards.length}张)`)
             }
+        }
+
+        // 6. 处理器官的词条
+        if (organ.entry.length > 0) {
+            const entryModifier = getEntryModifier(organ)
+            console.log(`[OrganModifier] ${organ.label} 应用 ${organ.entry.length} 个词条`)
+
+            for (const entryKey of organ.entry) {
+                const result = entryModifier.addEntry(entryKey)
+                if (result === true) {
+                    console.log(`[OrganModifier] 词条 ${entryKey} 应用成功`)
+                } else {
+                    console.warn(`[OrganModifier] 词条 ${entryKey} 应用失败: ${result}`)
+                }
+            }
+
+            // 注册词条移除函数到 ItemModifierUnit
+            unit.registerCustomRemover(() => {
+                for (const entryKey of organ.entry) {
+                    entryModifier.removeEntry(entryKey)
+                }
+            }, `词条 (${organ.entry.length}个)`)
         }
 
         console.log(`[OrganModifier] ${this.owner.label} 器官获取完成，当前器官列表:`, this.getOrgans().map(o => o.label))
@@ -363,6 +401,13 @@ export class OrganModifier extends ItemModifier {
             return false
         }
 
+        // 检查是否有坚固词条
+        const organAsAny = organ as any
+        if (organAsAny._isSturdy) {
+            newLog([organ, "因【坚固】词条而无法损坏"])
+            return false
+        }
+
         // 设置损坏状态
         organ.isDisabled = true
 
@@ -406,7 +451,7 @@ export class OrganModifier extends ItemModifier {
         }
 
         // 计算修复成本（60% 吞噬获取量）
-        const repairCost = calculateRepairCost(organ.quality, organ.absorbValue)
+        const repairCost = calculateRepairCost(organ.rarity, organ.absorbValue)
 
         // 检查物质是否足够
         const reserveModifier = getReserveModifier(this.owner)
@@ -449,7 +494,7 @@ export class OrganModifier extends ItemModifier {
      * @returns 获得的物质数量
      */
     private calculateDevourMaterial(organ: Organ): number {
-        const qualityConfig = getQualityConfig(organ.quality)
+        const qualityConfig = getQualityConfig(organ.rarity)
 
         // 吞噬获取量 * 等级 + 稀有度加成
         const baseMaterial = organ.absorbValue * organ.level
@@ -508,7 +553,7 @@ export class OrganModifier extends ItemModifier {
         }
 
         // 计算售价：基础黑市价格 + 随机折扣（-20% ~ +10%）
-        const basePrice = calculateBlackStorePrice(organ.quality, organ.level)
+        const basePrice = calculateBlackStorePrice(organ.rarity, organ.level)
         const discountFactor = 0.8 + Math.random() * 0.3  // 0.8 ~ 1.1
         const sellPrice = Math.floor(basePrice * discountFactor)
 
@@ -571,6 +616,13 @@ export class OrganModifier extends ItemModifier {
             return false
         }
 
+        // 检查是否达到最大等级
+        const maxLevel = organ.upgradeConfig?.maxLevel
+        if (maxLevel !== undefined && organ.level >= maxLevel) {
+            newLog([organ, `已达到最大等级 ${maxLevel}`])
+            return false
+        }
+
         // 计算升级成本
         let upgradeCost: number
 
@@ -583,7 +635,7 @@ export class OrganModifier extends ItemModifier {
             }
         } else {
             // 使用稀有度默认成本（带随机波动）
-            upgradeCost = calculateUpgradeCost(organ.quality, organ.absorbValue, true)
+            upgradeCost = calculateUpgradeCost(organ.rarity, organ.absorbValue, true)
         }
 
         // 获取储备管理器

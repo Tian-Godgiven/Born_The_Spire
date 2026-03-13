@@ -38,6 +38,16 @@ preloadAllLazyModules().then(() => {
         initRewardRegistry()
     })
 
+    // 初始化器官奖励动作系统（需要在懒加载完成后）
+    import('@/static/registry/initOrganRewardActions').then(({ initAllOrganRewardActions }) => {
+        initAllOrganRewardActions()
+    })
+
+    // 初始化水池行动系统（需要在懒加载完成后）
+    import('@/static/registry/initPoolActions').then(({ initAllPoolActions }) => {
+        initAllPoolActions()
+    })
+
     createApp(App)
         .use(router)
         .mount("#app");

@@ -325,12 +325,14 @@ export class MapGenerator {
    * 从房间key推断房间类型
    */
   private inferRoomTypeFromKey(roomKey: string): RoomType {
+    if (roomKey.startsWith("battle_elite_plus")) return "elitePlusBattle"
     if (roomKey.startsWith("battle_elite")) return "eliteBattle"
     if (roomKey.startsWith("battle_boss")) return "battle"
     if (roomKey.startsWith("battle")) return "battle"
     if (roomKey.startsWith("event")) return "event"
     if (roomKey.startsWith("pool")) return "pool"
     if (roomKey.startsWith("blackStore")) return "blackStore"
+    if (roomKey.startsWith("treasure")) return "treasure"
     return "battle"
   }
 
@@ -557,12 +559,16 @@ export class MapGenerator {
         return this.config.roomPools.battles
       case "eliteBattle":
         return this.config.roomPools.eliteBattles || []
+      case "elitePlusBattle":
+        return this.config.roomPools.elitePlusBattles || []
       case "event":
         return this.config.roomPools.events
       case "pool":
         return this.config.roomPools.pools
       case "blackStore":
         return this.config.roomPools.blackStores
+      case "treasure":
+        return this.config.roomPools.treasures || []
       default:
         return []
     }

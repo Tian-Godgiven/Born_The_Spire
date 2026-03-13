@@ -1,38 +1,94 @@
-import { Card } from "@/objects/Card";
-import { nowPlayer } from "./run";
+import type { Card } from "@/core/objects/item/Subclass/Card"
+import { nowPlayer } from "@/core/objects/game/run"
+import { showCardGroup } from "@/ui/hooks/interaction/cardGroupModal"
 
-type defaultCardGroupName = "draw"//抽牌堆
-|"discard"//弃牌堆
-|"hand"//手牌
-|"exhaust"//消耗堆
+type DefaultCardGroupName = "draw"      // 抽牌堆
+    | "discard"                          // 弃牌堆
+    | "hand"                             // 手牌
+    | "exhaust"                          // 消耗堆
 
-//显示卡组弹窗
-export function showCardGroup(cardGroup?:Card[]|defaultCardGroupName){
-    let _cardList :Card[] =[]
-    //默认情况显示角色持有的卡牌
-    if(!cardGroup){
-        _cardList = nowPlayer.value.getCardGroup()
+/**
+ * 显示卡牌组弹窗
+ * @param cardGroup - 卡牌数组或卡牌组名称（draw/discard/hand/exhaust），不传则显示所有卡牌
+ * @returns Promise，弹窗关闭时resolve
+ *
+ * @example
+ * // 显示抽牌堆
+ * await showCardGroupPopup("draw")
+ *
+ * // 显示手牌
+ * await showCardGroupPopup("hand")
+ *
+ * // 显示自定义卡牌列表
+ * await showCardGroupPopup([card1, card2, card3])
+ */
+export async function showCardGroupPopup(cardGroup?: Card[] | DefaultCardGroupName): Promise<void> {
+    let cardList: Card[] = []
+    let title = "卡牌组"
+
+    // 默认情况显示角色持有的所有卡牌
+    if (!cardGroup) {
+        cardList = nowPlayer.getCardGroup()
+        title = "所有卡牌"
     }
-    else{
-        //如果是名称
-        switch(cardGroup){
+    else if (Array.isArray(cardGroup)) {
+        // 如果是卡牌数组
+        cardList = cardGroup
+        title = "卡牌列表"
+    }
+    else {
+        // 如果是名称
+        switch (cardGroup) {
             case "draw":
-                _cardList = nowPlayer.value.cardPiles.drawPile;
-                break;
+                cardList = nowPlayer.cardPiles.drawPile
+                title = `抽牌堆 (${cardList.length})`
+                break
             case "hand":
-                _cardList = nowPlayer.value.cardPiles.handPile;
-                break;
+                cardList = nowPlayer.cardPiles.handPile
+                title = `手牌 (${cardList.length})`
+                break
             case "discard":
-                _cardList = nowPlayer.value.cardPiles.discardPile;
-                break;
+                cardList = nowPlayer.cardPiles.discardPile
+                title = `弃牌堆 (${cardList.length})`
+                break
             case "exhaust":
-                _cardList = nowPlayer.value.cardPiles.exhaustPile;
-                break;
+                cardList = nowPlayer.cardPiles.exhaustPile || []
+                title = `消耗堆 (${cardList.length})`
+                break
             default:
-                _cardList = cardGroup
+                cardList = []
+                title = "卡牌组"
         }
     }
 
-    // TODO: 实现弹窗显示逻辑
-    void _cardList  // 抑制未使用警告
+    // 显示弹窗
+    await showCardGroup(title, cardList)
+}
+
+/**
+ * 快捷方法：显示抽牌堆
+ */
+export function showDrawPile(): Promise<void> {
+    return showCardGroupPopup("draw")
+}
+
+/**
+ * 快捷方法：显示弃牌堆
+ */
+export function showDiscardPile(): Promise<void> {
+    return showCardGroupPopup("discard")
+}
+
+/**
+ * 快捷方法：显示手牌
+ */
+export function showHandPile(): Promise<void> {
+    return showCardGroupPopup("hand")
+}
+
+/**
+ * 快捷方法：显示消耗堆
+ */
+export function showExhaustPile(): Promise<void> {
+    return showCardGroupPopup("exhaust")
 }

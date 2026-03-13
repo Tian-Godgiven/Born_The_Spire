@@ -45,6 +45,8 @@ export class Card extends Item{
     public owner?: Entity   // 卡牌持有者（通常是 Player）
     public tags?: string[]  // 卡牌标签（用于分类和筛选）
     public level: number = 0  // 卡牌等级（用于升级系统）
+    public isTemporary: boolean = false  // 是否为临时卡牌
+    public temporaryRemoveOn?: "battleEnd" | "turnEnd" | "floorEnd"  // 临时卡牌的移除时机
 
     constructor(map:CardMap){
         super(map)

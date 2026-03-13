@@ -23,17 +23,31 @@
           <div v-if="organ.describe" class="organ-description">
             {{ organ.describe }}
           </div>
-        </div>
-      </div>
 
-      <div class="choice-actions">
-        <button
-          class="action-btn primary"
-          :disabled="!canConfirm"
-          @click="handleConfirm"
-        >
-          确认
-        </button>
+          <div
+            v-if="isSelected(organ.key) && actionMode === 'selectThenAction'"
+            class="reward-action-buttons"
+          >
+            <button
+              v-for="action in availableActions"
+              :key="action.key"
+              class="reward-action-btn"
+              :class="{ active: getOrganAction(organ.key) === action.key }"
+              @click.stop="selectAction(organ.key, action.key)"
+              :disabled="!isActionEnabled(action, organ)"
+            >
+              <span class="reward-action-icon">{{ action.icon }}</span>
+              <span class="reward-action-label">{{ action.label }}</span>
+            </button>
+          </div>
+
+          <!-- 返回按钮：取消当前器官的选择 -->
+          <div v-if="isSelected(organ.key)" class="organ-action-footer">
+            <button class="back-btn" @click.stop="deselectOrgan(organ.key)">
+              返回
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -44,6 +58,9 @@ import { ref, computed, watch } from 'vue'
 import { currentOrganChoice, confirmOrganChoice } from '@/ui/hooks/interaction/organChoice'
 import { getLazyModule } from '@/core/utils/lazyLoader'
 import type { OrganMap } from '@/core/objects/target/Organ'
+import { organRewardActionRegistry } from '@/static/registry/organRewardActionRegistry'
+import type { OrganRewardAction } from '@/core/types/organRewardAction'
+import { nowPlayer } from '@/core/objects/game/run'
 
 const visible = computed(() => currentOrganChoice.value !== null)
 const config = computed(() => currentOrganChoice.value)
@@ -61,13 +78,34 @@ const organOptions = computed(() => {
 })
 
 const selectCount = computed(() => config.value?.maxSelect || 1)
+const actionMode = computed(() => config.value?.actionMode || 'selectOnly')
 
+// 存储选中的器官
 const selectedOrgans = ref<string[]>([])
+// 存储每个器官选择的动作：organKey -> actionKey
+const organActions = ref<Map<string, string>>(new Map())
+
+// 获取可用动作
+const availableActions = computed<OrganRewardAction[]>(() => {
+  if (actionMode.value === 'selectOnly') return []
+
+  // 如果配置指定了可用动作，过滤注册表
+  if (config.value?.availableActions && config.value.availableActions.length > 0) {
+    return config.value.availableActions
+      .map(key => organRewardActionRegistry.getActionConfig(key))
+      .filter((a): a is OrganRewardAction => a !== undefined)
+      .sort((a, b) => b.priority - a.priority)
+  }
+
+  // 否则获取所有可用动作
+  return organRewardActionRegistry.getAvailableActions(null, nowPlayer, { source: 'battleReward' })
+})
 
 // 监听配置变化，重置选择
 watch(config, (newConfig) => {
   if (newConfig) {
     selectedOrgans.value = []
+    organActions.value = new Map()
   }
 })
 
@@ -89,11 +127,21 @@ function toggleSelection(organKey: string) {
   if (index >= 0) {
     // 已选中，取消选择
     selectedOrgans.value.splice(index, 1)
+    organActions.value.delete(organKey)
   } else if (canSelect(organKey)) {
     // 未选中且可选择
     if (selectCount.value === 1) {
-      // 单选模式，替换选择
-      selectedOrgans.value = [organKey]
+      // 单选模式，直接确认
+      if (actionMode.value === 'selectOnly') {
+        // selectOnly 模式直接返回
+        confirmOrganChoice({
+          selectedKeys: [organKey],
+          selectedActions: new Map()
+        })
+      } else {
+        // selectThenAction 模式，选中器官等待选动作
+        selectedOrgans.value = [organKey]
+      }
     } else {
       // 多选模式，添加选择
       selectedOrgans.value.push(organKey)
@@ -101,16 +149,59 @@ function toggleSelection(organKey: string) {
   }
 }
 
+// 选择动作（为指定器官）
+function selectAction(organKey: string, actionKey: string) {
+  organActions.value.set(organKey, actionKey)
+
+  // 选择动作后直接确认执行
+  confirmOrganChoice({
+    selectedKeys: selectedOrgans.value,
+    selectedActions: organActions.value
+  })
+}
+
+// 取消选择器官
+function deselectOrgan(organKey: string) {
+  const index = selectedOrgans.value.indexOf(organKey)
+  if (index >= 0) {
+    selectedOrgans.value.splice(index, 1)
+    organActions.value.delete(organKey)
+  }
+}
+
+// 获取器官当前选中的动作
+function getOrganAction(organKey: string): string | undefined {
+  return organActions.value.get(organKey)
+}
+
+// 检查动作是否可用
+function isActionEnabled(action: OrganRewardAction, organ: OrganMap): boolean {
+  if (typeof action.enabled === 'function') {
+    // 这里需要创建临时 Organ 对象来检查
+    return true  // 简化处理，实际可以更精确
+  }
+  return action.enabled
+}
+
 // 是否可以确认
 const canConfirm = computed(() => {
-  return selectedOrgans.value.length === selectCount.value
+  const hasSelectedEnough = selectedOrgans.value.length === selectCount.value
+  if (actionMode.value === 'selectOnly') {
+    return hasSelectedEnough
+  }
+  // selectThenAction 模式需要每个选中的器官都有动作
+  return hasSelectedEnough && selectedOrgans.value.every(key => organActions.value.has(key))
 })
 
 // 确认选择
 function handleConfirm() {
-  if (canConfirm.value) {
-    confirmOrganChoice(selectedOrgans.value)
-  }
+  if (!canConfirm.value) return
+
+  // 构建返回结果：selectedKeys 和每个器官的 selectedActions
+  confirmOrganChoice({
+    selectedKeys: selectedOrgans.value,
+    selectedActions: organActions.value
+  })
 }
 </script>
 
@@ -230,6 +321,69 @@ function handleConfirm() {
 
   &.primary {
     background: #f0f0f0;
+  }
+}
+
+.reward-action-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 2px solid #ddd;
+}
+
+.reward-action-btn {
+  flex: 1;
+  padding: 10px;
+  background: white;
+  border: 2px solid #ccc;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+
+  &:hover:not(:disabled) {
+    border-color: #888;
+    background: #f5f5f5;
+  }
+
+  &.active {
+    border-color: #2d5016;
+    background: #e8f5e9;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .reward-action-icon {
+    font-size: 20px;
+  }
+
+  .reward-action-label {
+    font-size: 14px;
+    font-weight: bold;
+  }
+}
+
+.organ-action-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.back-btn {
+  padding: 6px 16px;
+  font-size: 14px;
+  background: white;
+  border: 2px solid #ccc;
+  cursor: pointer;
+
+  &:hover {
+    border-color: #888;
+    background: #f5f5f5;
   }
 }
 </style>

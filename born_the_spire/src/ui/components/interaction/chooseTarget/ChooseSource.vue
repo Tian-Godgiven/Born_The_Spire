@@ -15,7 +15,7 @@ import { TargetType } from '@/static/list/registry/chooseTargetType';
 import { startChooseTarget } from '@/ui/interaction/target/chooseTarget';
     import { reactive, ref, useTemplateRef } from 'vue';
 
-    const {onStop,onHover,onSuccess} = defineProps<{onStop?:()=>void,onHover?:()=>{},onSuccess:(targets:Target[])=>void}>()
+    const {onStop,onHover,onSuccess} = defineProps<{onStop?:()=>void,onHover?:(target?:Target)=>void,onSuccess:(targets:Target[])=>void}>()
 
     defineExpose({
         startChoose:startChoose
@@ -47,6 +47,7 @@ import { startChooseTarget } from '@/ui/interaction/target/chooseTarget';
             ifShowConnectLine,
             targetType,
             source,
+            onHover,
             onSuccess:(targets)=>{
                 onSuccess(targets)
                 state.value = "none"

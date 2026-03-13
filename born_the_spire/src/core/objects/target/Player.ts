@@ -45,6 +45,10 @@ export class Player extends Chara{
     //药水的持有情况 - 通过 PotionModifier 管理，这里不需要存储
     // public potions - 已移除，使用 getPotionModifier(this).getPotions() 获取
     public relics:Relic[] = []//拥有的遗物
+    // 启用的器官奖励动作（由遗物等解锁）
+    public enabledOrganRewardActions: Set<string> = new Set()
+    // 启用的水池行动（由遗物等解锁）
+    public enabledPoolActions: Set<string> = new Set()
     constructor(map:PlayerMap){
         super(map)
 
@@ -105,7 +109,7 @@ export class Player extends Chara{
     }
 
     //战斗开始
-    startBattle(){
+    async startBattle(){
         //清理所有可清理的属性修饰器（双重保险，防止异常残留）
         for(const statusKey in this.status){
             this.status[statusKey].clearClearableModifiers()
@@ -115,6 +119,15 @@ export class Player extends Chara{
         this.initCardPile()
         //初始化状态：清空状态栏
         this.initState()
+
+        // 应用状态触发器
+        const { applyStrengthTrigger, applyVulnerableTrigger, applyWeakTrigger } = await import("@/core/effects/state/stateTriggers")
+        applyStrengthTrigger(this)
+        applyVulnerableTrigger(this)
+        applyWeakTrigger(this)
+
+        // 处理主动能力系统的战斗开始
+        await this.handleActiveAbilitiesBattleStart()
     }
     //从抽牌堆中抽牌
     drawCard(number:number,medium:Entity){
@@ -175,6 +188,62 @@ export class Player extends Chara{
     getCardGroup(){
         const cardModifier = getCardModifier(this)
         return cardModifier.getAllCards()
+    }
+
+    /**
+     * 处理主动能力系统的战斗开始
+     */
+    private async handleActiveAbilitiesBattleStart() {
+        const { handleBattleStart } = await import("@/core/hooks/activeAbility")
+        const { getOrganModifier } = await import("@/core/objects/system/modifier/OrganModifier")
+
+        // 处理器官的主动能力
+        const organModifier = getOrganModifier(this)
+        const organs = organModifier.getOrgans()
+
+        for (const organ of organs) {
+            if (organ.activeAbilities) {
+                handleBattleStart(organ, organ.activeAbilities)
+            }
+        }
+
+        // 处理遗物的主动能力
+        const relicModifier = getRelicModifier(this)
+        const relics = relicModifier.getRelics()
+
+        for (const relic of relics) {
+            if (relic.activeAbilities) {
+                handleBattleStart(relic, relic.activeAbilities)
+            }
+        }
+    }
+
+    /**
+     * 处理主动能力系统的战斗结束
+     */
+    async handleActiveAbilitiesBattleEnd() {
+        const { handleBattleEnd } = await import("@/core/hooks/activeAbility")
+        const { getOrganModifier } = await import("@/core/objects/system/modifier/OrganModifier")
+
+        // 处理器官的主动能力
+        const organModifier = getOrganModifier(this)
+        const organs = organModifier.getOrgans()
+
+        for (const organ of organs) {
+            if (organ.activeAbilities) {
+                handleBattleEnd(organ, organ.activeAbilities)
+            }
+        }
+
+        // 处理遗物的主动能力
+        const relicModifier = getRelicModifier(this)
+        const relics = relicModifier.getRelics()
+
+        for (const relic of relics) {
+            if (relic.activeAbilities) {
+                handleBattleEnd(relic, relic.activeAbilities)
+            }
+        }
     }
 }
 

@@ -11,6 +11,7 @@ import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifi
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
 import { showComponent } from "@/core/hooks/componentManager"
 import { gainMark, hasMark } from "@/core/hooks/mark"
+import { poolActionRegistry } from "@/static/registry/poolActionRegistry"
 
 /**
  * 水池房间配置
@@ -97,6 +98,36 @@ export class PoolRoom extends Room {
             choices.push(bloodMarkChoice)
             // 保存引用，以便后续移除
             this.bloodMarkChoice = bloodMarkChoice
+        }
+
+        // 添加扩展行动（从注册表获取）
+        const extendedActions = poolActionRegistry.getAvailableActions(nowPlayer, {
+            layer: this.layer,
+            absorbAmount: this.absorbAmount
+        })
+
+        for (const action of extendedActions) {
+            choices.push(new Choice({
+                title: action.title,
+                description: action.description,
+                icon: action.icon,
+                onSelect: async () => {
+                    const success = await poolActionRegistry.executeAction(
+                        action.key,
+                        nowPlayer,
+                        {
+                            layer: this.layer,
+                            absorbAmount: this.absorbAmount
+                        }
+                    )
+
+                    // 如果行动可重复且执行成功，递归调用
+                    if (success && action.repeatable) {
+                        // 重新显示选项（类似升级的逻辑）
+                        // 这里需要触发 UI 刷新，暂时不实现递归
+                    }
+                }
+            }))
         }
 
         return choices

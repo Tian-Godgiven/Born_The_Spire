@@ -3,6 +3,9 @@ import { doEvent } from "@/core/objects/system/ActionEvent";
 import { Player } from "@/core/objects/target/Player";
 import { Chara } from "@/core/objects/target/Target";
 import { EffectUnit } from "../objects/system/effect/EffectUnit";
+import { handleTurnStart, handleTurnEnd } from "@/core/hooks/activeAbility";
+import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier";
+import { getRelicModifier } from "@/core/objects/system/modifier/RelicModifier";
 
 //角色开始回合
 export async function startCharaTurn(chara:Chara,battle:Battle){
@@ -47,6 +50,9 @@ export async function endPlayerTurn(player:Player,battle:Battle){
 
 //开始回合行为
 export async function startTurn(chara:Chara,battle:Battle,effectUnits:EffectUnit[]=[],doWhat?:()=>void){
+    // 处理主动能力系统的回合开始
+    await handleActiveAbilitiesTurnStart(chara)
+
     doEvent({
         key:"turnStart",
         source:chara,
@@ -68,6 +74,63 @@ export async function endTurn(chara:Chara,battle:Battle,effectUnits:EffectUnit[]
         doWhat,
         effectUnits
     })
+
+    // 处理主动能力系统的回合结束
+    await handleActiveAbilitiesTurnEnd(chara)
+}
+
+/**
+ * 处理实体的主动能力回合开始
+ */
+async function handleActiveAbilitiesTurnStart(entity: Chara) {
+    // 处理器官的主动能力
+    if (entity instanceof Player) {
+        const organModifier = getOrganModifier(entity)
+        const organs = organModifier.getOrgans()
+
+        for (const organ of organs) {
+            if (organ.activeAbilities) {
+                handleTurnStart(organ, organ.activeAbilities)
+            }
+        }
+
+        // 处理遗物的主动能力
+        const relicModifier = getRelicModifier(entity)
+        const relics = relicModifier.getRelics()
+
+        for (const relic of relics) {
+            if (relic.activeAbilities) {
+                handleTurnStart(relic, relic.activeAbilities)
+            }
+        }
+    }
+}
+
+/**
+ * 处理实体的主动能力回合结束
+ */
+async function handleActiveAbilitiesTurnEnd(entity: Chara) {
+    // 处理器官的主动能力
+    if (entity instanceof Player) {
+        const organModifier = getOrganModifier(entity)
+        const organs = organModifier.getOrgans()
+
+        for (const organ of organs) {
+            if (organ.activeAbilities) {
+                handleTurnEnd(organ, organ.activeAbilities)
+            }
+        }
+
+        // 处理遗物的主动能力
+        const relicModifier = getRelicModifier(entity)
+        const relics = relicModifier.getRelics()
+
+        for (const relic of relics) {
+            if (relic.activeAbilities) {
+                handleTurnEnd(relic, relic.activeAbilities)
+            }
+        }
+    }
 }
 
 

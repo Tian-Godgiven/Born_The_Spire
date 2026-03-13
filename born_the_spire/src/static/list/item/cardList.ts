@@ -92,7 +92,7 @@ export const cardList:CardMap[] = [{
         cost:0
     },
     entry:["exhaust"],
-    describe:["获得",{key:["status","power"]},"层力量"],
+    describe:["获得",{key:["status","power"]},"层",{$:"力量"}],
     key:"original_card_00004",
     interaction:{
         use:{
@@ -147,7 +147,7 @@ export const cardList:CardMap[] = [{
         weak:2,
         cost:0
     },
-    describe:["使自己获得",{key:["status","weak"]},"层虚弱"],
+    describe:["使自己获得",{key:["status","weak"]},"层",{$:"虚弱"}],
     key:"original_card_00010",
     interaction:{
         use:{
@@ -166,7 +166,7 @@ export const cardList:CardMap[] = [{
         damage:8,
         cost:1
     },
-    describe:["造成",{key:["status","damage"]},"点伤害，使目标获得",{key:["status","vulnerable"]},"层易伤"],
+    describe:["造成",{key:["status","damage"]},"点伤害，使目标获得",{key:["status","vulnerable"]},"层",{$:"易伤"}],
     key:"original_card_00011",
     interaction:{
         use:{

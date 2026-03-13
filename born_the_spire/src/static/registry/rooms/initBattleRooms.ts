@@ -16,6 +16,7 @@ export async function initBattleRooms(): Promise<void> {
     // 注册战斗房间类型
     roomRegistry.registerRoomType("battle", BattleRoom)
     roomRegistry.registerRoomType("eliteBattle", BattleRoom)
+    roomRegistry.registerRoomType("elitePlusBattle", BattleRoom)
     roomRegistry.registerRoomType("bossBattle", BattleRoom)
 
     // 注册战斗房间配置
@@ -25,6 +26,9 @@ export async function initBattleRooms(): Promise<void> {
         switch (battle.battleType) {
             case "elite":
                 roomType = "eliteBattle"
+                break
+            case "elitePlus":
+                roomType = "elitePlusBattle"
                 break
             case "boss":
                 roomType = "bossBattle"

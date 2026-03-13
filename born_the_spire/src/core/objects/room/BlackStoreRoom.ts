@@ -180,7 +180,7 @@ export class BlackStoreRoom extends Room {
                 price: this.calculateOrganPrice(organ),
                 data: organ,
                 isPurchased: false,
-                rarity: organ.quality
+                rarity: organ.rarity
             })
         })
 
@@ -291,7 +291,7 @@ export class BlackStoreRoom extends Room {
      */
     private calculateOrganPrice(organ: OrganMap): number {
         const level = organ.level ?? 1
-        return calculateBlackStorePrice(organ.quality, level)
+        return calculateBlackStorePrice(organ.rarity, level)
     }
 
     /**

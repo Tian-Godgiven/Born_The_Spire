@@ -14,7 +14,7 @@
         @click="handleSelectOrgan(organ)"
       >
         <div class="organ-header">
-          <span class="organ-name" :style="{ color: getQualityColor(organ.quality) }">
+          <span class="organ-name" :style="{ color: getQualityColor(organ.rarity) }">
             {{ organ.label }}
           </span>
           <span class="organ-level">Lv.{{ organ.level }}</span>
@@ -25,7 +25,7 @@
             部位: {{ getPartLabel(organ.part) }}
           </div>
           <div class="organ-quality">
-            稀有度: {{ getQualityLabel(organ.quality) }}
+            稀有度: {{ getQualityLabel(organ.rarity) }}
           </div>
           <div class="organ-mass" v-if="hasMaxMass(organ)">
             质量: {{ getCurrentMass(organ) }} / {{ getMaxMass(organ) }}
@@ -95,7 +95,7 @@ function getUpgradeCost(organ: Organ): number {
     }
     return organ.upgradeConfig.cost
   }
-  return calculateUpgradeCost(organ.quality, organ.absorbValue, false)
+  return calculateUpgradeCost(organ.rarity, organ.absorbValue, false)
 }
 
 /**

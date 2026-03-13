@@ -5,6 +5,7 @@ import { newLog } from "@/ui/hooks/global/log"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
 import { nowPlayer } from "@/core/objects/game/run"
+import { processEliteDefeat } from "@/core/hooks/organUnlock"
 
 /**
  * 战斗房间配置
@@ -110,6 +111,14 @@ export class BattleRoom extends Room {
 
         if (battleResult === "player_win") {
             newLog([`===== ${this.getDisplayName()}胜利 =====`])
+
+            // 如果是精英战斗，记录击败的精英类型
+            if (this.battleType === "elite" || this.battleType === "elitePlus") {
+                for (const enemy of this.enemies) {
+                    processEliteDefeat((enemy as any).key)
+                }
+            }
+
             await this.handleVictoryRewards()
         } else if (battleResult === "player_lose") {
             newLog([`===== ${this.getDisplayName()}失败 =====`])
@@ -153,6 +162,9 @@ export class BattleRoom extends Room {
                 break
             case "elite":
                 await this.handleEliteRewards()
+                break
+            case "elitePlus":
+                await this.handleElitePlusRewards()
                 break
             case "boss":
                 await this.handleBossRewards()
@@ -275,10 +287,75 @@ export class BattleRoom extends Room {
     }
 
     /**
+     * 强化精英战斗奖励
+     * - 吞噬物质（与精英相同）
+     * - 同化器官（3选1）
+     * - 遗物选择（3选1）
+     * - 药水掉落（概率）
+     * - 获得印记
+     */
+    private async handleElitePlusRewards(): Promise<void> {
+        newLog(["强化精英战斗奖励："])
+
+        const rewards = []
+
+        // 1. 计算物质奖励（根据层级）
+        const materialReward = this.calculateMaterialReward()
+
+        // 创建物质奖励对象
+        const { rewardRegistry } = await import("@/static/registry/rewardRegistry")
+        const materialRewardObj = rewardRegistry.createReward({
+            type: "material",
+            amount: materialReward
+        } as any)
+        if (materialRewardObj) {
+            rewards.push(materialRewardObj)
+        }
+
+        // 2. 器官选择
+        const allOrganKeys = this.collectEnemyOrgans()
+        if (allOrganKeys.length > 0) {
+            const selectedOrganKeys = this.selectRandomOrgans(allOrganKeys, 3)
+            const organReward = rewardRegistry.createReward({
+                type: "organSelect",
+                organOptions: selectedOrganKeys,
+                selectCount: 1
+            })
+            if (organReward) {
+                rewards.push(organReward)
+            }
+        }
+
+        // 3. 遗物选择（3选1）
+        const relicReward = await this.generateRelicSelectReward(3, 1)
+        if (relicReward) {
+            rewards.push(relicReward)
+        }
+
+        // 4. 药水掉落（概率）
+        const potionReward = await this.tryGeneratePotionReward()
+        if (potionReward) {
+            rewards.push(potionReward)
+        }
+
+        // 5. 显示奖励页面
+        if (rewards.length > 0) {
+            const { showRewards } = await import("@/ui/hooks/interaction/rewardDisplay")
+            await showRewards(rewards, "强化精英战斗胜利", "选择你的奖励")
+        }
+
+        // 6. 获得印记
+        const { gainMark } = await import("@/core/hooks/mark")
+        await gainMark(nowPlayer, "mark_elite")
+        newLog(["获得绿色印记！"])
+    }
+
+    /**
      * Boss战斗奖励
      * - 吞噬物质（双倍）
      * - Boss器官（所有器官选1）
      * - Boss遗物（3选1）
+     * - 触发楼层选择
      */
     private async handleBossRewards(): Promise<void> {
         newLog(["Boss战斗奖励："])
@@ -324,6 +401,9 @@ export class BattleRoom extends Room {
             const { showRewards } = await import("@/ui/hooks/interaction/rewardDisplay")
             await showRewards(rewards, "Boss战斗胜利", "选择你的奖励")
         }
+
+        // 5. 触发楼层选择
+        await this.triggerFloorSelection()
     }
 
     /**
@@ -445,6 +525,78 @@ export class BattleRoom extends Room {
     }
 
     /**
+     * 触发楼层选择
+     * Boss 战斗结束后调用
+     */
+    private async triggerFloorSelection(): Promise<void> {
+        const { nowGameRun } = await import("@/core/objects/game/run")
+        const currentFloorConfig = nowGameRun.floorManager.getCurrentFloorConfig()
+
+        if (!currentFloorConfig) {
+            console.warn("[BattleRoom] 当前楼层配置为空，无法触发楼层选择")
+            return
+        }
+
+        const nextFloors = currentFloorConfig.nextFloors || []
+        const selectionMode = currentFloorConfig.nextFloorSelectionMode || "auto"
+
+        // 没有下一层级，游戏结束
+        if (nextFloors.length === 0) {
+            newLog(["恭喜通关！"])
+
+            // 标记当前持有器官的精通等级
+            const { processVictoryMastery } = await import("@/core/hooks/organUnlock")
+            processVictoryMastery(nowPlayer)
+
+            // TODO: 显示通关界面
+            return
+        }
+
+        // 只有一个下一层级且模式为 auto，直接进入
+        if (nextFloors.length === 1 && selectionMode === "auto") {
+            newLog([`自动进入下一层级: ${nextFloors[0]}`])
+            nowGameRun.floorManager.setCurrentFloor(nextFloors[0])
+
+            // 生成新楼层的地图
+            const newFloorConfig = nowGameRun.floorManager.getCurrentFloorConfig()
+            if (newFloorConfig?.mapConfig) {
+                nowGameRun.floorManager.generateMap(newFloorConfig.mapConfig)
+            }
+
+            // 显示地图UI
+            const { goToNextStep } = await import("@/core/hooks/step")
+            await goToNextStep()
+            return
+        }
+
+        // 多个下一层级或模式为 manual/random，显示选择界面
+        if (selectionMode === "random") {
+            // 随机选择一个
+            const randomFloor = nextFloors[Math.floor(Math.random() * nextFloors.length)]
+            newLog([`随机进入下一层级: ${randomFloor}`])
+            nowGameRun.floorManager.setCurrentFloor(randomFloor)
+
+            const newFloorConfig = nowGameRun.floorManager.getCurrentFloorConfig()
+            if (newFloorConfig?.mapConfig) {
+                nowGameRun.floorManager.generateMap(newFloorConfig.mapConfig)
+            }
+
+            const { goToNextStep } = await import("@/core/hooks/step")
+            await goToNextStep()
+        } else {
+            // 显示楼层选择界面
+            const { FloorSelectRoom } = await import("@/core/objects/room/FloorSelectRoom")
+            const floorSelectRoom = new FloorSelectRoom({
+                type: "floorSelect",
+                layer: this.layer + 1,
+                floorKeys: nextFloors
+            })
+
+            await nowGameRun.enterRoom(floorSelectRoom)
+        }
+    }
+
+    /**
      * 获取战斗房间显示名称
      */
     getDisplayName(): string {
@@ -455,6 +607,7 @@ export class BattleRoom extends Room {
         const typeNameMap: Record<BattleRoomType, string> = {
             "normal": "普通战斗",
             "elite": "精英战斗",
+            "elitePlus": "精英+战斗",
             "boss": "Boss战斗"
         }
 
@@ -468,6 +621,7 @@ export class BattleRoom extends Room {
         const iconMap: Record<BattleRoomType, string> = {
             "normal": "⚔️",
             "elite": "💀",
+            "elitePlus": "💀💀",
             "boss": "👑"
         }
 

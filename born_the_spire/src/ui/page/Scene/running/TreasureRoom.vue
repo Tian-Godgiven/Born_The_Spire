@@ -1,34 +1,42 @@
 <template>
   <div class="treasure-room">
     <div class="treasure-container">
-      <h2>宝箱房间</h2>
-      <div class="treasure-content">
-        <div class="chest-placeholder">
-          <div class="chest-icon">📦</div>
-          <p class="todo-notice">⚠️ 此房间类型尚未实现</p>
-          <p class="todo-description">
-            未来将实现：<br>
-            - 宝箱打开动画<br>
-            - 遗物奖励选择<br>
-            - 不同类型的宝箱
-          </p>
-        </div>
+      <!-- 宝箱图标 -->
+      <div class="chest-icon" @click="openChest" :class="{ opened: isOpened }">
+        {{ isOpened ? '📭' : '📦' }}
       </div>
 
-      <!-- 临时：直接离开按钮 -->
-      <div class="actions">
-        <button class="leave-btn" @click="leaveRoom">
-          离开房间
-        </button>
+      <!-- 提示文字 -->
+      <div class="chest-hint" v-if="!isOpened">
+        点击打开宝箱
+      </div>
+
+      <!-- 已打开提示 -->
+      <div class="chest-opened" v-else>
+        宝箱已打开
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+import { nowGameRun } from '@/core/objects/game/run'
+import { TreasureRoom } from '@/core/objects/room/TreasureRoom'
 import { completeAndGoNext } from '@/core/hooks/step'
 
-async function leaveRoom() {
+const room = nowGameRun.currentRoom as TreasureRoom
+const isOpened = ref(false)
+
+async function openChest() {
+  if (isOpened.value) return
+
+  isOpened.value = true
+
+  // 调用房间完成逻辑（会显示奖励UI）
+  await room.complete()
+
+  // 奖励领取完毕后，自动前往下一步
   await completeAndGoNext()
 }
 </script>
@@ -44,62 +52,35 @@ async function leaveRoom() {
 }
 
 .treasure-container {
-  max-width: 600px;
-  padding: 40px;
-  background: white;
-  border: 2px solid #333;
-  text-align: center;
-}
-
-h2 {
-  margin: 0 0 30px 0;
-  font-size: 28px;
-}
-
-.treasure-content {
-  margin-bottom: 30px;
-}
-
-.chest-placeholder {
-  padding: 40px;
-  border: 2px dashed #ccc;
-  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
 }
 
 .chest-icon {
-  font-size: 80px;
-  margin-bottom: 20px;
-}
-
-.todo-notice {
-  font-size: 18px;
-  color: #ff9800;
-  margin: 10px 0;
-  font-weight: bold;
-}
-
-.todo-description {
-  font-size: 14px;
-  color: #666;
-  line-height: 1.6;
-  margin: 15px 0 0 0;
-}
-
-.actions {
-  display: flex;
-  justify-content: center;
-}
-
-.leave-btn {
-  padding: 12px 24px;
-  background: white;
-  border: 2px solid #333;
-  font-size: 16px;
+  font-size: 120px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: transform 0.2s;
+  user-select: none;
 
-  &:hover {
-    background: rgba(0, 0, 0, 0.05);
+  &:hover:not(.opened) {
+    transform: scale(1.1);
   }
+
+  &.opened {
+    cursor: default;
+    opacity: 0.6;
+  }
+}
+
+.chest-hint {
+  font-size: 18px;
+  color: #666;
+}
+
+.chest-opened {
+  font-size: 18px;
+  color: #999;
 }
 </style>

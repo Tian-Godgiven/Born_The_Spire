@@ -3,14 +3,14 @@
  */
 
 import { applyVariance } from "@/core/hooks/variance"
-import { OrganQuality, QualityConfig } from "@/core/types/OrganTypes"
+import { OrganRarity, RarityConfig } from "@/core/types/OrganTypes"
 
 /**
  * 稀有度配置列表
  */
-export const qualityConfigList: QualityConfig[] = [
+export const qualityConfigList: RarityConfig[] = [
     {
-        key: OrganQuality.Common,
+        key: OrganRarity.Common,
         label: "普通",
         color: "#FFFFFF",           // 白色
         baseAbsorbValue: 20,        // 吞噬获得 20 物质
@@ -21,7 +21,7 @@ export const qualityConfigList: QualityConfig[] = [
         blackStorePrice: 100        // 黑市售价 100 金币
     },
     {
-        key: OrganQuality.Uncommon,
+        key: OrganRarity.Uncommon,
         label: "罕见",
         color: "#1EFF00",           // 绿色
         baseAbsorbValue: 35,
@@ -32,7 +32,7 @@ export const qualityConfigList: QualityConfig[] = [
         blackStorePrice: 180
     },
     {
-        key: OrganQuality.Rare,
+        key: OrganRarity.Rare,
         label: "稀有",
         color: "#0070DD",           // 蓝色
         baseAbsorbValue: 55,
@@ -47,7 +47,7 @@ export const qualityConfigList: QualityConfig[] = [
 /**
  * 根据稀有度获取配置
  */
-export function getQualityConfig(quality: OrganQuality): QualityConfig {
+export function getQualityConfig(quality: OrganRarity): RarityConfig {
     const config = qualityConfigList.find(c => c.key === quality)
     if (!config) {
         throw new Error(`未找到稀有度配置: ${quality}`)
@@ -58,14 +58,14 @@ export function getQualityConfig(quality: OrganQuality): QualityConfig {
 /**
  * 根据稀有度获取显示名称
  */
-export function getQualityLabel(quality: OrganQuality): string {
+export function getQualityLabel(quality: OrganRarity): string {
     return getQualityConfig(quality).label
 }
 
 /**
  * 根据稀有度获取颜色
  */
-export function getQualityColor(quality: OrganQuality): string {
+export function getQualityColor(quality: OrganRarity): string {
     return getQualityConfig(quality).color
 }
 
@@ -75,7 +75,7 @@ export function getQualityColor(quality: OrganQuality): string {
  * @param customValue 自定义值（可选）
  * @returns 吞噬获取量
  */
-export function calculateAbsorbValue(quality: OrganQuality, customValue?: number): number {
+export function calculateAbsorbValue(quality: OrganRarity, customValue?: number): number {
     if (customValue !== undefined) {
         return customValue
     }
@@ -89,7 +89,7 @@ export function calculateAbsorbValue(quality: OrganQuality, customValue?: number
  * @param applyVariance 是否应用随机波动（默认 true）
  * @returns 升级成本
  */
-export function calculateUpgradeCost(quality: OrganQuality, absorbValue: number, ifApplyVariance: boolean = true): number {
+export function calculateUpgradeCost(quality: OrganRarity, absorbValue: number, ifApplyVariance: boolean = true): number {
     const config = getQualityConfig(quality)
     const baseCost = Math.floor(absorbValue * config.upgradeCostMultiplier)
 
@@ -107,7 +107,7 @@ export function calculateUpgradeCost(quality: OrganQuality, absorbValue: number,
  * @param absorbValue 吞噬获取量
  * @returns 修复成本
  */
-export function calculateRepairCost(quality: OrganQuality, absorbValue: number): number {
+export function calculateRepairCost(quality: OrganRarity, absorbValue: number): number {
     const config = getQualityConfig(quality)
     return Math.floor(absorbValue * config.repairCostMultiplier)
 }
@@ -118,7 +118,7 @@ export function calculateRepairCost(quality: OrganQuality, absorbValue: number):
  * @param absorbValue 吞噬获取量
  * @returns 同化成本
  */
-export function calculateAssimilateCost(quality: OrganQuality, absorbValue: number): number {
+export function calculateAssimilateCost(quality: OrganRarity, absorbValue: number): number {
     const config = getQualityConfig(quality)
     return Math.floor(absorbValue * config.assimilateCostMultiplier)
 }
@@ -129,7 +129,7 @@ export function calculateAssimilateCost(quality: OrganQuality, absorbValue: numb
  * @param level 器官等级
  * @returns 黑市价格
  */
-export function calculateBlackStorePrice(quality: OrganQuality, level: number): number {
+export function calculateBlackStorePrice(quality: OrganRarity, level: number): number {
     const config = getQualityConfig(quality)
     // 基础价格 + 等级加成（每级增加 20%）
     return Math.floor(config.blackStorePrice * (1 + (level - 1) * 0.2))

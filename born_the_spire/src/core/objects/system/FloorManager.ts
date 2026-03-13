@@ -726,6 +726,11 @@ export class FloorManager {
                 .getRoomConfigsByType("eliteBattle")
                 .map(c => c.key)
         }
+        if (fullConfig.roomPools.elitePlusBattles && fullConfig.roomPools.elitePlusBattles.length === 0) {
+            fullConfig.roomPools.elitePlusBattles = roomRegistry
+                .getRoomConfigsByType("elitePlusBattle")
+                .map(c => c.key)
+        }
         if (fullConfig.roomPools.events.length === 0) {
             fullConfig.roomPools.events = roomRegistry
                 .getRoomConfigsByType("event")

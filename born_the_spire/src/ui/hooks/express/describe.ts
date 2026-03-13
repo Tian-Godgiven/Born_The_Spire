@@ -2,13 +2,32 @@ import { toString } from "lodash";
 import { newError } from "../global/alert";
 import { Status } from "@/core/objects/system/status/Status";
 import { toRaw } from "vue";
+import { glossaryMap } from "@/static/list/system/glossaryMap";
 
 //对象的描述，存储为数据，使用时翻译为对应的字符串
 export type Describe = (
     string //字符串
 |{
     key:string[] //需要访问的对象属性的key，如果获取的对象是数组则会在其中寻找key属性为对应值的对象
+}|{
+    $:string //术语标记，用于tooltip解释
+}|{
+    "@":string|number //卡牌实例引用（实例ID或索引）
+}|{
+    "#":string //卡牌key预览（用于临时效果）
 })[]
+
+/**
+ * 描述片段类型
+ */
+export type DescribeSegment = {
+    text: string
+    type: 'plain' | 'value' | 'glossary' | 'card'
+    glossaryKey?: string  // 如果是glossary类型
+    cardRef?: string | number  // 如果是card类型（实例ID、key或索引）
+    cardRefType?: 'instance' | 'key'  // card引用类型
+    style?: Record<string, string>
+}
 
 //将描述对象翻译为文本
 export function getDescribe(describe:Describe|undefined,target?:Object){
@@ -21,8 +40,28 @@ export function getDescribe(describe:Describe|undefined,target?:Object){
         }
         //是一个对象
         else if(value instanceof Object){
+            //术语标记
+            if("$" in value){
+                const glossaryKey = value.$
+                const glossary = glossaryMap[glossaryKey]
+                if(glossary){
+                    text += glossary.label
+                }else{
+                    text += glossaryKey
+                }
+            }
+            //卡牌实例引用
+            else if("@" in value){
+                // 暂时显示占位符，实际渲染由getDescribeStructured处理
+                text += "[卡牌]"
+            }
+            //卡牌key预览
+            else if("#" in value){
+                // 暂时显示占位符，实际渲染由getDescribeStructured处理
+                text += "[卡牌]"
+            }
             //这是一个数组，并且会尝试访问target的key属性
-            if("key" in value && target){
+            else if("key" in value && target){
                 const statusValue = getStatusDescribe(value.key,target)
                 //将其添加到text中
                 text += statusValue
@@ -32,6 +71,90 @@ export function getDescribe(describe:Describe|undefined,target?:Object){
 
     return text
 
+}
+
+/**
+ * 将描述对象翻译为结构化数据（用于渲染带样式的文本）
+ */
+export function getDescribeStructured(describe:Describe|undefined,target?:Object): DescribeSegment[]{
+    const segments: DescribeSegment[] = []
+    if(!describe) return segments
+
+    describe.forEach(value=>{
+        //纯字符串
+        if(typeof value == "string"){
+            segments.push({
+                text: value,
+                type: 'plain'
+            })
+        }
+        //是一个对象
+        else if(value instanceof Object){
+            //术语标记
+            if("$" in value){
+                const glossaryKey = value.$
+                const glossary = glossaryMap[glossaryKey]
+                if(glossary){
+                    segments.push({
+                        text: glossary.label,
+                        type: 'glossary',
+                        glossaryKey: glossaryKey,
+                        style: glossary.style
+                    })
+                }else{
+                    // 未找到术语定义，当作普通文本
+                    segments.push({
+                        text: glossaryKey,
+                        type: 'plain'
+                    })
+                }
+            }
+            //卡牌实例引用
+            else if("@" in value){
+                segments.push({
+                    text: "[卡牌]",  // 占位符，实际渲染时会替换为卡牌名称
+                    type: 'card',
+                    cardRef: value["@"],
+                    cardRefType: 'instance'
+                })
+            }
+            //卡牌key预览
+            else if("#" in value){
+                segments.push({
+                    text: "[卡牌]",  // 占位符，实际渲染时会替换为卡牌名称
+                    type: 'card',
+                    cardRef: value["#"],
+                    cardRefType: 'key'
+                })
+            }
+            //访问对象属性
+            else if("key" in value && target){
+                const statusValue = getStatusDescribe(value.key,target)
+                segments.push({
+                    text: statusValue,
+                    type: 'value'
+                })
+            }
+        }
+    })
+
+    return segments
+}
+
+/**
+ * 从描述中提取所有术语标记
+ */
+export function extractGlossaries(describe:Describe|undefined): string[]{
+    const glossaries: string[] = []
+    if(!describe) return glossaries
+
+    describe.forEach(value=>{
+        if(typeof value === "object" && "$" in value){
+            glossaries.push(value.$)
+        }
+    })
+
+    return glossaries
 }
 
 //处理对象的，关于属性的描述文本：提取对应的属性值字符串，提取失败的话会报错

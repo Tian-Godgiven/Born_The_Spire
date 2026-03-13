@@ -7,6 +7,10 @@
     <DynamicComponentContainer />
     <!-- 确认弹窗 -->
     <ConfirmModal />
+    <!-- 卡牌组弹窗 -->
+    <CardGroupModal />
+    <!-- 器官选择弹窗 -->
+    <OrganChoice />
   </main>
 </template>
 
@@ -17,6 +21,8 @@ import router from './ui/router';
 import { onMousemove } from './ui/hooks/global/mousePosition';
 import DynamicComponentContainer from './ui/components/global/DynamicComponentContainer.vue';
 import ConfirmModal from './ui/components/interaction/ConfirmModal.vue';
+import CardGroupModal from './ui/components/interaction/CardGroupModal.vue';
+import OrganChoice from './ui/components/interaction/OrganChoice.vue';
 
 onMounted(()=>{
     router.replace("/")

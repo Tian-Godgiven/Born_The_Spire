@@ -1,11 +1,15 @@
 import { Item, ItemMap } from "../Item";
 import { Entity } from "../../system/Entity";
 import { getRelicModifier } from "../../system/modifier/RelicModifier";
+import { ActiveAbility } from "@/core/types/ActiveAbility";
 
 export type RelicMap = ItemMap & {
-    // 未来可以添加遗物特有的属性，如稀有度、类型等
-    // rarity?: "common" | "uncommon" | "rare" | "boss" | "shop"
+    // 遗物稀有度（3级系统）
+    rarity?: "common" | "uncommon" | "rare"
+    // 未来可以添加遗物类型等
     // type?: "normal" | "boss" | "event" | "shop"
+    // 主动能力配置
+    activeAbilities?: ActiveAbility[]
 }
 
 /**
@@ -16,9 +20,11 @@ export type RelicMap = ItemMap & {
  */
 export class Relic extends Item {
     public readonly itemType = 'relic' as const  // 类型标识
+    public activeAbilities?: ActiveAbility[]  // 主动能力列表
 
     constructor(map: RelicMap) {
         super(map)
+        this.activeAbilities = map.activeAbilities
     }
 }
 

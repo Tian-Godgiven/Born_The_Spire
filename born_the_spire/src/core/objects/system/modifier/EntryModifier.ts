@@ -51,11 +51,11 @@ export class EntryModifier {
             }
         }
 
-        // 解析父级持有者
-        const parentOwner = this.resolveParentOwner()
+        // 解析 owner 的 owner
+        const ownersOwner = this.resolveOwnersOwner()
 
         // 应用词条
-        const removers = entryDef.onApply(this.owner, parentOwner)
+        const removers = entryDef.onApply(this.owner, ownersOwner)
 
         // 记录词条实例
         this.entries.set(entryKey, {
@@ -102,11 +102,11 @@ export class EntryModifier {
     }
 
     /**
-     * 解析父级持有者
+     * 解析 owner 的 owner
      * Card.owner → Player/Enemy
      * Organ.owner → Player/Enemy
      */
-    private resolveParentOwner(): Entity | undefined {
+    private resolveOwnersOwner(): Entity | undefined {
         // 使用鸭子类型判断：检查是否有 owner 属性（Card 和 Organ 都有）
         const maybeOwner = (this.owner as any).owner
         if (maybeOwner instanceof Entity) {

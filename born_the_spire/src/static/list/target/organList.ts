@@ -1,5 +1,5 @@
 import { OrganMap } from "@/core/objects/target/Organ"
-import { OrganQuality, OrganPart } from "@/core/types/OrganTypes"
+import { OrganRarity, OrganPart } from "@/core/types/OrganTypes"
 import { OrganTags } from "./organTags"
 
 export const organList:OrganMap[] = [
@@ -7,7 +7,7 @@ export const organList:OrganMap[] = [
         label:"心脏",
         key:"original_organ_00001",
         describe:["■"],
-        quality: OrganQuality.Common,
+        rarity: OrganRarity.Common,
         part: OrganPart.Heart,
         status: {
             "max-mass": 30
@@ -18,7 +18,7 @@ export const organList:OrganMap[] = [
         label:"石芯",
         key:"original_organ_00002",
         describe:["最大生命+3"],
-        quality: OrganQuality.Uncommon,
+        rarity: OrganRarity.Uncommon,
         part: OrganPart.Heart,
         status: {
             "max-mass": 40
@@ -41,7 +41,7 @@ export const organList:OrganMap[] = [
         label:"石肤",
         key:"original_organ_00003",
         describe:["受到的伤害值-1"],
-        quality: OrganQuality.Uncommon,
+        rarity: OrganRarity.Uncommon,
         part: OrganPart.Skin,
         status: {
             "max-mass": 25
@@ -69,8 +69,8 @@ export const organList:OrganMap[] = [
     },{
         label:"战斗之心",
         key:"test_organ_cards_001",
-        describe:["提供1张【打击】卡牌到牌组"],
-        quality: OrganQuality.Common,
+        describe:["提供1张",{"@": 0},"卡牌到牌组"],
+        rarity: OrganRarity.Common,
         part: OrganPart.Heart,
         status: {
             "max-mass": 30
@@ -90,8 +90,8 @@ export const organList:OrganMap[] = [
     },{
         label:"狂暴腺体",
         key:"test_organ_cards_002",
-        describe:["提供1张【消耗打击】和1张【肌肉强化】到牌组"],
-        quality: OrganQuality.Rare,
+        describe:["提供1张",{"@": 0},"和1张",{"@": 1},"到牌组"],
+        rarity: OrganRarity.Rare,
         part: OrganPart.Gland,
         status: {
             "max-mass": 20
@@ -115,7 +115,7 @@ export const organList:OrganMap[] = [
         label:"旋风引擎",
         key:"test_organ_cards_003",
         describe:["提供1张【旋风斩】到牌组","损坏后卡牌无法使用"],
-        quality: OrganQuality.Rare,  // 改为 Rare
+        rarity: OrganRarity.Rare,  // 改为 Rare
         part: OrganPart.Core,
         status: {
             "max-mass": 35
@@ -153,7 +153,7 @@ export const organList:OrganMap[] = [
         label:"末日核心",
         key:"test_organ_cards_004",
         describe:["提供1张【末日】到牌组","危险而强大"],
-        quality: OrganQuality.Rare,  // 改为 Rare
+        rarity: OrganRarity.Rare,  // 改为 Rare
         part: OrganPart.Core,
         // 无质量系统 - 无法被摧毁
         cards:["original_card_00006"],  // 提供"末日"
@@ -174,7 +174,7 @@ export const organList:OrganMap[] = [
         label:"癌变心脏",
         key:"example_organ_cursed_001",
         describe:["每回合开始时失去1点生命","但获得1点能量"],
-        quality: OrganQuality.Common,
+        rarity: OrganRarity.Common,
         part: OrganPart.Heart,
         tags: [OrganTags.CURSED, OrganTags.CANCER],  // 诅咒 + 癌变标签
         status: {
@@ -204,6 +204,307 @@ export const organList:OrganMap[] = [
                             params:{value:1}
                         }]
                     }]
+                }]
+            }
+        }
+    },{
+        label:"脆弱之心",
+        key:"test_organ_entry_001",
+        describe:["最大生命+5","但你受到伤害时此器官有50%概率损坏"],
+        rarity: OrganRarity.Uncommon,
+        part: OrganPart.Heart,
+        entry: ["organ_fragile"],  // 脆弱词条（使用 organ_ 前缀）
+        status: {
+            "max-mass": 25
+        },
+        current: ["mass"],
+        interaction:{
+            possess:{
+                target:{"key":"self"},
+                effects:[],
+                modifiers:[{
+                    statusKey:"max-health",
+                    targetLayer:"base",
+                    modifierType:"additive",
+                    modifierValue:5
+                }]
+            }
+        }
+    },{
+        label:"再生核心",
+        key:"test_organ_entry_002",
+        describe:["战斗结束时恢复5点质量"],
+        rarity: OrganRarity.Rare,
+        part: OrganPart.Core,
+        entry: ["organ_regenerative"],  // 再生词条（使用 organ_ 前缀）
+        status: {
+            "max-mass": 30
+        },
+        current: ["mass"],
+        interaction:{
+            possess:{
+                target:{"key":"self"},
+                effects:[],
+                modifiers:[{
+                    statusKey:"max-health",
+                    targetLayer:"base",
+                    modifierType:"additive",
+                    modifierValue:3
+                }]
+            }
+        }
+    },{
+        label:"坚固外壳",
+        key:"test_organ_entry_003",
+        describe:["此器官永不损坏","受到的伤害值-2"],
+        rarity: OrganRarity.Rare,
+        part: OrganPart.Skin,
+        entry: ["organ_sturdy"],  // 坚固词条（使用 organ_ 前缀）
+        status: {
+            "max-mass": 50
+        },
+        current: ["mass"],
+        interaction:{
+            possess:{
+                target:{"key":"self"},
+                effects:[],
+                triggers:[{
+                    when:"before",
+                    how:"take",
+                    key:"damage",
+                    event:[{
+                        key:"reduceDamage",
+                        label:"坚固外壳防护",
+                        targetType:"triggerEffect",
+                        effect:[
+                            {key:"reduceDamageValue",params:{value:2}}
+                        ]
+                    }]
+                }]
+            }
+        }
+    },
+    // ========== 升级系统示例 ==========
+    {
+        label:"进化之心",
+        key:"example_organ_upgrade_001",
+        describe:["每次升级增加2点最大生命","最高可升至3级"],
+        rarity: OrganRarity.Common,
+        part: OrganPart.Heart,
+        status: {
+            "max-mass": 30
+        },
+        current: ["mass"],
+        upgrade: {
+            maxLevel: 3,  // 最大等级限制
+            perLevel: {
+                effects: [{
+                    key: "addStatusBaseCurrentValue",
+                    params: { value: 2, statusKey: "max-health", currentKey: "health" }
+                }]
+            }
+        },
+        interaction:{
+            possess:{
+                target:{"key":"self"},
+                effects:[],
+                modifiers:[{
+                    statusKey:"max-health",
+                    targetLayer:"base",
+                    modifierType:"additive",
+                    modifierValue:3
+                }]
+            }
+        }
+    },{
+        label:"强化肌肉",
+        key:"example_organ_upgrade_002",
+        describe:["每次升级增加1点攻击力","3级时获得额外能量"],
+        rarity: OrganRarity.Uncommon,
+        part: OrganPart.Muscle,
+        status: {
+            "max-mass": 35
+        },
+        current: ["mass"],
+        upgrade: {
+            maxLevel: 5,
+            cost: 15,  // 固定升级成本
+            perLevel: {
+                effects: [{
+                    key: "addStatusModifier",
+                    params: {
+                        statusKey: "attack",
+                        targetLayer: "base",
+                        modifierType: "additive",
+                        modifierValue: 1
+                    }
+                }]
+            },
+            milestones: [{
+                level: 3,
+                effects: [{
+                    key: "addStatusModifier",
+                    params: {
+                        statusKey: "max-energy",
+                        targetLayer: "base",
+                        modifierType: "additive",
+                        modifierValue: 1
+                    }
+                }]
+            }]
+        },
+        interaction:{
+            possess:{
+                target:{"key":"self"},
+                effects:[],
+                modifiers:[{
+                    statusKey:"attack",
+                    targetLayer:"base",
+                    modifierType:"additive",
+                    modifierValue:2
+                }]
+            }
+        }
+    },{
+        label:"适应性外壳",
+        key:"example_organ_upgrade_003",
+        describe:["升级成本随等级递增","每级减伤+1","5级时获得护甲机制"],
+        rarity: OrganRarity.Rare,
+        part: OrganPart.Skin,
+        status: {
+            "max-mass": 40,
+            "damage-reduction": 0
+        },
+        current: ["mass"],
+        upgrade: {
+            maxLevel: 5,
+            cost: (organ) => {
+                // 动态成本：等级越高成本越高
+                return 10 + organ.level * 5
+            },
+            perLevel: {
+                effects: [{
+                    key: "addStatusModifier",
+                    params: {
+                        statusKey: "damage-reduction",
+                        targetLayer: "base",
+                        modifierType: "additive",
+                        modifierValue: 1
+                    }
+                }]
+            },
+            milestones: [{
+                level: 5,
+                effects: [{
+                    key: "addStatusBaseCurrentValue",
+                    params: { value: 10, statusKey: "max-health", currentKey: "health" }
+                }]
+            }]
+        },
+        interaction:{
+            possess:{
+                target:{"key":"self"},
+                effects:[],
+                triggers:[{
+                    when:"before",
+                    how:"take",
+                    key:"damage",
+                    event:[{
+                        key:"reduceDamage",
+                        label:"适应性外壳",
+                        targetType:"triggerEffect",
+                        effect:[
+                            {key:"reduceDamageValue",params:{value:1}}
+                        ]
+                    }]
+                }]
+            }
+        }
+    },{
+        label:"终极核心",
+        key:"example_organ_upgrade_004",
+        describe:["史诗级器官","每2级获得里程碑奖励","最高10级"],
+        rarity: OrganRarity.Rare,
+        part: OrganPart.Core,
+        status: {
+            "max-mass": 60
+        },
+        current: ["mass"],
+        upgrade: {
+            maxLevel: 10,
+            perLevel: {
+                effects: [{
+                    key: "addStatusBaseCurrentValue",
+                    params: { value: 1, statusKey: "max-health", currentKey: "health" }
+                }]
+            },
+            milestones: [
+                {
+                    level: 2,
+                    effects: [{
+                        key: "addStatusModifier",
+                        params: {
+                            statusKey: "attack",
+                            targetLayer: "base",
+                            modifierType: "additive",
+                            modifierValue: 1
+                        }
+                    }]
+                },
+                {
+                    level: 4,
+                    effects: [{
+                        key: "addStatusModifier",
+                        params: {
+                            statusKey: "max-energy",
+                            targetLayer: "base",
+                            modifierType: "additive",
+                            modifierValue: 1
+                        }
+                    }]
+                },
+                {
+                    level: 6,
+                    effects: [{
+                        key: "addStatusBaseCurrentValue",
+                        params: { value: 5, statusKey: "max-health", currentKey: "health" }
+                    }]
+                },
+                {
+                    level: 8,
+                    effects: [{
+                        key: "addStatusModifier",
+                        params: {
+                            statusKey: "attack",
+                            targetLayer: "base",
+                            modifierType: "additive",
+                            modifierValue: 2
+                        }
+                    }]
+                },
+                {
+                    level: 10,
+                    effects: [{
+                        key: "addStatusModifier",
+                        params: {
+                            statusKey: "max-energy",
+                            targetLayer: "base",
+                            modifierType: "additive",
+                            modifierValue: 1
+                        }
+                    }]
+                }
+            ]
+        },
+        interaction:{
+            possess:{
+                target:{"key":"self"},
+                effects:[],
+                modifiers:[{
+                    statusKey:"max-health",
+                    targetLayer:"base",
+                    modifierType:"additive",
+                    modifierValue:10
                 }]
             }
         }

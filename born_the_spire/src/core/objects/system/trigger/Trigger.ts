@@ -52,6 +52,10 @@ export class Trigger{
             remove
         }
     }
+    //获取指定位置的触发器列表
+    getTriggers(when: "before" | "after", how: "take" | "make" | "via", key: string): TriggerUnit[] | undefined {
+        return this[how][when][key]
+    }
     //移除并销毁触发器单元
     removeTrigger(obj:TriggerObj,unit:TriggerUnit){
         //同时移除关键触发器和默认触发器的信息
@@ -202,3 +206,24 @@ export function resolveTriggerEventTarget(
 //         }
 //     }
 // }
+
+/**
+ * 将 TriggerMap 应用到实体上
+ * @param entity 目标实体
+ * @param triggerMap 触发器配置
+ * @returns 移除所有添加的触发器的函数
+ */
+export function applyTriggerMap(entity: Entity, triggerMap: TriggerMap): () => void {
+    const removers: (() => void)[] = []
+
+    for (const item of triggerMap) {
+        const triggerObj = createTriggerByTriggerMap(entity, entity, item)
+        const { remove } = entity.trigger.appendTrigger(triggerObj)
+        removers.push(remove)
+    }
+
+    // 返回一个函数，调用时移除所有触发器
+    return () => {
+        removers.forEach(remove => remove())
+    }
+}

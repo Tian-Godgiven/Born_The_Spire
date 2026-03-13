@@ -28,10 +28,15 @@ export const markList: MarkConfig[] = [
                 }
             }]
         }
-    }
+    },
 
-    // 未来可以添加更多印记：
-    // - 绿色印记（强化精英）
-    // - 金色印记（宝箱）
-    // - 等等...
+    // 金色印记（宝箱）
+    {
+        key: "mark_treasure",
+        name: "宝箱印记",
+        description: "打开神秘宝箱获得的印记",
+        displayText: "已开宝箱",
+        displayColor: "#D4AF37",
+        statusKey: "ifTreasureMark"
+    }
 ]

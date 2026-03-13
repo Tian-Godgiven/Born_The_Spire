@@ -3,12 +3,13 @@ import { Interaction, ItemMap } from "../item/Item";
 import { getOrganModifier } from "../system/modifier/OrganModifier";
 import { doEvent } from "../system/ActionEvent";
 import { resolveTriggerEventTarget } from "../system/trigger/Trigger";
-import { OrganQuality, OrganPart } from "@/core/types/OrganTypes";
+import { OrganRarity, OrganPart } from "@/core/types/OrganTypes";
 import { calculateAbsorbValue } from "@/static/list/target/organQuality";
 import { TargetMap } from "./Target";
 import { Describe } from "@/ui/hooks/express/describe";
 import { EffectUnit } from "../system/effect/EffectUnit";
 import { Component } from "vue";
+import { ActiveAbility } from "@/core/types/ActiveAbility";
 
 /**
  * 器官升级里程碑配置
@@ -24,6 +25,9 @@ export interface OrganUpgradeMilestone {
  * 器官升级配置
  */
 export interface OrganUpgradeConfig {
+    // 最大等级限制（可选，不填则无限制）
+    maxLevel?: number
+
     // 自定义升级成本（可选，不填则使用稀有度默认值）
     cost?: number | ((organ: any) => number)
 
@@ -44,7 +48,7 @@ export type OrganMap = ItemMap&TargetMap&{
     entry?: string[]  // 器官的词条列表（词条的 key）
 
     // 新增属性
-    quality: OrganQuality  // 稀有度（必填）
+    rarity: OrganRarity  // 稀有度（必填）
     level?: number         // 等级（默认为 1）
     part?: OrganPart       // 部位（可选，不填表示不占据部位）
     absorbValue?: number   // 吞噬获取量（可选，不填则使用稀有度的默认值）
@@ -56,6 +60,9 @@ export type OrganMap = ItemMap&TargetMap&{
     // 质量系统（可选）
     // 如果 status 中定义了 "max-mass"，则器官具有质量属性
     // current 中需要包含 "mass" 来存储当前质量值
+
+    // 主动能力配置
+    activeAbilities?: ActiveAbility[]
 }
 
 export class Organ extends Entity{
@@ -67,18 +74,21 @@ export class Organ extends Entity{
     public entry:string[] = []  // 器官的词条列表
     public owner?: Entity   // 器官持有者（通常是 Player 或 Enemy）
     public isDisabled:boolean = false // 器官是否损坏
+    public isTemporary: boolean = false  // 是否为临时器官
+    public temporaryRemoveOn?: "battleEnd" | "turnEnd" | "floorEnd"  // 临时器官的移除时机
 
     // 新增属性
-    public readonly quality: OrganQuality  // 稀有度
+    public readonly rarity: OrganRarity  // 稀有度
     public level: number                   // 等级（可变，可以升级）
     public readonly part?: OrganPart       // 部位（可选）
     public readonly absorbValue: number    // 吞噬获取量
     public readonly upgradeConfig?: OrganUpgradeConfig  // 升级配置（可选）
     public readonly tags: string[]         // 标签列表
+    public activeAbilities?: ActiveAbility[]  // 主动能力列表
 
     // 内部管理的触发器移除函数
-    private workTriggerRemovers: Array<()=>void> = []
-    private brokenTriggerRemovers: Array<()=>void> = []
+    workTriggerRemovers: Array<()=>void> = []
+    brokenTriggerRemovers: Array<()=>void> = []
 
     constructor(map:OrganMap){
         super(map)
@@ -88,12 +98,13 @@ export class Organ extends Entity{
         this.entry = map.entry || []  // 初始化词条列表
 
         // 初始化新属性
-        this.quality = map.quality
+        this.rarity = map.rarity
         this.level = map.level ?? 1  // 默认等级为 1
         this.part = map.part
-        this.absorbValue = calculateAbsorbValue(map.quality, map.absorbValue)
+        this.absorbValue = calculateAbsorbValue(map.rarity, map.absorbValue)
         this.upgradeConfig = map.upgrade  // 升级配置
         this.tags = map.tags || []  // 初始化标签列表
+        this.activeAbilities = map.activeAbilities  // 初始化主动能力列表
 
         const interaction:Interaction[] = []
         for(let key in map.interaction){
@@ -161,7 +172,7 @@ export class Organ extends Entity{
     /**
      * 从交互配置中添加触发器（私有辅助方法）
      */
-    private addTriggersFromInteraction(interaction: Interaction, owner: Entity): Array<()=>void> {
+    addTriggersFromInteraction(interaction: Interaction, owner: Entity): Array<()=>void> {
         const removers: Array<()=>void> = []
 
         if(!interaction.triggers) return removers

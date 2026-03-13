@@ -449,16 +449,102 @@ When player loses/sells an organ, all associated modifiers are auto-removed.
 Relics typically add triggers to the player that respond to game events.
 Use `player.appendTrigger()` with appropriate when/how/key combinations.
 
+Relics can also enable special features through effects:
+- Use `enableOrganRewardAction` effect to unlock new organ reward actions
+- Use `disableOrganRewardAction` effect in `lose` interaction to clean up
+
+Example - Relic that unlocks a new organ reward action:
+```typescript
+{
+  label: "血祭之石",
+  key: "original_relic_sacrifice",
+  interaction: {
+    possess: {
+      target: { key: "owner" },
+      effects: [{
+        key: "enableOrganRewardAction",
+        params: { actionKey: "sacrifice" }
+      }]
+    },
+    lose: {
+      target: { key: "owner" },
+      effects: [{
+        key: "disableOrganRewardAction",
+        params: { actionKey: "sacrifice" }
+      }]
+    }
+  }
+}
+```
+
+### Organ Reward Actions
+
+The organ reward action system allows players to choose different actions when receiving organ rewards in battle (assimilate, devour, sacrifice, etc.).
+
+**Core Components:**
+- `Player.enabledOrganRewardActions: Set<string>` - Stores which actions are available to the player
+- `organRewardActionRegistry` - Global registry of all action definitions
+- `enableOrganRewardAction` / `disableOrganRewardAction` effects - Enable/disable actions for players
+
+**Built-in Actions:**
+- `assimilate` (同化) - Acquire the organ and its abilities (always available)
+- `devour` (吞噬) - Devour the organ for materials (always available)
+- `sacrifice` (献祭) - Sacrifice the organ for health (requires relic)
+
+**Adding New Actions:**
+1. Define action handler in `src/core/hooks/organRewardActions.ts`
+2. Register action in `initOrganRewardActions()` with `enabled` checking `player.enabledOrganRewardActions`
+3. Create relic that uses `enableOrganRewardAction` effect to unlock the action
+
+See `文档/未归档/器官奖励动作系统.md` for detailed documentation.
+
 ### Room System
 
 **Room Types:**
 - `battle`: Combat encounters with enemies
 - `eliteBattle`: Elite combat encounters
 - `event`: Story events with choices
-- `pool`: Rest area (absorb materials, upgrade organs, blood mark)
+- `pool`: Rest area (absorb materials, upgrade organs, blood mark, and extended actions)
 - `blackStore`: Shop for buying items
 - `roomSelect`: Choose next room to enter (legacy, use map UI instead)
 - `floorSelect`: Choose next floor theme (e.g., forest vs volcano)
+
+**Pool Room Extended Actions:**
+
+The pool room supports extended actions that can be unlocked by relics. Similar to organ reward actions, these are managed through a registry system.
+
+Built-in actions (always available):
+- Absorb (汲取) - Gain materials
+- Upgrade (升级) - Upgrade organs
+- Blood Mark (染血) - Gain blood mark (one-time)
+
+Extended actions (require relics):
+- Exercise (锻炼) - Spend materials to gain max health
+
+Adding new pool actions:
+1. Define action handler in `src/core/hooks/poolActions.ts`
+2. Register action in `initPoolActions()` with `enabled` checking `player.enabledPoolActions`
+3. Create relic that uses `enablePoolAction` effect to unlock the action
+
+Example relic:
+```typescript
+{
+  label: "健身手环",
+  key: "original_relic_exercise",
+  interaction: {
+    possess: {
+      target: { key: "owner" },
+      effects: [{ key: "enablePoolAction", params: { actionKey: "exercise" } }]
+    },
+    lose: {
+      target: { key: "owner" },
+      effects: [{ key: "disablePoolAction", params: { actionKey: "exercise" } }]
+    }
+  }
+}
+```
+
+See `文档/未归档/水池行动扩展系统.md` for detailed documentation.
 
 **Room Lifecycle:**
 1. `enter()`: Initialize room, display UI

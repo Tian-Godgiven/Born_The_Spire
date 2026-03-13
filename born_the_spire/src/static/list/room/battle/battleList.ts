@@ -41,5 +41,12 @@ export const battleList: BattleRoomConfig[] = [
         description: "危险的双头蛇盘踞在此",
         battleType: "elite",
         enemyConfigs: ["test_enemy_elite"]
+    },
+    {
+        key: "battle_elite_plus_berserker",
+        name: "染印狂战士领地",
+        description: "更危险的狂战士守护着印记试炼",
+        battleType: "elitePlus",
+        enemyConfigs: ["test_enemy_berserker"]
     }
 ]

@@ -10,7 +10,7 @@
     import { Chara, Target } from '@/core/objects/target/Target';
     import { ref } from 'vue';
     import { TargetChooseState, targetManager } from '@/ui/interaction/target/targetManager';
-    import { chooseATarget } from '@/ui/interaction/target/chooseTarget';
+    import { chooseATarget, nowChooseAction } from '@/ui/interaction/target/chooseTarget';
     import ChooseBox from './ChooseBox.vue';
     const {target} = defineProps<{target:Chara}>()
     const targetState = ref<{target:Target,chooseState:TargetChooseState}>(targetManager.addTarget(target))
@@ -18,10 +18,18 @@
     function onHover(){
         hovering.value = true
         targetManager.setTargetState(target,"isHovered",true)
+        // 如果目标可选，调用 onHover 回调
+        if(targetState.value?.chooseState.isSelectable){
+            nowChooseAction.value.onHover?.(target)
+        }
     }
     function onLeave(){
         hovering.value = false
         targetManager.setTargetState(target,"isHovered",false)
+        // 清除 hover 状态
+        if(targetState.value?.chooseState.isSelectable){
+            nowChooseAction.value.onHover?.(undefined)
+        }
     }
     function onClick(){
         //选中不可选择的目标时结束

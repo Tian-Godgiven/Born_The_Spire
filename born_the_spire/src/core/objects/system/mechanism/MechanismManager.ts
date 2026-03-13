@@ -8,10 +8,30 @@ import { MechanismVote, TriggerRemover } from "@/static/registry/mechanismRegist
 import { markRaw } from "vue"
 
 /**
+ * 机制管理器接口
+ * 定义机制管理器的公共方法（用于类型兼容性）
+ */
+export interface IMechanismManager {
+    addVote(mechanismKey: string, vote: MechanismVote): void
+    removeVote(mechanismKey: string, source: any): boolean
+    getVotes(mechanismKey: string): MechanismVote[]
+    getFinalVote(mechanismKey: string): "enable" | "disable" | null
+    setState(mechanismKey: string, enabled: boolean): void
+    getState(mechanismKey: string): boolean
+    isEnabled(mechanismKey: string): boolean
+    addTriggers(mechanismKey: string, triggers: TriggerRemover[]): void
+    removeTriggers(mechanismKey: string): void
+    getTriggers(mechanismKey: string): TriggerRemover[]
+    clear(): void
+    getEnabledMechanisms(): string[]
+    debug(mechanismKey?: string): void
+}
+
+/**
  * 机制管理器类
  * 封装实体的机制投票、触发器和状态管理
  */
-export class MechanismManager {
+export class MechanismManager implements IMechanismManager {
     private owner: Entity
     private votes: Map<string, MechanismVote[]> = new Map()
     private triggers: Map<string, TriggerRemover[]> = new Map()
@@ -182,7 +202,7 @@ export class MechanismManager {
 /**
  * 获取实体的机制管理器（如果不存在则创建）
  */
-export function getMechanismManager(entity: Entity): MechanismManager {
+export function getMechanismManager(entity: Entity): IMechanismManager {
     if (!entity.mechanisms) {
         entity.mechanisms = markRaw(new MechanismManager(entity))
     }

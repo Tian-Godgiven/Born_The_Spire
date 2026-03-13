@@ -34,7 +34,7 @@ export type PartConfig = {
 /**
  * 器官稀有度枚举
  */
-export enum OrganQuality {
+export enum OrganRarity {
     Common = "common",          // 普通
     Uncommon = "uncommon",      // 罕见
     Rare = "rare"               // 稀有
@@ -43,8 +43,8 @@ export enum OrganQuality {
 /**
  * 稀有度配置
  */
-export type QualityConfig = {
-    key: OrganQuality           // 稀有度标识
+export type RarityConfig = {
+    key: OrganRarity           // 稀有度标识
     label: string               // 显示名称
     color: string               // 颜色代码（用于 UI 显示）
     baseAbsorbValue: number     // 基础吞噬获取量

@@ -98,7 +98,7 @@ export const chooseOrganRemove: EffectFunc = async (event, effect) => {
 
     // 使用器官选择UI
     const { showOrganChoice } = await import("@/ui/hooks/interaction/organChoice")
-    const selectedKeys = await showOrganChoice({
+    const result = await showOrganChoice({
         title: "选择要移除的器官",
         description: count === 1 ? "选择一个器官移除" : `选择最多 ${count} 个器官移除`,
         organKeys: organs.map(o => o.key),
@@ -109,7 +109,7 @@ export const chooseOrganRemove: EffectFunc = async (event, effect) => {
 
     // 对每个选中的器官创建移除事件
     const { doEvent } = await import("@/core/objects/system/ActionEvent")
-    for (const organKey of selectedKeys) {
+    for (const organKey of result.selectedKeys) {
         const organ = organs.find(o => o.key === organKey)
         if (organ) {
             await doEvent({

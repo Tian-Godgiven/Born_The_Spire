@@ -10,9 +10,11 @@ import type { RoomType } from "@/core/objects/room/Room"
 export interface RoomPools {
   battles: string[]
   eliteBattles?: string[]
+  elitePlusBattles?: string[]
   events: string[]
   pools: string[]
   blackStores: string[]
+  treasures?: string[]
 }
 
 /**
@@ -109,9 +111,11 @@ export const defaultValidationStrategy: ValidationStrategy = {
 export interface RoomTypeWeights {
   battle: number
   eliteBattle?: number
+  elitePlusBattle?: number
   event: number
   pool: number
   blackStore: number
+  treasure?: number
   [key: string]: number | undefined  // 添加索引签名以支持动态访问
 }
 
@@ -386,7 +390,8 @@ export const defaultFloorMapConfig: FloorMapConfig = {
     eliteBattle: 10,
     event: 20,
     pool: 10,
-    blackStore: 10
+    blackStore: 10,
+    treasure: 0
   },
 
   layerSpecificWeights: {
@@ -396,7 +401,7 @@ export const defaultFloorMapConfig: FloorMapConfig = {
 
   layerLayouts: {
     7: {
-      roomTypes: ["treasure"]  // 第8层：宝箱房（未实现）
+      roomTypes: ["treasure"]  // 第8层：宝箱房
     },
     13: {
       roomTypes: ["pool", "pool", "pool"]
@@ -408,11 +413,13 @@ export const defaultFloorMapConfig: FloorMapConfig = {
 
   // 房间分配策略
   roomAssignmentStrategy: {
-    lazyTypes: ["battle", "event"],  // 战斗和事件延迟分配
-    eagerTypes: ["pool", "blackStore"],  // 休息和商店立即分配
+    lazyTypes: ["battle", "eliteBattle", "elitePlusBattle", "event"],  // 战斗、精英、强化精英和事件延迟分配
+    eagerTypes: ["pool", "blackStore", "treasure"],  // 休息、商店和宝箱立即分配
 
     exhaustionStrategy: {
       battle: "reset",  // 战斗池耗尽后重置
+      eliteBattle: "reset",  // 精英战斗池耗尽后重置
+      elitePlusBattle: "reset",  // 强化精英战斗池耗尽后重置
       event: "reset"    // 事件池耗尽后重置
     },
 
@@ -433,11 +440,11 @@ export const defaultFloorMapConfig: FloorMapConfig = {
 
     placement: {
       parent: {
-        noSelfFollow: ["eliteBattle", "pool", "blackStore"]
+        noSelfFollow: ["eliteBattle", "elitePlusBattle", "pool", "blackStore", "treasure"]
       },
 
       sibling: {
-        uniqueInLayer: ["eliteBattle", "pool", "blackStore"],
+        uniqueInLayer: ["eliteBattle", "elitePlusBattle", "pool", "blackStore", "treasure"],
 
         maxSameTypeInLayer: {
           battle: 5,
@@ -468,7 +475,8 @@ export const defaultFloorMapConfig: FloorMapConfig = {
     eliteBattles: [],
     events: [],
     pools: [],
-    blackStores: []
+    blackStores: [],
+    treasures: []
   }
   // 注意：seed 由 GameRun 提供，不在默认配置中设置
 }

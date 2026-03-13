@@ -9,8 +9,9 @@ import { costEnergy, emptyEnergy, getEnergy, pay_costEnergy } from "@/core/effec
 import { newError } from "@/ui/hooks/global/alert"
 import { discardCard, pay_discardCard, pay_exhaustCard, discardAllCard } from "@/core/effects/card/discard"
 import { voidExhaust, moveInherentToHand } from "@/core/effects/card/entryEffects"
+import { fragileBreak, regenerateMass } from "@/core/effects/organ/organEntryEffects"
 import { applyState, removeState, changeStateStack } from "@/core/effects/state/stateControl"
-import { addStatusBase } from "@/core/effects/status/changeStatus"
+import { addStatusBase, multiplyStatusBase, setCurrentToMax } from "@/core/effects/status/changeStatus"
 import { addCurrent, addStatusBaseCurrentValue } from "@/core/effects/current/changeCurrent"
 import { gainReserve, spendReserve } from "@/core/effects/reserve/reserve"
 import { killTarget, reviveTarget } from "@/core/effects/life/lifeControl"
@@ -25,11 +26,17 @@ import { discoverCard, chooseRandomCard, chooseCardUpgrade, chooseCardRemove, ch
 import { cancelEvent, cancelCurrentEvent } from "@/core/effects/event/cancelEvent"
 import { gainArmor } from "@/core/effects/gainArmor"
 import { addFirstTurnDraw } from "@/core/effects/card/addFirstTurnDraw"
+import { enableOrganRewardAction, disableOrganRewardAction } from "@/core/effects/organReward/organRewardActionEffects"
+import { enablePoolAction, disablePoolAction } from "@/core/effects/pool/poolActionEffects"
+import { addTemporaryCardEffect, addTemporaryOrganEffect, markCardTemporaryEffect, markOrganTemporaryEffect } from "@/core/effects/temporary/temporaryEffects"
+import { addAbilityChargesEffect, reduceAbilityCooldownEffect, setAbilityToggleEffect, resetAbilityUsesEffect, setAbilityEnabledEffect, modifyAbilityCostEffect } from "@/core/effects/ability/abilityEffects"
+import { addStatusModifier } from "@/core/effects/modifier/addModifier"
 
 type EffectData = {
     label?:string,
     key:string,
     effect:EffectFunc,//告知其对应的效果函数
+    preview?:(event: any, effect: any) => number | null  // 预览函数（可选）
 }
 
 export function getFromEffectMap(unit:EffectUnit){
@@ -47,7 +54,11 @@ export const effectMap:EffectData[] = [
 {
     label:"造成伤害",
     key:"damage",
-    effect:damageTo
+    effect:damageTo,
+    preview:(event, effect) => {
+        // 预览时只返回伤害值，不真正扣血
+        return Number(effect.params.value)
+    }
 },
 //减少伤害值
 {
@@ -59,13 +70,38 @@ export const effectMap:EffectData[] = [
 {
     label:"修改伤害值",
     key:"modifyDamageValue",
-    effect:modifyDamageValue
+    effect:modifyDamageValue,
+    preview:(event, effect) => {
+        // 预览时应用修改到目标效果的 params.value
+        const delta = Number(effect.params.delta)
+        const targetEffect = event.effects[0]
+        if (targetEffect && targetEffect.key === "damage") {
+            const oldValue = Number(targetEffect.params.value)
+            const newValue = Math.max(0, oldValue + delta)
+            targetEffect.params.value = newValue
+            return newValue
+        }
+        return null
+    }
 },
 //按百分比修改伤害值
 {
     label:"按百分比修改伤害值",
     key:"modifyDamageByPercent",
-    effect:modifyDamageByPercent
+    effect:modifyDamageByPercent,
+    preview:(event, effect) => {
+        // 预览时应用百分比修改
+        const percent = Number(effect.params.percent)
+        const targetEffect = event.effects[0]
+        if (targetEffect && targetEffect.key === "damage") {
+            const oldValue = Number(targetEffect.params.value)
+            const delta = Math.round(oldValue * percent)
+            const newValue = Math.max(0, oldValue + delta)
+            targetEffect.params.value = newValue
+            return newValue
+        }
+        return null
+    }
 },
 //收到伤害时，减少受到的伤害
 {
@@ -110,6 +146,9 @@ export const effectMap:EffectData[] = [
     key:"heal",
     effect:(event,effect)=>{
         healTo(event,effect)
+    },
+    preview:(event, effect) => {
+        return Number(effect.params.value)
     }
 },{
     label:"从牌堆中抽牌",
@@ -152,6 +191,14 @@ export const effectMap:EffectData[] = [
     key:"addStatusBase",
     effect:addStatusBase
 },{
+    label:"基础属性改变：乘法",
+    key:"multiplyStatusBase",
+    effect:multiplyStatusBase
+},{
+    label:"设置当前值为最大值",
+    key:"setCurrentToMax",
+    effect:setCurrentToMax
+},{
     label:"当前值改变：加减",
     key:"addCurrent",
     effect:addCurrent
@@ -175,6 +222,14 @@ export const effectMap:EffectData[] = [
     label:"固有：将固有卡牌移入手牌",
     key:"moveInherentToHand",
     effect:moveInherentToHand
+},{
+    label:"脆弱：50%概率损坏器官",
+    key:"fragileBreak",
+    effect:fragileBreak
+},{
+    label:"再生：恢复器官质量",
+    key:"regenerateMass",
+    effect:regenerateMass
 },{
     label:"杀死目标",
     key:"kill",
@@ -230,7 +285,10 @@ export const effectMap:EffectData[] = [
 },{
     label:"获得护甲",
     key:"gainArmor",
-    effect:gainArmor
+    effect:gainArmor,
+    preview:(event, effect) => {
+        return Number(effect.params.value)
+    }
 },{
     label:"第一回合额外抽牌",
     key:"addFirstTurnDraw",
@@ -271,5 +329,65 @@ export const effectMap:EffectData[] = [
     label:"恢复器官质量",
     key:"healOrgan",
     effect:healOrgan
+},{
+    label:"启用器官奖励动作",
+    key:"enableOrganRewardAction",
+    effect:enableOrganRewardAction
+},{
+    label:"禁用器官奖励动作",
+    key:"disableOrganRewardAction",
+    effect:disableOrganRewardAction
+},{
+    label:"启用水池行动",
+    key:"enablePoolAction",
+    effect:enablePoolAction
+},{
+    label:"禁用水池行动",
+    key:"disablePoolAction",
+    effect:disablePoolAction
+},{
+    label:"添加临时卡牌",
+    key:"addTemporaryCard",
+    effect:addTemporaryCardEffect
+},{
+    label:"添加临时器官",
+    key:"addTemporaryOrgan",
+    effect:addTemporaryOrganEffect
+},{
+    label:"标记卡牌为临时",
+    key:"markCardTemporary",
+    effect:markCardTemporaryEffect
+},{
+    label:"标记器官为临时",
+    key:"markOrganTemporary",
+    effect:markOrganTemporaryEffect
+},{
+    label:"为能力添加充能",
+    key:"addAbilityCharges",
+    effect:addAbilityChargesEffect
+},{
+    label:"减少能力冷却",
+    key:"reduceAbilityCooldown",
+    effect:reduceAbilityCooldownEffect
+},{
+    label:"设置能力开关状态",
+    key:"setAbilityToggle",
+    effect:setAbilityToggleEffect
+},{
+    label:"重置能力使用次数",
+    key:"resetAbilityUses",
+    effect:resetAbilityUsesEffect
+},{
+    label:"启用/禁用能力",
+    key:"setAbilityEnabled",
+    effect:setAbilityEnabledEffect
+},{
+    label:"修改能力消耗",
+    key:"modifyAbilityCost",
+    effect:modifyAbilityCostEffect
+},{
+    label:"添加属性修饰器",
+    key:"addStatusModifier",
+    effect:addStatusModifier
 }]
 

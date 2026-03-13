@@ -62,10 +62,12 @@ export interface FloorConfig {
     roomPools: {
         battles: string[]          // 普通战斗房间key列表
         eliteBattles: string[]     // 精英战斗房间key列表
+        elitePlusBattles: string[] // 强化精英战斗房间key列表
         bossBattles: string[]      // Boss战斗房间key列表
         events: string[]           // 事件房间key列表
         blackStores: string[]      // 黑市房间key列表
         pools: string[]            // 休息房间key列表
+        treasures: string[]        // 宝箱房间key列表
     }
 
     // 地图配置（新系统）

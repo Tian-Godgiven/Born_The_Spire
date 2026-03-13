@@ -111,6 +111,7 @@ const initChooseAction = {
     chooseRule:null,
     onSuccess:null,
     onStop:null,
+    onHover:null,
     removeListener:()=>{}
 }
 export const nowChooseAction = ref<{
@@ -118,6 +119,7 @@ export const nowChooseAction = ref<{
     chooseRule:ChooseRule|null,
     onSuccess:null|((targets:Target[])=>void);
     onStop:null|((targets:Target[])=>void),
+    onHover:null|((target?:Target)=>void),
     removeListener:()=>void;
 }>({...initChooseAction})
 export const choosingTarget = ref<boolean>(false)//当前的选择状态
@@ -143,6 +145,7 @@ export function startChooseTarget(option:ChooseOption,position:Position){
         chooseRule:rule,
         onSuccess,
         onStop:onStop,
+        onHover:option.onHover ? (target?: Target) => option.onHover!(target!) : null,
         removeListener:startListenClick(onStop)
     }
 
@@ -362,4 +365,39 @@ function startListenClick(onStop:(targets:Target[])=>void){
     },0)
 
     return removeListeners
+}
+
+/**
+ * Promise 风格的目标选择函数
+ * 包装 startChooseTarget 为 async/await 风格
+ */
+export function chooseTarget(option: {
+    targetType: TargetType,
+    source?: Entity,
+    amount?: number,
+    title?: string,
+    ifShowConnectLine?: boolean
+}): Promise<Target[] | null> {
+    return new Promise((resolve) => {
+        const { targetType, source, ifShowConnectLine } = option
+
+        // 使用 mousePosition 作为起始位置
+        const position = ref({ left: mousePosition.left, top: mousePosition.top })
+
+        startChooseTarget({
+            targetType,
+            source,
+            ifShowConnectLine,
+            onSuccess: (targets) => {
+                resolve(targets)
+            },
+            onStop: (targets) => {
+                if (targets.length === 0) {
+                    resolve(null)
+                } else {
+                    resolve(targets)
+                }
+            }
+        }, position.value)
+    })
 }

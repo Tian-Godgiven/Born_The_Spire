@@ -55,7 +55,6 @@ export class Current{
 }
 
 //初始化当前值
-// @ts-expect-error - T 用于类型约束但未在函数体中使用
 export async function initCurrentFromMap<T extends Entity>(owner:Entity,mapData:any){
     // 动态导入以避免循环依赖
     const { getMetaFromCurrentMap } = await import("@/static/list/system/currents/currentMap")

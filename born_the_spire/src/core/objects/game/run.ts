@@ -5,6 +5,7 @@ import { reactive } from "vue";
 import { addToPlayerTeam } from "./battle";
 import type { Room } from "../room/Room";
 import { getLazyModule } from "@/core/utils/lazyLoader";
+import { doEvent } from "@/core/objects/system/ActionEvent";
 
 //当前的局（使用 reactive 包装，内部属性自动响应式）
 export const nowGameRun = reactive<GameRun>(new GameRun())
@@ -142,7 +143,7 @@ export function initDefaultGameObjects() {
 }
 
 //开始一局新游戏
-export async function startNewRun(seed?: string){
+export async function startNewRun(seed?: string, ascensionLevel: number = 0, initialOrgans?: string[]){
     //创建本局（可选传入种子）
     const gameRun = new GameRun(seed)
     Object.assign(nowGameRun, gameRun)
@@ -155,6 +156,46 @@ export async function startNewRun(seed?: string){
 
     //添加到队伍中
     addToPlayerTeam(nowPlayer)
+
+    // 添加初始器官
+    if (initialOrgans && initialOrgans.length > 0) {
+        console.log(`[startNewRun] 添加 ${initialOrgans.length} 个初始器官`)
+        const { getOrganByKey } = await import("@/static/list/target/organList")
+        const { gainOrgan } = await import("@/core/effects/item/gainItem")
+
+        for (const organKey of initialOrgans) {
+            try {
+                const organData = await getOrganByKey(organKey)
+                if (organData) {
+                    // 创建获得器官事件
+                    await doEvent({
+                        key: "gainOrgan",
+                        source: nowPlayer,
+                        medium: nowPlayer,
+                        target: nowPlayer,
+                        effectUnits: [{ key: "gainOrgan", params: { organKey } }]
+                    })
+                    console.log(`[startNewRun] 已添加初始器官: ${organKey}`)
+                }
+            } catch (error) {
+                console.error(`[startNewRun] 添加初始器官失败: ${organKey}`, error)
+            }
+        }
+    }
+
+    // 应用进阶触发器
+    if (ascensionLevel > 0) {
+        const { getAscensionConfig } = await import("@/static/list/system/ascensionList")
+        const ascensionConfig = getAscensionConfig(ascensionLevel)
+        if (ascensionConfig) {
+            console.log(`[startNewRun] 应用进阶 ${ascensionLevel} 触发器`)
+            await nowGameRun.applyAscensionTriggers(ascensionConfig.triggers)
+            nowGameRun.towerFire = ascensionLevel
+        } else {
+            console.warn(`[startNewRun] 未找到进阶 ${ascensionLevel} 的配置`)
+        }
+    }
+
     //跳转到游戏页面
     router.replace("running")
 

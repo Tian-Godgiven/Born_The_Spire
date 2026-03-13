@@ -18,10 +18,12 @@ export const floorList: FloorConfig[] = [
         roomPools: {
             battles: ["battle_normal_rocker"],
             eliteBattles: ["battle_elite_berserker", "battle_elite_hydra"],
+            elitePlusBattles: ["battle_elite_plus_berserker"],
             bossBattles: [],       // TODO: 添加Boss战斗
             events: [],            // 事件池（不包含苏生事件）
             blackStores: [],       // TODO: 添加黑市房间
-            pools: ["pool_default"]
+            pools: ["pool_default"],
+            treasures: ["treasure_default"]
         },
         // 房间布局：第1步固定为苏生初始化房间
         roomLayout: [
@@ -44,10 +46,12 @@ export const floorList: FloorConfig[] = [
         roomPools: {
             battles: ["battle_normal_rocker"],
             eliteBattles: ["battle_elite_berserker", "battle_elite_hydra"],
+            elitePlusBattles: ["battle_elite_plus_berserker"],
             bossBattles: [],
             events: [],
             blackStores: [],
-            pools: ["pool_default"]
+            pools: ["pool_default"],
+            treasures: ["treasure_default"]
         },
         nextFloors: ["floor_3"],
         nextFloorSelectionMode: "auto",
@@ -65,10 +69,12 @@ export const floorList: FloorConfig[] = [
         roomPools: {
             battles: ["battle_normal_rocker"],
             eliteBattles: ["battle_elite_berserker", "battle_elite_hydra"],
+            elitePlusBattles: ["battle_elite_plus_berserker"],
             bossBattles: [],
             events: [],
             blackStores: [],
-            pools: ["pool_default"]
+            pools: ["pool_default"],
+            treasures: ["treasure_default"]
         },
         nextFloors: ["floor_4"],
         nextFloorSelectionMode: "auto",
@@ -86,12 +92,14 @@ export const floorList: FloorConfig[] = [
         roomPools: {
             battles: ["battle_normal_rocker"],
             eliteBattles: ["battle_elite_berserker", "battle_elite_hydra"],
+            elitePlusBattles: ["battle_elite_plus_berserker"],
             bossBattles: [],
             events: [],
             blackStores: [],
-            pools: ["pool_default"]
+            pools: ["pool_default"],
+            treasures: ["treasure_default"]
         },
-        nextFloors: [],  // 最后一层，没有下一层
+        nextFloors: [],  // 最后一层,没有下一层
         unlockCondition: (player) => {
             const markCount = countPlayerMarks(player)
             return {

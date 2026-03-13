@@ -4,6 +4,8 @@ import { floorManager } from "./FloorManager"
 import { cloneDeep } from "lodash"
 import { SeededRandom } from "@/core/utils/SeededRandom"
 import { markRaw } from "vue"
+import { TriggerMap } from "@/core/types/object/trigger"
+import { Entity } from "./Entity"
 
 /**
  * 玩家状态快照
@@ -42,6 +44,9 @@ export class GameRun{
 
     // 楼层管理器
     public floorManager = floorManager
+
+    // 进阶触发器（绑定到玩家的全局触发器）
+    private _ascensionTriggerRemovers: (() => void)[] = []
 
     constructor(seed?: string){
         // 初始化种子系统
@@ -221,6 +226,43 @@ export class GameRun{
      */
     generateNextFloorRoomOptions(count: number = 3): string[] {
         return this.floorManager.generateNextFloorRoomOptions(count)
+    }
+
+    /**
+     * 应用进阶触发器到玩家
+     * @param triggers 触发器配置数组
+     */
+    async applyAscensionTriggers(triggers: TriggerMap[]) {
+        // 动态导入避免循环依赖
+        const { nowPlayer } = await import("../game/run")
+
+        if (!nowPlayer) {
+            console.warn("[GameRun] 无法应用进阶触发器：玩家不存在")
+            return
+        }
+
+        // 清除之前的进阶触发器
+        this.clearAscensionTriggers()
+
+        // 应用新的触发器
+        const { applyTriggerMap } = await import("../system/trigger/Trigger")
+
+        for (const triggerMap of triggers) {
+            const remover = applyTriggerMap(nowPlayer as Entity, triggerMap)
+            if (remover) {
+                this._ascensionTriggerRemovers.push(remover)
+            }
+        }
+    }
+
+    /**
+     * 清除所有进阶触发器
+     */
+    clearAscensionTriggers() {
+        for (const remover of this._ascensionTriggerRemovers) {
+            remover()
+        }
+        this._ascensionTriggerRemovers = []
     }
 }
 

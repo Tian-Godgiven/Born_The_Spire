@@ -9,7 +9,7 @@ import { appendStatus, createStatusFromMap, Status } from "./status/Status";
 // import { Current, initCurrentFromMap } from "./Current/current";
 // import { CurrentMapData } from "@/static/list/system/currents/currentMap";
 import { EventParticipant } from "@/core/types/event/EventParticipant";
-import { MechanismManager } from "./mechanism/MechanismManager";
+import { IMechanismManager } from "./mechanism/MechanismManager";
 
 // 实体（entity）是Target和Item的基类
 export class Entity implements EventParticipant{
@@ -24,7 +24,10 @@ export class Entity implements EventParticipant{
     //触发器
     public trigger:Trigger
     //游戏机制管理器
-    public mechanisms?: MechanismManager
+    public mechanisms?: IMechanismManager
+    //主动能力相关属性
+    public disabledAbilities?: Set<string>  // 被禁用的能力key列表
+    public abilityCostModifiers?: Map<string, number>  // 能力消耗修改器 (abilityKey_costType -> modifier)
     constructor(map:EntityMap, beforeCurrentInit?: (this: Entity) => void){
         this.label = map.label
         console.log(`[Entity] 构造 ${map.label}`)
@@ -79,7 +82,6 @@ export class Entity implements EventParticipant{
     }
 }
 
-// @ts-expect-error - T 用于类型约束但未在类型定义中使用
 export type EntityMap<T extends Entity = Entity> = {
     label:string
     key:string,//唯一识别码，决定这个对象是什么对象/哪种对象（同一种对象可以有多个）

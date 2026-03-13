@@ -247,6 +247,8 @@ export async function initAllRooms(): Promise<void> {
     const { initPoolRooms } = await import('./rooms/initPoolRooms')
     // const { initBlackStoreRooms } = await import('./rooms/initBlackStoreRooms')
     const { initRoomSelectRooms } = await import('./rooms/initRoomSelectRooms')
+    const { initTreasureRooms } = await import('./rooms/initTreasureRooms')
+    const { initFloorSelectRooms } = await import('./rooms/initFloorSelectRooms')
 
     // 依次初始化各个房间类型（初始化房间优先）
     await initInitRooms()
@@ -255,6 +257,8 @@ export async function initAllRooms(): Promise<void> {
     await initPoolRooms()
     // await initBlackStoreRooms()
     await initRoomSelectRooms()
+    await initTreasureRooms()
+    await initFloorSelectRooms()
 
 }
 

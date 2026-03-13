@@ -167,8 +167,12 @@ export class Battle {
 
         this.isEnded = true
 
+        // 处理主动能力系统的战斗结束
+        this.handleActiveAbilitiesBattleEnd()
+
         if (result === "player_win") {
             newLog(["===== 战斗胜利 ====="])
+
             doEvent({
                 key: "battleEnd",
                 source: nowPlayer,
@@ -190,6 +194,17 @@ export class Battle {
 
             // 显示战斗失败弹窗
             showBattleDefeat()
+        }
+    }
+
+    /**
+     * 处理主动能力系统的战斗结束
+     */
+    private async handleActiveAbilitiesBattleEnd() {
+        // 处理玩家的主动能力战斗结束
+        const alivePlayers = this.getAlivePlayers()
+        for (const player of alivePlayers) {
+            await player.handleActiveAbilitiesBattleEnd()
         }
     }
 }
@@ -214,7 +229,17 @@ export async function startNewBattle(playerTeam:(Player|Chara)[],enemyTeam:(Enem
 
     nextTick(async ()=>{
         //当前玩家开始战斗（初始化状态）
-        nowPlayer.startBattle()
+        await nowPlayer.startBattle()
+
+        // 为所有敌人应用状态触发器
+        const { applyStrengthTrigger, applyVulnerableTrigger, applyWeakTrigger } = await import("@/core/effects/state/stateTriggers")
+        for (const enemy of enemyTeam) {
+            if (enemy instanceof Enemy) {
+                applyStrengthTrigger(enemy)
+                applyVulnerableTrigger(enemy)
+                applyWeakTrigger(enemy)
+            }
+        }
 
         // 触发 battleStart 事件
         doEvent({
