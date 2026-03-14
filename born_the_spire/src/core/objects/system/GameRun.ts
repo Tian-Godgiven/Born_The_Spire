@@ -4,7 +4,7 @@ import { floorManager } from "./FloorManager"
 import { cloneDeep } from "lodash"
 import { SeededRandom } from "@/core/utils/SeededRandom"
 import { markRaw } from "vue"
-import { TriggerMap } from "@/core/types/object/trigger"
+import type { TriggerMap } from "@/core/types/object/trigger"
 import { Entity } from "./Entity"
 
 /**

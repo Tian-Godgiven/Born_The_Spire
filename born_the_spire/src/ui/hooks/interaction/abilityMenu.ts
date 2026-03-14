@@ -1,6 +1,7 @@
 import { Entity } from "@/core/objects/system/Entity"
-import { ActiveAbility, AbilityMenuConfig } from "@/core/types/ActiveAbility"
-import { createApp, App } from 'vue'
+import type { ActiveAbility, AbilityMenuConfig } from "@/core/types/ActiveAbility"
+import { createApp } from 'vue'
+import type { App } from 'vue'
 import AbilityMenu from '@/ui/components/interaction/AbilityMenu.vue'
 import AbilityTargetSelector from '@/ui/components/interaction/AbilityTargetSelector.vue'
 

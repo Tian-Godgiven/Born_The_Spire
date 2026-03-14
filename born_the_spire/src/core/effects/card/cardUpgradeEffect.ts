@@ -1,4 +1,4 @@
-import { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
+import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import { Card } from "@/core/objects/item/Subclass/Card"
 import { upgradeCard } from "./cardUpgrade"
 

@@ -1,5 +1,5 @@
 import { Entity } from "@/core/objects/system/Entity"
-import { ActiveAbility } from "@/core/types/ActiveAbility"
+import type { ActiveAbility } from "@/core/types/ActiveAbility"
 import { usageTracker } from "./UsageTracker"
 
 /**

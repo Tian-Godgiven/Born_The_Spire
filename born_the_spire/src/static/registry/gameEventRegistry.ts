@@ -3,7 +3,7 @@
  * 支持 mod 制作者注册自定义事件类型
  */
 
-import { GameEvent, GameEventConfig } from "@/core/objects/system/GameEvent"
+import type { GameEvent, GameEventConfig } from "@/core/objects/system/GameEvent"
 
 /**
  * 事件类构造函数类型

@@ -1,4 +1,4 @@
-import { Describe } from "@/ui/hooks/express/describe"
+import type { Describe } from "@/ui/hooks/express/describe"
 import { Entity } from "@/core/objects/system/Entity"
 import { createTriggerByTriggerMap } from "@/core/objects/system/trigger/Trigger"
 

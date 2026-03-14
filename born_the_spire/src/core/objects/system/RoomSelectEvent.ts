@@ -3,7 +3,8 @@
  * 用于在每层选择房间
  */
 
-import { ChoiceEvent, ChoiceEventConfig } from "@/core/objects/system/GameEvent"
+import { ChoiceEvent } from "@/core/objects/system/GameEvent"
+import type { ChoiceEventConfig } from "@/core/objects/system/GameEvent"
 import { Choice } from "@/core/objects/system/Choice"
 import { Room } from "@/core/objects/room/Room"
 import { roomRegistry } from "@/static/registry/roomRegistry"

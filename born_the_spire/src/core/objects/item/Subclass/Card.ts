@@ -1,10 +1,11 @@
 import { Target } from "@/core/objects/target/Target";
-import { Item, ItemMap } from "@/core/objects/item/Item";
+import { Item } from "@/core/objects/item/Item";
+import type { ItemMap } from "@/core/objects/item/Item";
 import { doEvent, ActionEvent } from "@/core/objects/system/ActionEvent";
 import { beginTransaction, endTransaction } from "@/core/objects/game/transaction";
-import { CardPiles, Player } from "@/core/objects/target/Player";
+import type { CardPiles, Player } from "@/core/objects/target/Player";
 import { Entity } from "@/core/objects/system/Entity";
-import { EffectUnit } from "@/core/objects/system/effect/EffectUnit";
+import type { EffectUnit } from "@/core/objects/system/effect/EffectUnit";
 import { newError } from "@/ui/hooks/global/alert";
 import { getStatusValue } from "@/core/objects/system/status/Status";
 import { getCardModifier } from "@/core/objects/system/modifier/CardModifier";

@@ -1,12 +1,15 @@
-import { Entity } from "../Entity"
-import { Target } from "../../target/Target"
-import { State, StateData } from "../State"
-import { newLog, LogUnit } from "@/ui/hooks/global/log"
+import type { Entity } from "../Entity"
+import type { Target } from "../../target/Target"
+import type { StateData } from "../State"
+import type { LogUnit } from "@/ui/hooks/global/log"
+import { newLog } from "@/ui/hooks/global/log"
+
 import { doEvent } from "../ActionEvent"
 import { resolveTriggerEventTarget } from "../trigger/Trigger"
 import { nanoid } from "nanoid"
 import _ from "lodash"
-
+import { State } from "../State"
+import { modifierManager } from "@/core/managers/ModifierManager"
 /**
  * StateModifierUnit - 管理单个 state 的副作用
  */
@@ -373,15 +376,17 @@ export class StateModifier {
     }
 }
 
-// 使用 WeakMap 存储 StateModifier 实例
-const stateModifierMap = new WeakMap<Target, StateModifier>()
-
 /**
  * 为 Target 初始化状态管理器
  */
 export function initStateModifier(target: Target): StateModifier {
     const modifier = new StateModifier(target)
-    stateModifierMap.set(target, modifier)
+
+    // 注册到全局 ModifierManager
+    import("@/core/managers/ModifierManager").then(({ modifierManager }) => {
+        modifierManager.registerStateModifier(target, modifier)
+    })
+
     return modifier
 }
 
@@ -389,9 +394,19 @@ export function initStateModifier(target: Target): StateModifier {
  * 获取 Target 的状态管理器
  */
 export function getStateModifier(target: Target): StateModifier {
-    let modifier = stateModifierMap.get(target)
+    // 先尝试从 ModifierManager 获取
+    let modifier: StateModifier | undefined
+
+    // 同步导入检查（如果已加载）
+    try {
+        modifier = modifierManager.getStateModifier(target)
+    } catch {
+        // ModifierManager 未加载，创建新实例
+    }
+
     if (!modifier) {
         modifier = initStateModifier(target)
     }
+
     return modifier
 }

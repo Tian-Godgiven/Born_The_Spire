@@ -5,9 +5,10 @@
  */
 
 import { Entity } from "@/core/objects/system/Entity"
-import { Trigger, TriggerUnit } from "@/core/objects/system/trigger/Trigger"
-import { DefaultTrigger } from "@/core/objects/system/trigger/defaultTrigger"
-import { ImportantTrigger } from "@/core/objects/system/trigger/importantTrigger"
+import { Trigger } from "@/core/objects/system/trigger/Trigger"
+import type { TriggerUnit } from "../types/object/trigger"
+import type { DefaultTrigger } from "@/core/objects/system/trigger/defaultTrigger"
+import type { ImportantTrigger } from "@/core/objects/system/trigger/importantTrigger"
 
 /**
  * 触发器信息结构
@@ -61,7 +62,7 @@ export function getEntityTriggers(entity: Entity): EntityTriggerReport {
                             when,
                             how,
                             key,
-                            level: unit.level,
+                            level: unit.level || 0,
                             id: unit.id,
                             source,
                             ...importantInfo

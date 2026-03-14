@@ -1,17 +1,20 @@
-import { Entity } from "@/core/objects/system/Entity"
-import {
+import type { Entity } from "@/core/objects/system/Entity"
+import type {
     ActiveAbility,
     ActiveTriggerConfig,
     AbilityMenuConfig,
     ActiveAbilityContext
 } from "@/core/types/ActiveAbility"
+
+import type { TargetType } from "@/static/list/registry/chooseTargetType"
+
 import { RestrictionChecker } from "./RestrictionChecker"
 import { usageTracker } from "./UsageTracker"
-import { DisplayManager } from "./DisplayManager"
 import { doEvent } from "./ActionEvent"
 import { newError } from "@/ui/hooks/global/alert"
 import { newLog } from "@/ui/hooks/global/log"
-import { TargetType } from "@/static/list/registry/chooseTargetType"
+
+import { DisplayManager } from "./DisplayManager"
 
 /**
  * 主动能力管理器

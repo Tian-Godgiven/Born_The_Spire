@@ -1,7 +1,9 @@
-import { Card } from "@/core/objects/item/Subclass/Card"
-import { CardSelector, selectCards } from "./CardSelector"
-import { Enemy } from "../target/Enemy"
-import { Player } from "../target/Player"
+import type { Card } from "@/core/objects/item/Subclass/Card"
+import type { CardSelector } from "./CardSelector"
+import type { Enemy } from "../target/Enemy"
+import type { Player } from "../target/Player"
+
+import { selectCards } from "./CardSelector"
 
 /**
  * 敌人行为配置系统

@@ -1,10 +1,12 @@
-import { Describe } from "@/ui/hooks/express/describe";
-import { Entity, EntityMap } from "../system/Entity";
-import { EffectUnit } from "../system/effect/EffectUnit";
-import { TargetType } from "@/core/types/TargetType";
+import type { Describe } from "@/ui/hooks/express/describe";
+import type { EntityMap } from "../system/Entity";
+
+import { Entity } from "../system/Entity";
+import type { EffectUnit } from "../system/effect/EffectUnit";
+import type { TargetType } from "@/core/types/TargetType";
 import { newLog } from "@/ui/hooks/global/log";
-import { TriggerMap } from "@/core/types/object/trigger";
-import { ModifierOptions } from "../system/status/type";
+import type { TriggerMap } from "@/core/types/object/trigger";
+import type { ModifierOptions } from "../system/status/type";
 
 // 物品修饰器
 export type ItemModifierDef = {
@@ -94,7 +96,7 @@ export class Item extends Entity{
     }
 
     //使用item
-    use(_targets:Entity[]){
+    use(_targets:Item[]){
         //调用对象的use交互
         const interaction = this.interaction.find(item=>item.key == "use");
         if(!interaction){
@@ -104,6 +106,8 @@ export class Item extends Entity{
         return interaction
     }
 }
+
+
 
 export interface Interaction extends InteractionData {
     key:string

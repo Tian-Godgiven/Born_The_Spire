@@ -13,7 +13,8 @@
 <script setup lang='ts'>
     import type { Card } from '@/core/objects/item/Subclass/Card';
     import CardVue from '@/ui/components/object/Card.vue';
-    import { closePopUp, PopUp } from '@/ui/hooks/global/popUp';
+    import { closePopUp } from '@/ui/hooks/global/popUp';
+    import type { PopUp } from '@/ui/hooks/global/popUp';
 import Mask from '@/ui/components/global/Mask.vue';
     const {popUp,props} = defineProps<{popUp:PopUp,props:{cardPile:Card[]}}>()
     const {cardPile} = props

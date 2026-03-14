@@ -1,4 +1,4 @@
-import { AscensionConfig } from "@/core/types/AscensionConfig"
+import type { AscensionConfig } from "@/core/types/AscensionConfig"
 import { createAscensionModifier } from "@/core/utils/ascensionHelper"
 
 /**

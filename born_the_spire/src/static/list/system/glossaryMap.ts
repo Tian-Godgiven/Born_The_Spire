@@ -1,4 +1,4 @@
-import { Describe } from "@/ui/hooks/express/describe"
+import type { Describe } from "@/ui/hooks/express/describe"
 
 /**
  * 术语解释条目

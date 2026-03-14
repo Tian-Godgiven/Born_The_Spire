@@ -1,6 +1,6 @@
 import { ref } from "vue";
 import { Entity } from "../Entity";
-import { TriggerMap } from "@/core/types/object/trigger";
+import type { TriggerMap } from "@/core/types/object/trigger";
 import { createTriggerByTriggerMap } from "../trigger/Trigger";
 import { newError } from "@/ui/hooks/global/alert";
 // import { CurrentMapData, getMetaFromCurrentMap } from "@/static/list/system/currents/currentMap";

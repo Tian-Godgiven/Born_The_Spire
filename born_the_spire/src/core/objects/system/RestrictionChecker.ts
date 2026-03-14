@@ -1,6 +1,6 @@
-import { Entity } from "@/core/objects/system/Entity"
-import { Player } from "@/core/objects/target/Player"
-import {
+import type { Entity } from "@/core/objects/system/Entity"
+import type { Player } from "@/core/objects/target/Player"
+import type {
     ActiveAbility,
     ActiveAbilityRestrictions,
     AbilityCheckResult,

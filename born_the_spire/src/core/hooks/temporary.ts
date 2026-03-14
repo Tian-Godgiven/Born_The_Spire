@@ -1,9 +1,10 @@
-import { Card } from "@/core/objects/item/Subclass/Card"
-import { Organ } from "@/core/objects/target/Organ"
-import { Player } from "@/core/objects/target/Player"
-import { Entity } from "@/core/objects/system/Entity"
+import type { Card } from "@/core/objects/item/Subclass/Card"
+import type { Organ } from "@/core/objects/target/Organ"
+import type { Player } from "@/core/objects/target/Player"
+import type { Entity } from "@/core/objects/system/Entity"
 import { temporaryManager } from "@/core/objects/system/TemporaryManager"
 import { getLazyModule } from "@/core/utils/lazyLoader"
+import { createCard, createOrgan } from "@/core/factories"
 
 /**
  * 创建临时卡牌并添加到玩家手牌
@@ -12,11 +13,11 @@ import { getLazyModule } from "@/core/utils/lazyLoader"
  * @param removeOn 移除时机
  * @returns 创建的临时卡牌
  */
-export function addTemporaryCard(
+export async function addTemporaryCard(
     cardKey: string,
     player: Player,
     removeOn: "battleEnd" | "turnEnd" | "floorEnd" = "battleEnd"
-): Card {
+): Promise<Card> {
     const cardList = getLazyModule('cardList') as Record<string, any>
     const cardMap = cardList[cardKey]
 
@@ -24,8 +25,8 @@ export function addTemporaryCard(
         throw new Error(`[addTemporaryCard] 未找到卡牌: ${cardKey}`)
     }
 
-    // 创建卡牌实例
-    const card = new Card(cardMap)
+    // 使用工厂创建卡牌实例
+    const card = await createCard(cardMap)
     card.isTemporary = true
     card.temporaryRemoveOn = removeOn
     card.setOwner(player, cardMap.entry)
@@ -47,11 +48,11 @@ export function addTemporaryCard(
  * @param removeOn 移除时机
  * @returns 创建的临时器官
  */
-export function addTemporaryOrgan(
+export async function addTemporaryOrgan(
     organKey: string,
     owner: Entity,
     removeOn: "battleEnd" | "turnEnd" | "floorEnd" = "battleEnd"
-): Organ {
+): Promise<Organ> {
     const organList = getLazyModule('organList') as Record<string, any>
     const organMap = organList[organKey]
 
@@ -59,13 +60,13 @@ export function addTemporaryOrgan(
         throw new Error(`[addTemporaryOrgan] 未找到器官: ${organKey}`)
     }
 
-    // 创建器官实例
-    const organ = new Organ(organMap)
+    // 使用工厂创建器官实例
+    const organ = await createOrgan(organMap)
     organ.isTemporary = true
     organ.temporaryRemoveOn = removeOn
 
-    // 使用现有的器官获得逻辑
-    const { getOrgan } = require("@/core/objects/target/Organ")
+    // 使用现有的器官获得逻辑（动态导入避免循环依赖）
+    const { getOrgan } = await import("@/core/objects/target/Organ")
     getOrgan(owner, owner, organ) // source设为owner自己
 
     // 注册到临时管理器

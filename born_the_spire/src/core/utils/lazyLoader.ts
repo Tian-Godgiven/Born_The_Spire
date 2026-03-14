@@ -86,9 +86,10 @@ export async function getLazyModuleAsync<T>(key: string): Promise<T> {
 /**
  * 预加载所有已注册的懒加载模块
  * 应该在游戏启动时调用，提前加载所有数据
+ *
+ * 注意：核心类已经在 main.ts 中通过 import "@/core/preload" 预加载
  */
 export async function preloadAllLazyModules(): Promise<void> {
-
     const promises: Promise<void>[] = []
 
     for (const [, lazyModule] of lazyModules.entries()) {
@@ -119,68 +120,74 @@ export function clearLazyModules(): void {
 // ==================== 注册所有数据层模块 ====================
 
 /**
- * 注册 effectMap
+ * 初始化懒加载模块注册
+ * 必须在核心类预加载完成后调用
  */
-registerLazyModule('effectMap', async () => {
-    const module = await import('@/static/list/system/effectMap')
-    return module.effectMap
-})
+export function initLazyModuleRegistrations(): void {
+    /**
+     * 注册 effectMap
+     */
+    registerLazyModule('effectMap', async () => {
+        const module = await import('@/static/list/system/effectMap')
+        return module.effectMap
+    })
 
-/**
- * 注册 organList
- */
-registerLazyModule('organList', async () => {
-    const module = await import('@/static/list/target/organList')
-    return module.organList
-})
+    /**
+     * 注册 organList
+     */
+    registerLazyModule('organList', async () => {
+        const module = await import('@/static/list/target/organList')
+        return module.organList
+    })
 
-/**
- * 注册 cardList
- */
-registerLazyModule('cardList', async () => {
-    const module = await import('@/static/list/item/cardList')
-    return module.cardList
-})
+    /**
+     * 注册 cardList
+     */
+    registerLazyModule('cardList', async () => {
+        const module = await import('@/static/list/item/cardList')
+        return module.cardList
+    })
 
-/**
- * 注册 relicList
- */
-registerLazyModule('relicList', async () => {
-    const module = await import('@/static/list/item/relicList')
-    return module.relicList
-})
+    /**
+     * 注册 relicList
+     */
+    registerLazyModule('relicList', async () => {
+        const module = await import('@/static/list/item/relicList')
+        return module.relicList
+    })
 
-/**
- * 注册 potionList
- */
-registerLazyModule('potionList', async () => {
-    const module = await import('@/static/list/item/potionList')
-    return module.potionList
-})
+    /**
+     * 注册 potionList
+     */
+    registerLazyModule('potionList', async () => {
+        const module = await import('@/static/list/item/potionList')
+        return module.potionList
+    })
 
-/**
- * 注册 enemyList
- */
-registerLazyModule('enemyList', async () => {
-    const module = await import('@/static/list/target/enemyList')
-    return module.enemyList
-})
+    /**
+     * 注册 enemyList
+     */
+    registerLazyModule('enemyList', async () => {
+        const module = await import('@/static/list/target/enemyList')
+        return module.enemyList
+    })
 
-/**
- * 注册 eventList
- */
-registerLazyModule('eventList', async () => {
-    const module = await import('@/static/list/room/event/eventList')
-    return module.eventList
-})
+    /**
+     * 注册 eventList
+     */
+    registerLazyModule('eventList', async () => {
+        const module = await import('@/static/list/room/event/eventList')
+        return module.eventList
+    })
 
-/**
- * 注册 initList
- */
-registerLazyModule('initList', async () => {
-    const module = await import('@/static/list/room/init/initList')
-    return module.initList
-})
+    /**
+     * 注册 initList
+     */
+    registerLazyModule('initList', async () => {
+        const module = await import('@/static/list/room/init/initList')
+        return module.initList
+    })
+}
 
 // 可以继续添加更多数据层模块...
 

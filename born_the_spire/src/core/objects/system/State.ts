@@ -1,9 +1,9 @@
-import { Describe } from "@/ui/hooks/express/describe"
-import { Target } from "../target/Target"
+import type { Describe } from "@/ui/hooks/express/describe"
+import type { Target } from "../target/Target"
 import { newError } from "@/ui/hooks/global/alert"
-import { EffectUnit } from "./effect/EffectUnit"
-import { TriggerMap } from "@/core/types/object/trigger"
-import { EventParticipant } from "@/core/types/event/EventParticipant"
+import type { EffectUnit } from "./effect/EffectUnit"
+import type { TriggerMap } from "@/core/types/object/trigger"
+import type { EventParticipant } from "@/core/types/event/EventParticipant"
 import { nanoid } from "nanoid"
 
 // ==================== 类型定义 ====================

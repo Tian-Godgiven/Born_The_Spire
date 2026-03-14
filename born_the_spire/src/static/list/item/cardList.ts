@@ -1,5 +1,5 @@
 
-import { CardMap } from "@/core/objects/item/Subclass/Card"
+import type { CardMap } from "@/core/objects/item/Subclass/Card"
 
 export const cardList:CardMap[] = [{
     label:"打击",

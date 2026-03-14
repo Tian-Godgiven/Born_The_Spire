@@ -1,4 +1,4 @@
-import { RelicMap } from "@/core/objects/item/Subclass/Relic"
+import type { RelicMap } from "@/core/objects/item/Subclass/Relic"
 
 /**
  * 测试遗物：治疗药剂

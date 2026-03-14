@@ -4,7 +4,8 @@
  * 支持 Mod 扩展
  */
 
-import { Component, markRaw, reactive } from "vue"
+import { markRaw, reactive } from "vue"
+import type { Component } from "vue"
 
 /**
  * 组件布局模式

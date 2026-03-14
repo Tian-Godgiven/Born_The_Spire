@@ -12,7 +12,27 @@
       "Bash(sed:*)",
       "Bash(rm:*)",
       "Bash(cd D:/tian/Born_The_Spire/born_the_spire && npx vue-tsc --noEmit 2>&1 | head -30)",
-      "Bash(cd born_the_spire && depcruise --init --config .dependency-cruiser.js)"
+      "Bash(cd born_the_spire && depcruise --init --config .dependency-cruiser.js)",
+      "Bash(cd \"D:\\\\tian\\\\Born_The_Spire\\\\born_the_spire\\\\src\" && rm -rf components page router objects hooks)",
+      "Bash(cd \"D:\\\\tian\\\\Born_The_Spire\\\\born_the_spire\\\\src\\\\static\\\\list\" && rm -f cardList.ts effectList.ts enemyList.ts organList.ts potionList.ts playerList.ts moneyList.ts statusList.ts)",
+      "Bash(for file:*)",
+      "Bash(do echo:*)",
+      "Read(//d/tian/Born_The_Spire/born_the_spire/**)",
+      "Bash(done)",
+      "Bash(node fix-imports.js)",
+      "Bash(node fix-runtime-imports.js)",
+      "Bash(cd D:/tian/Born_The_Spire/born_the_spire && grep -n \"Effect\" src/core/objects/system/effect/EffectFunc.ts | grep -v \"EffectFunc\" | grep -v \"EffectParams\" | grep -v \"import\" | grep -v \"//\" | head -20)",
+      "Bash(head -500 \"D:\\\\tian\\\\Born_The_Spire\\\\born_the_spire\\\\circular.json\" | iconv -f UTF-16LE -t UTF-8 | grep -A 10 \"drawCard\")",
+      "Bash(printf '    makeEvent\\(when: \"\"before\"\" | \"\"after\"\", triggerKey: string, event: IActionEvent, effect: IEffect | null, triggerLevel: number\\){\\\\n        this.trigger.onTrigger\\(when, \"\"make\"\", triggerKey, {actionEvent:event, effect}, triggerLevel\\)\\\\n    }\\\\n    viaEvent\\(when: \"\"before\"\" | \"\"after\"\", triggerKey: string, event: IActionEvent, effect: IEffect | null, triggerLevel: number\\){\\\\n        this.trigger.onTrigger\\(when, \"\"via\"\", triggerKey, {actionEvent:event, effect}, triggerLevel\\)\\\\n    }\\\\n    takeEvent\\(when: \"\"before\"\" | \"\"after\"\", triggerKey: string, event: IActionEvent, effect: IEffect | null, triggerLevel: number\\){\\\\n        this.trigger.onTrigger\\(when, \"\"take\"\", triggerKey, {actionEvent:event, effect}, triggerLevel\\)\\\\n    }\\\\n')",
+      "Read(//tmp/**)",
+      "Bash(cp /tmp/entity_new.txt src/core/objects/system/Entity.ts)",
+      "Bash(grep -rn \"from.*Item\" src/core/objects/system/*.ts | grep -v \"type\")",
+      "Bash(grep -n \"from.*Item\" src/core/objects/system/effect/*.ts)",
+      "Bash(grep -n \"from.*modifier\" src/core/objects/system/effect/*.ts)",
+      "Bash(grep -n \"from.*modifier\" src/core/objects/system/status/*.ts)",
+      "Bash(node -e \"\nconst fs = require\\('fs'\\);\nconst buf = fs.readFileSync\\('D:/tian/Born_The_Spire/born_the_spire/circular.json'\\);\nconst content = buf.toString\\('utf16le'\\);\nconst idx = content.indexOf\\('Circular Dependencies'\\);\nif \\(idx >= 0\\) {\n  console.log\\(content.substring\\(idx, idx + 10000\\)\\);\n} else {\n  console.log\\('No circular section found'\\);\n}\n\")",
+      "Bash(node -e \"\nconst fs = require\\('fs'\\);\nconst buf = fs.readFileSync\\('D:/tian/Born_The_Spire/born_the_spire/circular.json'\\);\nconst content = buf.toString\\('utf16le'\\);\nconst idx = content.indexOf\\('Circular Dependencies'\\);\nif \\(idx >= 0\\) {\n  console.log\\(content.substring\\(idx, idx + 20000\\)\\);\n}\n\" | head -100)",
+      "Bash(node -e \"\nconst fs = require\\('fs'\\);\nconst buf = fs.readFileSync\\('D:/tian/Born_The_Spire/born_the_spire/circular.json'\\);\nconst content = buf.toString\\('utf16le'\\);\nconst idx = content.indexOf\\('Circular Dependencies'\\);\nconst section = content.substring\\(idx, idx + 20000\\);\nconst lines = section.split\\('\\\\n'\\).filter\\(line => \n  line.includes\\('effectMap'\\) || \n  line.includes\\('EffectUnit'\\) ||\n  line.includes\\('lazyLoader'\\)\n\\);\nconsole.log\\(lines.slice\\(0, 20\\).join\\('\\\\n'\\)\\);\n\")"
     ]
   }
 }

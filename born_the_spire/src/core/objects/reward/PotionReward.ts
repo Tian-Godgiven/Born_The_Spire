@@ -1,7 +1,10 @@
-import { Reward, RewardConfig } from "./Reward"
-import { Potion, PotionMap } from "@/core/objects/item/Subclass/Potion"
+import { Reward } from "./Reward"
+import type { RewardConfig } from "./Reward"
+import type { Potion } from "@/core/objects/item/Subclass/Potion"
+import type { PotionMap } from "@/core/objects/item/Subclass/Potion"
 import { newLog } from "@/ui/hooks/global/log"
 import { getLazyModule } from "@/core/utils/lazyLoader"
+import { createPotion } from "@/core/factories"
 
 /**
  * 药水奖励配置
@@ -51,7 +54,7 @@ export class PotionReward extends Reward {
             return
         }
 
-        this.potion = new Potion(this.potionConfig)
+        this.potion = await createPotion(this.potionConfig)
         newLog([`获得药水: ${this.potion.label}`])
 
         // 将药水添加到玩家背包

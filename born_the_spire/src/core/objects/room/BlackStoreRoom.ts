@@ -3,21 +3,23 @@
  * 支持买卖器官、遗物、药水，以及出售生命值
  */
 
-import { Room, RoomConfig } from "./Room"
+import { Room } from "./Room"
+import type { RoomConfig } from "./Room"
 import { nowPlayer } from "@/core/objects/game/run"
 import { newLog } from "@/ui/hooks/global/log"
 import type { OrganMap } from "@/core/objects/target/Organ"
 import type { Organ } from "@/core/objects/target/Organ"
-import { Relic } from "@/core/objects/item/Subclass/Relic"
+import type { Relic } from "@/core/objects/item/Subclass/Relic"
 import type { RelicMap } from "@/core/objects/item/Subclass/Relic"
 import type { PotionMap } from "@/core/objects/item/Subclass/Potion"
+import { createRelic } from "@/core/factories"
 import {
     blackStoreOrganPool,
     blackStoreRelicPool,
     blackStorePotionPool,
     selectRandomItemsFromPool,
-    RarityWeights
 } from "@/static/list/room/blackStore/blackStoreItemPool"
+import type { RarityWeights } from "@/static/list/room/blackStore/blackStoreItemPool"
 import { calculateBlackStorePrice } from "@/static/list/target/organQuality"
 import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
 import { getLazyModule } from "@/core/utils/lazyLoader"
@@ -391,8 +393,8 @@ export class BlackStoreRoom extends Room {
                 const relicConfig = relicList.find(r => r.key === relicData.key)
                 if (!relicConfig) throw new Error(`未找到遗物: ${relicData.key}`)
 
-                // 创建 Relic 实例
-                const relic = new Relic(relicConfig)
+                // 使用工厂创建 Relic 实例
+                const relic = await createRelic(relicConfig)
                 const relicModifier = getRelicModifier(nowPlayer)
                 relicModifier.acquireRelic(relic, nowPlayer)
                 newLog([`获得遗物: ${item.name}`])

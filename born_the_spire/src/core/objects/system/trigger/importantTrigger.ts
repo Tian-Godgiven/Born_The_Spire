@@ -1,5 +1,5 @@
-import { TriggerObj } from "@/core/types/object/trigger"
-import { Trigger } from "./Trigger"
+import type { TriggerObj } from "@/core/types/object/trigger"
+import type { Trigger } from "./Trigger"
 import { newError } from "@/ui/hooks/global/alert"
 
 export type ImportantTrigger = {

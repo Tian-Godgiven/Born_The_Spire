@@ -1,16 +1,26 @@
-import { Card, drawCardFromDrawPile } from "../item/Subclass/Card";
 import type { Potion } from "../item/Subclass/Potion"
 import type { Relic } from "../item/Subclass/Relic"
-import { nanoid } from "nanoid";
-import { Chara, CharaMap } from "./Target";
-import { Entity } from "../system/Entity";
-import { washPile } from "@/core/effects/card";
-import { reactive } from "vue";
-import { getReserveModifier } from "../system/modifier/ReserveModifier";
-import { getStatusValue } from "../system/status/Status";
+import type { Card } from "../item/Subclass/Card";
+import type { CharaMap } from "./Target";
+import type { Entity } from "../system/Entity";
+
+
+
+import { drawCardFromDrawPile } from "../item/Subclass/Card";
 import { getPotionModifier } from "../system/modifier/PotionModifier";
 import { getCardModifier } from "../system/modifier/CardModifier";
 import { getRelicModifier } from "../system/modifier/RelicModifier";
+import { washPile } from "@/core/effects/card";
+import { Chara } from "./Target";
+
+import { getReserveModifier } from "../system/modifier/ReserveModifier";
+import { getStatusValue } from "../system/status/Status";
+
+import { nanoid } from "nanoid";
+import { reactive } from "vue";
+
+console.log("开始构建Player文件")
+console.trace()
 
 export type PlayerMap = CharaMap & {
     key:string
@@ -29,7 +39,7 @@ export type CardPiles = {
     discardPile:Card[],
     exhaustPile:Card[]
 }
-
+console.log("开始构建player对象")
 // 每一局游戏中，玩家扮演的角色
 export class Player extends Chara{
     public readonly targetType = 'player' as const  // 类型标识
@@ -246,6 +256,3 @@ export class Player extends Chara{
         }
     }
 }
-
-
-

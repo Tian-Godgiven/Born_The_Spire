@@ -3,7 +3,7 @@
  * 提供基于白名单、黑名单和稀有度权重的遗物选择功能
  */
 
-import { RelicMap } from "@/core/objects/item/Subclass/Relic"
+import type { RelicMap } from "@/core/objects/item/Subclass/Relic"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { randomWeightedChoices, randomChoices, randomChoicesWithReplacement } from "@/core/hooks/random"
 

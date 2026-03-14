@@ -2,7 +2,7 @@
  * 初始化房间类型定义
  */
 
-import { Component } from "vue"
+import type { Component } from "vue"
 
 /**
  * 初始化选项配置

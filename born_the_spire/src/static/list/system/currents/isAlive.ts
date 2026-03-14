@@ -1,4 +1,4 @@
-import { CurrentMap } from "@/core/types/CurrentMapData"
+import type { CurrentMap } from "@/core/types/CurrentMapData"
 import type { Chara } from "@/core/objects/target/Target"
 import { doEvent } from "@/core/objects/system/ActionEvent"
 import { newLog } from "@/ui/hooks/global/log"

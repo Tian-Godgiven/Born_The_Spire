@@ -1,5 +1,5 @@
 import { handleEventEntity, doEvent, ActionEvent } from "@/core/objects/system/ActionEvent";
-import { EffectFunc } from "@/core/objects/system/effect/EffectFunc";
+import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc";
 import { newError } from "@/ui/hooks/global/alert";
 import { isEntity } from "@/core/utils/typeGuards";
 import { Effect } from "@/core/objects/system/effect/Effect";

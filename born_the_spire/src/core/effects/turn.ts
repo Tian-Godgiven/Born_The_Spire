@@ -1,16 +1,19 @@
-import { Battle } from "@/core/objects/game/battle";
-import { doEvent } from "@/core/objects/system/ActionEvent";
-import { Player } from "@/core/objects/target/Player";
-import { Chara } from "@/core/objects/target/Target";
-import { EffectUnit } from "../objects/system/effect/EffectUnit";
-import { handleTurnStart, handleTurnEnd } from "@/core/hooks/activeAbility";
+import type { Battle } from "@/core/objects/game/battle";
+import type { Player } from "@/core/objects/target/Player";
+import type { Chara } from "@/core/objects/target/Target";
+import type { EffectUnit } from "../objects/system/effect/EffectUnit";
+import { isPlayer } from "../utils/typeGuards";
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier";
 import { getRelicModifier } from "@/core/objects/system/modifier/RelicModifier";
+import { doEvent } from "@/core/objects/system/ActionEvent";
+import { handleTurnStart, handleTurnEnd } from "@/core/hooks/activeAbility";
+
+
 
 //角色开始回合
 export async function startCharaTurn(chara:Chara,battle:Battle){
     //如果是玩家
-    if(chara instanceof Player){
+    if(isPlayer(chara)){
         await startPlayerTurn(chara,battle)
         return;
     }
@@ -19,7 +22,7 @@ export async function startCharaTurn(chara:Chara,battle:Battle){
 //角色结束回合
 export async function endCharaTurn(chara:Chara,battle:Battle){
     //如果是玩家
-    if(chara instanceof Player){
+    if(isPlayer(chara)){
         await endPlayerTurn(chara,battle)
         return;
     }
@@ -84,7 +87,7 @@ export async function endTurn(chara:Chara,battle:Battle,effectUnits:EffectUnit[]
  */
 async function handleActiveAbilitiesTurnStart(entity: Chara) {
     // 处理器官的主动能力
-    if (entity instanceof Player) {
+    if (isPlayer(entity)) {
         const organModifier = getOrganModifier(entity)
         const organs = organModifier.getOrgans()
 
@@ -111,7 +114,7 @@ async function handleActiveAbilitiesTurnStart(entity: Chara) {
  */
 async function handleActiveAbilitiesTurnEnd(entity: Chara) {
     // 处理器官的主动能力
-    if (entity instanceof Player) {
+    if (isPlayer(entity)) {
         const organModifier = getOrganModifier(entity)
         const organs = organModifier.getOrgans()
 

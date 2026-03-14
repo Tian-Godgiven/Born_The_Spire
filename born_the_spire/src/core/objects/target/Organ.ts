@@ -1,15 +1,17 @@
 import { Entity } from "../system/Entity";
-import { Interaction, ItemMap } from "../item/Item";
+import type { ItemMap, Interaction } from "../item/Item";
+
+console.log('[Organ.ts] 模块开始执行 - Entity 导入完成:', typeof Entity)
 import { getOrganModifier } from "../system/modifier/OrganModifier";
 import { doEvent } from "../system/ActionEvent";
 import { resolveTriggerEventTarget } from "../system/trigger/Trigger";
-import { OrganRarity, OrganPart } from "@/core/types/OrganTypes";
+import type { OrganRarity, OrganPart } from "@/core/types/OrganTypes";
 import { calculateAbsorbValue } from "@/static/list/target/organQuality";
-import { TargetMap } from "./Target";
-import { Describe } from "@/ui/hooks/express/describe";
-import { EffectUnit } from "../system/effect/EffectUnit";
-import { Component } from "vue";
-import { ActiveAbility } from "@/core/types/ActiveAbility";
+import type { TargetMap } from "./Target";
+import type { Describe } from "@/ui/hooks/express/describe";
+import type { EffectUnit } from "../system/effect/EffectUnit";
+import type { Component } from "vue";
+import type { ActiveAbility } from "@/core/types/ActiveAbility";
 
 /**
  * 器官升级里程碑配置
@@ -64,6 +66,8 @@ export type OrganMap = ItemMap&TargetMap&{
     // 主动能力配置
     activeAbilities?: ActiveAbility[]
 }
+
+console.log('[Organ.ts] 准备定义 Organ 类，Entity =', typeof Entity)
 
 export class Organ extends Entity{
     public readonly targetType = 'organ' as const  // 类型标识

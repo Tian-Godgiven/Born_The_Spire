@@ -1,4 +1,5 @@
-import { Item, ItemMap } from "../Item";
+import { Item } from "../Item";
+import type { ItemMap } from "../Item";
 import { Entity } from "../../system/Entity";
 import { getPotionModifier } from "../../system/modifier/PotionModifier";
 

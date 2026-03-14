@@ -1,6 +1,6 @@
-import { Card } from "@/core/objects/item/Subclass/Card"
+import type { Card } from "@/core/objects/item/Subclass/Card"
 import { getStatusValue, ifHaveStatus } from "@/core/objects/system/status/Status"
-// import { Organ } from "@/core/objects/target/Organ"  // 移除以避免循环依赖
+import type { Organ } from "@/core/objects/target/Organ"  // 移除以避免循环依赖
 
 /**
  * 卡牌筛选器（通用工具）

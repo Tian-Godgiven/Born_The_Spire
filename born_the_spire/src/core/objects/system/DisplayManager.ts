@@ -1,10 +1,11 @@
-import { Entity } from "@/core/objects/system/Entity"
-import {
+import type { Entity } from "@/core/objects/system/Entity"
+import type {
     ActiveAbility,
     ActiveDisplayConfig,
     ActiveBadgeConfig,
     AbilityCheckResult
 } from "@/core/types/ActiveAbility"
+
 import { usageTracker } from "./UsageTracker"
 import { RestrictionChecker } from "./RestrictionChecker"
 import { getStatusValue } from "@/core/objects/system/status/Status"

@@ -2,7 +2,8 @@
  * 器官部位系统
  */
 
-import { OrganPart, PartConfig } from "@/core/types/OrganTypes"
+import { OrganPart } from "@/core/types/OrganTypes"
+import type { PartConfig } from "@/core/types/OrganTypes"
 
 /**
  * 部位配置列表

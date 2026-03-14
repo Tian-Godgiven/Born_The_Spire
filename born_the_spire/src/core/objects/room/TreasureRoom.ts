@@ -3,11 +3,14 @@
  * 玩家进入后可以打开宝箱获得金钱、遗物和印记奖励
  */
 
-import { Room, RoomConfig } from "./Room"
+import { Room } from "./Room"
+import type { RoomConfig } from "./Room"
 import { newLog } from "@/ui/hooks/global/log"
 import { Reward } from "@/core/objects/reward/Reward"
-import { applyVariance, VarianceConfig } from "@/core/hooks/variance"
-import { selectRelicsWithFilter, RelicFilterConfig } from "@/core/utils/relicFilter"
+import { applyVariance } from "@/core/hooks/variance"
+import type { VarianceConfig } from "@/core/hooks/variance"
+import { selectRelicsWithFilter } from "@/core/utils/relicFilter"
+import type { RelicFilterConfig } from "@/core/utils/relicFilter"
 
 /**
  * 宝箱房间配置

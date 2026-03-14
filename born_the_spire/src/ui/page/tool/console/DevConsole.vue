@@ -289,7 +289,7 @@ async function addTemporaryCard(cardKey: string, removeOn: string = 'battleEnd')
         const { addTemporaryCard: addTempCard } = await import('@/core/hooks/temporary')
         const player = nowPlayer
 
-        const card = addTempCard(cardKey, player, removeOn as any)
+        const card = await addTempCard(cardKey, player, removeOn as any)
         addOutput(`✓ 成功添加临时卡牌: ${card.label} (${removeOn})`, 'result')
     } catch (error: any) {
         addOutput(`添加临时卡牌失败: ${error.message}`, 'error')
@@ -314,7 +314,7 @@ async function addTemporaryOrgan(organKey: string, removeOn: string = 'battleEnd
         const { addTemporaryOrgan: addTempOrgan } = await import('@/core/hooks/temporary')
         const player = nowPlayer
 
-        const organ = addTempOrgan(organKey, player, removeOn as any)
+        const organ = await addTempOrgan(organKey, player, removeOn as any)
         addOutput(`✓ 成功添加临时器官: ${organ.label} (${removeOn})`, 'result')
     } catch (error: any) {
         addOutput(`添加临时器官失败: ${error.message}`, 'error')

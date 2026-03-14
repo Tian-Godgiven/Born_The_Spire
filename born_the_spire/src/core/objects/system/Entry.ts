@@ -1,5 +1,5 @@
-import { Describe } from "@/ui/hooks/express/describe"
-import { Entity } from "@/core/objects/system/Entity"
+import type { Describe } from "@/ui/hooks/express/describe"
+import type { Entity } from "@/core/objects/system/Entity"
 import { cardEntryDefinitions } from "./entry/CardEntry"
 import { organEntryDefinitions } from "./entry/OrganEntry"
 

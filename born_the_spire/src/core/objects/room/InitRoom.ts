@@ -4,12 +4,13 @@
  * 与普通事件房间分离，避免污染事件池
  */
 
-import { Room, RoomConfig } from "./Room"
+import { Room } from "./Room"
+import type { RoomConfig } from "./Room"
 import { Choice, ChoiceGroup } from "../system/Choice"
-import { InitMap } from "@/core/types/InitMapData"
+import type { InitMap } from "@/core/types/InitMapData"
 import { executeEventEffects } from "@/static/list/room/event/eventEffectMap"
 import { newLog } from "@/ui/hooks/global/log"
-import { Component } from "vue"
+import type { Component } from "vue"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 
 /**

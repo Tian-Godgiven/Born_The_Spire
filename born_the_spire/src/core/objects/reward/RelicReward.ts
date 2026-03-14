@@ -1,7 +1,10 @@
-import { Reward, RewardConfig } from "./Reward"
-import { Relic, RelicMap } from "@/core/objects/item/Subclass/Relic"
+import { Reward } from "./Reward"
+import type { RewardConfig } from "./Reward"
+import type { Relic } from "@/core/objects/item/Subclass/Relic"
+import type { RelicMap } from "@/core/objects/item/Subclass/Relic"
 import { newLog } from "@/ui/hooks/global/log"
 import { getLazyModule } from "@/core/utils/lazyLoader"
+import { createRelic } from "@/core/factories"
 
 /**
  * 遗物奖励配置
@@ -51,7 +54,7 @@ export class RelicReward extends Reward {
             return
         }
 
-        this.relic = new Relic(this.relicConfig)
+        this.relic = await createRelic(this.relicConfig)
         newLog([`获得遗物: ${this.relic.label}`])
 
         // TODO: 将遗物添加到玩家

@@ -1,4 +1,4 @@
-import { Describe } from "@/ui/hooks/express/describe"
+import type { Describe } from "@/ui/hooks/express/describe"
 
 type Entry = {
     label: string        // 显示名称

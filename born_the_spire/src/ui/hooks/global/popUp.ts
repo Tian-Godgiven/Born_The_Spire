@@ -1,4 +1,5 @@
-import { reactive, ref, ShallowRef } from "vue"
+import { reactive, ref } from "vue"
+import type { ShallowRef } from "vue"
 import { nanoid } from "nanoid"
 
 export let popUpList = reactive<PopUp[]>([])

@@ -1,4 +1,5 @@
-import { Entity } from "../Entity"
+import { isEntity } from "@/core/utils/typeGuards"
+import type { Entity } from "../Entity"
 import { entryDefinitions } from "../Entry"
 import { toRaw } from "vue"
 
@@ -109,7 +110,7 @@ export class EntryModifier {
     private resolveOwnersOwner(): Entity | undefined {
         // 使用鸭子类型判断：检查是否有 owner 属性（Card 和 Organ 都有）
         const maybeOwner = (this.owner as any).owner
-        if (maybeOwner instanceof Entity) {
+        if (isEntity(maybeOwner)) {
             return maybeOwner
         }
         return undefined

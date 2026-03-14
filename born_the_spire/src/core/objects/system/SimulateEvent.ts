@@ -1,8 +1,9 @@
 import { ActionEvent } from "./ActionEvent"
 import { Effect } from "./effect/Effect"
-import { EffectUnit, createEffectByUnit } from "./effect/EffectUnit"
+import { createEffectByUnit } from "./effect/EffectUnit"
+import type { EffectUnit } from "./effect/EffectUnit"
 import { Entity } from "./Entity"
-import { EventParticipant } from "@/core/types/event/EventParticipant"
+import type { EventParticipant } from "@/core/types/event/EventParticipant"
 import { isEntity } from "@/core/utils/typeGuards"
 import { cloneDeep } from "lodash"
 

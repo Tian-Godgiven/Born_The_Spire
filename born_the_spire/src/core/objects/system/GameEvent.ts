@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid"
 import { reactive } from "vue"
-import { Component } from "vue"
+import type { Component } from "vue"
 import { Choice, ChoiceGroup } from "./Choice"
 
 /**

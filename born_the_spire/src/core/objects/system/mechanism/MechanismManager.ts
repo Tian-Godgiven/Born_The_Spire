@@ -3,8 +3,8 @@
  * 管理单个实体的所有游戏机制（护甲、能量护盾等）
  */
 
-import { Entity } from "../Entity"
-import { MechanismVote, TriggerRemover } from "@/static/registry/mechanismRegistry"
+import type { Entity } from "../Entity"
+import type { MechanismVote, TriggerRemover } from "@/static/registry/mechanismRegistry"
 import { markRaw } from "vue"
 
 /**

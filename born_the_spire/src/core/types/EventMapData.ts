@@ -2,8 +2,8 @@
  * 事件配置类型定义
  */
 
-import { Component } from "vue"
-import { RoomAvailableCondition } from "@/static/registry/roomRegistry"
+import type { Component } from "vue"
+import type { RoomAvailableCondition } from "@/static/registry/roomRegistry"
 
 /**
  * 事件选项配置

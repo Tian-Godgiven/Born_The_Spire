@@ -1,4 +1,5 @@
-import { isRef, Ref } from "vue";
+import { isRef } from "vue";
+import type { Ref } from "vue"
 
 export function getRefValue(refValue:Ref|any){
     if(isRef(refValue)){

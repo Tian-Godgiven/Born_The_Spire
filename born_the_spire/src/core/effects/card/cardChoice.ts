@@ -1,4 +1,4 @@
-import { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
+import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import { Player } from "@/core/objects/target/Player"
 import { chooseFromRandomCards, chooseCardsToUpgrade, chooseCardsToRemove, chooseCardToDuplicate, showCardChoice } from "@/ui/hooks/interaction/cardChoice"
 import { getCardModifier } from "@/core/objects/system/modifier/CardModifier"

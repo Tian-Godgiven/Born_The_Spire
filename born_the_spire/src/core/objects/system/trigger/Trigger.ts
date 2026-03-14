@@ -1,11 +1,14 @@
-import { ActionEvent, doEvent } from "../ActionEvent";
+
+import type { TriggerEventConfig, TriggerFunc, TriggerMap, TriggerObj, TriggerType, TriggerUnit } from "@/core/types/object/trigger";
+import type { Entity } from "../Entity";
+import { getDefaultTrigger, type DefaultTrigger } from "./defaultTrigger";
+import { appendImportantTrigger, createImportantTrigger, type ImportantTrigger } from "./importantTrigger";
+import type { ActionEvent } from "../ActionEvent";
+import type { Effect } from "../effect/Effect";
+import { doEvent } from "../ActionEvent";
 import { nanoid } from "nanoid";
-import { TriggerEventConfig, TriggerFunc, TriggerMap, TriggerObj, TriggerType, TriggerUnit } from "@/core/types/object/trigger";
-import { Effect } from "../effect/Effect";
-import { Entity } from "../Entity";
-import { DefaultTrigger, getDefaultTrigger } from "./defaultTrigger";
-import { appendImportantTrigger, createImportantTrigger, ImportantTrigger } from "./importantTrigger";
 import { isEntity } from "@/core/utils/typeGuards";
+import { newError } from "@/ui/hooks/global/alert";
 
 // 触发器是基于事件总线的，一系列在个体上的响应器
 // 触发器的实现原理是：在某一个时刻(trigger_key)执行对应时刻的回调函数
@@ -92,6 +95,7 @@ export class Trigger{
         return this._importantTrigger.filter(i=>i.importantKey == importantKey)
     }
 }
+
 
 //通过triggerMap生成触发器
 export function createTriggerByTriggerMap(source:Entity,target:Entity, item:TriggerMap[number]){
@@ -185,8 +189,9 @@ export function resolveTriggerEventTarget(
             }
             return triggerEffect;
         default:
-            if (targetType instanceof Entity) {
-                return targetType;
+            // 检查是否是实体（通过 participantType 而不是 instanceof）
+            if (typeof targetType === 'object' && targetType !== null && 'participantType' in targetType && targetType.participantType === 'entity') {
+                return targetType as Entity;
             }
             throw new Error("不被支持的目标类型:"+targetType)
     }

@@ -1,4 +1,4 @@
-import { CurrentMap } from "@/core/types/CurrentMapData"
+import type { CurrentMap } from "@/core/types/CurrentMapData"
 import { healthMap } from "./health"
 import { energyMap } from "./energy"
 import { isAliveMap } from "./isAlive"

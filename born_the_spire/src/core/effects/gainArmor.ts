@@ -2,7 +2,7 @@
  * 获得护甲效果
  */
 
-import { EffectFunc } from "@/core/objects/system/effect/Effect"
+import type { EffectFunc } from "@/core/objects/system/effect/Effect"
 import { handleEventEntity } from "@/core/objects/system/ActionEvent"
 import { Target } from "@/core/objects/target/Target"
 import { newLog } from "@/ui/hooks/global/log"

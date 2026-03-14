@@ -9,7 +9,8 @@
 <script setup lang='ts'>
     import { Chara, Target } from '@/core/objects/target/Target';
     import { ref } from 'vue';
-    import { TargetChooseState, targetManager } from '@/ui/interaction/target/targetManager';
+    import { targetManager } from '@/ui/interaction/target/targetManager';
+    import type { TargetChooseState } from '@/ui/interaction/target/targetManager';
     import { chooseATarget, nowChooseAction } from '@/ui/interaction/target/chooseTarget';
     import ChooseBox from './ChooseBox.vue';
     const {target} = defineProps<{target:Chara}>()

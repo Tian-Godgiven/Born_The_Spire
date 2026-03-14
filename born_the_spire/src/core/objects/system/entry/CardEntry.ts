@@ -1,8 +1,9 @@
-import { Describe } from "@/ui/hooks/express/describe"
-import { Entity } from "@/core/objects/system/Entity"
-import { Card } from "@/core/objects/item/Subclass/Card"
-import { Player } from "@/core/objects/target/Player"
+import type { Describe } from "@/ui/hooks/express/describe"
+import type { Entity } from "@/core/objects/system/Entity"
+import type { Card } from "@/core/objects/item/Subclass/Card"
+import type { Player } from "@/core/objects/target/Player"
 import { createTriggerByTriggerMap } from "@/core/objects/system/trigger/Trigger"
+import { isCard, isPlayer } from "@/core/utils/typeGuards"
 
 /**
  * 卡牌专用词条定义
@@ -11,6 +12,20 @@ export type CardEntryDefinition = {
     describe: Describe
     conflictsWith?: string[]
     onApply: (owner: Entity, ownersOwner?: Entity) => Array<() => void>
+}
+
+//判断通用条件函数，返回断言后的 card 和 player，失败返回 null
+function checkOwnerTypes(
+    owner: Entity,
+    ownersOwner: Entity | undefined
+): { card: Card; player: Player } | null {
+    if (!isCard(owner)) {
+        return null
+    }
+    if (!ownersOwner || !isPlayer(ownersOwner)) {
+        return null
+    }
+    return { card: owner, player: ownersOwner }
 }
 
 /**
@@ -22,15 +37,11 @@ export const cardEntryDefinitions: Record<string, CardEntryDefinition> = {
         describe: ["使用后，将其移入消耗堆，而非弃牌堆"],
         conflictsWith: ["card_void"],  // 与其他"使用后去向"词条互斥
         onApply: (owner, ownersOwner) => {
-            // owner 应该是 Card，ownersOwner 应该是 Player
-            if (!(owner instanceof Card)) {
+            const result = checkOwnerTypes(owner, ownersOwner)
+            if (!result) {
                 return []
             }
-            if (!(ownersOwner instanceof Player)) {
-                return []
-            }
-
-            const card = owner
+            const { card } = result
 
             // 保存原方法
             const originalMethod = card.getAfterUseEffect.bind(card)
@@ -57,16 +68,11 @@ export const cardEntryDefinitions: Record<string, CardEntryDefinition> = {
         describe: ["若回合结束时仍在手牌中，会移入消耗堆而非弃牌堆"],
         conflictsWith: ["card_exhaust"],  // 与 exhaust 词条互斥
         onApply: (owner, ownersOwner) => {
-            // owner 应该是 Card，ownersOwner 应该是 Player
-            if (!(owner instanceof Card)) {
+            const result = checkOwnerTypes(owner, ownersOwner)
+            if (!result) {
                 return []
             }
-            if (!(ownersOwner instanceof Player)) {
-                return []
-            }
-
-            const card = owner
-            const player = ownersOwner
+            const { card, player } = result
 
             // 使用声明式触发器定义
             const triggerObj = createTriggerByTriggerMap(
@@ -100,16 +106,11 @@ export const cardEntryDefinitions: Record<string, CardEntryDefinition> = {
     card_inherent: {
         describe: ["战斗开始时，必定会抽到此卡片"],
         onApply: (owner, ownersOwner) => {
-            // owner 应该是 Card，ownersOwner 应该是 Player
-            if (!(owner instanceof Card)) {
+            const result = checkOwnerTypes(owner, ownersOwner)
+            if (!result) {
                 return []
             }
-            if (!(ownersOwner instanceof Player)) {
-                return []
-            }
-
-            // const _card = owner
-            const player = ownersOwner
+            const { player } = result
 
             // 在 Player 上添加触发器，监听战斗开始
             // 使用 onlyKey 确保即使有多张固有卡牌，也只有一个触发器

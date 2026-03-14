@@ -1,5 +1,5 @@
-import { Enemy } from "@/core/objects/target/Enemy"
-import { Player } from "@/core/objects/target/Player"
+import type { Enemy } from "@/core/objects/target/Enemy"
+import type { Player } from "@/core/objects/target/Player"
 import { selectAction } from "@/core/objects/system/EnemyBehavior"
 import { newLog } from "@/ui/hooks/global/log"
 

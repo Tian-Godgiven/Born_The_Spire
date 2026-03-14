@@ -126,7 +126,8 @@
 <script setup lang='ts'>
 import { computed, ref } from 'vue'
 import { nowGameRun, nowPlayer } from '@/core/objects/game/run'
-import { BlackStoreRoom, StoreItem } from '@/core/objects/room/BlackStoreRoom'
+import { BlackStoreRoom } from '@/core/objects/room/BlackStoreRoom'
+import type { StoreItem } from '@/core/objects/room/BlackStoreRoom'
 import { getReserveModifier } from '@/core/objects/system/modifier/ReserveModifier'
 import { getOrganModifier } from '@/core/objects/system/modifier/OrganModifier'
 import { Organ } from '@/core/objects/target/Organ'

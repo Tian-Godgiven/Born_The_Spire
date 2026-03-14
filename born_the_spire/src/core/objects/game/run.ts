@@ -1,11 +1,15 @@
-import { GameRun } from "@/core/objects/system/GameRun";
-import { Player } from "@/core/objects/target/Player";
-import router from "@/ui/router";
-import { reactive } from "vue";
-import { addToPlayerTeam } from "./battle";
 import type { Room } from "../room/Room";
+import type { Player } from "@/core/objects/target/Player";
+
+import { GameRun } from "@/core/objects/system/GameRun";
+
+// import { addToPlayerTeam } from "./battle";
 import { getLazyModule } from "@/core/utils/lazyLoader";
 import { doEvent } from "@/core/objects/system/ActionEvent";
+import { createPlayer } from "@/core/factories";
+
+import { reactive } from "vue";
+import router from "@/ui/router";
 
 //当前的局（使用 reactive 包装，内部属性自动响应式）
 export const nowGameRun = reactive<GameRun>(new GameRun())
@@ -71,10 +75,10 @@ export async function enterRoom(room: Room | string, layer?: number): Promise<vo
 }
 
 // 初始化函数，在懒加载完成后调用
-export function initDefaultGameObjects() {
+export async function initDefaultGameObjects() {
     // nowPlayer 已经在模块初始化时创建，这里只需要重新赋值
     const playerList = getLazyModule<Record<string, any>>('playerList')
-    const defaultPlayer = new Player(playerList["default"])
+    const defaultPlayer = await createPlayer(playerList["default"])
     nowPlayer = reactive(defaultPlayer) as unknown as Player
 
     const defaultGameRun = new GameRun()
@@ -151,7 +155,7 @@ export async function startNewRun(seed?: string, ascensionLevel: number = 0, ini
     //创建本局角色
     const playerList = getLazyModule<Record<string, any>>('playerList')
     const map = playerList["default"]
-    const player = new Player(map)
+    const player = await createPlayer(map)
     nowPlayer = reactive(player) as unknown as Player  // 重新赋值，不要用 Object.assign
 
     //添加到队伍中

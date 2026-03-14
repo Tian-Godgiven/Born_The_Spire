@@ -9,7 +9,8 @@
  * 特殊的房间类型，用于让玩家选择下一个要进入的房间
  */
 
-import { Room, RoomConfig } from "./Room"
+import { Room } from "./Room"
+import type { RoomConfig } from "./Room"
 import { Choice, ChoiceGroup } from "../system/Choice"
 import { roomRegistry } from "@/static/registry/roomRegistry"
 import { nowGameRun, enterRoom } from "@/core/objects/game/run"

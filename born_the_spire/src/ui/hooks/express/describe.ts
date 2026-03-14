@@ -1,8 +1,9 @@
 import { toString } from "lodash";
 import { newError } from "../global/alert";
-import { Status } from "@/core/objects/system/status/Status";
+import type { Status } from "@/core/objects/system/status/Status";
 import { toRaw } from "vue";
 import { glossaryMap } from "@/static/list/system/glossaryMap";
+import { isStatus } from "@/core/utils/typeGuards";
 
 //对象的描述，存储为数据，使用时翻译为对应的字符串
 export type Describe = (
@@ -178,14 +179,15 @@ function getStatusDescribe(keys:string[],target:Record<string,any>){
                 if(typeof value == "object"){
                     //消除代理
                     const rawValue = toRaw(value)
-                    if(value instanceof Status){
+                    // 使用 typeGuard 检查是否为 Status 对象
+                    if(isStatus(rawValue)){
                         result = toString(rawValue.value)
                         break;
                     }
                     else{
                         item = rawValue
                     }
-                    
+
                 }
                 else{
                     result = toString(value)

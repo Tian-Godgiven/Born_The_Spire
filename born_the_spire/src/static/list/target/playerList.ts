@@ -1,4 +1,4 @@
-import { PlayerMap } from "@/core/objects/target/Player"
+import type { PlayerMap } from "@/core/objects/target/Player"
 
 export const playerList:Record<string,PlayerMap> = {
     "default":{

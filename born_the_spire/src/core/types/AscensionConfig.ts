@@ -1,4 +1,4 @@
-import { TriggerMap } from "./object/trigger"
+import type { TriggerMap } from "./object/trigger"
 
 /**
  * 进阶系统配置

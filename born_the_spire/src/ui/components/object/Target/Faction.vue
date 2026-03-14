@@ -9,7 +9,8 @@
 <script setup lang='ts'>
     import { Chara } from '@/core/objects/target/Target';
     import { computed, ref } from 'vue';
-    import { TargetChooseState, targetManager } from '@/ui/interaction/target/targetManager';
+    import { targetManager } from '@/ui/interaction/target/targetManager';
+    import type { TargetChooseState } from '@/ui/interaction/target/targetManager';
     import { chooseAFaction } from '@/ui/interaction/target/chooseTarget';
     import { nowPlayer } from '@/core/objects/game/run';
     import CharaVue from './Chara/Chara.vue';

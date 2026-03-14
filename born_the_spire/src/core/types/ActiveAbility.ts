@@ -1,6 +1,6 @@
 import { Entity } from "@/core/objects/system/Entity"
-import { EffectUnit } from "@/core/objects/system/effect/EffectUnit"
-import { Describe } from "@/ui/hooks/express/describe"
+import type { EffectUnit } from "@/core/objects/system/effect/EffectUnit"
+import type { Describe } from "@/ui/hooks/express/describe"
 
 /**
  * 主动能力触发配置

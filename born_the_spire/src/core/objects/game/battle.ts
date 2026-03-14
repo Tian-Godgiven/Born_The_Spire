@@ -1,16 +1,20 @@
-import { Enemy } from "@/core/objects/target/Enemy"
-import { Player } from "@/core/objects/target/Player"
-import { Chara } from "@/core/objects/target/Target"
+import type { Enemy } from "@/core/objects/target/Enemy"
+import type { Player } from "@/core/objects/target/Player"
+import type { Chara } from "@/core/objects/target/Target"
 import { nanoid } from "nanoid"
 import { ref } from "vue"
-import { nowPlayer } from "./run"
-import { endCharaTurn, startCharaTurn } from "@/core/effects/turn"
-import { nextTick } from "vue"
-import { doEvent } from "../system/ActionEvent"
-import { prepareEnemyIntents, executeAllEnemiesTurn } from "./enemyTurn"
-import { newLog } from "@/ui/hooks/global/log"
 import { showDisplayMessage } from "@/ui/hooks/global/displayMessage"
 import { showBattleDefeat } from "@/ui/hooks/interaction/battleDefeat"
+import { isEnemy, isPlayer } from "@/core/utils/typeGuards"
+import { nextTick } from "vue"
+import { newLog } from "@/ui/hooks/global/log"
+import { doEvent } from "../system/ActionEvent"
+import { nowPlayer } from "./run"
+import { endCharaTurn, startCharaTurn } from "@/core/effects/turn"
+
+import { prepareEnemyIntents, executeAllEnemiesTurn } from "./enemyTurn"
+
+
 
 export class Battle {
     public readonly __key:string = nanoid()
@@ -38,9 +42,9 @@ export class Battle {
      * 获取存活的敌人列表
      */
     getAliveEnemies(): Enemy[] {
-        return this.enemyTeam.filter(chara =>
-            chara instanceof Enemy && chara.current.isAlive?.value === 1
-        ) as Enemy[]
+        return this.enemyTeam.filter(chara =>{
+            return isEnemy(chara) && chara.current.isAlive?.value === 1
+        }) as Enemy[]
     }
 
     /**
@@ -48,7 +52,7 @@ export class Battle {
      */
     getAlivePlayers(): Player[] {
         return this.playerTeam.filter(chara =>
-            chara instanceof Player && chara.current.isAlive?.value === 1
+            isPlayer(chara) && chara.current.isAlive?.value === 1
         ) as Player[]
     }
 
@@ -234,7 +238,7 @@ export async function startNewBattle(playerTeam:(Player|Chara)[],enemyTeam:(Enem
         // 为所有敌人应用状态触发器
         const { applyStrengthTrigger, applyVulnerableTrigger, applyWeakTrigger } = await import("@/core/effects/state/stateTriggers")
         for (const enemy of enemyTeam) {
-            if (enemy instanceof Enemy) {
+            if (isEnemy(enemy)) {
                 applyStrengthTrigger(enemy)
                 applyVulnerableTrigger(enemy)
                 applyWeakTrigger(enemy)

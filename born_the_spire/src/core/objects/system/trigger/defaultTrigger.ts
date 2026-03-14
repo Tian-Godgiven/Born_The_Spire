@@ -1,6 +1,6 @@
 //默认触发器相关
-import { TriggerObj } from "@/core/types/object/trigger";
-import { Trigger } from "./Trigger";
+import type { TriggerObj } from "@/core/types/object/trigger";
+import type { Trigger } from "./Trigger";
 
 export type DefaultTrigger = {
     triggerWay:string,//例如 after_via_useCard

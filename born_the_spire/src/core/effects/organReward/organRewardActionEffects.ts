@@ -2,7 +2,7 @@
  * 器官奖励动作相关的效果函数
  */
 
-import { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
+import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import { Player } from "@/core/objects/target/Player"
 import { newLog } from "@/ui/hooks/global/log"
 

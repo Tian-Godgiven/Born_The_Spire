@@ -1,4 +1,4 @@
-import { OrganMap } from "@/core/objects/target/Organ"
+import type { OrganMap } from "@/core/objects/target/Organ"
 import { OrganRarity, OrganPart } from "@/core/types/OrganTypes"
 import { OrganTags } from "./organTags"
 

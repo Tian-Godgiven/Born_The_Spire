@@ -1,4 +1,4 @@
-import { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
+import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import { handleEventEntity } from "@/core/objects/system/ActionEvent"
 import { isEntity } from "@/core/utils/typeGuards"
 

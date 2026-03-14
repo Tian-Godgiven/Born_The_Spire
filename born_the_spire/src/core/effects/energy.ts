@@ -1,6 +1,6 @@
 import { showQuickInfo } from "@/ui/hooks/global/quickInfo"
 import { Player } from "../objects/target/Player"
-import { EffectFunc } from "../objects/system/effect/EffectFunc"
+import type { EffectFunc } from "../objects/system/effect/EffectFunc"
 import { getStatusValue } from "../objects/system/status/Status"
 import { changeCurrentValue, getCurrentValue } from "../objects/system/Current/current"
 

@@ -1,7 +1,8 @@
-import { Item, ItemMap } from "../Item";
+import { Item } from "../Item";
+import type { ItemMap } from "../Item";
 import { Entity } from "../../system/Entity";
 import { getRelicModifier } from "../../system/modifier/RelicModifier";
-import { ActiveAbility } from "@/core/types/ActiveAbility";
+import type { ActiveAbility } from "@/core/types/ActiveAbility";
 
 export type RelicMap = ItemMap & {
     // 遗物稀有度（3级系统）

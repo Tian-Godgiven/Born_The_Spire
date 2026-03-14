@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang='ts'>
-    import { TargetChooseState } from '@/ui/interaction/target/targetManager';
+    import type { TargetChooseState } from '@/ui/interaction/target/targetManager';
     const {chooseState} = defineProps<{chooseState:TargetChooseState}>()
 </script>
 

@@ -3,8 +3,8 @@
  * 支持 mod 制作者注册自定义房间类型和组件
  */
 
-import { Room, RoomType } from "@/core/objects/room/Room"
-import { Component } from "vue"
+import type { Room, RoomType } from "@/core/objects/room/Room"
+import type { Component } from "vue"
 
 /**
  * 房间组件类型

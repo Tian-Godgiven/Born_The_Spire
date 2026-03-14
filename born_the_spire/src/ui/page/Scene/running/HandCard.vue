@@ -5,7 +5,8 @@
 </template>
 
 <script setup lang='ts'>
-    import { Card, useCard } from '@/core/objects/item/Subclass/Card';
+    // import { useCard } from '@/core/objects/item/Subclass/Card';
+    import type { Card } from "@/core/objects/item/Subclass/Card"
     import CardVue from '@/ui/components/object/Card.vue';
     import ChooseSource from '@/ui/components/interaction/chooseTarget/ChooseSource.vue';
     import { computed, ref, useTemplateRef } from 'vue';
@@ -37,7 +38,7 @@
     }
     //选择完成时使用卡牌效果
     function onSuccess(targets:Target[]){
-        useCard(card,nowPlayer.cardPiles.handPile,nowPlayer.getSelf(),targets);
+        // useCard(card,nowPlayer.cardPiles.handPile,nowPlayer.getSelf(),targets);
         // 清除悬停目标
         hoverTarget.value = null
     }

@@ -1,4 +1,4 @@
-import { Describe } from "@/ui/hooks/express/describe"
+import type { Describe } from "@/ui/hooks/express/describe"
 
 /**
  * 储备类型定义（静态数据）

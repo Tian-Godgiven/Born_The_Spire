@@ -4,7 +4,8 @@
  * 例如：森林、沼泽、火山等不同风格的楼层
  */
 
-import { Room, RoomConfig } from "./Room"
+import { Room } from "./Room"
+import type { RoomConfig } from "./Room"
 import { Choice, ChoiceGroup } from "../system/Choice"
 import { floorRegistry } from "@/static/registry/floorRegistry"
 import { nowGameRun, enterRoom } from "@/core/objects/game/run"

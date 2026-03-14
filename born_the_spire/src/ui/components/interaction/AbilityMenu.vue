@@ -43,7 +43,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { Entity } from '@/core/objects/system/Entity'
-import { ActiveAbility, AbilityMenuConfig } from '@/core/types/ActiveAbility'
+import type { ActiveAbility, AbilityMenuConfig } from '@/core/types/ActiveAbility'
 import { checkAbilityUsability } from '@/core/hooks/activeAbility'
 import { getDescribe } from '@/ui/hooks/express/describe'
 

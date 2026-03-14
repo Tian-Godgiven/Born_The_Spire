@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { Organ } from '@/core/objects/target/Organ'
+import type { Organ } from '@/core/objects/target/Organ'
 
 /**
  * 确认弹窗状态

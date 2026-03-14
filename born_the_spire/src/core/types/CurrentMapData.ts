@@ -1,7 +1,7 @@
-import { Current } from "@/core/objects/system/Current/current"
-import { Entity } from "@/core/objects/system/Entity"
-import { TriggerMap } from "@/core/types/object/trigger"
-import { ActionEvent } from "@/core/objects/system/ActionEvent"
+import type { Current } from "@/core/objects/system/Current/current"
+import type { Entity } from "@/core/objects/system/Entity"
+import type { TriggerMap } from "@/core/types/object/trigger"
+import type { ActionEvent } from "@/core/objects/system/ActionEvent"
 
 export type CurrentMap<T extends Entity> = {
     startValue:"max"|"min"|number//初始值

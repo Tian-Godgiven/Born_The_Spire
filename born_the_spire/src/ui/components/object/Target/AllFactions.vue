@@ -9,7 +9,8 @@
 <script setup lang='ts'>
     import { nowBattle } from '@/core/objects/game/battle';
 import { chooseAFaction } from '@/ui/interaction/target/chooseTarget';
-import { TargetChooseState, targetManager } from '@/ui/interaction/target/targetManager';
+import { targetManager } from '@/ui/interaction/target/targetManager';
+import type { TargetChooseState } from '@/ui/interaction/target/targetManager';
 import { ref } from 'vue';
 import ChooseBox from '../../interaction/chooseTarget/ChooseBox.vue';
     const state = ref<{chooseState:TargetChooseState}>(targetManager.getFaction('all'))

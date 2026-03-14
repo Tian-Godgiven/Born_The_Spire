@@ -1,10 +1,13 @@
+import type { Entity } from "../Entity"
+import type { Card } from "../../item/Subclass/Card"
+import type { Player } from "../../target/Player"
+import type { Chara } from "../../target/Target"
+import type { LogUnit } from "@/ui/hooks/global/log"
+import type { Organ } from "../../target/Organ"
+
+import { newLog } from "@/ui/hooks/global/log"
 import { reactive, toRaw } from "vue"
-import { Entity } from "../Entity"
-import { Card } from "../../item/Subclass/Card"
-import { Player } from "../../target/Player"
-import { Chara } from "../../target/Target"
-import { newLog, LogUnit } from "@/ui/hooks/global/log"
-import { Organ } from "../../target/Organ"
+
 import { nowBattle } from "../../game/battle"
 
 /**

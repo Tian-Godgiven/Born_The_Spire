@@ -1,13 +1,13 @@
-import { Entity } from "@/core/objects/system/Entity"
-import {
+import type { Entity } from "@/core/objects/system/Entity"
+import type {
     ActiveAbility,
     ActiveTriggerConfig,
     AbilityMenuConfig,
     ActiveDisplayConfig
 } from "@/core/types/ActiveAbility"
-import { activeAbilityManager } from "@/core/objects/system/ActiveAbilityManager"
 import { activeAbilityLifecycleManager } from "@/core/objects/system/ActiveAbilityLifecycleManager"
 import { usageTracker } from "@/core/objects/system/UsageTracker"
+import { activeAbilityManager } from "@/core/objects/system/ActiveAbilityManager"
 
 /**
  * 主动能力系统便捷hooks

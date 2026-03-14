@@ -1,7 +1,9 @@
-import { Reward, RewardConfig } from "./Reward"
-import { RelicMap } from "@/core/objects/item/Subclass/Relic"
+import { Reward } from "./Reward"
+import type { RewardConfig } from "./Reward"
+import type { RelicMap } from "@/core/objects/item/Subclass/Relic"
 import { newLog } from "@/ui/hooks/global/log"
 import { getLazyModule } from "@/core/utils/lazyLoader"
+import { createRelic } from "@/core/factories"
 
 /**
  * 遗物选择奖励配置
@@ -66,7 +68,6 @@ export class RelicSelectReward extends Reward {
 
         // 动态导入避免循环依赖
         const { nowPlayer } = await import("@/core/objects/game/run")
-        const { Relic } = await import("@/core/objects/item/Subclass/Relic")
         const { getRelicModifier } = await import("@/core/objects/system/modifier/RelicModifier")
 
         // 将选择的遗物添加到玩家
@@ -74,7 +75,7 @@ export class RelicSelectReward extends Reward {
         for (const relicKey of this.selectedRelics) {
             const relicConfig = this.relicOptions.find(r => r.key === relicKey)
             if (relicConfig) {
-                const relic = new Relic(relicConfig)
+                const relic = await createRelic(relicConfig)
                 relicModifier.acquireRelic(relic, nowPlayer)
                 newLog([`获得遗物: ${relicConfig.label}`])
             }

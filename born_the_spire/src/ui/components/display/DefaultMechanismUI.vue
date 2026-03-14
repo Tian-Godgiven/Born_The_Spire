@@ -7,7 +7,7 @@
 
 <script setup lang='ts'>
 import { Entity } from '@/core/objects/system/Entity'
-import { MechanismConfig } from '@/core/types/MechanismConfig'
+import type { MechanismConfig } from '@/core/types/MechanismConfig'
 import { computed } from 'vue'
 
 const { entity, config } = defineProps<{

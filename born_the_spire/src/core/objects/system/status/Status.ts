@@ -1,8 +1,8 @@
-import { StatusMap } from "@/core/types/StatusMapData"
-import { Entity } from "../Entity"
+import type { StatusMap } from "@/core/types/StatusMapData"
+import type { Entity } from "../Entity"
 import { Modifier } from "../modifier/Modifier"
 import { StatusModifier } from "./StatusModifier"
-import { ModifierFunc, ModifierOptions, ModifierType, TargetLayer } from "./type"
+import type { ModifierFunc, ModifierOptions, ModifierType, TargetLayer } from "./type"
 import { newError } from "@/ui/hooks/global/alert"
 import { ref, markRaw } from "vue"
 import { getRefValue } from "@/core/hooks/refValue"
@@ -12,6 +12,7 @@ export type StatusOptions = {
 }
 
 export class Status extends Modifier<StatusModifier>{
+    public readonly statusType = 'status' as const // 类型标识，用于 typeGuard
     public key:string//唯一键名
     public label:string//属性名称
     public options?:StatusOptions//备注：功能未完成

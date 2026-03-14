@@ -1,10 +1,11 @@
 import { nanoid } from "nanoid"
 import { Entity } from "../Entity"
-import { Item } from "../../item/Item"
+import type { Item } from "../../item/Item"
 import { reactive, toRaw } from "vue"
-import { newLog, LogUnit } from "@/ui/hooks/global/log"
+import { newLog } from "@/ui/hooks/global/log"
+import type { LogUnit } from "@/ui/hooks/global/log"
 import { doEvent } from "../ActionEvent"
-import { EffectUnit } from "../effect/EffectUnit"
+import type { EffectUnit } from "../effect/EffectUnit"
 import { resolveTriggerEventTarget } from "../trigger/Trigger"
 
 /**
@@ -542,16 +543,18 @@ export class ItemModifier {
     }
 }
 
-// 使用 WeakMap 存储 ItemModifier 实例，避免与 Vue reactive 冲突
-const itemModifierMap = new WeakMap<Entity, ItemModifier>()
-
 /**
  * 为实体初始化物品修饰器管理器
  */
 export function initItemModifier(entity: Entity): ItemModifier {
     const rawEntity = toRaw(entity)
     const modifier = new ItemModifier(rawEntity)
-    itemModifierMap.set(rawEntity, modifier)
+
+    // 注册到全局 ModifierManager
+    import("@/core/managers/ModifierManager").then(({ modifierManager }) => {
+        modifierManager.registerItemModifier(rawEntity, modifier)
+    })
+
     return modifier
 }
 
@@ -560,9 +563,21 @@ export function initItemModifier(entity: Entity): ItemModifier {
  */
 export function getItemModifier(entity: Entity): ItemModifier {
     const rawEntity = toRaw(entity)
-    let modifier = itemModifierMap.get(rawEntity)
+
+    // 先尝试从 ModifierManager 获取
+    let modifier: ItemModifier | undefined
+
+    // 同步导入检查（如果已加载）
+    try {
+        const { modifierManager } = require("@/core/managers/ModifierManager")
+        modifier = modifierManager.getItemModifier(rawEntity)
+    } catch {
+        // ModifierManager 未加载，创建新实例
+    }
+
     if (!modifier) {
         modifier = initItemModifier(rawEntity)
     }
+
     return modifier
 }

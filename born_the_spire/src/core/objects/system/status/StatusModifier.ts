@@ -1,6 +1,6 @@
-import { Entity } from "../Entity"
+import type { Entity } from "../Entity"
 import { ModifierObj } from "../modifier/Modifier"
-import { ApplyMode, ModifierOptions, ModifierType, TargetLayer } from "./type"
+import type{ ApplyMode, ModifierOptions, ModifierType, TargetLayer } from "./type"
 
 export class StatusModifier extends ModifierObj{
     public statusKey: string           // 作用的属性键

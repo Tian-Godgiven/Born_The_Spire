@@ -1,6 +1,6 @@
-import { ActionEvent } from "../ActionEvent";
-import { Effect } from "./Effect";
-import { isState } from "@/core/utils/typeGuards";
+import type { ActionEvent } from "../ActionEvent";
+import type { Effect } from "./Effect";
+import { isState, isEffect } from "@/core/utils/typeGuards";
 import { getStatusValue } from "../status/Status";
 import { getCurrentValue } from "../Current/current";
 import { newError } from "@/ui/hooks/global/alert";
@@ -146,10 +146,7 @@ export async function doEffectFunc(effect: Effect, override_event?:Partial<Actio
     if (event.simulate) {
         // 检查目标是否为效果对象（修改参数）
         const targets = Array.isArray(target) ? target : [target]
-        const isModifyingEffect = targets.some(t =>
-            t instanceof Effect ||
-            (t as any).participantType === 'effect'
-        )
+        const isModifyingEffect = targets.some(t => isEffect(t))
 
         if (isModifyingEffect) {
             // 目标是效果对象，允许执行（修改参数）

@@ -1,0 +1,190 @@
+src/core/effects/card/addFirstTurnDraw.ts:1:10 - error TS1484: 'EffectFunc' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+1 import { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
+           ~~~~~~~~~~
+
+src/core/effects/card/cardChoice.ts:1:10 - error TS1484: 'EffectFunc' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+1 import { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
+           ~~~~~~~~~~
+
+src/core/effects/card/cardRemoveEffect.ts:1:10 - error TS1484: 'EffectFunc' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+1 import { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
+           ~~~~~~~~~~
+
+src/core/effects/card/cardUpgradeEffect.ts:1:10 - error TS1484: 'EffectFunc' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+1 import { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
+           ~~~~~~~~~~
+
+src/core/effects/card/discard.ts:4:10 - error TS1484: 'EffectFunc' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+4 import { EffectFunc } from "@/core/objects/system/effect/EffectFunc";
+           ~~~~~~~~~~
+
+src/core/effects/card/discard.ts:5:10 - error TS1484: 'CardPiles' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+5 import { CardPiles, Player } from "@/core/objects/target/Player";
+           ~~~~~~~~~
+
+src/core/effects/card/drawCard.ts:5:10 - error TS1484: 'EffectFunc' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+5 import { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
+           ~~~~~~~~~~
+
+src/core/effects/card/drawCard.ts:6:10 - error TS1484: 'CardPiles' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+6 import { CardPiles, Player } from "@/core/objects/target/Player"
+           ~~~~~~~~~
+
+src/core/effects/card/entryEffects.ts:1:10 - error TS1484: 'EffectFunc' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+1 import { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
+           ~~~~~~~~~~
+
+src/core/hooks/activeAbility.ts:3:5 - error TS1484: 'ActiveAbility' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+3     ActiveAbility,
+      ~~~~~~~~~~~~~
+
+src/core/hooks/activeAbility.ts:4:5 - error TS1484: 'ActiveTriggerConfig' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+4     ActiveTriggerConfig,
+      ~~~~~~~~~~~~~~~~~~~
+
+src/core/hooks/activeAbility.ts:5:5 - error TS1484: 'AbilityMenuConfig' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+5     AbilityMenuConfig,
+      ~~~~~~~~~~~~~~~~~
+
+src/core/hooks/activeAbility.ts:6:5 - error TS1484: 'ActiveDisplayConfig' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+6     ActiveDisplayConfig
+      ~~~~~~~~~~~~~~~~~~~
+
+src/core/hooks/triggerDebug.ts:8:19 - error TS2459: Module '"@/core/objects/system/trigger/Trigger"' declares 'TriggerUnit' locally, but it is not exported.
+
+8 import { Trigger, TriggerUnit } from "@/core/objects/system/trigger/Trigger"
+                    ~~~~~~~~~~~
+
+  src/core/objects/system/trigger/Trigger.ts:3:85
+    3 import type { TriggerEventConfig, TriggerFunc, TriggerMap, TriggerObj, TriggerType, TriggerUnit } from "@/core/types/object/trigger";
+                                                                                          ~~~~~~~~~~~
+    'TriggerUnit' is declared here.
+
+src/core/hooks/triggerDebug.ts:64:29 - error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+
+64                             level: unit.level,
+                               ~~~~~
+
+  src/core/hooks/triggerDebug.ts:19:5
+    19     level: number
+           ~~~~~
+    The expected type comes from property 'level' which is declared here on type 'TriggerDebugInfo'
+
+src/core/objects/room/BlackStoreRoom.ts:20:5 - error TS1484: 'RarityWeights' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+20     RarityWeights
+       ~~~~~~~~~~~~~
+
+src/core/objects/system/ActiveAbilityManager.ts:3:5 - error TS1484: 'ActiveAbility' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+3     ActiveAbility,
+      ~~~~~~~~~~~~~
+
+src/core/objects/system/ActiveAbilityManager.ts:4:5 - error TS1484: 'ActiveTriggerConfig' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+4     ActiveTriggerConfig,
+      ~~~~~~~~~~~~~~~~~~~
+
+src/core/objects/system/ActiveAbilityManager.ts:5:5 - error TS1484: 'AbilityMenuConfig' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+5     AbilityMenuConfig,
+      ~~~~~~~~~~~~~~~~~
+
+src/core/objects/system/ActiveAbilityManager.ts:6:5 - error TS1484: 'ActiveAbilityContext' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+6     ActiveAbilityContext
+      ~~~~~~~~~~~~~~~~~~~~
+
+src/core/objects/system/DisplayManager.ts:3:5 - error TS1484: 'ActiveAbility' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+3     ActiveAbility,
+      ~~~~~~~~~~~~~
+
+src/core/objects/system/DisplayManager.ts:4:5 - error TS1484: 'ActiveDisplayConfig' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+4     ActiveDisplayConfig,
+      ~~~~~~~~~~~~~~~~~~~
+
+src/core/objects/system/DisplayManager.ts:5:5 - error TS1484: 'ActiveBadgeConfig' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+5     ActiveBadgeConfig,
+      ~~~~~~~~~~~~~~~~~
+
+src/core/objects/system/DisplayManager.ts:6:5 - error TS1484: 'AbilityCheckResult' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+6     AbilityCheckResult
+      ~~~~~~~~~~~~~~~~~~
+
+src/core/objects/system/FloorManager.ts:8:5 - error TS1484: 'RoomWeightConfig' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+8     RoomWeightConfig,
+      ~~~~~~~~~~~~~~~~
+
+src/core/objects/system/FloorManager.ts:9:5 - error TS1484: 'RoomGenerationContext' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+9     RoomGenerationContext,
+      ~~~~~~~~~~~~~~~~~~~~~
+
+src/core/objects/system/FloorManager.ts:12:5 - error TS1484: 'RoomGenerationRule' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+12     RoomGenerationRule
+       ~~~~~~~~~~~~~~~~~~
+
+src/core/objects/system/RestrictionChecker.ts:4:5 - error TS1484: 'ActiveAbility' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+4     ActiveAbility,
+      ~~~~~~~~~~~~~
+
+src/core/objects/system/RestrictionChecker.ts:5:5 - error TS1484: 'ActiveAbilityRestrictions' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+5     ActiveAbilityRestrictions,
+      ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/core/objects/system/RestrictionChecker.ts:6:5 - error TS1484: 'AbilityCheckResult' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+6     AbilityCheckResult,
+      ~~~~~~~~~~~~~~~~~~
+
+src/core/objects/system/RestrictionChecker.ts:7:5 - error TS1484: 'AbilityUsageState' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+
+7     AbilityUsageState
+      ~~~~~~~~~~~~~~~~~
+
+src/ui/page/popUp/CardPile.vue:8:36 - error TS2339: Property 'closePopUp' does not exist on type 'CreateComponentPublicInstanceWithMixins<ToResolvedProps<__VLS_Props, {}>, { CardVue: typeof CardVue; Mask: typeof Mask; cardPile: typeof cardPile; }, {}, {}, {}, ComponentOptionsMixin, ... 19 more ..., {}>'.
+
+8         <div class="close" @click="closePopUp(popUp)">关闭</div>
+                                     ~~~~~~~~~~
+
+
+Found 32 errors in 15 files.
+
+Errors  Files
+     1  src/core/effects/card/addFirstTurnDraw.ts:1
+     1  src/core/effects/card/cardChoice.ts:1
+     1  src/core/effects/card/cardRemoveEffect.ts:1
+     1  src/core/effects/card/cardUpgradeEffect.ts:1
+     2  src/core/effects/card/discard.ts:4
+     2  src/core/effects/card/drawCard.ts:5
+     1  src/core/effects/card/entryEffects.ts:1
+     4  src/core/hooks/activeAbility.ts:3
+     2  src/core/hooks/triggerDebug.ts:8
+     1  src/core/objects/room/BlackStoreRoom.ts:20
+     4  src/core/objects/system/ActiveAbilityManager.ts:3
+     4  src/core/objects/system/DisplayManager.ts:3
+     3  src/core/objects/system/FloorManager.ts:8
+     4  src/core/objects/system/RestrictionChecker.ts:4
+     1  src/ui/page/popUp/CardPile.vue:8

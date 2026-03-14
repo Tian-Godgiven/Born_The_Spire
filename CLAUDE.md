@@ -98,9 +98,26 @@ The game uses a sophisticated event-driven architecture centered around three co
 4. **Modifier System (修饰器)**
    - **StatusModifier**: Manages attribute changes (health, energy, etc.) with base/current layers
    - **ContentModifier**: Manages item/organ possession
+   - **ModifierManager** (`core/managers/ModifierManager.ts`): Global registry for all modifiers
+     - Provides global hooks: `onModifierAdded`, `onModifierRemoved`
+     - Debugging: `getStats()` returns counts of all registered modifiers
+     - Uses WeakMap to avoid memory leaks
    - Modifiers automatically handle "add/remove" logic - when an organ is lost, its effects are automatically removed and attributes recalculated
 
-5. **Lazy Loading System (懒加载系统)**
+5. **Dependency Injection Container (依赖注入容器)**
+   - **Purpose**: Centralized service and factory management
+   - **Location**: `src/core/container.ts`
+   - **Registered Services**:
+     - Factory functions: `createEntity`, `createCard`, `createPotion`, `createRelic`, `createPlayer`, `createEnemy`, `createOrgan`, `createActionEvent`
+     - Singletons: `modifierManager`
+   - **Usage**:
+     ```typescript
+     import { container } from "@/core/container"
+     const modifierManager = container.resolve("modifierManager")
+     ```
+   - **Initialization**: Called in `main.ts` via `initContainer()` after data preload
+
+6. **Lazy Loading System (懒加载系统)**
    - **Purpose**: Avoid circular dependencies between core system classes and data configuration files
    - **Location**: `src/core/utils/lazyLoader.ts`
    - **How it works**:
@@ -161,8 +178,10 @@ The game uses a sophisticated event-driven architecture centered around three co
 ```
 born_the_spire/src/
 ├── core/                    # Core game logic
+│   ├── container.ts        # Dependency injection container
 │   ├── effects/            # Effect functions (damage, heal, draw, etc.)
 │   ├── hooks/              # Global utilities and Vue hooks
+│   ├── managers/           # Global managers (ModifierManager)
 │   ├── objects/
 │   │   ├── game/          # Game flow (battle, run, transaction, eventStack)
 │   │   ├── item/          # Items (Card, Potion, Relic)

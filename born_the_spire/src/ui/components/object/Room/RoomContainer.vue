@@ -21,12 +21,14 @@
 </template>
 
 <script setup lang='ts'>
-import { computed, defineAsyncComponent, Component } from 'vue'
+import { computed, defineAsyncComponent } from 'vue'
+import type { Component } from 'vue'
 import { Room } from '@/core/objects/room/Room'
 import { RoomSelectRoom } from '@/core/objects/room/RoomSelectRoom'
 import { PoolRoom } from '@/core/objects/room/PoolRoom'
 import { EventRoom } from '@/core/objects/room/EventRoom'
-import { roomRegistry, RoomComponent } from '@/static/registry/roomRegistry'
+import { roomRegistry } from '@/static/registry/roomRegistry'
+import type { RoomComponent } from '@/static/registry/roomRegistry'
 import ChoiceContainer from '@/ui/components/system/ChoiceContainer.vue'
 
 const props = defineProps<{

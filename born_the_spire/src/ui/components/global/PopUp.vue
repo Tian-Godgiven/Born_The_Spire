@@ -12,7 +12,7 @@
 
 <script setup lang="ts" name="">
 import { shallowRef } from 'vue';
-import { PopUp } from '@/ui/hooks/global/popUp'; 
+import type { PopUp } from '@/ui/hooks/global/popUp'; 
 	const {popUp} = defineProps<{popUp:PopUp}>()
 	const {index} = popUp
 	const innerVue = shallowRef(popUp.vue);

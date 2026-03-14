@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
 import { ActionEvent } from "../system/ActionEvent";
-import { newLog, LogUnit } from "@/ui/hooks/global/log";
+import { newLog } from "@/ui/hooks/global/log";
+import type { LogUnit } from "@/ui/hooks/global/log";
 
 //当前事务
 let nowTransaction:null|Transaction = null

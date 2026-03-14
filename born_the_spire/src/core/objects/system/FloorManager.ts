@@ -3,13 +3,15 @@
  * 负责管理楼层地图和房间历史
  */
 
-import { RoomType } from "@/core/objects/room/Room"
-import {
+import type { RoomType } from "@/core/objects/room/Room"
+import type {
     RoomWeightConfig,
     RoomGenerationContext,
+    RoomGenerationRule
+} from "./RoomGenerationRules"
+import {
     defaultRoomWeights,
     getAllRoomGenerationRules,
-    RoomGenerationRule
 } from "./RoomGenerationRules"
 import { roomRegistry } from "@/static/registry/roomRegistry"
 import { floorRegistry } from "@/static/registry/floorRegistry"

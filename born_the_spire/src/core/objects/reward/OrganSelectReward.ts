@@ -1,9 +1,11 @@
-import { Reward, RewardConfig } from "./Reward"
+import { Reward } from "./Reward"
+import type { RewardConfig } from "./Reward"
 import type { OrganMap } from "@/core/objects/target/Organ"
 import { newLog } from "@/ui/hooks/global/log"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { organRewardActionRegistry } from "@/static/registry/organRewardActionRegistry"
 import type { OrganRewardActionContext } from "@/core/types/organRewardAction"
+import { createOrgan } from "@/core/factories"
 
 /**
  * 器官选择奖励配置
@@ -71,7 +73,6 @@ export class OrganSelectReward extends Reward {
 
         // 动态导入避免循环依赖
         const { nowPlayer } = await import("@/core/objects/game/run")
-        const { Organ } = await import("@/core/objects/target/Organ")
 
         const player = nowPlayer
         const context: OrganRewardActionContext = {
@@ -84,7 +85,7 @@ export class OrganSelectReward extends Reward {
             const organConfig = this.organOptions.find(o => o.key === organKey)
             if (!organConfig) continue
 
-            const organ = new Organ(organConfig)
+            const organ = await createOrgan(organConfig)
 
             // 获取选择的动作
             const actionKey = this.selectedActions.get(organKey)

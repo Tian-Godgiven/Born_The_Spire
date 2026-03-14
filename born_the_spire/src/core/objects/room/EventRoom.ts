@@ -3,12 +3,13 @@
  * 支持从配置列表加载事件，支持原子效果和复杂交互
  */
 
-import { Room, RoomConfig } from "./Room"
+import { Room } from "./Room"
+import type { RoomConfig } from "./Room"
 import { Choice, ChoiceGroup } from "../system/Choice"
-import { EventMap, EventSceneMap } from "@/core/types/EventMapData"
+import type { EventMap, EventSceneMap } from "@/core/types/EventMapData"
 import { executeEventEffects } from "@/static/list/room/event/eventEffectMap"
 import { newLog } from "@/ui/hooks/global/log"
-import { Component } from "vue"
+import type { Component } from "vue"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 
 /**

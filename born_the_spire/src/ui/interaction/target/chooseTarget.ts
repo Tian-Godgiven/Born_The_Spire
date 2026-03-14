@@ -1,7 +1,9 @@
-import { Reactive, ref } from "vue";
+import { ref } from "vue";
+import type { Reactive } from "vue";
 import { Target } from "@/core/objects/target/Target";
 import { Entity } from "@/core/objects/system/Entity";
-import { getSpecificTargetsByTargetType, TargetType } from "@/static/list/registry/chooseTargetType";
+import { getSpecificTargetsByTargetType } from "@/static/list/registry/chooseTargetType";
+import type { TargetType } from "@/static/list/registry/chooseTargetType";
 import { nowBattle } from "@/core/objects/game/battle";
 import { targetManager } from "./targetManager";
 import { newError } from "@/ui/hooks/global/alert";

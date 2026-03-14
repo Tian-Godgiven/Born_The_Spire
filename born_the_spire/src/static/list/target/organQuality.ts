@@ -3,7 +3,8 @@
  */
 
 import { applyVariance } from "@/core/hooks/variance"
-import { OrganRarity, RarityConfig } from "@/core/types/OrganTypes"
+import { OrganRarity } from "@/core/types/OrganTypes"
+import type { RarityConfig } from "@/core/types/OrganTypes"
 
 /**
  * 稀有度配置列表

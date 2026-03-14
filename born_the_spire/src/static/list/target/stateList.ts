@@ -1,4 +1,4 @@
-import { StateData } from "@/core/objects/system/State"
+import type { StateData } from "@/core/objects/system/State"
 
 export const stateList: StateData[] = [
     // 力量：造成伤害时，伤害增加

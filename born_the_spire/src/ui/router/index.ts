@@ -1,17 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import Start from '@/ui/page/Scene/start/Start.vue';
-import Running from '@/ui/page/Scene/running/Running.vue';
 
+// 使用懒加载避免在 preload 之前加载组件
 const routes = [
   {
     path: '/',
     name: 'start',
-    component: Start
+    component: () => import('@/ui/page/Scene/start/Start.vue')
   },
   {
     path: '/running',
     name: 'running',
-    component: Running
+    component: () => import('@/ui/page/Scene/running/Running.vue')
   }
 ];
 

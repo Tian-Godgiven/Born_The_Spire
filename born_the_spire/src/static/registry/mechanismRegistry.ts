@@ -3,7 +3,7 @@
  * 管理所有游戏机制的注册、启用、禁用
  */
 
-import { MechanismConfig } from "@/core/types/MechanismConfig"
+import type { MechanismConfig } from "@/core/types/MechanismConfig"
 import { Entity } from "@/core/objects/system/Entity"
 import { getMechanismManager } from "@/core/objects/system/mechanism/MechanismManager"
 import { Current } from "@/core/objects/system/Current/current"

@@ -4,7 +4,7 @@
  * 这些房间不会出现在普通事件池中
  */
 
-import { InitMap } from "@/core/types/InitMapData"
+import type { InitMap } from "@/core/types/InitMapData"
 
 /**
  * 初始化房间配置列表

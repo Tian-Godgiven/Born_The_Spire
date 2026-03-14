@@ -1,6 +1,6 @@
 import { ActionEvent, handleEventEntity } from "@/core/objects/system/ActionEvent";
 import { changeCurrentValue, getCurrentValue } from "@/core/objects/system/Current/current";
-import { EffectFunc } from "@/core/objects/system/effect/EffectFunc";
+import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc";
 import { isEntity, isEffect } from "@/core/utils/typeGuards";
 import { newError } from "@/ui/hooks/global/alert";
 

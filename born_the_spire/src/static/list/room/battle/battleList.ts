@@ -3,7 +3,7 @@
  * 定义所有预设的战斗房间
  */
 
-import { BattleRoomType } from "@/core/objects/room/Room"
+import type { BattleRoomType } from "@/core/objects/room/Room"
 
 export interface BattleRoomConfig {
     key: string

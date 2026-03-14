@@ -3,7 +3,7 @@
  * 定义游戏中的所有事件
  */
 
-import { EventMap } from "@/core/types/EventMapData"
+import type { EventMap } from "@/core/types/EventMapData"
 
 /**
  * 事件配置列表

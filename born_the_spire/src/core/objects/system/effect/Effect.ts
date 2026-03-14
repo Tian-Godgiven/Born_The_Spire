@@ -1,6 +1,8 @@
-import { ActionEvent, handleEventEntity, setCurrentExecutingEvent, getCurrentExecutingEvent } from "../ActionEvent";
-import { doEffectFunc, EffectFunc, EffectParams, resolveEffectParams } from "./EffectFunc";
-import { EventParticipant } from "@/core/types/event/EventParticipant";
+import type { ActionEvent } from "../ActionEvent";
+import type { EffectFunc, EffectParams } from "./EffectFunc";
+import type { EventParticipant } from "@/core/types/event/EventParticipant";
+
+import { doEffectFunc, resolveEffectParams } from "./EffectFunc";
 import { isEntity } from "@/core/utils/typeGuards";
 import { nanoid } from "nanoid";
 import { validateEffectParams } from "@/core/effects/validateEffectParams";
@@ -93,8 +95,11 @@ export class Effect implements EventParticipant{
         this.trigger("after",triggerLevel-=1)
     }
     //触发效果对象所在的事件的参与者的触发器
-    trigger(when:"before"|"after",triggerLevel:number){
+    async trigger(when:"before"|"after",triggerLevel:number){
         const event = this.actionEvent
+
+        // 动态导入 ActionEvent 工具函数（打破循环依赖）
+        const { getCurrentExecutingEvent, setCurrentExecutingEvent, handleEventEntity } = await import("../ActionEvent")
 
         // 设置当前执行的事件（用于传递模拟标记）
         const previousEvent = getCurrentExecutingEvent()

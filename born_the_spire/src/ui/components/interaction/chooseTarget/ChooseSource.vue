@@ -11,7 +11,7 @@
 <script setup lang='ts'>
     import { Target } from '@/core/objects/target/Target';
 import { Entity } from '@/core/objects/system/Entity';
-import { TargetType } from '@/static/list/registry/chooseTargetType';
+import type { TargetType } from '@/static/list/registry/chooseTargetType';
 import { startChooseTarget } from '@/ui/interaction/target/chooseTarget';
     import { reactive, ref, useTemplateRef } from 'vue';
 

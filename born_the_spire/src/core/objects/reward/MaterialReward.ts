@@ -1,4 +1,5 @@
-import { Reward, RewardConfig } from "./Reward"
+import { Reward } from "./Reward"
+import type { RewardConfig } from "./Reward"
 import { newLog } from "@/ui/hooks/global/log"
 
 /**

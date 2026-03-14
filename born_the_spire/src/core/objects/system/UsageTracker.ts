@@ -1,5 +1,5 @@
-import { Entity } from "@/core/objects/system/Entity"
-import { AbilityUsageState, ActiveAbility } from "@/core/types/ActiveAbility"
+import type { Entity } from "@/core/objects/system/Entity"
+import type { AbilityUsageState, ActiveAbility } from "@/core/types/ActiveAbility"
 
 /**
  * 使用状态追踪器

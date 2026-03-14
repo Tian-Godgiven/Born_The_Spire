@@ -1,4 +1,5 @@
-import { Enemy, EnemyMap } from "@/core/objects/target/Enemy"
+import { Enemy } from "@/core/objects/target/Enemy"
+import type { EnemyMap } from "@/core/objects/target/Enemy"
 import { reactive } from "vue"
 
 export const enemyList:EnemyMap[] = [

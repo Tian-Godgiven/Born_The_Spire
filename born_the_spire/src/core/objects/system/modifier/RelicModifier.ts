@@ -1,8 +1,10 @@
 import { Entity } from "../Entity"
-import { Relic } from "../../item/Subclass/Relic"
+import type { Relic } from "../../item/Subclass/Relic"
 import { ItemModifier } from "./ItemModifier"
-import { newLog, LogUnit } from "@/ui/hooks/global/log"
+import { newLog } from "@/ui/hooks/global/log"
+import type { LogUnit } from "@/ui/hooks/global/log"
 import { computed } from "vue"
+import { createRelic } from "@/core/factories"
 
 /**
  * 遗物管理器
@@ -51,8 +53,8 @@ export class RelicModifier extends ItemModifier {
                 continue
             }
 
-            // 创建遗物实例
-            const relic = new Relic(relicConfig)
+            // 使用工厂创建遗物实例
+            const relic = await createRelic(relicConfig)
             this.acquireRelic(relic, source, parentLog)
         }
     }

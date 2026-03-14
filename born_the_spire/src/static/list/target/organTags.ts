@@ -2,7 +2,7 @@
  * 器官标签系统
  */
 
-import { TagConfig } from "@/core/types/OrganTypes"
+import type { TagConfig } from "@/core/types/OrganTypes"
 
 /**
  * 常用标签常量

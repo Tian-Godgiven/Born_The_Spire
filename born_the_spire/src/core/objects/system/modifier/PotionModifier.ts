@@ -1,7 +1,8 @@
 import { Entity } from "../Entity"
-import { Potion } from "../../item/Subclass/Potion"
+import type { Potion } from "../../item/Subclass/Potion"
 import { ItemModifier } from "./ItemModifier"
-import { newLog, LogUnit } from "@/ui/hooks/global/log"
+import { newLog } from "@/ui/hooks/global/log"
+import type { LogUnit } from "@/ui/hooks/global/log"
 import { computed, toRaw } from "vue"
 
 /**

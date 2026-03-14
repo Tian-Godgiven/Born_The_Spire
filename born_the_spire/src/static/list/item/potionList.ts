@@ -1,4 +1,4 @@
-import { PotionMap } from "@/core/objects/item/Subclass/Potion";
+import type { PotionMap } from "@/core/objects/item/Subclass/Potion";
 
 export const potionList:PotionMap[] = [
     // 简单药水 - 单个 use

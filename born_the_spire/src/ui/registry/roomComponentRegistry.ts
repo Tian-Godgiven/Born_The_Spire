@@ -3,7 +3,7 @@
  * 用于注册房间类型对应的 Vue 组件，支持 Mod 扩展
  */
 
-import { Component } from 'vue'
+import type { Component } from 'vue'
 import type { RoomType } from '@/core/objects/room/Room'
 
 // 导入内置房间组件

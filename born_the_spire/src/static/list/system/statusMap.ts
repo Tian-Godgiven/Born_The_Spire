@@ -1,4 +1,4 @@
-import { StatusMap } from "@/core/types/StatusMapData"
+import type { StatusMap } from "@/core/types/StatusMapData"
 
 export function getMap(key: string) {
     if (isStatusKey(key)) {

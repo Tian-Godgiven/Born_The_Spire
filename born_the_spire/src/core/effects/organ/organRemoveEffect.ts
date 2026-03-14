@@ -1,4 +1,4 @@
-import { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
+import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import { Organ } from "@/core/objects/target/Organ"
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
 import { isEntity } from "@/core/utils/typeGuards"

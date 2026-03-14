@@ -54,7 +54,7 @@
 </template>
 
 <script setup lang='ts'>
-import { Card } from '@/core/objects/item/Subclass/Card';
+import type { Card } from '@/core/objects/item/Subclass/Card';
 import { getStatusValue, ifHaveStatus } from '@/core/objects/system/status/Status';
 import { getDescribe, getDescribeStructured, extractGlossaries, type DescribeSegment } from '@/ui/hooks/express/describe';
 import { computed, ref, onMounted, onBeforeUnmount, nextTick } from 'vue';

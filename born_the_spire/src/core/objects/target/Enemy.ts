@@ -1,12 +1,15 @@
-import { Chara, CharaMap } from "./Target";
+import { Chara } from "./Target";
+import type { CharaMap } from "./Target";
 import { newLog } from "@/ui/hooks/global/log";
 import { Card } from "../item/Subclass/Card";
 import { getOrganModifier } from "../system/modifier/OrganModifier";
 import { getCardByKey } from "@/static/list/item/cardList";
-import { Intent, cardsToIntent, IntentVisibility } from "../system/Intent";
+import { cardsToIntent } from "../system/Intent";
+import type { Intent, IntentVisibility } from "../system/Intent";
 import { doEvent } from "../system/ActionEvent";
 import { Player } from "./Player";
-import { EnemyBehaviorConfig, selectAction } from "../system/EnemyBehavior";
+import { selectAction } from "../system/EnemyBehavior";
+import type { EnemyBehaviorConfig } from "../system/EnemyBehavior";
 
 export type EnemyMap = CharaMap & {
     key:string

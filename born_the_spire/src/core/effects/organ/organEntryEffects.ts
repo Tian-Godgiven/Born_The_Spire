@@ -1,4 +1,4 @@
-import { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
+import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import { Organ, breakOrgan } from "@/core/objects/target/Organ"
 import { getCurrentValue, setCurrentValue } from "@/core/objects/system/Current/current"
 import { getStatusValue } from "@/core/objects/system/status/Status"

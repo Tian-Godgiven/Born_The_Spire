@@ -1,5 +1,5 @@
-import { TriggerMap } from "@/core/types/object/trigger"
-import { SimpleAscensionModifiers } from "@/core/types/AscensionConfig"
+import type { TriggerMap } from "@/core/types/object/trigger"
+import type { SimpleAscensionModifiers } from "@/core/types/AscensionConfig"
 
 /**
  * 将简化的进阶修饰器配置转换为触发器配置

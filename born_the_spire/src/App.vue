@@ -15,14 +15,24 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, defineAsyncComponent } from 'vue';
 import { RouterView } from 'vue-router';
 import router from './ui/router';
 import { onMousemove } from './ui/hooks/global/mousePosition';
-import DynamicComponentContainer from './ui/components/global/DynamicComponentContainer.vue';
-import ConfirmModal from './ui/components/interaction/ConfirmModal.vue';
-import CardGroupModal from './ui/components/interaction/CardGroupModal.vue';
-import OrganChoice from './ui/components/interaction/OrganChoice.vue';
+
+// 使用异步组件避免在 preload 之前加载核心类
+const DynamicComponentContainer = defineAsyncComponent(() =>
+  import('./ui/components/global/DynamicComponentContainer.vue')
+);
+const ConfirmModal = defineAsyncComponent(() =>
+  import('./ui/components/interaction/ConfirmModal.vue')
+);
+const CardGroupModal = defineAsyncComponent(() =>
+  import('./ui/components/interaction/CardGroupModal.vue')
+);
+const OrganChoice = defineAsyncComponent(() =>
+  import('./ui/components/interaction/OrganChoice.vue')
+);
 
 onMounted(()=>{
     router.replace("/")

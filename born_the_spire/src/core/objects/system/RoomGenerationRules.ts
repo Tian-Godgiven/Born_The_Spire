@@ -3,7 +3,7 @@
  * 定义房间生成的概率和规则
  */
 
-import { RoomType } from "@/core/objects/room/Room"
+import type { RoomType } from "@/core/objects/room/Room"
 
 /**
  * 房间权重配置

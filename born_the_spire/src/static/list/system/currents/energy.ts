@@ -1,5 +1,5 @@
 import type { Player } from "@/core/objects/target/Player";
-import { CurrentMap } from "@/core/types/CurrentMapData";
+import type { CurrentMap } from "@/core/types/CurrentMapData";
 
 export const energyMap:CurrentMap<Player> = {
     startValue:0,

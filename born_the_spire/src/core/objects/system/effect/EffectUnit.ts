@@ -1,6 +1,6 @@
 import { Effect } from "./Effect"
-import { EffectParams } from "./EffectFunc"
-import { ActionEvent } from "../ActionEvent"
+import type { EffectParams } from "./EffectFunc"
+import type { ActionEvent } from "../ActionEvent"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { newError } from "@/ui/hooks/global/alert"
 

@@ -44,7 +44,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Card } from '@/core/objects/item/Subclass/Card'
+import type { Card } from '@/core/objects/item/Subclass/Card'
 import CardVue from '@/ui/components/object/Card.vue'
 import type { CardSelector } from '@/core/objects/system/CardSelector'
 

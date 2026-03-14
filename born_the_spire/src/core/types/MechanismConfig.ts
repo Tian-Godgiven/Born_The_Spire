@@ -3,7 +3,7 @@
  * 用于定义类似护甲、能量护盾等"有数据+有行为+有UI"的游戏机制
  */
 
-import { Component } from "vue"
+import type { Component } from "vue"
 import { Entity } from "@/core/objects/system/Entity"
 import { ActionEvent } from "@/core/objects/system/ActionEvent"
 import { Effect } from "@/core/objects/system/effect/Effect"

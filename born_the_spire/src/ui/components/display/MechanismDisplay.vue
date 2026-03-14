@@ -12,7 +12,7 @@
 
 <script setup lang='ts'>
 import { Entity } from '@/core/objects/system/Entity'
-import { UIPosition } from '@/core/types/MechanismConfig'
+import type { UIPosition } from '@/core/types/MechanismConfig'
 import { getMechanismManager } from '@/core/objects/system/mechanism/MechanismManager'
 import { getMechanismConfig } from '@/static/registry/mechanismRegistry'
 import DefaultMechanismUI from './DefaultMechanismUI.vue'

@@ -3,7 +3,8 @@
  * 玩家可以在这里休息和提升
  */
 
-import { Room, RoomConfig } from "./Room"
+import { Room } from "./Room"
+import type { RoomConfig } from "./Room"
 import { Choice, ChoiceGroup } from "../system/Choice"
 import { nowPlayer } from "@/core/objects/game/run"
 import { newLog } from "@/ui/hooks/global/log"

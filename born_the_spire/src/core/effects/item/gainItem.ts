@@ -2,7 +2,7 @@
  * 物品获得相关的效果函数
  */
 
-import { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
+import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import { newLog } from "@/ui/hooks/global/log"
 import { getCardModifier } from "@/core/objects/system/modifier/CardModifier"
 import { getPotionModifier } from "@/core/objects/system/modifier/PotionModifier"
@@ -12,6 +12,7 @@ import { getLazyModule } from "@/core/utils/lazyLoader"
 import { isEntity } from "@/core/utils/typeGuards"
 import { Player } from "@/core/objects/target/Player"
 import { Enemy } from "@/core/objects/target/Enemy"
+import { createOrgan } from "@/core/factories"
 
 /**
  * 获得卡牌效果
@@ -145,9 +146,7 @@ export const gainOrgan: EffectFunc = async (event, effect) => {
         return
     }
 
-    // 动态导入避免循环依赖
-    const { Organ } = await import("@/core/objects/target/Organ")
-
+    // 使用工厂创建器官
     const organList = getLazyModule<any[]>('organList')
     const organData = organList.find((o: any) => o.key === organKey)
 
@@ -156,7 +155,7 @@ export const gainOrgan: EffectFunc = async (event, effect) => {
         return
     }
 
-    const organ = new Organ(organData)
+    const organ = await createOrgan(organData)
     const organModifier = getOrganModifier(target)
     organModifier.acquireOrgan(organ, target)
 

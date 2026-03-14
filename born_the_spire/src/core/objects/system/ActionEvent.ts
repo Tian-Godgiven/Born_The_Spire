@@ -1,10 +1,13 @@
-import { Effect } from "./effect/Effect";
-import { newLog, LogUnit, LogData } from "@/ui/hooks/global/log";
-import { EffectUnit, createEffectByUnit } from "./effect/EffectUnit";
+import type { Effect } from "./effect/Effect";
+import type { LogUnit, LogData } from "@/ui/hooks/global/log";
+import type { EffectUnit } from "./effect/EffectUnit";
+import type { EventParticipant } from "@/core/types/event/EventParticipant";
+
+import { newLog } from "@/ui/hooks/global/log";
+import { createEffectByUnit } from "./effect/EffectUnit";
 import { nanoid } from "nanoid";
 import { isArray } from "lodash";
 import { newError } from "@/ui/hooks/global/alert";
-import { EventParticipant } from "@/core/types/event/EventParticipant";
 import { isEntity } from "@/core/utils/typeGuards";
 import {
     getEventCollector,

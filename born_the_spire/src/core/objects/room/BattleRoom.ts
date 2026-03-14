@@ -1,11 +1,14 @@
-import { Room, RoomConfig, BattleRoomType } from "./Room"
+import { Room } from "./Room"
+import type { RoomConfig, BattleRoomType } from "./Room"
 import { startNewBattle, Battle } from "../game/battle"
-import { Enemy, EnemyMap } from "../target/Enemy"
+import type { Enemy } from "../target/Enemy"
+import type { EnemyMap } from "../target/Enemy"
 import { newLog } from "@/ui/hooks/global/log"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
 import { nowPlayer } from "@/core/objects/game/run"
 import { processEliteDefeat } from "@/core/hooks/organUnlock"
+import { createEnemy } from "@/core/factories"
 
 /**
  * 战斗房间配置
@@ -71,8 +74,10 @@ export class BattleRoom extends Room {
     async enter(): Promise<void> {
         newLog([`===== 进入${this.getDisplayName()} =====`])
 
-        // 生成敌人
-        this.enemies = this.enemyConfigs.map(config => new Enemy(config))
+        // 使用工厂生成敌人
+        this.enemies = await Promise.all(
+            this.enemyConfigs.map(config => createEnemy(config))
+        )
 
         newLog([`生成敌人: ${this.enemies.map(e => e.label).join(", ")}`])
     }

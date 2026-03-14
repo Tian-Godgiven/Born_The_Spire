@@ -1,4 +1,4 @@
-import { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
+import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import { ActionEvent } from "@/core/objects/system/ActionEvent"
 import { newLog } from "@/ui/hooks/global/log"
 

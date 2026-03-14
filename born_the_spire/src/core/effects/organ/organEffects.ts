@@ -2,16 +2,17 @@
  * 器官相关的效果函数
  */
 
-import { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
+import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import { newLog } from "@/ui/hooks/global/log"
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { isEntity } from "@/core/utils/typeGuards"
 import { Player } from "@/core/objects/target/Player"
-import { Organ } from "@/core/objects/target/Organ"
+import type { Organ } from "@/core/objects/target/Organ"
 import { hasTag } from "@/static/list/target/organTags"
 import { OrganTags } from "@/static/list/target/organTags"
 import { getCurrentValue, setCurrentValue } from "@/core/objects/system/Current/current"
+import { createOrgan } from "@/core/factories"
 
 /**
  * 替换器官效果
@@ -22,7 +23,7 @@ export const replaceOrgan: EffectFunc = async (event, effect) => {
     const { organKey } = effect.params
     const keepLevel = effect.params.keepLevel !== false // 默认为 true
 
-    // 动态导入避免循环依赖
+    // 需要动态导入 Organ 类用于 instanceof 检查
     const { Organ } = await import("@/core/objects/target/Organ")
 
     // 验证 target 是 Entity（不能是数组）
@@ -58,7 +59,7 @@ export const replaceOrgan: EffectFunc = async (event, effect) => {
         newLog(["错误：未找到器官", organKey])
         return
     }
-    const newOrgan = new Organ(organData)
+    const newOrgan = await createOrgan(organData)
 
     // 如果保留等级，设置新器官的等级
     if (keepLevel) {
@@ -135,6 +136,9 @@ export const chooseOrganRemove: EffectFunc = async (event, effect) => {
  * }
  */
 export const damageOrgan: EffectFunc = async (_event, effect) => {
+    // 动态导入 Organ 类用于 instanceof 检查
+    const { Organ } = await import("@/core/objects/target/Organ")
+
     const { organ, value } = effect.params
 
     if (!(organ instanceof Organ)) {
@@ -187,6 +191,9 @@ export const damageOrgan: EffectFunc = async (_event, effect) => {
  * }
  */
 export const healOrgan: EffectFunc = async (_event, effect) => {
+    // 动态导入 Organ 类用于 instanceof 检查
+    const { Organ } = await import("@/core/objects/target/Organ")
+
     const { organ, value } = effect.params
 
     if (!(organ instanceof Organ)) {

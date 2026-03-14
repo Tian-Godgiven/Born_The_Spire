@@ -1,20 +1,25 @@
-import { Entity } from "../Entity"
-import { Organ } from "../../target/Organ"
-import { Item } from "../../item/Item"
+import type { Entity } from "../Entity"
+import type { Organ } from "../../target/Organ"
+import type { Item } from "../../item/Item"
+import type { EffectUnit } from "../effect/EffectUnit"
+import type { Player } from "../../target/Player"
+
 import { ItemModifier } from "./ItemModifier"
 import { newLog } from "@/ui/hooks/global/log"
 import { doEvent } from "../ActionEvent"
-import { EffectUnit } from "../effect/EffectUnit"
 import { computed, toRaw } from "vue"
+import { getEntryModifier } from "./EntryModifier"
+import { getCurrentValue } from "@/core/objects/system/Current/current"
 import { resolveTriggerEventTarget } from "../trigger/Trigger"
-import { getCardModifier } from "./CardModifier"
-import { Player } from "../../target/Player"
 import { getPartMaxCount } from "@/static/list/target/organPart"
 import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
 import { getQualityConfig, calculateUpgradeCost, calculateBlackStorePrice, calculateRepairCost } from "@/static/list/target/organQuality"
-import { getCurrentValue } from "@/core/objects/system/Current/current"
+import { modifierManager } from "@/core/managers/ModifierManager"
 import { showComponent } from "@/core/hooks/componentManager"
-import { getEntryModifier } from "./EntryModifier"
+
+import { getCardModifier } from "./CardModifier"
+
+
 
 /**
  * 器官管理器
@@ -85,14 +90,12 @@ export class OrganModifier extends ItemModifier {
         }
 
         const parentLog = newLog([this.owner, "获得了器官", organ])
-        console.log(`[OrganModifier] ${this.owner.label} 获得器官 ${organ.label}`)
 
         // 设置器官持有者
         organ.owner = this.owner
 
         // 1. 创建 ItemModifierUnit
         const unit = this.add(organ as unknown as Item)
-        console.log(`[OrganModifier] 创建 ItemModifierUnit, 当前器官数量: ${this.getOrgans().length}`)
 
         // 2. 处理 possess 交互（持有期间的持续效果）
         const possessInteraction = organ.getInteraction("possess")
@@ -149,7 +152,6 @@ export class OrganModifier extends ItemModifier {
 
                     // 2.2. 处理 modifiers - 添加属性修饰器
                     if (possessInteraction.modifiers) {
-                        console.log(`[OrganModifier] ${organ.label} 添加 ${possessInteraction.modifiers.length} 个修饰器`)
                         for (const modifierDef of possessInteraction.modifiers) {
                             const statusKey = modifierDef.statusKey
                             const label = modifierDef.label || statusKey
@@ -160,12 +162,6 @@ export class OrganModifier extends ItemModifier {
                                 console.warn(`[OrganModifier] 实体 ${this.owner.label} 没有属性 ${statusKey}，跳过修饰器`)
                                 continue
                             }
-
-                            console.log(`[OrganModifier] 为 ${statusKey} 添加修饰器:`, {
-                                value: modifierDef.modifierValue,
-                                targetLayer: modifierDef.targetLayer,
-                                applyMode: modifierDef.applyMode
-                            })
 
                             // 添加修饰器
                             const remover = status.addByJSON(organ, {
@@ -179,7 +175,6 @@ export class OrganModifier extends ItemModifier {
 
                             // 收集 remover
                             unit.registerModifierRemover(remover, label)
-                            console.log(`[OrganModifier] 修饰器已注册到 ItemModifierUnit`)
                         }
                     }
                 }
@@ -207,8 +202,9 @@ export class OrganModifier extends ItemModifier {
         organ.activateWorkTriggers(this.owner)
 
         // 5. 处理器官提供的卡牌（如果 owner 是 Player）
-        if (this.owner instanceof Player && organ.cards.length > 0) {
-            const cardModifier = getCardModifier(this.owner)
+        // 使用 targetType 检查而不是 instanceof，避免循环依赖
+        if ((this.owner as any).targetType === 'player' && organ.cards.length > 0) {
+            const cardModifier = getCardModifier(this.owner as Player)
             const addedCards = await cardModifier.addCardsFromSource(organ, organ.cards, parentLog)
 
             // 更新器官的describe，将卡牌索引替换为实例ID
@@ -237,15 +233,9 @@ export class OrganModifier extends ItemModifier {
         // 6. 处理器官的词条
         if (organ.entry.length > 0) {
             const entryModifier = getEntryModifier(organ)
-            console.log(`[OrganModifier] ${organ.label} 应用 ${organ.entry.length} 个词条`)
 
             for (const entryKey of organ.entry) {
                 const result = entryModifier.addEntry(entryKey)
-                if (result === true) {
-                    console.log(`[OrganModifier] 词条 ${entryKey} 应用成功`)
-                } else {
-                    console.warn(`[OrganModifier] 词条 ${entryKey} 应用失败: ${result}`)
-                }
             }
 
             // 注册词条移除函数到 ItemModifierUnit
@@ -255,8 +245,6 @@ export class OrganModifier extends ItemModifier {
                 }
             }, `词条 (${organ.entry.length}个)`)
         }
-
-        console.log(`[OrganModifier] ${this.owner.label} 器官获取完成，当前器官列表:`, this.getOrgans().map(o => o.label))
     }
 
     /**
@@ -271,7 +259,6 @@ export class OrganModifier extends ItemModifier {
     loseOrgan(organ: Organ, triggerLoseEffect: boolean = false) {
         // 创建父日志
         const parentLog = newLog([this.owner, "失去了器官", organ])
-        console.log(`[OrganModifier] ${this.owner.label} 失去器官 ${organ.label}`)
 
         // 1. 移除 work 触发器（在清理副作用之前）
         organ.removeWorkTriggers()
@@ -280,11 +267,7 @@ export class OrganModifier extends ItemModifier {
         const removed = this.removeByItem(organ as unknown as Item, parentLog)
         if (!removed) {
             console.warn(`[OrganModifier] 未找到器官 ${organ.label}，可能已经被移除`)
-        } else {
-            console.log(`[OrganModifier] 器官 ${organ.label} 的修饰器已清理`)
         }
-
-        console.log(`[OrganModifier] ${this.owner.label} 当前器官列表:`, this.getOrgans().map(o => o.label))
 
         // 3. 可选：触发 lose 交互（失去器官时的一次性效果）
         if (triggerLoseEffect) {
@@ -729,16 +712,18 @@ export class OrganModifier extends ItemModifier {
     }
 }
 
-// 使用 WeakMap 存储 OrganModifier 实例，避免与 Vue reactive 冲突
-const organModifierMap = new WeakMap<Entity, OrganModifier>()
-
 /**
  * 为实体初始化器官管理器
  */
 export function initOrganModifier(entity: Entity): OrganModifier {
     const rawEntity = toRaw(entity)
     const modifier = new OrganModifier(rawEntity)
-    organModifierMap.set(rawEntity, modifier)
+
+    // 注册到全局 ModifierManager
+    import("@/core/managers/ModifierManager").then(({ modifierManager }) => {
+        modifierManager.registerItemModifier(rawEntity, modifier)
+    })
+
     return modifier
 }
 
@@ -747,9 +732,23 @@ export function initOrganModifier(entity: Entity): OrganModifier {
  */
 export function getOrganModifier(entity: Entity): OrganModifier {
     const rawEntity = toRaw(entity)
-    let modifier = organModifierMap.get(rawEntity)
+
+    // 先尝试从 ModifierManager 获取
+    let modifier: OrganModifier | undefined
+
+    // 同步导入检查（如果已加载）
+    try {
+        const itemModifier = modifierManager.getItemModifier(rawEntity)
+        if (itemModifier instanceof OrganModifier) {
+            modifier = itemModifier
+        }
+    } catch {
+        // ModifierManager 未加载，创建新实例
+    }
+
     if (!modifier) {
         modifier = initOrganModifier(rawEntity)
     }
+
     return modifier
 }
