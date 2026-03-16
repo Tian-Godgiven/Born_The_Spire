@@ -4,8 +4,13 @@ import { createRouter, createWebHistory } from 'vue-router';
 const routes = [
   {
     path: '/',
-    name: 'start',
+    name: 'home',
     component: () => import('@/ui/page/Scene/start/Start.vue')
+  },
+  {
+    path: '/setup',
+    name: 'setup',
+    component: () => import('@/ui/page/Scene/start/Setup.vue')
   },
   {
     path: '/running',

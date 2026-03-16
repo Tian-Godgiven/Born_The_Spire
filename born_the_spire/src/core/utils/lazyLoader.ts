@@ -173,6 +173,14 @@ export function initLazyModuleRegistrations(): void {
     })
 
     /**
+     * 注册 playerList
+     */
+    registerLazyModule('playerList', async () => {
+        const module = await import('@/static/list/target/playerList')
+        return module.playerList
+    })
+
+    /**
      * 注册 eventList
      */
     registerLazyModule('eventList', async () => {

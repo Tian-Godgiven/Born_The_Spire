@@ -32,7 +32,9 @@
       "Bash(grep -n \"from.*modifier\" src/core/objects/system/status/*.ts)",
       "Bash(node -e \"\nconst fs = require\\('fs'\\);\nconst buf = fs.readFileSync\\('D:/tian/Born_The_Spire/born_the_spire/circular.json'\\);\nconst content = buf.toString\\('utf16le'\\);\nconst idx = content.indexOf\\('Circular Dependencies'\\);\nif \\(idx >= 0\\) {\n  console.log\\(content.substring\\(idx, idx + 10000\\)\\);\n} else {\n  console.log\\('No circular section found'\\);\n}\n\")",
       "Bash(node -e \"\nconst fs = require\\('fs'\\);\nconst buf = fs.readFileSync\\('D:/tian/Born_The_Spire/born_the_spire/circular.json'\\);\nconst content = buf.toString\\('utf16le'\\);\nconst idx = content.indexOf\\('Circular Dependencies'\\);\nif \\(idx >= 0\\) {\n  console.log\\(content.substring\\(idx, idx + 20000\\)\\);\n}\n\" | head -100)",
-      "Bash(node -e \"\nconst fs = require\\('fs'\\);\nconst buf = fs.readFileSync\\('D:/tian/Born_The_Spire/born_the_spire/circular.json'\\);\nconst content = buf.toString\\('utf16le'\\);\nconst idx = content.indexOf\\('Circular Dependencies'\\);\nconst section = content.substring\\(idx, idx + 20000\\);\nconst lines = section.split\\('\\\\n'\\).filter\\(line => \n  line.includes\\('effectMap'\\) || \n  line.includes\\('EffectUnit'\\) ||\n  line.includes\\('lazyLoader'\\)\n\\);\nconsole.log\\(lines.slice\\(0, 20\\).join\\('\\\\n'\\)\\);\n\")"
+      "Bash(node -e \"\nconst fs = require\\('fs'\\);\nconst buf = fs.readFileSync\\('D:/tian/Born_The_Spire/born_the_spire/circular.json'\\);\nconst content = buf.toString\\('utf16le'\\);\nconst idx = content.indexOf\\('Circular Dependencies'\\);\nconst section = content.substring\\(idx, idx + 20000\\);\nconst lines = section.split\\('\\\\n'\\).filter\\(line => \n  line.includes\\('effectMap'\\) || \n  line.includes\\('EffectUnit'\\) ||\n  line.includes\\('lazyLoader'\\)\n\\);\nconsole.log\\(lines.slice\\(0, 20\\).join\\('\\\\n'\\)\\);\n\")",
+      "Bash(git log:*)",
+      "Bash(cd \"born_the_spire/src/ui/page/Scene/start\" && mv Start.vue Setup.vue)"
     ]
   }
 }

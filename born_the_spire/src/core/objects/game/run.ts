@@ -10,6 +10,7 @@ import { createPlayer } from "@/core/factories";
 
 import { reactive } from "vue";
 import router from "@/ui/router";
+import { addToPlayerTeam } from "@/core/objects/game/battle";
 
 //当前的局（使用 reactive 包装，内部属性自动响应式）
 export const nowGameRun = reactive<GameRun>(new GameRun())
@@ -201,7 +202,10 @@ export async function startNewRun(seed?: string, ascensionLevel: number = 0, ini
     }
 
     //跳转到游戏页面
-    router.replace("running")
+    await router.replace("/running")
+
+    // 等待 Vue 组件挂载完成（给 onMounted 执行时间）
+    await new Promise(resolve => setTimeout(resolve, 100))
 
     // 确保所有房间类型已注册（通过导入触发自动注册）
     await import("@/core/objects/room/InitRoom")
