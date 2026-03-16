@@ -125,9 +125,13 @@ export class TreasureRoom extends Room {
         const rawGold = this.baseGoldAmount + this.layer * this.goldPerLayer
         const finalGold = applyVariance(rawGold, this.goldVariance)
 
-        // 创建金钱奖励（目前只输出日志，等金钱系统实现后补充）
-        newLog([`获得金钱: ${finalGold}`])
-        // TODO: 等金钱系统实现后，创建 GoldReward 对象
+        // 创建金钱奖励
+        const { GoldReward } = await import("@/core/objects/reward/GoldReward")
+        const goldReward = new GoldReward({
+            type: "gold",
+            amount: finalGold
+        })
+        rewards.push(goldReward)
 
         // 2. 遗物奖励（带过滤）
         const selectedRelics = selectRelicsWithFilter(this.relicFilter)

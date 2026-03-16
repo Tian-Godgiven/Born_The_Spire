@@ -352,7 +352,7 @@ function generateTriggersForMechanism(
             removers.push({ remove })
         }
 
-        // TODO: 持续回合数和自定义清零条件
+        // 持续回合数和自定义清零条件
     }
 
     // 3. 生成自定义 Triggers

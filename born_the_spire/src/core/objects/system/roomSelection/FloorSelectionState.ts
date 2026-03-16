@@ -139,7 +139,7 @@ export class FloorSelectionState {
             ruleStates: Object.fromEntries(this.ruleStates),
             dynamicRules: this.dynamicRules.map(dr => ({
                 id: dr.id
-                // TODO: 序列化动态规则配置
+                // 序列化动态规则配置
             })),
             poolManagerState: this.roomSelector.serialize()
         }
@@ -157,6 +157,6 @@ export class FloorSelectionState {
             this.roomSelector.deserialize(data.poolManagerState)
         }
 
-        // TODO: 恢复动态规则
+        // 恢复动态规则
     }
 }

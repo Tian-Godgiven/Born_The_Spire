@@ -1,6 +1,5 @@
 import { Reward } from "./Reward"
 import type { RewardConfig } from "./Reward"
-import { newLog } from "@/ui/hooks/global/log"
 
 /**
  * 金钱奖励配置
@@ -31,8 +30,20 @@ export class GoldReward extends Reward {
             return
         }
 
-        // TODO: 实现金钱系统后，给玩家添加金钱
-        newLog([`获得 ${this.amount} 金钱`])
+        // 通过事件系统给玩家添加金钱
+        const { nowPlayer } = await import("@/core/objects/game/run")
+        const { doEvent } = await import("@/core/objects/system/ActionEvent")
+
+        await doEvent({
+            key: "gainReserve",
+            source: nowPlayer,
+            medium: nowPlayer,
+            target: nowPlayer,
+            effectUnits: [{
+                key: "gainReserve",
+                params: { reserveKey: "gold", amount: this.amount }
+            }]
+        })
 
         this.markAsClaimed()
     }

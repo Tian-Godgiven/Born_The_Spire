@@ -174,7 +174,7 @@ export class FloorSelectRoom extends Room {
             await enterRoom(this.selectedFloor.entranceEvent, 0)
         } else {
             // 直接进入地图UI或第一个房间选择
-            // TODO: 这里应该显示地图UI，暂时使用旧的房间选择方式
+            // 这里应该显示地图UI，暂时使用旧的房间选择方式
             const { RoomSelectRoom } = await import("@/core/objects/room/RoomSelectRoom")
             const roomSelectRoom = new RoomSelectRoom({
                 type: "roomSelect",

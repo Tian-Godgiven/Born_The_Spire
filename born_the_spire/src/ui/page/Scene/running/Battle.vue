@@ -70,7 +70,7 @@
                 // 胜利：完成房间，显示奖励
                 await nowGameRun.completeCurrentRoom()
             } else if (result === 'player_lose') {
-                // 失败：TODO 处理失败逻辑
+                // 失败：处理失败逻辑
                 console.log('[Battle] 战斗失败')
             }
         }

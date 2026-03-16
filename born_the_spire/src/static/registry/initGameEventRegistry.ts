@@ -17,7 +17,7 @@ export function initGameEventRegistry(): void {
     gameEventRegistry.registerEventType("choice", ChoiceEvent)
     gameEventRegistry.registerEventType("roomSelect", RoomSelectEvent)
 
-    // TODO: 注册其他事件类型
+    // 注册其他事件类型
     // gameEventRegistry.registerEventType("poolEvent", PoolEvent)
     // gameEventRegistry.registerEventType("storeEvent", StoreEvent)
     // gameEventRegistry.registerEventType("randomEvent", RandomEvent)

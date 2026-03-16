@@ -54,11 +54,26 @@ export class RelicReward extends Reward {
             return
         }
 
-        this.relic = await createRelic(this.relicConfig)
-        newLog([`获得遗物: ${this.relic.label}`])
+        // 通过事件系统给玩家添加遗物
+        const { nowPlayer } = await import("@/core/objects/game/run")
+        const { doEvent } = await import("@/core/objects/system/ActionEvent")
 
-        // TODO: 将遗物添加到玩家
-        // nowPlayer.addRelic(this.relic)
+        await doEvent({
+            key: "gainRelic",
+            source: nowPlayer,
+            medium: nowPlayer,
+            target: nowPlayer,
+            effectUnits: [{
+                key: "gainRelic",
+                params: { relicKey: this.relicConfig.key }
+            }]
+        })
+
+        // 获取已添加的遗物实例（从 RelicModifier 中获取）
+        const { getRelicModifier } = await import("@/core/objects/system/modifier/RelicModifier")
+        const relicModifier = getRelicModifier(nowPlayer)
+        const relics = relicModifier.getRelics()
+        this.relic = relics.find(r => r.key === this.relicConfig.key) || null
 
         this.markAsClaimed()
     }

@@ -19,9 +19,6 @@ import { getStatusValue } from "../system/status/Status";
 import { nanoid } from "nanoid";
 import { reactive } from "vue";
 
-console.log("开始构建Player文件")
-console.trace()
-
 export type PlayerMap = CharaMap & {
     key:string
     reserves?:Record<string,number>,  // 储备（金钱等）
@@ -39,7 +36,6 @@ export type CardPiles = {
     discardPile:Card[],
     exhaustPile:Card[]
 }
-console.log("开始构建player对象")
 // 每一局游戏中，玩家扮演的角色
 export class Player extends Chara{
     public readonly targetType = 'player' as const  // 类型标识

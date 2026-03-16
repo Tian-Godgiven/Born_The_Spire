@@ -108,7 +108,7 @@ export const eventList: EventMap[] = [
                 description: "净化你的牌组",
                 icon: "✨",
                 effects: [
-                    // TODO: 需要打开卡牌选择界面
+                    // 需要打开卡牌选择界面
                     { key: "healHealth", params: { amount: 20 } }
                 ]
             },
@@ -142,7 +142,7 @@ export const eventList: EventMap[] = [
                         nextScene: "scene2",
                         saveData: async (data) => {
                             data.itemType = 'card'
-                            data.itemName = '攻击卡'  // TODO: 实际应该打开卡牌选择界面
+                            data.itemName = '攻击卡'  // 实际应该打开卡牌选择界面
                             data.itemValue = 10
                         }
                     },
@@ -153,7 +153,7 @@ export const eventList: EventMap[] = [
                         nextScene: "scene2",
                         saveData: async (data) => {
                             data.itemType = 'organ'
-                            data.itemName = '心脏'  // TODO: 实际应该打开器官选择界面
+                            data.itemName = '心脏'  // 实际应该打开器官选择界面
                             data.itemValue = 20
                         }
                     },

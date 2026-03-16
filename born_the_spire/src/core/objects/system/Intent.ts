@@ -205,7 +205,7 @@ function calculateDamageWithBuffs(baseDamage: number, owner: Entity): number {
     // 这会触发所有相关触发器（如力量、虚弱），但不实际执行效果
 
     // 假设目标是玩家（敌人攻击玩家的场景）
-    // TODO: 这里需要传入实际的目标，可能需要调整 cardsToIntent 的参数
+    // 这里需要传入实际的目标，可能需要调整 cardsToIntent 的参数
     const finalDamage = simulateDamage(baseDamage, owner, owner)
 
     return finalDamage

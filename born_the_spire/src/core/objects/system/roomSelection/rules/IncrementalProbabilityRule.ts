@@ -100,7 +100,7 @@ export class IncrementalProbabilityRule implements SelectionRule {
         if (this.config.targetPool) {
             return this.config.targetPool.includes(roomKey)
         }
-        // TODO: 需要通过 roomRegistry 判断类型
+        // 需要通过 roomRegistry 判断类型
         // 暂时用简单的字符串匹配
         return roomKey.startsWith(this.config.targetType + '_')
     }

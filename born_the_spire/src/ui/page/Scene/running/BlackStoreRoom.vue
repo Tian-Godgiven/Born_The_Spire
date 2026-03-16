@@ -120,6 +120,30 @@
             <div class="modal-close" @click="closeSellOrganModal">取消</div>
         </div>
     </div>
+
+    <!-- 出售生命值弹窗 -->
+    <div v-if="showSellHealthModal" class="modal-overlay" @click="closeSellHealthModal">
+        <div class="modal-content" @click.stop>
+            <h2 class="modal-title">选择要出售的生命值数量</h2>
+            <div class="health-info">
+                <p>当前生命值: {{ playerCurrentHealth }} / {{ playerMaxHealth }}</p>
+                <p class="warning-text">注意：出售生命值会永久降低最大生命值</p>
+            </div>
+            <div class="health-options">
+                <div
+                    v-for="amount in healthAmountOptions"
+                    :key="amount"
+                    class="health-option"
+                    :class="{ 'disabled': !canSellHealthAmount(amount) }"
+                    @click="confirmSellHealth(amount)"
+                >
+                    <div class="health-amount">{{ amount }} 生命值</div>
+                    <div class="health-price">售价: {{ getHealthSellPrice(amount) }} 金</div>
+                </div>
+            </div>
+            <div class="modal-close" @click="closeSellHealthModal">取消</div>
+        </div>
+    </div>
 </div>
 </template>
 
@@ -132,6 +156,8 @@ import { getReserveModifier } from '@/core/objects/system/modifier/ReserveModifi
 import { getOrganModifier } from '@/core/objects/system/modifier/OrganModifier'
 import { Organ } from '@/core/objects/target/Organ'
 import { newLog } from '@/ui/hooks/global/log'
+import { getCurrentValue } from '@/core/objects/system/Current/current'
+import { getStatusValue } from '@/core/objects/system/status/Status'
 
 // 获取当前房间
 const currentRoom = computed(() => {
@@ -196,11 +222,27 @@ const healthSoldCount = computed(() => {
 // 出售器官弹窗状态
 const showSellOrganModal = ref(false)
 
+// 出售生命值弹窗状态
+const showSellHealthModal = ref(false)
+
 // 玩家器官列表
 const playerOrgans = computed(() => {
     const organModifier = getOrganModifier(nowPlayer)
     return organModifier.getOrgans()
 })
+
+// 玩家当前生命值
+const playerCurrentHealth = computed(() => {
+    return getCurrentValue(nowPlayer, 'health')
+})
+
+// 玩家最大生命值
+const playerMaxHealth = computed(() => {
+    return getStatusValue(nowPlayer, 'max-health')
+})
+
+// 生命值数量选项（5, 10, 15, 20）
+const healthAmountOptions = [5, 10, 15, 20]
 
 // 检查是否能购买
 function canAfford(item: StoreItem): boolean {
@@ -262,9 +304,36 @@ function getOrganSellPrice(organ: Organ): number {
 async function handleSellHealth() {
     if (!currentRoom.value) return
 
-    // TODO: 打开生命值数量选择界面
-    // 暂时固定出售 10 点生命值
-    await currentRoom.value.sellHealth(10)
+    // 打开生命值数量选择界面
+    showSellHealthModal.value = true
+}
+
+// 关闭出售生命值弹窗
+function closeSellHealthModal() {
+    showSellHealthModal.value = false
+}
+
+// 检查是否可以出售指定数量的生命值
+function canSellHealthAmount(amount: number): boolean {
+    return playerCurrentHealth.value > amount
+}
+
+// 获取指定数量生命值的售价
+function getHealthSellPrice(amount: number): number {
+    if (!currentRoom.value) return 0
+    return currentRoom.value.getHealthSellPricePreview(amount)
+}
+
+// 确认出售生命值
+async function confirmSellHealth(amount: number) {
+    if (!currentRoom.value) return
+    if (!canSellHealthAmount(amount)) {
+        newLog(['生命值不足！', `需要保留至少 1 点生命值`])
+        return
+    }
+
+    await currentRoom.value.sellHealth(amount)
+    closeSellHealthModal()
 }
 
 // 离开黑市
@@ -518,4 +587,63 @@ async function handleLeave() {
         background: rgba(0, 0, 0, 0.05);
     }
 }
+
+// 生命值选择界面样式
+.health-info {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border: 2px solid black;
+    background: rgba(255, 255, 0, 0.1);
+
+    p {
+        margin: 0.5rem 0;
+        font-size: 1.1rem;
+    }
+
+    .warning-text {
+        color: red;
+        font-weight: bold;
+        font-size: 1rem;
+    }
+}
+
+.health-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.health-option {
+    border: 2px solid black;
+    padding: 1rem;
+    background: white;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    &:hover:not(.disabled) {
+        background: rgba(0, 0, 0, 0.05);
+    }
+
+    &.disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        border-color: gray;
+    }
+}
+
+.health-amount {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.health-price {
+    font-size: 1rem;
+    color: green;
+    font-weight: bold;
+}
+
 </style>

@@ -19,9 +19,9 @@ export const floorList: FloorConfig[] = [
             battles: ["battle_normal_rocker"],
             eliteBattles: ["battle_elite_berserker", "battle_elite_hydra"],
             elitePlusBattles: ["battle_elite_plus_berserker"],
-            bossBattles: [],       // TODO: 添加Boss战斗
+            bossBattles: [],       // 添加Boss战斗
             events: [],            // 事件池（不包含苏生事件）
-            blackStores: [],       // TODO: 添加黑市房间
+            blackStores: [],       // 添加黑市房间
             pools: ["pool_default"],
             treasures: ["treasure_default"]
         },

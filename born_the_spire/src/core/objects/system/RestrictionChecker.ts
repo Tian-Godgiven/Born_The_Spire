@@ -131,12 +131,6 @@ export class RestrictionChecker {
             }
         }
 
-        // 时机条件（这里简化处理，实际可能需要更复杂的时机检查）
-        if (conditions.timing && conditions.timing !== 'anytime') {
-            // 实际实现中可能需要检查当前是否在指定时机
-            // 这里暂时跳过，因为需要更多上下文信息
-        }
-
         return { canUse: true }
     }
 

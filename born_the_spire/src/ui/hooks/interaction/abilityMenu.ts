@@ -111,15 +111,29 @@ export async function chooseTarget(params: TargetSelectionParams): Promise<Entit
         }
 
         // 设置全局点击监听器来选择目标
-        const clickHandler = (event: MouseEvent) => {
+        const clickHandler = async (event: MouseEvent) => {
             const target = event.target as HTMLElement
             const entityElement = target.closest('[data-entity-id]')
 
             if (entityElement) {
                 const entityId = entityElement.getAttribute('data-entity-id')
-                // 这里需要根据实际情况获取Entity对象
-                // 暂时跳过具体实现
-                console.log(`[TargetSelection] 点击了实体: ${entityId}`)
+                if (!entityId) return
+
+                // 从当前战斗中获取实体对象
+                const { nowBattle } = await import('@/core/objects/game/battle')
+                if (!nowBattle.value) {
+                    console.warn('[TargetSelection] 当前没有进行中的战斗')
+                    return
+                }
+
+                const entity = nowBattle.value.getEntityById(entityId)
+                if (entity) {
+                    console.log(`[TargetSelection] 选中实体: ${entity.label} (${entityId})`)
+                    // 这里可以调用回调函数或触发事件
+                    // 例如: params.onSelect?.(entity)
+                } else {
+                    console.warn(`[TargetSelection] 未找到实体: ${entityId}`)
+                }
             }
         }
 
@@ -139,7 +153,7 @@ export async function chooseTarget(params: TargetSelectionParams): Promise<Entit
  */
 export function showAbilityDetail(ability: ActiveAbility, item: Entity, owner: Entity): void {
     console.log(`[AbilityDetail] 显示能力详情: ${ability.label}`)
-    // TODO: 实现能力详情弹窗
+    // 实现能力详情弹窗
 }
 
 /**
@@ -147,5 +161,5 @@ export function showAbilityDetail(ability: ActiveAbility, item: Entity, owner: E
  */
 export function showAbilityUnavailableReason(ability: ActiveAbility, reason: string): void {
     console.log(`[AbilityUnavailable] ${ability.label} 不可用: ${reason}`)
-    // TODO: 实现不可用原因提示
+    // 实现不可用原因提示
 }

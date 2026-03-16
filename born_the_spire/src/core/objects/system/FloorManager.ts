@@ -426,7 +426,7 @@ export class FloorManager {
                     floorOrder: currentFloorOrder,
                     step: currentStep,
                     player,
-                    roomHistory: []  // TODO: 需要传入完整的 Room 对象历史
+                    roomHistory: []  // 需要传入完整的 Room 对象历史
                 })
             } catch (error) {
                 console.error(`[FloorManager] 自定义条件检查失败:`, error)
@@ -505,7 +505,7 @@ export class FloorManager {
                     floorOrder: currentFloorOrder,
                     step: currentStep,
                     player,
-                    roomHistory: []  // TODO: 传入完整的 Room 对象历史
+                    roomHistory: []  // 传入完整的 Room 对象历史
                 })
                 if (typeof result === "string") {
                     selectedRooms.push(result)

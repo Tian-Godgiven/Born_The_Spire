@@ -57,6 +57,16 @@ export class Battle {
     }
 
     /**
+     * 通过实体 ID 获取实体对象
+     * @param entityId 实体的 __id
+     * @returns Entity 对象，如果未找到则返回 undefined
+     */
+    getEntityById(entityId: string): Chara | undefined {
+        const allCharas = [...this.playerTeam, ...this.enemyTeam]
+        return allCharas.find(chara => chara.__id === entityId)
+    }
+
+    /**
      * 检查战斗是否应该结束
      * @returns "player_win" | "player_lose" | null
      */

@@ -10,7 +10,7 @@ const routes = [
   {
     path: '/setup',
     name: 'setup',
-    component: () => import('@/ui/page/Scene/start/Setup.vue')
+    component: () => import('@/ui/page/Scene/start/Setup/index.vue')
   },
   {
     path: '/running',

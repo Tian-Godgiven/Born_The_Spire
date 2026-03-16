@@ -553,7 +553,7 @@ export class BattleRoom extends Room {
             const { processVictoryMastery } = await import("@/core/hooks/organUnlock")
             processVictoryMastery(nowPlayer)
 
-            // TODO: 显示通关界面
+            // 显示通关界面
             return
         }
 

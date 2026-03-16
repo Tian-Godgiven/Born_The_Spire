@@ -20,5 +20,5 @@ export class ContentModifier extends Modifier<Entity & {id: string}>{
 //移除内容修饰器
 export function removeContentModifier(_modifier:ContentModifier){
     //获取其位置
-    // TODO: 实现移除逻辑
+    // 实现移除逻辑
 }

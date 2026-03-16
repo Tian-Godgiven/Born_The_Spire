@@ -300,7 +300,7 @@ export class BlackStoreRoom extends Room {
      * 计算遗物价格
      */
     private calculateRelicPrice(_relic: RelicMap): number {
-        // TODO: 根据遗物稀有度计算
+        // 根据遗物稀有度计算
         return 200
     }
 

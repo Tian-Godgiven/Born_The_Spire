@@ -4,6 +4,7 @@ import type { Status } from "@/core/objects/system/status/Status";
 import { toRaw } from "vue";
 import { glossaryMap } from "@/static/list/system/glossaryMap";
 import { isStatus } from "@/core/utils/typeGuards";
+import { getLazyModule } from "@/core/utils/lazyLoader";
 
 //对象的描述，存储为数据，使用时翻译为对应的字符串
 export type Describe = (
@@ -53,13 +54,28 @@ export function getDescribe(describe:Describe|undefined,target?:Object){
             }
             //卡牌实例引用
             else if("@" in value){
-                // 暂时显示占位符，实际渲染由getDescribeStructured处理
-                text += "[卡牌]"
+                const cardIndex = value["@"]
+                let cardLabel = "[卡牌]"
+
+                if (target && 'cards' in target && Array.isArray(target.cards)) {
+                    const cardKey = target.cards[cardIndex]
+                    if (cardKey) {
+                        const cardList = getLazyModule<any[]>('cardList')
+                        const cardConfig = cardList.find((c: any) => c.key === cardKey)
+                        if (cardConfig) cardLabel = cardConfig.label
+                    }
+                }
+                text += cardLabel
             }
             //卡牌key预览
             else if("#" in value){
-                // 暂时显示占位符，实际渲染由getDescribeStructured处理
-                text += "[卡牌]"
+                const cardKey = value["#"]
+                let cardLabel = "[卡牌]"
+
+                const cardList = getLazyModule<any[]>('cardList')
+                const cardConfig = cardList.find((c: any) => c.key === cardKey)
+                if (cardConfig) cardLabel = cardConfig.label
+                text += cardLabel
             }
             //这是一个数组，并且会尝试访问target的key属性
             else if("key" in value && target){
@@ -112,19 +128,45 @@ export function getDescribeStructured(describe:Describe|undefined,target?:Object
             }
             //卡牌实例引用
             else if("@" in value){
+                const cardIndex = value["@"]
+                let cardLabel = "[卡牌]"
+
+                // 尝试从 target 的 cards 数组中获取卡牌名称
+                if (target && 'cards' in target && Array.isArray(target.cards)) {
+                    const cardKey = target.cards[cardIndex]
+                    if (cardKey) {
+                        // 使用懒加载获取 cardList
+                        const cardList = getLazyModule<any[]>('cardList')
+                        const cardConfig = cardList.find((c: any) => c.key === cardKey)
+                        if (cardConfig) {
+                            cardLabel = cardConfig.label
+                        }
+                    }
+                }
+
                 segments.push({
-                    text: "[卡牌]",  // 占位符，实际渲染时会替换为卡牌名称
+                    text: cardLabel,
                     type: 'card',
-                    cardRef: value["@"],
+                    cardRef: cardIndex,
                     cardRefType: 'instance'
                 })
             }
             //卡牌key预览
             else if("#" in value){
+                const cardKey = value["#"]
+                let cardLabel = "[卡牌]"
+
+                // 使用懒加载获取 cardList
+                const cardList = getLazyModule<any[]>('cardList')
+                const cardConfig = cardList.find((c: any) => c.key === cardKey)
+                if (cardConfig) {
+                    cardLabel = cardConfig.label
+                }
+
                 segments.push({
-                    text: "[卡牌]",  // 占位符，实际渲染时会替换为卡牌名称
+                    text: cardLabel,
                     type: 'card',
-                    cardRef: value["#"],
+                    cardRef: cardKey,
                     cardRefType: 'key'
                 })
             }

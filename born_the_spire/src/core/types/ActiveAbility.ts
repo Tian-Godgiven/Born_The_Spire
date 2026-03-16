@@ -89,7 +89,6 @@ export interface ActiveAbilityRestrictions {
         maxHandSize?: number
         hasStatus?: string
         notHasStatus?: string
-        timing?: "turnStart" | "turnEnd" | "anytime"
         scene?: "combat" | "nonCombat" | "anytime"
     }
 

@@ -116,9 +116,7 @@ export const gainRelic: EffectFunc = async (event, effect) => {
     }
 
     const relicModifier = getRelicModifier(target)
-    relicModifier.acquireRelicsFromKeys([relicKey], target)
-
-    newLog([target, "获得了遗物", relicKey])
+    await relicModifier.acquireRelicsFromKeys([relicKey], target)
 }
 
 /**

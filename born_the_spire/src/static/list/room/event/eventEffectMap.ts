@@ -21,7 +21,7 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
      */
     "gainMaterial": async (params: { amount: number }) => {
         newLog([`获得 ${params.amount} 物质`])
-        // TODO: nowPlayer.addMaterial(params.amount)
+        // nowPlayer.addMaterial(params.amount)
     },
 
     /**
@@ -29,7 +29,7 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
      */
     "loseMaterial": async (params: { amount: number }) => {
         newLog([`失去 ${params.amount} 物质`])
-        // TODO: nowPlayer.spendMaterial(params.amount)
+        // nowPlayer.spendMaterial(params.amount)
     },
 
     /**
@@ -367,7 +367,7 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
      */
     "openChest": async () => {
         newLog(["打开宝箱..."])
-        // TODO: 随机给予奖励
+        // 随机给予奖励
     },
 
     /**

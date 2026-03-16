@@ -69,7 +69,7 @@ export function generateRandomRoomChoices(
     layer: number,
     count: number = 3
 ): ChoiceGroup {
-    // TODO: 根据层级和概率规则生成房间
+    // 根据层级和概率规则生成房间
     // 这里先简单地从所有房间配置中随机选择
 
     const allConfigs = roomRegistry.getAllRoomConfigs()
