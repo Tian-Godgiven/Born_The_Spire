@@ -11,6 +11,7 @@ import { floorRegistry } from "@/static/registry/floorRegistry"
 import { nowGameRun, enterRoom } from "@/core/objects/game/run"
 import { newLog } from "@/ui/hooks/global/log"
 import type { FloorConfig } from "@/core/types/FloorConfig"
+import { RoomSelectRoom } from "./RoomSelectRoom"
 
 /**
  * 楼层选择房间配置
@@ -173,7 +174,6 @@ export class FloorSelectRoom extends Room {
         } else {
             // 直接进入地图UI或第一个房间选择
             // 这里应该显示地图UI，暂时使用旧的房间选择方式
-            const { RoomSelectRoom } = await import("@/core/objects/room/RoomSelectRoom")
             const roomSelectRoom = new RoomSelectRoom({
                 type: "roomSelect",
                 layer: 1,

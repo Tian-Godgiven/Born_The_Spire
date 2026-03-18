@@ -6,6 +6,7 @@ import { createTriggerByTriggerMap } from "../trigger/Trigger";
 import { newError } from "@/ui/hooks/global/alert";
 import { getStatusValue } from "../status/Status";
 import { getRefValue, setRefValue } from "@/core/hooks/refValue";
+import { getMetaFromCurrentMap } from "@/static/list/system/currents/currentMap";
 
 type CurrentOption = {
     allowOverMin?:boolean|"breakdown",//是否允许某次修改超出下限值,默认为true
@@ -55,9 +56,6 @@ export class Current{
 
 //初始化当前值
 export async function initCurrentFromMap<T extends Entity>(owner:Entity,mapData:any){
-    // 动态导入以避免循环依赖
-    const { getMetaFromCurrentMap } = await import("@/static/list/system/currents/currentMap")
-
     //从map里找到当前值
     for(let i of mapData){
         let key:string = typeof i == "string" ? i:i.key

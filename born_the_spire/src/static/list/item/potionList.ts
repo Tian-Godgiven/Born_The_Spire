@@ -118,7 +118,6 @@ export const potionList:PotionMap[] = [
 
 //获取药水对象
 export async function getPotionByKey(potionKey:string){
-    const { Potion } = await import("@/core/objects/item/Subclass/Potion")
     //获取数据
     const map = potionList.find(item=>item.key == potionKey)
     if(!map){

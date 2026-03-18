@@ -1,6 +1,7 @@
 import { Reward } from "./Reward"
 import type { RewardConfig } from "./Reward"
 import { newLog } from "@/ui/hooks/global/log"
+import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
 
 /**
  * 物质奖励配置
@@ -32,8 +33,8 @@ export class MaterialReward extends Reward {
         }
 
         // 动态导入避免循环依赖
-        const { nowPlayer } = await import("@/core/objects/game/run")
-        const { getReserveModifier } = await import("@/core/objects/system/modifier/ReserveModifier")
+        
+        
 
         const reserveModifier = getReserveModifier(nowPlayer)
         reserveModifier.gainReserve("material", this.amount, nowPlayer)

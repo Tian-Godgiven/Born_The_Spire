@@ -1,6 +1,7 @@
 import { Reward } from "./Reward"
 import type { RewardConfig } from "./Reward"
 import type { OrganMap } from "@/core/objects/target/Organ"
+import { nowPlayer } from "@/core/objects/game/run"
 import { newLog } from "@/ui/hooks/global/log"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { organRewardActionRegistry } from "@/static/registry/organRewardActionRegistry"
@@ -72,7 +73,7 @@ export class OrganSelectReward extends Reward {
         }
 
         // 动态导入避免循环依赖
-        const { nowPlayer } = await import("@/core/objects/game/run")
+        
 
         const player = nowPlayer
         const context: OrganRewardActionContext = {

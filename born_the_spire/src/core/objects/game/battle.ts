@@ -11,6 +11,7 @@ import { newLog } from "@/ui/hooks/global/log"
 import { doEvent } from "../system/ActionEvent"
 import { nowPlayer } from "./run"
 import { endCharaTurn, startCharaTurn } from "@/core/effects/turn"
+import { applyStrengthTrigger, applyVulnerableTrigger, applyWeakTrigger } from "@/core/effects/state/stateTriggers"
 
 import { prepareEnemyIntents, executeAllEnemiesTurn } from "./enemyTurn"
 
@@ -246,7 +247,6 @@ export async function startNewBattle(playerTeam:(Player|Chara)[],enemyTeam:(Enem
         await nowPlayer.startBattle()
 
         // 为所有敌人应用状态触发器
-        const { applyStrengthTrigger, applyVulnerableTrigger, applyWeakTrigger } = await import("@/core/effects/state/stateTriggers")
         for (const enemy of enemyTeam) {
             if (isEnemy(enemy)) {
                 applyStrengthTrigger(enemy)

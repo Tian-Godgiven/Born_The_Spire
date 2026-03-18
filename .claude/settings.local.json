@@ -44,7 +44,13 @@
       "Bash(powershell -Command \"Rename-Item -Path 'archived_systems' -NewName '已归档系统'\")",
       "Bash(powershell -Command \"Move-Item -Path '已归档系统/README.md' -Destination '文档/未归档/已归档系统说明.md'; Move-Item -Path '已归档系统/动态房间选择系统/README.md' -Destination '文档/未归档/动态房间选择系统详细文档.md'; Move-Item -Path '已归档系统/动态房间选择系统/MIGRATION_GUIDE.md' -Destination '文档/未归档/动态房间选择系统迁移指南.md'\")",
       "Bash(head -223 \"D:\\\\tian\\\\Born_The_Spire\\\\born_the_spire\\\\文档\\\\未归档\\\\任务列表.md\" > \"D:\\\\tian\\\\Born_The_Spire\\\\born_the_spire\\\\文档\\\\未归档\\\\任务列表_temp.md\")",
-      "Bash(tail -n +224 \"D:\\\\tian\\\\Born_The_Spire\\\\born_the_spire\\\\文档\\\\未归档\\\\任务列表.md\" > \"D:\\\\tian\\\\Born_The_Spire\\\\born_the_spire\\\\文档\\\\未归档\\\\已完成任务_2026-03-16.md\")"
+      "Bash(tail -n +224 \"D:\\\\tian\\\\Born_The_Spire\\\\born_the_spire\\\\文档\\\\未归档\\\\任务列表.md\" > \"D:\\\\tian\\\\Born_The_Spire\\\\born_the_spire\\\\文档\\\\未归档\\\\已完成任务_2026-03-16.md\")",
+      "Bash(cat:*)",
+      "Bash(do)",
+      "Bash(echo \"=== $file ===\")",
+      "Read(//d/tian/Born_The_Spire/born_the_spire/src/**)",
+      "Bash(cd:*)",
+      "Bash(grep:*)"
     ]
   }
 }

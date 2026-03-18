@@ -1,6 +1,7 @@
 import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import { handleEventEntity } from "@/core/objects/system/ActionEvent"
 import { isEntity } from "@/core/utils/typeGuards"
+import { nowBattle } from "@/core/objects/game/battle"
 
 /**
  * 战斗开始时增加第一回合抽牌数
@@ -23,9 +24,6 @@ export const addFirstTurnDraw: EffectFunc = (event, effect) => {
             how: "take",
             key: "turnStartDrawCard",
             callback: async (triggerEvent) => {
-                // 动态导入 nowBattle 避免循环依赖
-                const { nowBattle } = await import("@/core/objects/game/battle")
-
                 // 检查是否是第一回合
                 if (nowBattle.value && nowBattle.value.turnNumber === 1) {
                     // 修改抽牌事件的效果参数

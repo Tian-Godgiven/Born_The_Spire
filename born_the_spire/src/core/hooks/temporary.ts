@@ -5,6 +5,7 @@ import type { Entity } from "@/core/objects/system/Entity"
 import { temporaryManager } from "@/core/objects/system/TemporaryManager"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { createCard, createOrgan } from "@/core/factories"
+import { getOrgan } from "@/core/objects/target/Organ"
 
 /**
  * 创建临时卡牌并添加到玩家手牌
@@ -64,8 +65,7 @@ export async function addTemporaryOrgan(
     organ.isTemporary = true
     organ.temporaryRemoveOn = removeOn
 
-    // 使用现有的器官获得逻辑（动态导入避免循环依赖）
-    const { getOrgan } = await import("@/core/objects/target/Organ")
+    // 使用现有的器官获得逻辑
     getOrgan(owner, owner, organ) // source设为owner自己
 
     // 注册到临时管理器

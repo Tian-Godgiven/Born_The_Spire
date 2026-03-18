@@ -4,6 +4,7 @@ import { createApp } from 'vue'
 import type { App } from 'vue'
 import AbilityMenu from '@/ui/components/interaction/AbilityMenu.vue'
 import AbilityTargetSelector from '@/ui/components/interaction/AbilityTargetSelector.vue'
+import { nowBattle } from '@/core/objects/game/battle'
 
 /**
  * 能力菜单显示参数
@@ -120,7 +121,6 @@ export async function chooseTarget(params: TargetSelectionParams): Promise<Entit
                 if (!entityId) return
 
                 // 从当前战斗中获取实体对象
-                const { nowBattle } = await import('@/core/objects/game/battle')
                 if (!nowBattle.value) {
                     console.warn('[TargetSelection] 当前没有进行中的战斗')
                     return

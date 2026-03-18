@@ -4,6 +4,7 @@ import { chooseFromRandomCards, chooseCardsToUpgrade, chooseCardsToRemove, choos
 import { getCardModifier } from "@/core/objects/system/modifier/CardModifier"
 import { Card } from "@/core/objects/item/Subclass/Card"
 import { getCardByKey, cardList } from "@/static/list/item/cardList"
+import { doEvent } from "@/core/objects/system/ActionEvent"
 
 /**
  * 发现卡牌（从卡牌池中随机抽取并选择，加入手牌）
@@ -119,7 +120,7 @@ export const chooseCardUpgrade: EffectFunc = async (event, effect) => {
   const selectedCards = await chooseCardsToUpgrade(target, Number(count))
 
   // 对每张选中的卡牌创建升级事件
-  const { doEvent } = await import("@/core/objects/system/ActionEvent")
+  
   for (const card of selectedCards) {
     await doEvent({
       key: "upgradeCard",
@@ -151,7 +152,7 @@ export const chooseCardRemove: EffectFunc = async (event, effect) => {
   const selectedCards = await chooseCardsToRemove(target, Number(count), Number(minCount))
 
   // 对每张选中的卡牌创建移除事件
-  const { doEvent } = await import("@/core/objects/system/ActionEvent")
+  
   for (const card of selectedCards) {
     await doEvent({
       key: "removeCard",
@@ -248,7 +249,7 @@ export const customCardChoice: EffectFunc = async (event, effect) => {
   const actionStr = String(action)
 
   // 动态导入 doEvent
-  const { doEvent } = await import("@/core/objects/system/ActionEvent")
+  
 
   for (const card of selectedCards) {
     switch (actionStr) {

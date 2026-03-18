@@ -3,6 +3,7 @@ import type { RewardConfig } from "./Reward"
 import type { Relic } from "@/core/objects/item/Subclass/Relic"
 import type { RelicMap } from "@/core/objects/item/Subclass/Relic"
 import { newLog } from "@/ui/hooks/global/log"
+import { getRelicModifier } from "@/core/objects/system/modifier/RelicModifier"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { createRelic } from "@/core/factories"
 
@@ -55,8 +56,8 @@ export class RelicReward extends Reward {
         }
 
         // 通过事件系统给玩家添加遗物
-        const { nowPlayer } = await import("@/core/objects/game/run")
-        const { doEvent } = await import("@/core/objects/system/ActionEvent")
+        
+        
 
         await doEvent({
             key: "gainRelic",
@@ -70,7 +71,7 @@ export class RelicReward extends Reward {
         })
 
         // 获取已添加的遗物实例（从 RelicModifier 中获取）
-        const { getRelicModifier } = await import("@/core/objects/system/modifier/RelicModifier")
+        
         const relicModifier = getRelicModifier(nowPlayer)
         const relics = relicModifier.getRelics()
         this.relic = relics.find(r => r.key === this.relicConfig.key) || null

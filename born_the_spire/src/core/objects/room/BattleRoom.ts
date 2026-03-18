@@ -1,14 +1,18 @@
 import { Room } from "./Room"
 import type { RoomConfig, BattleRoomType } from "./Room"
-import { startNewBattle, Battle } from "../game/battle"
+import { startNewBattle, Battle, nowPlayerTeam, endNowBattle } from "../game/battle"
 import type { Enemy } from "../target/Enemy"
 import type { EnemyMap } from "../target/Enemy"
 import { newLog } from "@/ui/hooks/global/log"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
-import { nowPlayer } from "@/core/objects/game/run"
-import { processEliteDefeat } from "@/core/hooks/organUnlock"
+import { nowPlayer, nowGameRun } from "@/core/objects/game/run"
+import { processEliteDefeat, processVictoryMastery } from "@/core/hooks/organUnlock"
 import { createEnemy } from "@/core/factories"
+import { rewardRegistry } from "@/static/registry/rewardRegistry"
+import { gainMark } from "@/core/hooks/mark"
+import { goToNextStep } from "@/core/hooks/step"
+import { FloorSelectRoom } from "./FloorSelectRoom"
 
 /**
  * 战斗房间配置
@@ -88,8 +92,6 @@ export class BattleRoom extends Room {
      */
     async process(): Promise<void> {
         // 获取玩家队伍（从 battle.ts 中导入）
-        const { nowPlayerTeam } = await import("../game/battle")
-
         if (nowPlayerTeam.length === 0) {
             console.error("[BattleRoom] 没有玩家队伍")
             return
@@ -139,14 +141,13 @@ export class BattleRoom extends Room {
     async exit(): Promise<void> {
         newLog([`===== 离开${this.getDisplayName()} =====`])
 
-        // 清理 targetManager 中的目标
+        // 清理 targetManager 中的目标（UI相关，保留动态import）
         const { targetManager } = await import("@/ui/interaction/target/targetManager")
         this.enemies.forEach(enemy => {
             targetManager.removeTarget(enemy)
         })
 
         // 清理全局战斗状态
-        const { endNowBattle } = await import("../game/battle")
         endNowBattle()
 
         // 清理本地战斗状态
@@ -192,7 +193,6 @@ export class BattleRoom extends Room {
         const materialReward = this.calculateMaterialReward()
 
         // 创建物质奖励对象
-        const { rewardRegistry } = await import("@/static/registry/rewardRegistry")
         const materialRewardObj = rewardRegistry.createReward({
             type: "material",
             amount: materialReward
@@ -249,7 +249,7 @@ export class BattleRoom extends Room {
         const materialReward = this.calculateMaterialReward()
 
         // 创建物质奖励对象
-        const { rewardRegistry } = await import("@/static/registry/rewardRegistry")
+        
         const materialRewardObj = rewardRegistry.createReward({
             type: "material",
             amount: materialReward
@@ -308,7 +308,7 @@ export class BattleRoom extends Room {
         const materialReward = this.calculateMaterialReward()
 
         // 创建物质奖励对象
-        const { rewardRegistry } = await import("@/static/registry/rewardRegistry")
+        
         const materialRewardObj = rewardRegistry.createReward({
             type: "material",
             amount: materialReward
@@ -350,7 +350,6 @@ export class BattleRoom extends Room {
         }
 
         // 6. 获得印记
-        const { gainMark } = await import("@/core/hooks/mark")
         await gainMark(nowPlayer, "mark_elite")
         newLog(["获得绿色印记！"])
     }
@@ -371,7 +370,7 @@ export class BattleRoom extends Room {
         const materialReward = this.calculateMaterialReward() * 2
 
         // 创建物质奖励对象
-        const { rewardRegistry } = await import("@/static/registry/rewardRegistry")
+        
         const materialRewardObj = rewardRegistry.createReward({
             type: "material",
             amount: materialReward
@@ -475,7 +474,7 @@ export class BattleRoom extends Room {
             return null
         }
 
-        const { rewardRegistry } = await import("@/static/registry/rewardRegistry")
+        
         return rewardRegistry.createReward({
             type: "relicSelect",
             title: title || "选择遗物",
@@ -507,7 +506,7 @@ export class BattleRoom extends Room {
 
         const randomPotion = potionList[Math.floor(Math.random() * potionList.length)]
 
-        const { rewardRegistry } = await import("@/static/registry/rewardRegistry")
+        
         return rewardRegistry.createReward({
             type: "potion",
             potionConfig: randomPotion
@@ -534,7 +533,6 @@ export class BattleRoom extends Room {
      * Boss 战斗结束后调用
      */
     private async triggerFloorSelection(): Promise<void> {
-        const { nowGameRun } = await import("@/core/objects/game/run")
         const currentFloorConfig = nowGameRun.floorManager.getCurrentFloorConfig()
 
         if (!currentFloorConfig) {
@@ -550,7 +548,6 @@ export class BattleRoom extends Room {
             newLog(["恭喜通关！"])
 
             // 标记当前持有器官的精通等级
-            const { processVictoryMastery } = await import("@/core/hooks/organUnlock")
             processVictoryMastery(nowPlayer)
 
             // 显示通关界面
@@ -569,7 +566,6 @@ export class BattleRoom extends Room {
             }
 
             // 显示地图UI
-            const { goToNextStep } = await import("@/core/hooks/step")
             await goToNextStep()
             return
         }
@@ -586,11 +582,9 @@ export class BattleRoom extends Room {
                 nowGameRun.floorManager.generateMap(newFloorConfig.mapConfig)
             }
 
-            const { goToNextStep } = await import("@/core/hooks/step")
             await goToNextStep()
         } else {
             // 显示楼层选择界面
-            const { FloorSelectRoom } = await import("@/core/objects/room/FloorSelectRoom")
             const floorSelectRoom = new FloorSelectRoom({
                 type: "floorSelect",
                 layer: this.layer + 1,

@@ -9,7 +9,7 @@ import { newLog } from "@/ui/hooks/global/log"
 import { doEvent } from "../ActionEvent"
 import { computed, toRaw } from "vue"
 import { getEntryModifier } from "./EntryModifier"
-import { getCurrentValue } from "@/core/objects/system/Current/current"
+import { getCurrentValue, setCurrentValue } from "@/core/objects/system/Current/current"
 import { resolveTriggerEventTarget } from "../trigger/Trigger"
 import { getPartMaxCount } from "@/static/list/target/organPart"
 import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
@@ -381,7 +381,6 @@ export class OrganModifier extends ItemModifier {
         // 恢复质量到最大值（如果有质量系统）
         if (organ.status["max-mass"]) {
             const maxMass = organ.status["max-mass"].value
-            const { setCurrentValue } = await import("@/core/objects/system/Current/current")
             setCurrentValue(organ, "mass", maxMass)
             newLog([organ, `质量完全恢复到 ${maxMass}`])
         }
@@ -649,9 +648,7 @@ export function initOrganModifier(entity: Entity): OrganModifier {
     const modifier = new OrganModifier(rawEntity)
 
     // 注册到全局 ModifierManager
-    import("@/core/managers/ModifierManager").then(({ modifierManager }) => {
-        modifierManager.registerItemModifier(rawEntity, modifier)
-    })
+    modifierManager.registerItemModifier(rawEntity, modifier)
 
     return modifier
 }

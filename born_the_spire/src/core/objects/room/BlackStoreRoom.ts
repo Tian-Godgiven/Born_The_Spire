@@ -13,6 +13,7 @@ import type { Relic } from "@/core/objects/item/Subclass/Relic"
 import type { RelicMap } from "@/core/objects/item/Subclass/Relic"
 import type { PotionMap } from "@/core/objects/item/Subclass/Potion"
 import { createRelic } from "@/core/factories"
+import { getOrganByKey } from "@/static/list/target/organList"
 import {
     blackStoreOrganPool,
     blackStoreRelicPool,
@@ -380,7 +381,6 @@ export class BlackStoreRoom extends Room {
             case "organ": {
                 const organData = item.data as OrganMap
                 // 使用 getOrganByKey 创建 Organ 实例
-                const { getOrganByKey } = await import("@/static/list/target/organList")
                 const organ = await getOrganByKey(organData.key)
                 const organModifier = getOrganModifier(nowPlayer)
                 organModifier.acquireOrgan(organ, nowPlayer)

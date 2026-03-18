@@ -13,6 +13,7 @@ import { isEntity } from "@/core/utils/typeGuards"
 import { Player } from "@/core/objects/target/Player"
 import { Enemy } from "@/core/objects/target/Enemy"
 import { createOrgan } from "@/core/factories"
+import { getPotionByKey } from "@/static/list/item/potionList"
 
 /**
  * 获得卡牌效果
@@ -76,7 +77,7 @@ export const gainPotion: EffectFunc = async (event, effect) => {
         return
     }
 
-    const { getPotionByKey } = await import("@/static/list/item/potionList")
+    
     const potion = await getPotionByKey(potionKey)
 
     if (!potion) {

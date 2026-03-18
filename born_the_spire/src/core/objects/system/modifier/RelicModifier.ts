@@ -5,6 +5,7 @@ import { newLog } from "@/ui/hooks/global/log"
 import type { LogUnit } from "@/ui/hooks/global/log"
 import { computed } from "vue"
 import { createRelic } from "@/core/factories"
+import { getLazyModule } from "@/core/utils/lazyLoader"
 
 /**
  * 遗物管理器
@@ -42,8 +43,6 @@ export class RelicModifier extends ItemModifier {
      * @param parentLog 父日志
      */
     async acquireRelicsFromKeys(relicKeys: string[], source: Entity, parentLog?: LogUnit) {
-        // 动态导入避免循环依赖
-        const { getLazyModule } = await import("@/core/utils/lazyLoader")
         const relicList = getLazyModule<any[]>('relicList')
 
         for (const relicKey of relicKeys) {

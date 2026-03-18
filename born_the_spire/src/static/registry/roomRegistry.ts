@@ -5,6 +5,13 @@
 
 import type { Room, RoomType } from "@/core/objects/room/Room"
 import type { Component } from "vue"
+import { initInitRooms } from './rooms/initInitRooms'
+import { initBattleRooms } from './rooms/initBattleRooms'
+import { initEventRooms } from './rooms/initEventRooms'
+import { initPoolRooms } from './rooms/initPoolRooms'
+import { initRoomSelectRooms } from './rooms/initRoomSelectRooms'
+import { initTreasureRooms } from './rooms/initTreasureRooms'
+import { initFloorSelectRooms } from './rooms/initFloorSelectRooms'
 
 /**
  * 房间组件类型
@@ -239,17 +246,6 @@ export type { RoomTypeRegistration }
  * 在懒加载完成后调用，依次调用各个房间类型的注册模块
  */
 export async function initAllRooms(): Promise<void> {
-
-    // 导入各个房间类型的注册模块
-    const { initInitRooms } = await import('./rooms/initInitRooms')
-    const { initBattleRooms } = await import('./rooms/initBattleRooms')
-    const { initEventRooms } = await import('./rooms/initEventRooms')
-    const { initPoolRooms } = await import('./rooms/initPoolRooms')
-    // const { initBlackStoreRooms } = await import('./rooms/initBlackStoreRooms')
-    const { initRoomSelectRooms } = await import('./rooms/initRoomSelectRooms')
-    const { initTreasureRooms } = await import('./rooms/initTreasureRooms')
-    const { initFloorSelectRooms } = await import('./rooms/initFloorSelectRooms')
-
     // 依次初始化各个房间类型（初始化房间优先）
     await initInitRooms()
     await initBattleRooms()

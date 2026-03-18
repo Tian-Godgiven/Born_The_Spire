@@ -1,5 +1,8 @@
 import type { PoolActionHandler } from "@/core/types/poolAction"
 import { poolActionRegistry } from "@/static/registry/poolActionRegistry"
+import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
+import { doEvent } from "@/core/objects/system/ActionEvent"
+import { newLog } from "@/ui/hooks/global/log"
 
 /**
  * 内置水池行动
@@ -13,10 +16,6 @@ import { poolActionRegistry } from "@/static/registry/poolActionRegistry"
 export const exerciseAction: PoolActionHandler = async (player, _context) => {
   const materialCost = 30  // 消耗物质
   const healthGain = 5     // 增加最大生命
-
-  const { getReserveModifier } = await import("@/core/objects/system/modifier/ReserveModifier")
-  const { doEvent } = await import("@/core/objects/system/ActionEvent")
-  const { newLog } = await import("@/ui/hooks/global/log")
 
   // 检查物质是否足够
   const reserveModifier = getReserveModifier(player)

@@ -4,6 +4,7 @@
  */
 
 import type { MarkConfig } from "@/core/types/MarkConfig"
+import { markList } from '@/static/list/mark/markList'
 
 /**
  * 印记注册表类
@@ -71,10 +72,6 @@ export const markRegistry = new MarkRegistry()
  * 在懒加载完成后调用
  */
 export async function initAllMarks(): Promise<void> {
-
-    // 导入印记列表
-    const { markList } = await import('@/static/list/mark/markList')
-
     // 注册所有印记
     markRegistry.registerMarks(markList)
 

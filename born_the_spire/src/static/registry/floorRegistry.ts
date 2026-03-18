@@ -1,9 +1,10 @@
- /* 
+ /*
  * 层级注册表系统
  * 管理所有层级配置，支持 mod 制作者注册自定义层级
  */
 
 import type { FloorConfig } from "@/core/types/FloorConfig"
+import { floorList } from '@/static/list/floor/floorList'
 
 /**
  * 层级注册表类
@@ -78,10 +79,6 @@ export const floorRegistry = new FloorRegistry()
  * 在懒加载完成后调用
  */
 export async function initAllFloors(): Promise<void> {
-
-    // 导入层级列表
-    const { floorList } = await import('@/static/list/floor/floorList')
-
     // 注册所有层级
     floorRegistry.registerFloors(floorList)
 

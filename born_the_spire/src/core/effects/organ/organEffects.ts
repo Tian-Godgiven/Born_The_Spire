@@ -8,11 +8,12 @@ import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { isEntity } from "@/core/utils/typeGuards"
 import { Player } from "@/core/objects/target/Player"
-import type { Organ } from "@/core/objects/target/Organ"
+import { Organ } from "@/core/objects/target/Organ"
 import { hasTag } from "@/static/list/target/organTags"
 import { OrganTags } from "@/static/list/target/organTags"
 import { getCurrentValue, setCurrentValue } from "@/core/objects/system/Current/current"
 import { createOrgan } from "@/core/factories"
+import { doEvent } from "@/core/objects/system/ActionEvent"
 
 /**
  * 替换器官效果
@@ -24,7 +25,7 @@ export const replaceOrgan: EffectFunc = async (event, effect) => {
     const keepLevel = effect.params.keepLevel !== false // 默认为 true
 
     // 需要动态导入 Organ 类用于 instanceof 检查
-    const { Organ } = await import("@/core/objects/target/Organ")
+    // Organ 已静态导入
 
     // 验证 target 是 Entity（不能是数组）
     if (Array.isArray(target)) {
@@ -109,7 +110,7 @@ export const chooseOrganRemove: EffectFunc = async (event, effect) => {
     })
 
     // 对每个选中的器官创建移除事件
-    const { doEvent } = await import("@/core/objects/system/ActionEvent")
+    
     for (const organKey of result.selectedKeys) {
         const organ = organs.find(o => o.key === organKey)
         if (organ) {
@@ -137,7 +138,7 @@ export const chooseOrganRemove: EffectFunc = async (event, effect) => {
  */
 export const damageOrgan: EffectFunc = async (_event, effect) => {
     // 动态导入 Organ 类用于 instanceof 检查
-    const { Organ } = await import("@/core/objects/target/Organ")
+    // Organ 已静态导入
 
     const { organ, value } = effect.params
 
@@ -192,7 +193,7 @@ export const damageOrgan: EffectFunc = async (_event, effect) => {
  */
 export const healOrgan: EffectFunc = async (_event, effect) => {
     // 动态导入 Organ 类用于 instanceof 检查
-    const { Organ } = await import("@/core/objects/target/Organ")
+    // Organ 已静态导入
 
     const { organ, value } = effect.params
 

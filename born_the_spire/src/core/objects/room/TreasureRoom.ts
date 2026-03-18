@@ -11,6 +11,10 @@ import { applyVariance } from "@/core/hooks/variance"
 import type { VarianceConfig } from "@/core/hooks/variance"
 import { selectRelicsWithFilter } from "@/core/utils/relicFilter"
 import type { RelicFilterConfig } from "@/core/utils/relicFilter"
+import { gainMark } from "@/core/hooks/mark"
+import { nowPlayer } from "@/core/objects/game/run"
+import { GoldReward } from "@/core/objects/reward/GoldReward"
+import { RelicSelectReward } from "@/core/objects/reward/RelicSelectReward"
 
 /**
  * 宝箱房间配置
@@ -97,13 +101,11 @@ export class TreasureRoom extends Room {
         // 生成奖励
         const rewards = await this.generateRewards()
 
-        // 显示奖励
+        // 显示奖励（UI相关，保留动态import）
         const { showRewards } = await import("@/ui/hooks/interaction/rewardDisplay")
         await showRewards(rewards, "宝箱奖励", "你获得了以下奖励")
 
         // 发放印记
-        const { gainMark } = await import("@/core/hooks/mark")
-        const { nowPlayer } = await import("@/core/objects/game/run")
         gainMark(nowPlayer, this.markKey)
         newLog(["获得宝箱印记！"])
     }
@@ -126,7 +128,6 @@ export class TreasureRoom extends Room {
         const finalGold = applyVariance(rawGold, this.goldVariance)
 
         // 创建金钱奖励
-        const { GoldReward } = await import("@/core/objects/reward/GoldReward")
         const goldReward = new GoldReward({
             type: "gold",
             amount: finalGold
@@ -137,8 +138,6 @@ export class TreasureRoom extends Room {
         const selectedRelics = selectRelicsWithFilter(this.relicFilter)
 
         if (selectedRelics.length > 0) {
-            // 使用动态 import 避免循环依赖
-            const { RelicSelectReward } = await import("@/core/objects/reward/RelicSelectReward")
             const relicReward = new RelicSelectReward({
                 type: "relicSelect",
                 relicOptions: selectedRelics,

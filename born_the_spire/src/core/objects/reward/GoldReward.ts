@@ -1,5 +1,7 @@
 import { Reward } from "./Reward"
 import type { RewardConfig } from "./Reward"
+import { nowPlayer } from "@/core/objects/game/run"
+import { doEvent } from "@/core/objects/system/ActionEvent"
 
 /**
  * 金钱奖励配置
@@ -31,8 +33,8 @@ export class GoldReward extends Reward {
         }
 
         // 通过事件系统给玩家添加金钱
-        const { nowPlayer } = await import("@/core/objects/game/run")
-        const { doEvent } = await import("@/core/objects/system/ActionEvent")
+        
+        
 
         await doEvent({
             key: "gainReserve",

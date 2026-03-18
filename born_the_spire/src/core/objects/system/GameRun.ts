@@ -6,6 +6,7 @@ import { SeededRandom } from "@/core/utils/SeededRandom"
 import { markRaw } from "vue"
 import type { TriggerMap } from "@/core/types/object/trigger"
 import { Entity } from "./Entity"
+import { applyTriggerMap } from "../system/trigger/Trigger"
 
 /**
  * 玩家状态快照
@@ -245,8 +246,6 @@ export class GameRun{
         this.clearAscensionTriggers()
 
         // 应用新的触发器
-        const { applyTriggerMap } = await import("../system/trigger/Trigger")
-
         for (const triggerMap of triggers) {
             const remover = applyTriggerMap(nowPlayer as Entity, triggerMap)
             if (remover) {

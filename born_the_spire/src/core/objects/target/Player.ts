@@ -18,6 +18,10 @@ import { getStatusValue } from "../system/status/Status";
 
 import { nanoid } from "nanoid";
 import { reactive } from "vue";
+import { getPotionByKey } from "@/static/list/item/potionList";
+import { applyStrengthTrigger, applyVulnerableTrigger, applyWeakTrigger } from "@/core/effects/state/stateTriggers";
+import { handleBattleStart, handleBattleEnd } from "@/core/hooks/activeAbility";
+import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier";
 
 export type PlayerMap = CharaMap & {
     key:string
@@ -100,7 +104,6 @@ export class Player extends Chara{
         }
         else{
             //获取药水对象的数据
-            const { getPotionByKey } = await import("@/static/list/item/potionList")
             const potion = await getPotionByKey(potionKey)
             // 使用 PotionModifier 系统添加药水
             potionModifier.acquirePotion(potion, this)
@@ -127,7 +130,6 @@ export class Player extends Chara{
         this.initState()
 
         // 应用状态触发器
-        const { applyStrengthTrigger, applyVulnerableTrigger, applyWeakTrigger } = await import("@/core/effects/state/stateTriggers")
         applyStrengthTrigger(this)
         applyVulnerableTrigger(this)
         applyWeakTrigger(this)
@@ -200,9 +202,6 @@ export class Player extends Chara{
      * 处理主动能力系统的战斗开始
      */
     private async handleActiveAbilitiesBattleStart() {
-        const { handleBattleStart } = await import("@/core/hooks/activeAbility")
-        const { getOrganModifier } = await import("@/core/objects/system/modifier/OrganModifier")
-
         // 处理器官的主动能力
         const organModifier = getOrganModifier(this)
         const organs = organModifier.getOrgans()
@@ -228,9 +227,6 @@ export class Player extends Chara{
      * 处理主动能力系统的战斗结束
      */
     async handleActiveAbilitiesBattleEnd() {
-        const { handleBattleEnd } = await import("@/core/hooks/activeAbility")
-        const { getOrganModifier } = await import("@/core/objects/system/modifier/OrganModifier")
-
         // 处理器官的主动能力
         const organModifier = getOrganModifier(this)
         const organs = organModifier.getOrgans()

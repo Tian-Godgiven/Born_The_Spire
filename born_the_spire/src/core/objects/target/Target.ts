@@ -10,6 +10,10 @@ import { getStatusRefValue } from "../system/status/Status";
 import { getCurrentRefValue } from "../system/Current/current";
 import { getOrganModifier } from "../system/modifier/OrganModifier";
 import { doEvent } from "../system/ActionEvent";
+import { getOrgan } from "./Organ";
+import { getLazyModule } from "@/core/utils/lazyLoader";
+import { createOrgan } from "@/core/factories";
+import { voteMechanismForEntity } from "@/static/registry/mechanismRegistry";
 
 export type TargetMap = EntityMap & {
     label:string,
@@ -47,10 +51,6 @@ export class Chara extends Target{
             // 此时 this 指向正在构造的 Chara 实例
             const chara = this as Chara
             if (map.organ) {
-                // 动态导入避免循环依赖
-                const { getOrgan } = await import("./Organ")
-                const { getLazyModule } = await import("@/core/utils/lazyLoader")
-                const { createOrgan } = await import("@/core/factories")
                 const organList = getLazyModule<any[]>('organList')
 
                 for(let key of map.organ){
@@ -66,10 +66,7 @@ export class Chara extends Target{
         })
 
         // 启用护甲机制（默认启用）
-        // 使用动态导入避免循环依赖
-        import("@/static/registry/mechanismRegistry").then(({ voteMechanismForEntity }) => {
-            voteMechanismForEntity(this, "armor", "enable", "default", 0)
-        })
+        voteMechanismForEntity(this, "armor", "enable", "default", 0)
 
         // 添加默认的死亡触发器
         // 监听 healthReachMin 事件，触发 dead 事件
@@ -100,10 +97,6 @@ export class Chara extends Target{
     // 添加器官的方法
     protected async initOrgans(organKeys: string[]) {
         if (organKeys) {
-            // 动态导入避免循环依赖
-            const { getOrgan } = await import("./Organ")
-            const { getLazyModule } = await import("@/core/utils/lazyLoader")
-            const { createOrgan } = await import("@/core/factories")
             const organList = getLazyModule<any[]>('organList')
 
             for(let key of organKeys){

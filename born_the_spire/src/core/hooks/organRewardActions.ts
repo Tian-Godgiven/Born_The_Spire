@@ -1,5 +1,8 @@
 import type { OrganRewardActionHandler } from "@/core/types/organRewardAction"
 import { organRewardActionRegistry } from "@/static/registry/organRewardActionRegistry"
+import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
+import { loadMetaProgress, saveMetaProgress, unlockOrgan } from "@/core/persistence/metaProgress"
+import { doEvent } from "@/core/objects/system/ActionEvent"
 
 /**
  * 内置器官奖励动作
@@ -11,13 +14,11 @@ import { organRewardActionRegistry } from "@/static/registry/organRewardActionRe
  * 获取器官及其能力
  */
 export const assimilateAction: OrganRewardActionHandler = async (organ, player) => {
-  const { getOrganModifier } = await import("@/core/objects/system/modifier/OrganModifier")
   const modifier = getOrganModifier(player)
   const result = modifier.assimilateOrgan(organ)
 
   // 解锁器官
   if (result && organ.key) {
-    const { loadMetaProgress, saveMetaProgress, unlockOrgan } = await import("@/core/persistence/metaProgress")
     const metaProgress = loadMetaProgress()
     const unlocked = unlockOrgan(metaProgress, organ.key)
     if (unlocked) {
@@ -33,7 +34,6 @@ export const assimilateAction: OrganRewardActionHandler = async (organ, player) 
  * 吞噬器官获得物质
  */
 export const devourAction: OrganRewardActionHandler = async (organ, player) => {
-  const { getOrganModifier } = await import("@/core/objects/system/modifier/OrganModifier")
   const modifier = getOrganModifier(player)
   return modifier.devourOrgan(organ)
 }
@@ -45,8 +45,6 @@ export const devourAction: OrganRewardActionHandler = async (organ, player) => {
 export const sacrificeAction: OrganRewardActionHandler = async (organ, player) => {
   // 献祭器官，回复生命值
   const healAmount = 10  // 基础回复量
-
-  const { doEvent } = await import("@/core/objects/system/ActionEvent")
   await doEvent({
     key: "heal",
     source: player,

@@ -2,6 +2,7 @@ import { Reward } from "./Reward"
 import type { RewardConfig } from "./Reward"
 import type { Potion } from "@/core/objects/item/Subclass/Potion"
 import type { PotionMap } from "@/core/objects/item/Subclass/Potion"
+import { getPotionModifier } from "@/core/objects/system/modifier/PotionModifier"
 import { newLog } from "@/ui/hooks/global/log"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { createPotion } from "@/core/factories"
@@ -58,8 +59,8 @@ export class PotionReward extends Reward {
         newLog([`获得药水: ${this.potion.label}`])
 
         // 将药水添加到玩家背包
-        const { nowPlayer } = await import("@/core/objects/game/run")
-        const { getPotionModifier } = await import("@/core/objects/system/modifier/PotionModifier")
+        
+        
 
         const potionModifier = getPotionModifier(nowPlayer)
         potionModifier.acquirePotion(this.potion, nowPlayer)

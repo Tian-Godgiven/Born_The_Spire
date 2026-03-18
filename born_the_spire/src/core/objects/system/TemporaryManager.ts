@@ -1,6 +1,6 @@
 import { Entity } from "./Entity"
 import { Card } from "../item/Subclass/Card"
-import { Organ } from "../target/Organ"
+import { Organ, removeOrgan } from "../target/Organ"
 import { Player } from "../target/Player"
 import { ActionEvent } from "./ActionEvent"
 
@@ -94,8 +94,6 @@ export class TemporaryManager {
      * 移除临时器官
      */
     private async removeTemporaryOrgan(organ: Organ, owner: Entity) {
-        // 使用动态导入避免循环依赖
-        const { removeOrgan } = await import("../target/Organ")
         removeOrgan(owner, organ, false) // 不触发失去效果
         console.log(`[TemporaryManager] 移除临时器官 ${organ.label}`)
     }

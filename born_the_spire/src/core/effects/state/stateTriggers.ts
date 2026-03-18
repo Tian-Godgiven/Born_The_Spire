@@ -5,6 +5,7 @@
 
 import type { Entity } from "@/core/objects/system/Entity"
 import { ifHaveStatus, getStatusValue } from "@/core/objects/system/status/Status"
+import { doEvent } from "@/core/objects/system/ActionEvent"
 
 /**
  * 为实体添加力量(strength)触发器
@@ -95,7 +96,7 @@ async function createModifyDamageEvent(
     targetEffect: any,
     delta: number
 ) {
-    const { doEvent } = await import("@/core/objects/system/ActionEvent")
+    
 
     return doEvent({
         key: "modifyDamage",
@@ -117,7 +118,7 @@ async function createModifyDamageByPercentEvent(
     targetEffect: any,
     percent: number
 ) {
-    const { doEvent } = await import("@/core/objects/system/ActionEvent")
+    
 
     return doEvent({
         key: "modifyDamage",

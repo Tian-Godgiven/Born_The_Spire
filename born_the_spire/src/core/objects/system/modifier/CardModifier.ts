@@ -9,6 +9,7 @@ import { newLog } from "@/ui/hooks/global/log"
 import { reactive, toRaw } from "vue"
 
 import { nowBattle } from "../../game/battle"
+import { getCardByKey, getAllCards } from "@/static/list/item/cardList"
 
 /**
  * 卡牌修饰器管理器
@@ -34,7 +35,6 @@ export class CardModifier {
      * @returns 添加的卡牌对象数组
      */
     async addCardsFromSource(source: Entity, cardKeys: string[], parentLog?: LogUnit): Promise<Card[]> {
-        const { getCardByKey, getAllCards } = await import("@/static/list/item/cardList")
         const addedCards: Card[] = []
 
         // 检查是否在战斗中

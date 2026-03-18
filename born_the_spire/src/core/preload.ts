@@ -83,6 +83,18 @@ await Promise.all([
     import('@/core/objects/system/modifier/EntryModifier')
 ])
 
+// ==================== 第 10 层：Room 类 ====================
+await consoleFunc("第10层")
+await Promise.all([
+    import('@/core/objects/room/Room'),
+    import('@/core/objects/room/BattleRoom'),
+    import('@/core/objects/room/EventRoom'),
+    import('@/core/objects/room/PoolRoom'),
+    import('@/core/objects/room/TreasureRoom'),
+    import('@/core/objects/room/RoomSelectRoom'),
+    import('@/core/objects/room/FloorSelectRoom')
+])
+
 // ==================== 完成 ====================
 
 export const preloadComplete = true

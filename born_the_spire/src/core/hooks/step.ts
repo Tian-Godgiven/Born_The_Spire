@@ -3,6 +3,11 @@
 import { newError } from "@/ui/hooks/global/alert";
 import { nowGameRun } from "../objects/game/run";
 import type { RoomType } from "../objects/room/Room";
+import { BattleRoom } from "@/core/objects/room/BattleRoom";
+import { EventRoom } from "@/core/objects/room/EventRoom";
+import { PoolRoom } from "@/core/objects/room/PoolRoom";
+import { TreasureRoom } from "@/core/objects/room/TreasureRoom";
+import { RoomSelectRoom } from "@/core/objects/room/RoomSelectRoom";
 
 /**
  * 显示地图UI的回调（由UI层设置）
@@ -67,27 +72,21 @@ export async function goToRoomType(roomType: RoomType, config?: any){
     let room
     switch(roomType){
         case "battle":
-            const { BattleRoom } = await import("@/core/objects/room/BattleRoom")
             room = new BattleRoom({ type: "battle", layer, ...config })
             break
         case "event":
-            const { EventRoom } = await import("@/core/objects/room/EventRoom")
             room = new EventRoom({ type: "event", layer, ...config })
             break
         case "pool":
-            const { PoolRoom } = await import("@/core/objects/room/PoolRoom")
             room = new PoolRoom({ type: "pool", layer, ...config })
             break
         case "treasure":
-            const { TreasureRoom } = await import("@/core/objects/room/TreasureRoom")
             room = new TreasureRoom({ type: "treasure", layer, ...config })
             break
         // case "blackStore":
-        //     const { BlackStoreRoom } = await import("@/core/objects/room/BlackStoreRoom")
         //     room = new BlackStoreRoom({ type: "blackStore", layer, ...config })
         //     break
         case "roomSelect":
-            const { RoomSelectRoom } = await import("@/core/objects/room/RoomSelectRoom")
             room = new RoomSelectRoom({ type: "roomSelect", layer, roomCount: 3, ...config })
             break
         default:

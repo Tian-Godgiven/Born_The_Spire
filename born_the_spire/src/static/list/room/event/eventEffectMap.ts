@@ -6,6 +6,8 @@
 import { newLog } from "@/ui/hooks/global/log"
 import { doEvent } from "@/core/objects/system/ActionEvent"
 import { nowPlayer } from "@/core/objects/game/run"
+import { getLazyModule } from "@/core/utils/lazyLoader"
+import { randomChoices } from "@/core/hooks/random"
 
 /**
  * 事件效果函数类型
@@ -240,9 +242,7 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
      */
     "gainRandomRelic": async (params?: { count?: number }) => {
         const count = params?.count || 1
-        const { getLazyModule } = await import("@/core/utils/lazyLoader")
         const relicList = getLazyModule<any[]>('relicList')
-        const { randomChoices } = await import("@/core/hooks/random")
 
         // 随机选择遗物
         const selected = randomChoices(relicList, count, "gainRandomRelic")
@@ -266,9 +266,7 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
      */
     "gainRandomPotion": async (params?: { count?: number }) => {
         const count = params?.count || 1
-        const { getLazyModule } = await import("@/core/utils/lazyLoader")
         const potionList = getLazyModule<any[]>('potionList')
-        const { randomChoices } = await import("@/core/hooks/random")
 
         // 随机选择药水
         const selected = randomChoices(potionList, count, "gainRandomPotion")
@@ -292,9 +290,7 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
      */
     "gainRandomCard": async (params?: { count?: number, rarity?: string }) => {
         const count = params?.count || 1
-        const { getLazyModule } = await import("@/core/utils/lazyLoader")
         const cardList = getLazyModule<any[]>('cardList')
-        const { randomChoices } = await import("@/core/hooks/random")
 
         // 根据稀有度筛选（如果指定）
         let filteredCards = cardList
@@ -327,7 +323,6 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
     "upgradeRandomCards": async (params?: { count?: number, tags?: string[] }) => {
         const count = params?.count || 1
         const tags = params?.tags || []
-        const { randomChoices } = await import("@/core/hooks/random")
 
         // 获取玩家卡组
         let cards = nowPlayer.getCardGroup()

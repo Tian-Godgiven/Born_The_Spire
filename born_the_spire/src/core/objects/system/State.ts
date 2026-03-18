@@ -5,6 +5,7 @@ import type { EffectUnit } from "./effect/EffectUnit"
 import type { TriggerMap } from "@/core/types/object/trigger"
 import type { EventParticipant } from "@/core/types/event/EventParticipant"
 import { nanoid } from "nanoid"
+import { stateList } from "@/static/list/target/stateList"
 
 // ==================== 类型定义 ====================
 
@@ -158,7 +159,6 @@ export function createState(map: StateMap): State {
  * 根据 key 从 stateList 创建状态对象
  */
 export async function createStateByKey(key: string, stacks: Stack[] | number): Promise<State | undefined> {
-    const { stateList } = await import("@/static/list/target/stateList")
     const stateData = stateList.find(state => state.key === key)
     if (stateData) {
         return new State({

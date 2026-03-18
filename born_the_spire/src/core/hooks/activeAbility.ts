@@ -8,6 +8,7 @@ import type {
 import { activeAbilityLifecycleManager } from "@/core/objects/system/ActiveAbilityLifecycleManager"
 import { usageTracker } from "@/core/objects/system/UsageTracker"
 import { activeAbilityManager } from "@/core/objects/system/ActiveAbilityManager"
+import { doEvent } from "@/core/objects/system/ActionEvent"
 
 /**
  * 主动能力系统便捷hooks
@@ -257,8 +258,6 @@ export async function forceExecuteAbility(
     console.warn("[ActiveAbilityHooks] 强制执行能力（调试模式）:", ability.label)
 
     // 直接执行效果，跳过所有检查
-    const { doEvent } = await import("@/core/objects/system/ActionEvent")
-
     if (ability.onActivate) {
         await ability.onActivate(item, owner, { ability, selectedTargets })
     } else {

@@ -5,6 +5,8 @@ import { doEvent } from "@/core/objects/system/ActionEvent"
 import router from "@/ui/router"
 import { newError } from "@/ui/hooks/global/alert"
 import { newLog } from "@/ui/hooks/global/log"
+import { RoomSelectRoom } from "@/core/objects/room/RoomSelectRoom"
+import { roomRegistry } from "@/static/registry/roomRegistry"
 
 /**
  * 触发游戏失败
@@ -83,7 +85,6 @@ export async function retryCurrentRoom() {
     try {
         if (roomType === "roomSelect") {
             // RoomSelectRoom 是动态创建的，需要特殊处理
-            const { RoomSelectRoom } = await import("@/core/objects/room/RoomSelectRoom")
             const newRoom = new RoomSelectRoom({
                 type: "roomSelect",
                 layer: roomLayer,
@@ -94,7 +95,6 @@ export async function retryCurrentRoom() {
             await newRoom.process()
         } else {
             // 其他房间类型通过 registry 重新创建
-            const { roomRegistry } = await import("@/static/registry/roomRegistry")
             const newRoom = roomRegistry.createRoom(roomKey, roomLayer)
 
             if (!newRoom) {

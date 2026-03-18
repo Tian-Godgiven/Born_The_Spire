@@ -7,10 +7,17 @@ import { GameRun } from "@/core/objects/system/GameRun";
 import { getLazyModule } from "@/core/utils/lazyLoader";
 import { doEvent } from "@/core/objects/system/ActionEvent";
 import { createPlayer } from "@/core/factories";
+import { roomRegistry } from "@/static/registry/roomRegistry";
 
 import { reactive } from "vue";
 import router from "@/ui/router";
 import { addToPlayerTeam } from "@/core/objects/game/battle";
+import { nowBattle } from "@/core/objects/game/battle";
+import { gameOver } from "@/core/hooks/game";
+import { getOrganByKey } from "@/static/list/target/organList";
+import { gainOrgan } from "@/core/effects/item/gainItem";
+import { getAscensionConfig } from "@/static/list/system/ascensionList";
+import { goToNextStep } from "@/core/hooks/step";
 
 //当前的局（使用 reactive 包装，内部属性自动响应式）
 export const nowGameRun = reactive<GameRun>(new GameRun())
@@ -38,7 +45,6 @@ export async function enterRoom(room: Room | string, layer?: number): Promise<vo
             return
         }
 
-        const { roomRegistry } = await import("@/static/registry/roomRegistry")
         roomInstance = roomRegistry.createRoom(room, layer)
 
         if (!roomInstance) {
@@ -96,7 +102,7 @@ export async function initDefaultGameObjects() {
 
     // 列出所有可用房间
     ;(window as any).listRooms = async (type?: string) => {
-        const { roomRegistry } = await import("@/static/registry/roomRegistry")
+        
         const allRooms = roomRegistry.getAllRoomConfigs()
 
         if (type) {
@@ -111,7 +117,7 @@ export async function initDefaultGameObjects() {
 
     // 杀死当前战斗中的所有敌人
     ;(window as any).killAllEnemies = async () => {
-        const { nowBattle } = await import("@/core/objects/game/battle")
+        
         if (!nowBattle.value) {
             console.error('[killAllEnemies] 当前没有战斗')
             return
@@ -123,7 +129,7 @@ export async function initDefaultGameObjects() {
         }
 
 
-        const { doEvent } = await import("@/core/objects/system/ActionEvent")
+        
         for (const enemy of enemies) {
             await doEvent({
                 key: "kill",
@@ -142,7 +148,7 @@ export async function initDefaultGameObjects() {
 
     // 触发游戏失败
     ;(window as any).gameOver = async () => {
-        const { gameOver } = await import("@/core/hooks/game")
+        
         await gameOver()
     }
 }
@@ -170,8 +176,8 @@ export async function startNewRun(seed?: string, ascensionLevel: number = 0, ini
 
     // 添加初始器官（仅在创建新 Player 时执行）
     if (!existingPlayer && initialOrgans && initialOrgans.length > 0) {
-        const { getOrganByKey } = await import("@/static/list/target/organList")
-        const { gainOrgan } = await import("@/core/effects/item/gainItem")
+        
+        
 
         for (const organKey of initialOrgans) {
             try {
@@ -194,7 +200,7 @@ export async function startNewRun(seed?: string, ascensionLevel: number = 0, ini
 
     // 应用进阶触发器
     if (ascensionLevel > 0) {
-        const { getAscensionConfig } = await import("@/static/list/system/ascensionList")
+        
         const ascensionConfig = getAscensionConfig(ascensionLevel)
         if (ascensionConfig) {
             await nowGameRun.applyAscensionTriggers(ascensionConfig.triggers)
@@ -210,15 +216,7 @@ export async function startNewRun(seed?: string, ascensionLevel: number = 0, ini
     // 等待 Vue 组件挂载完成（给 onMounted 执行时间）
     await new Promise(resolve => setTimeout(resolve, 100))
 
-    // 确保所有房间类型已注册（通过导入触发自动注册）
-    await import("@/core/objects/room/InitRoom")
-    await import("@/core/objects/room/EventRoom")
-    await import("@/core/objects/room/BattleRoom")
-    await import("@/core/objects/room/PoolRoom")
-    // await import("@/core/objects/room/BlackStoreRoom")
-    await import("@/core/objects/room/RoomSelectRoom")
-    await import("@/core/objects/room/FloorSelectRoom")
-    await import("@/core/objects/room/TreasureRoom")
+    // Room类已在preload.ts中预加载，无需再次导入
 
     // 设置当前层级为第1层（暂时，后续会让玩家选择）
     nowGameRun.floorManager.setCurrentFloor("floor_1")
@@ -238,7 +236,7 @@ export async function startNewRun(seed?: string, ascensionLevel: number = 0, ini
     })
 
     // 进入开场初始化房间（苏生）
-    const { roomRegistry } = await import("@/static/registry/roomRegistry")
+    
     const startEvent = roomRegistry.createRoom("init_game_start", 0)
 
     if (startEvent) {
@@ -251,7 +249,7 @@ export async function startNewRun(seed?: string, ascensionLevel: number = 0, ini
                 await nowGameRun.completeCurrentRoom()
 
                 // 显示地图UI（通过回调）
-                const { goToNextStep } = await import("@/core/hooks/step")
+                
                 await goToNextStep()
             }
         }, 100)

@@ -11,6 +11,7 @@ import { executeEventEffects } from "@/static/list/room/event/eventEffectMap"
 import { newLog } from "@/ui/hooks/global/log"
 import type { Component } from "vue"
 import { getLazyModule } from "@/core/utils/lazyLoader"
+import { completeAndGoNext } from "@/core/hooks/step"
 
 /**
  * 事件房间配置
@@ -233,7 +234,6 @@ export class EventRoom extends Room {
             description: "前往下一层",
             icon: "🚪",
             onSelect: async () => {
-                const { completeAndGoNext } = await import("@/core/hooks/step")
                 await completeAndGoNext()
             }
         })

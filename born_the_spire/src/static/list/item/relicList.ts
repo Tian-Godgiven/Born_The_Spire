@@ -1,4 +1,5 @@
 import type { RelicMap } from "@/core/objects/item/Subclass/Relic";
+import { Relic } from "@/core/objects/item/Subclass/Relic";
 import { createRelic } from "@/core/factories";
 
 export const relicList: RelicMap[] = [
@@ -208,7 +209,6 @@ export const relicList: RelicMap[] = [
  * 获取遗物对象
  */
 export async function getRelicByKey(relicKey: string) {
-    const { Relic } = await import("@/core/objects/item/Subclass/Relic")
     // 获取数据
     const map = relicList.find(item => item.key == relicKey)
     if (!map) {

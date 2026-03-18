@@ -7,6 +7,7 @@ import { isEntity } from "@/core/utils/typeGuards";
 import { nanoid } from "nanoid";
 import { validateEffectParams } from "@/core/effects/validateEffectParams";
 import { newError } from "@/ui/hooks/global/alert";
+import { getCurrentExecutingEvent, setCurrentExecutingEvent, handleEventEntity } from "../ActionEvent";
 
 // 重新导出 EffectFunc 供外部使用
 export type { EffectFunc, EffectParams }
@@ -97,9 +98,6 @@ export class Effect implements EventParticipant{
     //触发效果对象所在的事件的参与者的触发器
     async trigger(when:"before"|"after",triggerLevel:number){
         const event = this.actionEvent
-
-        // 动态导入 ActionEvent 工具函数（打破循环依赖）
-        const { getCurrentExecutingEvent, setCurrentExecutingEvent, handleEventEntity } = await import("../ActionEvent")
 
         // 设置当前执行的事件（用于传递模拟标记）
         const previousEvent = getCurrentExecutingEvent()
