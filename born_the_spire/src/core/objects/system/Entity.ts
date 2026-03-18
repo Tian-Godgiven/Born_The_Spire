@@ -3,13 +3,14 @@ import type { ActionEvent } from "./ActionEvent";
 import type{ Describe } from "@/ui/hooks/express/describe";
 import type { TriggerMap, TriggerObj } from "@/core/types/object/trigger";
 import type { Effect } from "./effect/Effect";
-import type { Current, initCurrentFromMap } from "./Current/current";
+import type { Current } from "./Current/current";
 import type { EventParticipant } from "@/core/types/event/EventParticipant";
 import type{ IMechanismManager } from "./mechanism/MechanismManager";
 
 import { nanoid } from "nanoid";
 import { appendStatus, createStatusFromMap, Status } from "./status/Status";
 import { Trigger } from "./trigger/Trigger";
+import { initCurrentFromMap } from "./Current/current";
 
 
 
@@ -30,6 +31,12 @@ export class Entity implements EventParticipant{
     //主动能力相关属性
     public disabledAbilities?: Set<string>  // 被禁用的能力key列表
     public abilityCostModifiers?: Map<string, number>  // 能力消耗修改器 (abilityKey_costType -> modifier)
+
+    // 两阶段初始化相关字段
+    private _initialized: boolean = false
+    private _currentMapData?: any
+    private _beforeCurrentInit?: (this: Entity) => void
+
     constructor(map:EntityMap, beforeCurrentInit?: (this: Entity) => void){
         this.label = map.label
         //初始化实体自带的触发器,并创建自带的触发器
@@ -45,20 +52,37 @@ export class Entity implements EventParticipant{
                 appendStatus(this,status)
             }
         }
-        //在初始化当前值之前，执行回调（用于子类插入逻辑，如初始化器官）
-        if(beforeCurrentInit){
-            beforeCurrentInit.call(this)
-        }
-        //初始化当前值 - 使用动态导入避免循环依赖
-        if(map.current){
-            // 动态导入以避免循环依赖
-            import("./Current/current").then(({ initCurrentFromMap }) => {
-                initCurrentFromMap<typeof this>(this,map.current!)
-            })
-        }
+
+        // 保存初始化数据，不立即执行异步初始化
+        this._beforeCurrentInit = beforeCurrentInit
+        this._currentMapData = map.current
+
         //初始化描述
         this.describe = map.describe??[]
     }
+
+    /**
+     * 异步初始化方法
+     *
+     * 在构造函数完成后调用，执行需要异步的初始化逻辑
+     * 子类可以覆盖此方法添加自己的初始化逻辑
+     */
+    async initialize(): Promise<void> {
+        if (this._initialized) return
+
+        // 执行 beforeCurrentInit 回调
+        if (this._beforeCurrentInit) {
+            this._beforeCurrentInit.call(this)
+        }
+
+        // 初始化 Current（静态 import，preload.ts 已调整顺序：current 在 Entity 之前）
+        if (this._currentMapData) {
+            await initCurrentFromMap<typeof this>(this, this._currentMapData)
+        }
+
+        this._initialized = true
+    }
+
     //添加一个触发器
     appendTrigger(triggerObj:TriggerObj){
         return this.trigger.appendTrigger(triggerObj)

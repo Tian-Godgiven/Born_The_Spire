@@ -1,5 +1,6 @@
 
 import type { CardMap } from "@/core/objects/item/Subclass/Card"
+import { createCard } from "@/core/factories"
 
 export const cardList:CardMap[] = [{
     label:"打击",
@@ -372,10 +373,9 @@ export const cardList:CardMap[] = [{
 }]
 
 export async function getCardByKey(key:string){
-    const { Card } = await import("@/core/objects/item/Subclass/Card")
     const data = cardList.find(value=>value.key == key)
     if(!data)throw new Error("不存在的卡牌")
-    const card = new Card(data)
+    const card = await createCard(data)
     return card
 }
 

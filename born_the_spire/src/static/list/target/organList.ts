@@ -1,6 +1,7 @@
 import type { OrganMap } from "@/core/objects/target/Organ"
 import { OrganRarity, OrganPartEnum } from "@/core/types/OrganTypes"
 import { OrganTags } from "./organTags"
+import { createOrgan } from "@/core/factories"
 
 export const organList:OrganMap[] = [
     {
@@ -489,9 +490,8 @@ export const organList:OrganMap[] = [
 
 //通过key来获取器官对象
 export async function getOrganByKey(key:string){
-    const { Organ } = await import("@/core/objects/target/Organ")
     const data = organList.find(value=>value.key==key)
     if(!data)throw new Error("没有该器官对象")
-    const organ = new Organ(data)
+    const organ = await createOrgan(data)
     return organ
 }

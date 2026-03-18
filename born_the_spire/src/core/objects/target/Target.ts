@@ -3,8 +3,6 @@ import type { EntityMap } from "../system/Entity";
 import type { State } from "../system/State";
 import type { TriggerMap } from "@/core/types/object/trigger";
 
-
-
 import { nanoid } from "nanoid";
 import { Entity } from "../system/Entity";
 import { computed, reactive } from "vue";

@@ -54,16 +54,17 @@ export class Enemy extends Chara{
         if (map.cards) {
             this.exclusiveCards = map.cards
         }
+    }
 
-        // 等待 Current 初始化完成（super 中的动态 import）后再触发 enemyCreation 事件
-        import("../system/Current/current").then(() => {
-            doEvent({
-                key: "enemyCreation",
-                source: this,
-                medium: this,
-                target: this,
-                effectUnits: []
-            })
+    async initialize(): Promise<void> {
+        await super.initialize()
+
+        doEvent({
+            key: "enemyCreation",
+            source: this,
+            medium: this,
+            target: this,
+            effectUnits: []
         })
     }
 

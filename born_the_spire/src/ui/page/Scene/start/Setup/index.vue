@@ -78,6 +78,8 @@ import { getLazyModule } from '@/core/utils/lazyLoader'
 import { Organ } from '@/core/objects/target/Organ'
 import { Player, type PlayerMap } from '@/core/objects/target/Player'
 import { getOrganModifier } from '@/core/objects/system/modifier/OrganModifier'
+import { getOrganByKey } from '@/static/list/target/organList'
+import { createPlayer } from '@/core/factories'
 import SeedDialog from '../SeedDialog.vue'
 import OrganMap from './components/OrganMap.vue'
 import Chara from '@/ui/components/object/Target/Chara/Chara.vue'
@@ -139,7 +141,7 @@ const allOrganData = computed(() => {
 })
 
 const displayOrgans = computed(() => {
-    // 只在需要显示时创建 Organ 实例
+    // 只用于 UI 显示，不需要完整初始化（Organ 构造函数是同步的）
     return allOrganData.value.map((organData: any) => {
         return new Organ(organData)
     })
@@ -181,10 +183,7 @@ async function createPreviewPlayer(): Promise<Player> {
         ],
     }
 
-    const player = new Player(map)
-
-    // 等待 Current 和 Organ 初始化完成
-    await new Promise(resolve => setTimeout(resolve, 300))
+    const player = await createPlayer(map)
 
     return player
 }
@@ -209,7 +208,7 @@ async function syncOrgansToPlayer() {
         if (!currentKeys.includes(organKey)) {
             const organData = allOrganData.value.find((o: any) => o.key === organKey)
             if (organData) {
-                const organ = new Organ(organData)
+                const organ = await getOrganByKey(organKey)
                 await organModifier.acquireOrgan(organ, previewPlayer.value, true)  // 跳过确认弹窗
             }
         }

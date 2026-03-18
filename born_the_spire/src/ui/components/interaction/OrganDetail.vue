@@ -130,8 +130,8 @@ async function createCardFromKey(cardKey: string): Promise<CardType | null> {
         const cardData = cardList.find((c: any) => c.key === cardKey)
         if (!cardData) return null
 
-        const { Card } = await import('@/core/objects/item/Subclass/Card')
-        return new Card(cardData)
+        const { createCard } = await import('@/core/factories')
+        return await createCard(cardData)
     } catch (error) {
         console.error('创建临时卡牌失败:', error)
         return null

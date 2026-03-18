@@ -1,4 +1,5 @@
 import type { RelicMap } from "@/core/objects/item/Subclass/Relic";
+import { createRelic } from "@/core/factories";
 
 export const relicList: RelicMap[] = [
     // 被动遗物 - 只有 possess
@@ -214,7 +215,7 @@ export async function getRelicByKey(relicKey: string) {
         throw new Error(`不存在的遗物key: ${relicKey}`)
     }
     // 生成遗物对象
-    const relic = new Relic(map)
+    const relic = await createRelic(map)
     return relic
 }
 

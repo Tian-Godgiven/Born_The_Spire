@@ -1,6 +1,7 @@
 import { Enemy } from "@/core/objects/target/Enemy"
 import type { EnemyMap } from "@/core/objects/target/Enemy"
 import { reactive } from "vue"
+import { createEnemy } from "@/core/factories"
 
 export const enemyList:EnemyMap[] = [
     // 原有的小石怪
@@ -239,9 +240,9 @@ export const enemyList:EnemyMap[] = [
     }
 ]
 
-export function getEnemyByKey(key:string){
+export async function getEnemyByKey(key:string){
     const data = enemyList.find(value=>value.key == key)
     if(!data)throw new Error("没有指定的敌人存在")
-    const enemy = reactive(new Enemy(data as any)) as unknown as Enemy
-    return enemy
+    const enemy = await createEnemy(data as any)
+    return reactive(enemy) as unknown as Enemy
 }

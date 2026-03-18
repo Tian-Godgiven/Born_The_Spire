@@ -1,11 +1,10 @@
 import { ref, markRaw } from "vue";
-import { Entity } from "../Entity";
+import type { Entity } from "../Entity";
 import type { TriggerMap } from "@/core/types/object/trigger";
+import type { ActionEvent } from "../ActionEvent";
 import { createTriggerByTriggerMap } from "../trigger/Trigger";
 import { newError } from "@/ui/hooks/global/alert";
-// import { CurrentMapData, getMetaFromCurrentMap } from "@/static/list/system/currents/currentMap";
 import { getStatusValue } from "../status/Status";
-import { ActionEvent } from "../ActionEvent";
 import { getRefValue, setRefValue } from "@/core/hooks/refValue";
 
 type CurrentOption = {

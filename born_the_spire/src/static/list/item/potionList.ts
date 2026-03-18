@@ -1,4 +1,5 @@
 import type { PotionMap } from "@/core/objects/item/Subclass/Potion";
+import { createPotion } from "@/core/factories";
 
 export const potionList:PotionMap[] = [
     // 简单药水 - 单个 use
@@ -124,6 +125,6 @@ export async function getPotionByKey(potionKey:string){
         throw new Error(`不存在的药水key${potionKey}`)
     }
     //生成药水对象
-    const potion = new Potion(map)
+    const potion = await createPotion(map)
     return potion
 }

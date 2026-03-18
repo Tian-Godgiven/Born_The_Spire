@@ -365,7 +365,7 @@ async function addTestRelic(relicKey: string) {
 
     try {
         const { testActiveAbilityItems } = await import('@/static/list/test/testActiveAbilityItems')
-        const { Relic } = await import('@/core/objects/item/Subclass/Relic')
+        const { createRelic } = await import('@/core/factories')
         const { getRelic } = await import('@/core/objects/item/Subclass/Relic')
 
         const relicMap = (testActiveAbilityItems as any)[relicKey]
@@ -375,7 +375,7 @@ async function addTestRelic(relicKey: string) {
             return
         }
 
-        const relic = new Relic(relicMap)
+        const relic = await createRelic(relicMap)
         const player = nowPlayer
         getRelic(player, player, relic)
 
@@ -403,7 +403,7 @@ async function addTestOrgan(organKey: string) {
 
     try {
         const { testActiveAbilityItems } = await import('@/static/list/test/testActiveAbilityItems')
-        const { Organ } = await import('@/core/objects/target/Organ')
+        const { createOrgan } = await import('@/core/factories')
         const { getOrgan } = await import('@/core/objects/target/Organ')
 
         const organMap = (testActiveAbilityItems as any)[organKey]
@@ -413,7 +413,7 @@ async function addTestOrgan(organKey: string) {
             return
         }
 
-        const organ = new Organ(organMap)
+        const organ = await createOrgan(organMap)
         const player = nowPlayer
         getOrgan(player, player, organ)
 
@@ -566,17 +566,10 @@ async function addOrgan(organKey: string) {
     }
 
     try {
-        const { Organ } = await import('@/core/objects/target/Organ')
+        const { getOrganByKey } = await import('@/static/list/target/organList')
         const { getOrganModifier } = await import('@/core/objects/system/modifier/OrganModifier')
-        const organList = (await import('@/static/list/target/organList')).organList
 
-        const organData = organList.find((o: any) => o.key === organKey)
-        if (!organData) {
-            addOutput(`未找到器官: ${organKey}`, 'error')
-            return
-        }
-
-        const organ = new Organ(organData)
+        const organ = await getOrganByKey(organKey)
         const player = nowPlayer
         const organModifier = getOrganModifier(player)
 
@@ -756,17 +749,13 @@ async function testOrganFlow() {
         // 步骤1: 添加测试器官
         addOutput('步骤1: 添加测试器官', 'info')
         const testOrganKey = 'original_organ_00001'  // 心脏器官
-        const organData = organList.find((o: any) => o.key === testOrganKey)
-        if (!organData) {
-            addOutput('未找到测试器官数据', 'error')
-            return
-        }
 
         // 确保物质充足
         reserveModifier.gainReserve('material', 100, player)
         addOutput('  已添加 100 物质用于测试', 'result')
 
-        const organ = new Organ(organData)
+        const { getOrganByKey } = await import('@/static/list/target/organList')
+        const organ = await getOrganByKey(testOrganKey)
         await organModifier.acquireOrgan(organ, player)
         addOutput(`  ✓ 添加器官: ${organ.label}`, 'result')
 

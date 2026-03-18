@@ -5,16 +5,28 @@
  * 工厂内部使用值导入和 new 操作，集中管理创建逻辑
  */
 
-import type { Entity, EntityMap } from "./objects/system/Entity"
-import type { Item } from "./objects/item/Item"
-import type { Card } from "./objects/item/Subclass/Card"
-import type { Potion } from "./objects/item/Subclass/Potion"
-import type { Relic } from "./objects/item/Subclass/Relic"
-import type { Organ } from "./objects/target/Organ"
-import type { Player } from "./objects/target/Player"
-import type { Enemy } from "./objects/target/Enemy"
-import type { ActionEvent } from "./objects/system/ActionEvent"
+import type { EntityMap } from "./objects/system/Entity"
 import type { EffectUnit } from "./objects/system/effect/EffectUnit"
+
+// 值导入（核心类已在 preload.ts 中预加载）
+import { Entity } from "./objects/system/Entity"
+import { Card } from "./objects/item/Subclass/Card"
+import { Potion } from "./objects/item/Subclass/Potion"
+import { Relic } from "./objects/item/Subclass/Relic"
+import { Player } from "./objects/target/Player"
+import { Enemy } from "./objects/target/Enemy"
+import { Organ } from "./objects/target/Organ"
+import { ActionEvent } from "./objects/system/ActionEvent"
+
+// 类型导入（用于返回类型）
+import type { Entity as EntityType } from "./objects/system/Entity"
+import type { Card as CardType } from "./objects/item/Subclass/Card"
+import type { Potion as PotionType } from "./objects/item/Subclass/Potion"
+import type { Relic as RelicType } from "./objects/item/Subclass/Relic"
+import type { Player as PlayerType } from "./objects/target/Player"
+import type { Enemy as EnemyType } from "./objects/target/Enemy"
+import type { Organ as OrganType } from "./objects/target/Organ"
+import type { ActionEvent as ActionEventType } from "./objects/system/ActionEvent"
 
 // ========== Entity 工厂 ==========
 
@@ -22,9 +34,10 @@ import type { EffectUnit } from "./objects/system/effect/EffectUnit"
  * 创建 Entity 实例
  * 工厂内部使用值导入，外部只使用类型
  */
-export async function createEntity(map: EntityMap): Promise<Entity> {
-    const { Entity } = await import("./objects/system/Entity")
-    return new Entity(map)
+export async function createEntity(map: EntityMap): Promise<EntityType> {
+    const entity = new Entity(map)
+    await entity.initialize()
+    return entity
 }
 
 // ========== Item 工厂 ==========
@@ -32,25 +45,28 @@ export async function createEntity(map: EntityMap): Promise<Entity> {
 /**
  * 创建 Card 实例
  */
-export async function createCard(map: any): Promise<Card> {
-    const { Card } = await import("./objects/item/Subclass/Card")
-    return new Card(map)
+export async function createCard(map: any): Promise<CardType> {
+    const card = new Card(map)
+    await card.initialize()
+    return card
 }
 
 /**
  * 创建 Potion 实例
  */
-export async function createPotion(map: any): Promise<Potion> {
-    const { Potion } = await import("./objects/item/Subclass/Potion")
-    return new Potion(map)
+export async function createPotion(map: any): Promise<PotionType> {
+    const potion = new Potion(map)
+    await potion.initialize()
+    return potion
 }
 
 /**
  * 创建 Relic 实例
  */
-export async function createRelic(map: any): Promise<Relic> {
-    const { Relic } = await import("./objects/item/Subclass/Relic")
-    return new Relic(map)
+export async function createRelic(map: any): Promise<RelicType> {
+    const relic = new Relic(map)
+    await relic.initialize()
+    return relic
 }
 
 // ========== Target 工厂 ==========
@@ -58,25 +74,28 @@ export async function createRelic(map: any): Promise<Relic> {
 /**
  * 创建 Player 实例
  */
-export async function createPlayer(map: any): Promise<Player> {
-    const { Player } = await import("./objects/target/Player")
-    return new Player(map)
+export async function createPlayer(map: any): Promise<PlayerType> {
+    const player = new Player(map)
+    await player.initialize()
+    return player
 }
 
 /**
  * 创建 Enemy 实例
  */
-export async function createEnemy(map: any): Promise<Enemy> {
-    const { Enemy } = await import("./objects/target/Enemy")
-    return new Enemy(map)
+export async function createEnemy(map: any): Promise<EnemyType> {
+    const enemy = new Enemy(map)
+    await enemy.initialize()
+    return enemy
 }
 
 /**
  * 创建 Organ 实例
  */
-export async function createOrgan(map: any): Promise<Organ> {
-    const { Organ } = await import("./objects/target/Organ")
-    return new Organ(map)
+export async function createOrgan(map: any): Promise<OrganType> {
+    const organ = new Organ(map)
+    await organ.initialize()
+    return organ
 }
 
 // ========== ActionEvent 工厂 ==========
@@ -86,20 +105,22 @@ export async function createOrgan(map: any): Promise<Organ> {
  */
 export async function createActionEvent(
     key: string,
-    source: Entity,
-    medium: Entity,
-    target: Entity | Entity[],
+    source: EntityType,
+    medium: EntityType,
+    target: EntityType | EntityType[],
     info: Record<string, any>,
     effectUnits: EffectUnit[]
-): Promise<ActionEvent> {
-    const { ActionEvent } = await import("./objects/system/ActionEvent")
+): Promise<ActionEventType> {
     return new ActionEvent(key, source, medium, target, info, effectUnits)
 }
 
 // ========== Effect 工厂 ==========
 
-import type { Effect } from "./objects/system/effect/Effect"
+import type { Effect as EffectType } from "./objects/system/effect/Effect"
 import type { EffectParams } from "./objects/system/effect/EffectFunc"
+import { Effect } from "./objects/system/effect/Effect"
+import { getLazyModule } from "@/core/utils/lazyLoader"
+import { newError } from "@/ui/hooks/global/alert"
 
 /**
  * 通过 EffectUnit 创建 Effect 实例
@@ -116,11 +137,8 @@ import type { EffectParams } from "./objects/system/effect/EffectFunc"
 export function createEffectByUnit(
     event: ActionEvent,
     unit: EffectUnit
-): Effect {
+): EffectType {
     // 使用懒加载获取 effectMap（已在 preload 中加载）
-    const { getLazyModule } = require("@/core/utils/lazyLoader")
-    const { newError } = require("@/ui/hooks/global/alert")
-
     const effectMap = getLazyModule<any[]>('effectMap')
     const data = effectMap.find((tmp: any) => tmp.key == unit.key)
     if(!data){
@@ -139,9 +157,6 @@ export function createEffectByUnit(
         // 如果有循环引用，退回到浅拷贝
         clonedParams = {...params}
     }
-
-    // 动态导入 Effect 类（必须在运行时，此时模块已加载）
-    const { Effect } = require("./objects/system/effect/Effect")
 
     // 创建 Effect 对象（会在构造函数中解析参数并验证）
     const effectObj = new Effect({
