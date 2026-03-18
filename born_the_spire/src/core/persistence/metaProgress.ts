@@ -108,7 +108,8 @@ export function createDefaultSave(): MetaProgressSave {
     return {
         version: CURRENT_VERSION,
         unlockedOrgans: {
-            "original_organ_00001": true  // 默认解锁心脏器官
+            "original_organ_00001": true,  // 默认解锁心脏器官
+            "original_organ_00003": true   // 默认解锁石肤器官
         },
         organAscensionMastery: {},
         defeatedEliteTypes: {}

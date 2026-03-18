@@ -2,7 +2,7 @@
  * 器官部位系统
  */
 
-import { OrganPart } from "@/core/types/OrganTypes"
+import { OrganPartEnum } from "@/core/types/OrganTypes"
 import type { PartConfig } from "@/core/types/OrganTypes"
 
 /**
@@ -11,79 +11,79 @@ import type { PartConfig } from "@/core/types/OrganTypes"
  */
 export const partConfigList: PartConfig[] = [
     {
-        key: OrganPart.Heart,
+        key: OrganPartEnum.Heart,
         label: "心脏",
         maxCount: 1,
         description: "生命的核心，只能装备一个"
     },
     {
-        key: OrganPart.Lung,
+        key: OrganPartEnum.Lung,
         label: "肺",
         maxCount: 2,
         description: "呼吸器官，可以装备两个"
     },
     {
-        key: OrganPart.Liver,
+        key: OrganPartEnum.Liver,
         label: "肝脏",
         maxCount: 1,
         description: "解毒器官"
     },
     {
-        key: OrganPart.Stomach,
+        key: OrganPartEnum.Stomach,
         label: "胃",
         maxCount: 1,
         description: "消化器官"
     },
     {
-        key: OrganPart.Brain,
+        key: OrganPartEnum.Brain,
         label: "大脑",
         maxCount: 1,
         description: "思维中枢"
     },
     {
-        key: OrganPart.Eye,
+        key: OrganPartEnum.Eye,
         label: "眼睛",
         maxCount: 2,
         description: "视觉器官，可以装备两个"
     },
     {
-        key: OrganPart.Skin,
+        key: OrganPartEnum.Skin,
         label: "皮肤",
         maxCount: 3,
         description: "防护层，可以装备多个"
     },
     {
-        key: OrganPart.Bone,
+        key: OrganPartEnum.Bone,
         label: "骨骼",
         maxCount: 3,
         description: "支撑结构，可以装备多个"
     },
     {
-        key: OrganPart.Muscle,
+        key: OrganPartEnum.Muscle,
         label: "肌肉",
         maxCount: 3,
         description: "力量来源，可以装备多个"
     },
     {
-        key: OrganPart.Blood,
+        key: OrganPartEnum.Blood,
         label: "血液",
         maxCount: 1,
         description: "循环系统"
     },
     {
-        key: OrganPart.Nerve,
+        key: OrganPartEnum.Nerve,
         label: "神经",
         maxCount: 2,
         description: "感知系统，可以装备两个"
     },
     {
-        key: OrganPart.Gland,
+        key: OrganPartEnum.Gland,
         label: "腺体",
         maxCount: 3,
         description: "分泌器官，可以装备多个"
     },
     {
-        key: OrganPart.Core,
+        key: OrganPartEnum.Core,
         label: "核心",
         maxCount: 1,
         description: "强大的核心器官，只能装备一个"
@@ -92,27 +92,28 @@ export const partConfigList: PartConfig[] = [
 
 /**
  * 根据部位获取配置
+ * 如果部位未注册，返回 undefined
  */
-export function getPartConfig(part: OrganPart): PartConfig {
-    const config = partConfigList.find(c => c.key === part)
-    if (!config) {
-        throw new Error(`未找到部位配置: ${part}`)
-    }
-    return config
+export function getPartConfig(part: string): PartConfig | undefined {
+    return partConfigList.find(c => c.key === part)
 }
 
 /**
  * 根据部位获取显示名称
+ * 如果部位未注册，返回部位原始值
  */
-export function getPartLabel(part: OrganPart): string {
-    return getPartConfig(part).label
+export function getPartLabel(part: string): string {
+    const config = getPartConfig(part)
+    return config?.label || part
 }
 
 /**
  * 根据部位获取最大数量限制
+ * 如果部位未注册，返回默认值 1（独特的部位只能有一个）
  */
-export function getPartMaxCount(part: OrganPart): number {
-    return getPartConfig(part).maxCount
+export function getPartMaxCount(part: string): number {
+    const config = getPartConfig(part)
+    return config?.maxCount ?? 1
 }
 
 /**

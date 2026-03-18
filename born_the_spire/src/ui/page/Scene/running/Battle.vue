@@ -71,7 +71,7 @@
                 await nowGameRun.completeCurrentRoom()
             } else if (result === 'player_lose') {
                 // 失败：处理失败逻辑
-                console.log('[Battle] 战斗失败')
+                //todo 没有处理失败逻辑
             }
         }
     })

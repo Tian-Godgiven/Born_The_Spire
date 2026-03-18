@@ -18,7 +18,6 @@ class OrganRewardActionRegistry {
       console.warn(`[OrganRewardActionRegistry] 动作 ${config.key} 已存在，将被覆盖`)
     }
     this.actions.set(config.key, { ...config, handler })
-    console.log(`[OrganRewardActionRegistry] 注册动作: ${config.key} (${config.label})`)
   }
 
   /**
@@ -99,7 +98,6 @@ class OrganRewardActionRegistry {
   unregisterAction(key: string): boolean {
     const existed = this.actions.delete(key)
     if (existed) {
-      console.log(`[OrganRewardActionRegistry] 移除动作: ${key}`)
     }
     return existed
   }

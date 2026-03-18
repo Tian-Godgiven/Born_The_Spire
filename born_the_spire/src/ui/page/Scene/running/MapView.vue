@@ -256,17 +256,14 @@ async function onNodeClick(node: MapNode & { x: number; y: number }) {
     return
   }
 
-  console.log('[MapView] 点击节点:', node.id, '状态:', node.state, '类型:', node.roomType)
 
   if (node.state !== 'available') {
-    console.log('[MapView] 节点不可用，无法进入')
     return
   }
 
   // 移动到该节点
   const success = nowGameRun.floorManager.moveToMapNode(node.id)
   if (!success) {
-    console.error('[MapView] 移动到节点失败')
     return
   }
 
@@ -345,7 +342,6 @@ function onMouseLeave() {
 // 监听地图变化
 watch(floorMap, (newMap) => {
   if (newMap) {
-    console.log('[MapView] 地图已加载，共', newMap.totalLayers, '层')
 
     // 首次加载地图时，滚动到底部
     if (!hasScrolledToBottom.value && mapContainer.value) {
@@ -354,7 +350,6 @@ watch(floorMap, (newMap) => {
         if (mapContainer.value) {
           mapContainer.value.scrollTop = mapContainer.value.scrollHeight
           hasScrolledToBottom.value = true
-          console.log('[MapView] 已滚动到底部')
         }
       }, 100)
     }
@@ -362,7 +357,6 @@ watch(floorMap, (newMap) => {
 })
 
 onMounted(() => {
-  console.log('[MapView] 组件已挂载')
 
   // 如果地图已经存在，立即滚动到底部
   if (floorMap.value && !hasScrolledToBottom.value && mapContainer.value) {
@@ -370,7 +364,6 @@ onMounted(() => {
       if (mapContainer.value) {
         mapContainer.value.scrollTop = mapContainer.value.scrollHeight
         hasScrolledToBottom.value = true
-        console.log('[MapView] 已滚动到底部（onMounted）')
       }
     }, 100)
   }

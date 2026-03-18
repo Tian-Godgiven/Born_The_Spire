@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, onMounted, onUnmounted } from 'vue'
 import { nowGameRun, nowPlayer } from '@/core/objects/game/run'
 import { roomRegistry } from '@/static/registry/roomRegistry'
 import router from '@/ui/router'
@@ -167,6 +167,9 @@ async function executeFunction(funcName: string, args: any[]) {
             break
         case 'removeTrigger':
             await removeTrigger(args[0], args[1])
+            break
+        case 'unlockAllOrgans':
+            await unlockAllOrgans()
             break
         case 'help':
             showHelp()
@@ -946,6 +949,29 @@ async function removeTrigger(targetType: string, triggerId: string) {
     }
 }
 
+// 解锁所有器官
+async function unlockAllOrgans() {
+    const { getLazyModule } = await import('@/core/utils/lazyLoader')
+    const { loadMetaProgress, saveMetaProgress, unlockOrgan } = await import('@/core/persistence/metaProgress')
+
+    const organList = getLazyModule('organList')
+    const metaProgress = loadMetaProgress()
+
+    let unlockedCount = 0
+    for (const organData of organList) {
+        const isNew = unlockOrgan(metaProgress, organData.key)
+        if (isNew) {
+            unlockedCount++
+        }
+    }
+
+    saveMetaProgress(metaProgress)
+
+    addOutput(`✓ 已解锁所有器官`, 'result')
+    addOutput(`  新解锁: ${unlockedCount} 个`, 'info')
+    addOutput(`  总计: ${organList.length} 个`, 'info')
+}
+
 // 显示帮助
 function showHelp() {
     addOutput('=== 可用命令 ===', 'info')
@@ -979,6 +1005,8 @@ function showHelp() {
     addOutput('=== 器官系统命令 ===', 'info')
     addOutput('listOrgans() - 列出当前拥有的器官', 'info')
     addOutput('listAllOrgans() - 列出所有可用器官', 'info')
+    addOutput('unlockAllOrgans() - 解锁所有器官（元进度）', 'info')
+    addOutput('  例如: unlockAllOrgans()', 'info')
     addOutput('addOrgan("organKey") - 添加器官', 'info')
     addOutput('  例如: addOrgan("original_organ_00001")', 'info')
     addOutput('breakOrgan("organKey") - 损坏器官', 'info')
@@ -1043,10 +1071,30 @@ function close() {
     isVisible.value = false
 }
 
-// 暴露到全局
-;(window as any).openConsole = open
+// 切换控制台显示/隐藏
+function toggle() {
+    if (isVisible.value) {
+        close()
+    } else {
+        open()
+    }
+}
 
-defineExpose({ open, close })
+// 生命周期
+onMounted(() => {
+    // 暴露到全局
+    ;(window as any).openConsole = open
+    ;(window as any).closeConsole = close
+    ;(window as any).toggleConsole = toggle
+})
+
+onUnmounted(() => {
+    delete (window as any).openConsole
+    delete (window as any).closeConsole
+    delete (window as any).toggleConsole
+})
+
+defineExpose({ open, close, toggle })
 </script>
 
 <style scoped lang="scss">

@@ -5,6 +5,81 @@ import { isEntity } from "@/core/utils/typeGuards";
 import { Effect } from "@/core/objects/system/effect/Effect";
 import { resolveTriggerEventTarget } from "@/core/objects/system/trigger/Trigger";
 import { Entity } from "@/core/objects/system/Entity";
+import { getCurrentValue, changeCurrentValue } from "@/core/objects/system/Current/current";
+
+/**
+ * 添加最大生命并回复生命
+ *
+ * 这个效果会：
+ * 1. 添加 modifier 增加最大生命
+ * 2. 回复等量的当前生命
+ * 3. 当 modifier 被移除时，扣除等量的当前生命（不会致死）
+ *
+ * 参数：
+ * - value: 增加的最大生命值（同时也是回复的生命值）
+ * - canKill: 移除时是否可以致死（默认 false，不会致死）
+ */
+export const addMaxHealthAndHeal: EffectFunc = (event, effect) => {
+    const { target } = event;
+    const { value = 0, canKill = false } = effect.params;
+
+    if (!value) {
+        newError(["addMaxHealthAndHeal 效果缺少 value 参数"]);
+        return;
+    }
+
+    const valueNum = Number(value);
+    const canKillBool = Boolean(canKill);
+    const removers: Array<() => void> = []
+
+    handleEventEntity(target, (entity) => {
+        if (!isEntity(entity)) {
+            return;
+        }
+
+        // 1. 添加 modifier（最大生命+value）
+        const status = entity.status["max-health"];
+
+        if (!status) {
+            console.warn(`[addMaxHealthAndHeal] 实体 ${entity.label} 没有 max-health 属性，跳过`);
+            return;
+        }
+
+        const remover = status.addByJSON(event.source, {
+            targetLayer: "base",
+            modifierType: "additive",
+            modifierValue: valueNum
+        });
+
+        // 2. 回复当前生命（+value）
+        const currentHealth = getCurrentValue(entity, "health");
+        changeCurrentValue(entity, "health", currentHealth + valueNum, event);
+
+        // 3. 创建自定义清理函数：移除时 -value 生命
+        const customRemover = () => {
+            // 先移除 modifier
+            remover();
+
+            // 然后扣除生命
+            const currentHealth = getCurrentValue(entity, "health");
+            let newHealth = currentHealth - valueNum;
+
+            // 如果不允许致死，确保生命至少为 1
+            if (!canKillBool && newHealth < 1) {
+                newHealth = 1;
+            }
+
+            changeCurrentValue(entity, "health", newHealth, event);
+        };
+
+        // 收集副作用
+        event.collectSideEffect(customRemover);
+        removers.push(customRemover)
+    });
+
+    // 返回所有 remover
+    return removers.length === 1 ? removers[0] : removers
+};
 
 /**
  * 添加状态修饰器到目标

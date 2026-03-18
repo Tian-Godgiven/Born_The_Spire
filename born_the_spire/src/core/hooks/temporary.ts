@@ -37,7 +37,6 @@ export async function addTemporaryCard(
     // 注册到临时管理器
     temporaryManager.registerTemporary(card, player)
 
-    console.log(`[addTemporaryCard] 创建临时卡牌: ${card.label}, 移除时机: ${removeOn}`)
     return card
 }
 
@@ -72,7 +71,6 @@ export async function addTemporaryOrgan(
     // 注册到临时管理器
     temporaryManager.registerTemporary(organ, owner)
 
-    console.log(`[addTemporaryOrgan] 创建临时器官: ${organ.label}, 移除时机: ${removeOn}`)
     return organ
 }
 
@@ -98,7 +96,6 @@ export function markCardAsTemporary(
     // 注册到临时管理器
     temporaryManager.registerTemporary(card, owner)
 
-    console.log(`[markCardAsTemporary] 标记卡牌为临时: ${card.label}, 移除时机: ${removeOn}`)
 }
 
 /**
@@ -123,7 +120,6 @@ export function markOrganAsTemporary(
     // 注册到临时管理器
     temporaryManager.registerTemporary(organ, owner)
 
-    console.log(`[markOrganAsTemporary] 标记器官为临时: ${organ.label}, 移除时机: ${removeOn}`)
 }
 
 /**
@@ -142,7 +138,6 @@ export async function makeItemPermanent(item: Card | Organ) {
     // 从临时管理器中移除（但不删除物品本身）
     await temporaryManager.removeItem(item)
 
-    console.log(`[makeItemPermanent] 物品 ${item.label} 变为永久`)
 }
 
 /**

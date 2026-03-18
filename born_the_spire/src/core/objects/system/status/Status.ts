@@ -61,22 +61,6 @@ export class Status extends Modifier<StatusModifier>{
         this._baseValue.value = countBaseModifier(this.owner,this.originalBaseValue,this.store)
         //再用基础值刷新当前值，从基础值开始
         this._value.value = countCurrentModifier(this.owner,this.baseValue,this.value,this.store)
-
-        // 调试：如果是 max-health，打印修饰器信息
-        if(this.key === "max-health") {
-            console.log(`[Status] ${this.owner.label} max-health 刷新:`, {
-                baseValue: this.baseValue,
-                value: this.value,
-                modifiers: this.store.map(m => ({
-                    source: m.source?.label || 'unknown',
-                    value: m.value,
-                    applyMode: m.applyMode,
-                    targetLayer: m.targetLayer,
-                    snapshotBaseValue: m.snapshotBaseValue,
-                    snapshotValue: m.snapshotValue
-                }))
-            })
-        }
     }
     //获得响应式值
     getRefValue(){

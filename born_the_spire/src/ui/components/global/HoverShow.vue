@@ -20,12 +20,12 @@
 
 <script setup lang='ts'>
     import { ref, computed, useTemplateRef } from 'vue';
-    const {hoverPosition="left",maxWidth=300} = defineProps<{
+    const {hoverPosition="left",maxWidth=300,waitTime=200} = defineProps<{
         hoverPosition?:"left"|"right"|"top"|"bottom",
-        maxWidth?:number
+        maxWidth?:number,
+        waitTime?:number
     }>()
     const offset = 12//偏移量aka间距
-    const waitTime = 200//移除后等待时间，单位ms
 
     const mainRef = useTemplateRef("mainRef");
     const hoverRef = useTemplateRef("hoverRef")

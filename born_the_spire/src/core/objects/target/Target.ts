@@ -1,11 +1,9 @@
-console.log('[Target.ts] 模块开始执行')
 
 import type { EntityMap } from "../system/Entity";
 import type { State } from "../system/State";
 import type { TriggerMap } from "@/core/types/object/trigger";
 
 
-console.log('[Target.ts] Entity 导入完成，Entity =', typeof Entity)
 
 import { nanoid } from "nanoid";
 import { Entity } from "../system/Entity";
@@ -39,7 +37,9 @@ export type CharaMap = TargetMap & {
 export class Chara extends Target{
     // 从 OrganModifier 动态获取器官列表（用于 UI 显示）
     public organs = computed(() => {
-        return getOrganModifier(this).getOrgans()
+        const modifier = getOrganModifier(this)
+        const organs = modifier.getOrgans()
+        return organs
     })
 
     constructor(map:CharaMap){

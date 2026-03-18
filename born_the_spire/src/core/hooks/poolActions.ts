@@ -66,5 +66,4 @@ export function initPoolActions() {
     }
   }, exerciseAction)
 
-  console.log("[PoolActions] 水池行动系统初始化完成")
 }

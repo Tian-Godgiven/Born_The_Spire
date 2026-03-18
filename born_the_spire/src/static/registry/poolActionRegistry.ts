@@ -17,7 +17,6 @@ class PoolActionRegistry {
       console.warn(`[PoolActionRegistry] 行动 ${config.key} 已存在，将被覆盖`)
     }
     this.actions.set(config.key, { ...config, handler })
-    console.log(`[PoolActionRegistry] 注册行动: ${config.key} (${config.title})`)
   }
 
   /**
@@ -97,7 +96,6 @@ class PoolActionRegistry {
   unregisterAction(key: string): boolean {
     const existed = this.actions.delete(key)
     if (existed) {
-      console.log(`[PoolActionRegistry] 移除行动: ${key}`)
     }
     return existed
   }

@@ -39,7 +39,6 @@ export function processVictoryMastery(player: Player): void {
         // 标记为当前进阶精通
         const mastered = markOrganAscensionMastery(metaProgress, organKey, ascensionLevel)
         if (mastered) {
-            console.log(`[processVictoryMastery] 标记精通: ${organKey} @ 进阶 ${ascensionLevel}`)
             hasChanges = true
         }
     }
@@ -68,7 +67,6 @@ export function processEliteDefeat(eliteKey: string): boolean {
         saveMetaProgress(metaProgress)
         clearMetaProgressCache()
         const newBudget = getInitialOrganBudget(metaProgress)
-        console.log(`[processEliteDefeat] 击败精英 ${eliteKey}，初始器官上限增加到 ${newBudget}`)
     }
 
     return isFirstTime

@@ -222,6 +222,7 @@ export const eventList: EventMap[] = [
                             { key: "healHealth", params: { amount: 30 } }
                         ],
                         customCallback: async (data) => {
+                            //todo
                             console.log(`[湖面精灵] 诚实奖励：升级 ${data.itemName}`)
                         }
                     }
@@ -240,6 +241,7 @@ export const eventList: EventMap[] = [
                             { key: "loseHealth", params: { amount: 20 } }
                         ],
                         customCallback: async (data) => {
+                            //todo
                             console.log(`[湖面精灵] 说谎惩罚：返还 ${data.itemName} 并获得诅咒`)
                         }
                     }

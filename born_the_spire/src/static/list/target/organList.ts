@@ -1,5 +1,5 @@
 import type { OrganMap } from "@/core/objects/target/Organ"
-import { OrganRarity, OrganPart } from "@/core/types/OrganTypes"
+import { OrganRarity, OrganPartEnum } from "@/core/types/OrganTypes"
 import { OrganTags } from "./organTags"
 
 export const organList:OrganMap[] = [
@@ -8,10 +8,7 @@ export const organList:OrganMap[] = [
         key:"original_organ_00001",
         describe:["■"],
         rarity: OrganRarity.Common,
-        part: OrganPart.Heart,
-        status: {
-            "max-mass": 30
-        },
+        part: "■■■■■■?",
         current: ["mass"],
         interaction:{}
     },{
@@ -19,7 +16,7 @@ export const organList:OrganMap[] = [
         key:"original_organ_00002",
         describe:["最大生命+3"],
         rarity: OrganRarity.Uncommon,
-        part: OrganPart.Heart,
+        part: OrganPartEnum.Heart,
         status: {
             "max-mass": 40
         },
@@ -27,12 +24,9 @@ export const organList:OrganMap[] = [
         interaction:{
             possess:{
                 target:{"key":"self"},
-                effects:[],
-                modifiers:[{
-                    statusKey:"max-health",
-                    targetLayer:"base",
-                    modifierType:"additive",
-                    modifierValue:3
+                effects:[{
+                    key:"addMaxHealthAndHeal",
+                    params:{value:3}
                 }]
             }
         },
@@ -42,7 +36,7 @@ export const organList:OrganMap[] = [
         key:"original_organ_00003",
         describe:["受到的伤害值-1"],
         rarity: OrganRarity.Uncommon,
-        part: OrganPart.Skin,
+        part: OrganPartEnum.Skin,
         status: {
             "max-mass": 25
         },
@@ -69,21 +63,20 @@ export const organList:OrganMap[] = [
     },{
         label:"战斗之心",
         key:"test_organ_cards_001",
-        describe:["提供1张",{"@": 0},"卡牌到牌组"],
+        describe:["提供1张",{"@": 0},"卡牌到牌组","最大生命+2"],
         rarity: OrganRarity.Common,
-        part: OrganPart.Heart,
+        part: OrganPartEnum.Heart,
         status: {
             "max-mass": 30
         },
         current: ["mass"],
-        cards:["original_card_00001"],  // 提供"打击"
+        cards:["original_card_00001"],
         interaction:{
-            get:{
+            possess:{
                 target:{"key":"self"},
                 effects:[{
-                    key:"addStatusBaseCurrentValue",
-                    params:{value:2,statusKey:"max-health",currentKey:"health"},
-                    describe:["获得2点最大生命"]
+                    key:"addMaxHealthAndHeal",
+                    params:{value:2}
                 }]
             }
         }
@@ -92,7 +85,7 @@ export const organList:OrganMap[] = [
         key:"test_organ_cards_002",
         describe:["提供1张",{"@": 0},"和1张",{"@": 1},"到牌组"],
         rarity: OrganRarity.Rare,
-        part: OrganPart.Gland,
+        part: OrganPartEnum.Gland,
         status: {
             "max-mass": 20
         },
@@ -114,23 +107,15 @@ export const organList:OrganMap[] = [
     },{
         label:"旋风引擎",
         key:"test_organ_cards_003",
-        describe:["提供1张【旋风斩】到牌组","损坏后卡牌无法使用"],
-        rarity: OrganRarity.Rare,  // 改为 Rare
-        part: OrganPart.Core,
+        describe:["提供1张",{"@": 0},"到牌组","损坏后卡牌无法使用"],
+        rarity: OrganRarity.Rare,
+        part: OrganPartEnum.Core,
         status: {
             "max-mass": 35
         },
         current: ["mass"],
         cards:["original_card_00005"],  // 提供"旋风斩"
         interaction:{
-            get:{
-                target:{"key":"self"},
-                effects:[{
-                    key:"addStatusBaseCurrentValue",
-                    params:{value:5,statusKey:"max-health",currentKey:"health"},
-                    describe:["获得5点最大生命"]
-                }]
-            },
             work:{
                 target:{"key":"self"},
                 effects:[],
@@ -152,9 +137,9 @@ export const organList:OrganMap[] = [
     },{
         label:"末日核心",
         key:"test_organ_cards_004",
-        describe:["提供1张【末日】到牌组","危险而强大"],
+        describe:["提供1张",{"@": 0},"到牌组","危险而强大"],
         rarity: OrganRarity.Rare,  // 改为 Rare
-        part: OrganPart.Core,
+        part: OrganPartEnum.Core,
         // 无质量系统 - 无法被摧毁
         cards:["original_card_00006"],  // 提供"末日"
         interaction:{
@@ -173,12 +158,12 @@ export const organList:OrganMap[] = [
     },{
         label:"癌变心脏",
         key:"example_organ_cursed_001",
-        describe:["每回合开始时失去1点生命","但获得1点能量"],
+        describe:["回合开始时该器官收到1点伤害并获得1点能量"],
         rarity: OrganRarity.Common,
-        part: OrganPart.Heart,
+        part: OrganPartEnum.Heart,
         tags: [OrganTags.CURSED, OrganTags.CANCER],  // 诅咒 + 癌变标签
         status: {
-            "max-mass": 20
+            "max-mass": 10
         },
         current: ["mass"],
         interaction:{
@@ -210,10 +195,10 @@ export const organList:OrganMap[] = [
     },{
         label:"脆弱之心",
         key:"test_organ_entry_001",
-        describe:["最大生命+5","但你受到伤害时此器官有50%概率损坏"],
+        describe:["最大生命+5","你受到伤害时50%概率损坏"],
         rarity: OrganRarity.Uncommon,
-        part: OrganPart.Heart,
-        entry: ["organ_fragile"],  // 脆弱词条（使用 organ_ 前缀）
+        part: OrganPartEnum.Heart,
+        entry: ["organ_fragile"],
         status: {
             "max-mass": 25
         },
@@ -221,12 +206,9 @@ export const organList:OrganMap[] = [
         interaction:{
             possess:{
                 target:{"key":"self"},
-                effects:[],
-                modifiers:[{
-                    statusKey:"max-health",
-                    targetLayer:"base",
-                    modifierType:"additive",
-                    modifierValue:5
+                effects:[{
+                    key:"addMaxHealthAndHeal",
+                    params:{value:5}
                 }]
             }
         }
@@ -235,8 +217,8 @@ export const organList:OrganMap[] = [
         key:"test_organ_entry_002",
         describe:["战斗结束时恢复5点质量"],
         rarity: OrganRarity.Rare,
-        part: OrganPart.Core,
-        entry: ["organ_regenerative"],  // 再生词条（使用 organ_ 前缀）
+        part: OrganPartEnum.Core,
+        entry: ["organ_regenerative"],
         status: {
             "max-mass": 30
         },
@@ -244,21 +226,18 @@ export const organList:OrganMap[] = [
         interaction:{
             possess:{
                 target:{"key":"self"},
-                effects:[],
-                modifiers:[{
-                    statusKey:"max-health",
-                    targetLayer:"base",
-                    modifierType:"additive",
-                    modifierValue:3
+                effects:[{
+                    key:"addMaxHealthAndHeal",
+                    params:{value:3}
                 }]
             }
         }
     },{
         label:"坚固外壳",
         key:"test_organ_entry_003",
-        describe:["此器官永不损坏","受到的伤害值-2"],
+        describe:["此器官不会损坏","受到的伤害值-2"],
         rarity: OrganRarity.Rare,
-        part: OrganPart.Skin,
+        part: OrganPartEnum.Skin,
         entry: ["organ_sturdy"],  // 坚固词条（使用 organ_ 前缀）
         status: {
             "max-mass": 50
@@ -290,13 +269,13 @@ export const organList:OrganMap[] = [
         key:"example_organ_upgrade_001",
         describe:["每次升级增加2点最大生命","最高可升至3级"],
         rarity: OrganRarity.Common,
-        part: OrganPart.Heart,
+        part: OrganPartEnum.Heart,
         status: {
             "max-mass": 30
         },
         current: ["mass"],
         upgrade: {
-            maxLevel: 3,  // 最大等级限制
+            maxLevel: 3,
             perLevel: {
                 effects: [{
                     key: "addStatusBaseCurrentValue",
@@ -307,12 +286,9 @@ export const organList:OrganMap[] = [
         interaction:{
             possess:{
                 target:{"key":"self"},
-                effects:[],
-                modifiers:[{
-                    statusKey:"max-health",
-                    targetLayer:"base",
-                    modifierType:"additive",
-                    modifierValue:3
+                effects:[{
+                    key:"addMaxHealthAndHeal",
+                    params:{value:3}
                 }]
             }
         }
@@ -321,7 +297,7 @@ export const organList:OrganMap[] = [
         key:"example_organ_upgrade_002",
         describe:["每次升级增加1点攻击力","3级时获得额外能量"],
         rarity: OrganRarity.Uncommon,
-        part: OrganPart.Muscle,
+        part: OrganPartEnum.Muscle,
         status: {
             "max-mass": 35
         },
@@ -370,7 +346,7 @@ export const organList:OrganMap[] = [
         key:"example_organ_upgrade_003",
         describe:["升级成本随等级递增","每级减伤+1","5级时获得护甲机制"],
         rarity: OrganRarity.Rare,
-        part: OrganPart.Skin,
+        part: OrganPartEnum.Skin,
         status: {
             "max-mass": 40,
             "damage-reduction": 0
@@ -425,7 +401,7 @@ export const organList:OrganMap[] = [
         key:"example_organ_upgrade_004",
         describe:["史诗级器官","每2级获得里程碑奖励","最高10级"],
         rarity: OrganRarity.Rare,
-        part: OrganPart.Core,
+        part: OrganPartEnum.Core,
         status: {
             "max-mass": 60
         },

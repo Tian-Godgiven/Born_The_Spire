@@ -30,7 +30,7 @@ import { enableOrganRewardAction, disableOrganRewardAction } from "@/core/effect
 import { enablePoolAction, disablePoolAction } from "@/core/effects/pool/poolActionEffects"
 import { addTemporaryCardEffect, addTemporaryOrganEffect, markCardTemporaryEffect, markOrganTemporaryEffect } from "@/core/effects/temporary/temporaryEffects"
 import { addAbilityChargesEffect, reduceAbilityCooldownEffect, setAbilityToggleEffect, resetAbilityUsesEffect, setAbilityEnabledEffect, modifyAbilityCostEffect } from "@/core/effects/ability/abilityEffects"
-import { addStatusModifier } from "@/core/effects/modifier/addModifier"
+import { addStatusModifier, addMaxHealthAndHeal } from "@/core/effects/modifier/addModifier"
 
 type EffectData = {
     label?:string,
@@ -389,5 +389,9 @@ export const effectMap:EffectData[] = [
     label:"添加属性修饰器",
     key:"addStatusModifier",
     effect:addStatusModifier
+},{
+    label:"添加最大生命并回复",
+    key:"addMaxHealthAndHeal",
+    effect:addMaxHealthAndHeal
 }]
 

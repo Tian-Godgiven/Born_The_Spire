@@ -54,7 +54,6 @@ export class FloorSelectionState {
      */
     addDynamicRule(ruleId: string, rule: SelectionRule): void {
         this.dynamicRules.push({ id: ruleId, rule })
-        console.log(`[FloorSelectionState] 添加动态规则: ${ruleId}`)
     }
 
     /**
@@ -63,7 +62,6 @@ export class FloorSelectionState {
     removeDynamicRule(ruleId: string): void {
         this.dynamicRules = this.dynamicRules.filter(dr => dr.id !== ruleId)
         this.ruleStates.delete(ruleId)
-        console.log(`[FloorSelectionState] 移除动态规则: ${ruleId}`)
     }
 
     /**

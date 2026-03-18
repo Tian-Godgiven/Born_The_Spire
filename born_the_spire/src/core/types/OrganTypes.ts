@@ -3,9 +3,15 @@
  */
 
 /**
- * 器官部位枚举
+ * 器官部位类型
+ * 允许使用枚举值或任意字符串作为部位标识
  */
-export enum OrganPart {
+export type OrganPart = string
+
+/**
+ * 常用部位枚举（可选使用）
+ */
+export enum OrganPartEnum {
     Heart = "heart",        // 心脏
     Lung = "lung",          // 肺
     Liver = "liver",        // 肝脏
@@ -25,7 +31,7 @@ export enum OrganPart {
  * 部位配置
  */
 export type PartConfig = {
-    key: OrganPart          // 部位标识
+    key: string             // 部位标识（任意字符串）
     label: string           // 显示名称
     maxCount: number        // 该部位最多可装备几个器官
     description?: string    // 部位描述

@@ -144,12 +144,13 @@ export function getDescribeStructured(describe:Describe|undefined,target?:Object
                     }
                 }
 
-                segments.push({
+                const segment = {
                     text: cardLabel,
-                    type: 'card',
+                    type: 'card' as const,
                     cardRef: cardIndex,
-                    cardRefType: 'instance'
-                })
+                    cardRefType: 'instance' as const
+                }
+                segments.push(segment)
             }
             //卡牌key预览
             else if("#" in value){

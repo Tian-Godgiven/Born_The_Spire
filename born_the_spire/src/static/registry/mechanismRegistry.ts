@@ -39,7 +39,6 @@ export function registerMechanism(config: MechanismConfig): void {
         console.warn(`[MechanismRegistry] 机制已存在: ${config.key}，将被覆盖`)
     }
     mechanismConfigMap.set(config.key, config)
-    console.log(`[MechanismRegistry] 注册机制: ${config.key} - ${config.label}`)
 }
 
 /**
@@ -153,25 +152,15 @@ function enableMechanism(
     mechanismKey: string,
     config: MechanismConfig
 ): void {
-    console.log(`[enableMechanism] 开始启用机制: ${mechanismKey} for ${entity.label}`)
     const manager = getMechanismManager(entity)
 
     // 标记为已启用
     manager.setState(mechanismKey, true)
-    console.log(`[enableMechanism] 状态已标记为启用`)
-
     // 1. 创建数据存储
-    console.log(`[enableMechanism] 准备调用 createMechanismData`)
     createMechanismData(entity, config)
-    console.log(`[enableMechanism] createMechanismData 调用完成`)
-
     // 2. 生成并添加 Triggers
-    console.log(`[enableMechanism] 准备生成触发器`)
     const triggers = generateTriggersForMechanism(entity, config)
     manager.addTriggers(mechanismKey, triggers)
-    console.log(`[enableMechanism] 触发器已添加，数量: ${triggers.length}`)
-
-    console.log(`[MechanismRegistry] 启用机制: ${mechanismKey} for ${entity.label}`)
 }
 
 /**
@@ -182,14 +171,10 @@ function disableMechanism(
     mechanismKey: string
 ): void {
     const manager = getMechanismManager(entity)
-
     // 标记为已禁用
     manager.setState(mechanismKey, false)
-
     // 移除所有 Triggers
     manager.removeTriggers(mechanismKey)
-
-    console.log(`[MechanismRegistry] 禁用机制: ${mechanismKey} for ${entity.label}`)
 }
 
 /**
@@ -198,14 +183,9 @@ function disableMechanism(
 function createMechanismData(entity: Entity, config: MechanismConfig): void {
     const { location, key, defaultValue } = config.data
     const storageKey = key || config.key
-
-    console.log(`[createMechanismData] ${entity.label} - ${storageKey}, location: ${location}`)
-    console.log(`[createMechanismData] 当前 entity.current[${storageKey}]:`, entity.current[storageKey])
-
     if (location === "current") {
         // 在 current 中创建 Current 实例
         if (!entity.current[storageKey]) {
-            console.log(`[createMechanismData] 创建新的 Current 实例: ${storageKey}`)
             const _current = new Current(
                 entity,  // source
                 entity,  // owner
@@ -221,9 +201,6 @@ function createMechanismData(entity: Entity, config: MechanismConfig): void {
             )
             // Current 构造函数会自动调用 appendCurrent
             void _current  // 抑制未使用警告 - 变量仅用于构造函数副作用
-            console.log(`[createMechanismData] Current 创建完成，检查 entity.current[${storageKey}]:`, entity.current[storageKey])
-        } else {
-            console.log(`[createMechanismData] ${storageKey} 已存在，跳过创建`)
         }
     } else if (location === "status") {
         // 在 status 中创建 Status 实例

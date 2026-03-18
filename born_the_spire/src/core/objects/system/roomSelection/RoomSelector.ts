@@ -278,21 +278,18 @@ export class RoomSelector {
         switch (strategy.type) {
             case 'reset':
                 // 重置池子
-                console.log(`[RoomSelector] ${type} 池耗尽，重置池子`)
                 this.poolManager.resetPool(type as keyof RoomPools)
                 // 重新尝试选择
                 return this.pickRooms(requirement, this.poolManager.getAvailablePools(), alreadySelected)
 
             case 'allow-repeat':
                 // 允许重复，从原始池中选择
-                console.log(`[RoomSelector] ${type} 池耗尽，允许重复`)
                 const originalPool = this.poolManager.getOriginalPool(type as keyof RoomPools)
                 const available = originalPool.filter(key => !alreadySelected.includes(key))
                 return this.randomPick(available, Math.min(requirement.count, available.length))
 
             case 'borrow':
                 // 从其他类型借用
-                console.log(`[RoomSelector] ${type} 池耗尽，从其他类型借用`)
                 const borrowFrom = strategy.borrowFrom || []
                 for (const borrowType of borrowFrom) {
                     if (!this.poolManager.isPoolExhausted(borrowType as keyof RoomPools)) {
@@ -307,7 +304,6 @@ export class RoomSelector {
 
             case 'skip':
                 // 跳过，不选择
-                console.log(`[RoomSelector] ${type} 池耗尽，跳过`)
                 return []
 
             case 'error':

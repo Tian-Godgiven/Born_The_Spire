@@ -1,4 +1,4 @@
-import { ref } from "vue";
+import { ref, markRaw } from "vue";
 import { Entity } from "../Entity";
 import type { TriggerMap } from "@/core/types/object/trigger";
 import { createTriggerByTriggerMap } from "../trigger/Trigger";
@@ -90,12 +90,16 @@ export async function initCurrentFromMap<T extends Entity>(owner:Entity,mapData:
 export function appendCurrent(entity:Entity,current:Current,force:boolean=false){
     if(ifHaveCurrent(entity,current.key)){
         if(force){
-            entity.current[current.key] = current
+            // 使用 markRaw 保护 Current 对象，防止 Vue 响应式系统破坏内部 ref
+            const markedCurrent = markRaw(current)
+            entity.current[current.key] = markedCurrent
         }
         newError([entity,"已具备该当前值",current,"，且未设置强制覆盖。"])
     }
     else{
-        entity.current[current.key] = current
+        // 使用 markRaw 保护 Current 对象，防止 Vue 响应式系统破坏内部 ref
+        const markedCurrent = markRaw(current)
+        entity.current[current.key] = markedCurrent
     }
 }
 

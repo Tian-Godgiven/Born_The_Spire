@@ -22,5 +22,4 @@ export async function initTreasureRooms(): Promise<void> {
         })
     }
 
-    console.log(`[TreasureRooms] 已注册 ${treasureList.length} 个宝箱房间`)
 }

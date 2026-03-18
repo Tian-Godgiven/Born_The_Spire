@@ -35,7 +35,6 @@ export class ActiveAbilityManager {
         menuConfig?: AbilityMenuConfig
     ): Promise<void> {
         if (!triggerConfig?.rightClick) {
-            console.log("[ActiveAbilityManager] 未配置右键行为")
             return
         }
 

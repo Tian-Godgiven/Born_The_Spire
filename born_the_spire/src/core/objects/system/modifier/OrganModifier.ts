@@ -38,7 +38,7 @@ export class OrganModifier extends ItemModifier {
      * 获得器官
      *
      * 完整流程（使用新的副作用收集系统）：
-     * 0. 检查部位互斥，如果有冲突则显示确认弹窗
+     * 0. 检查部位互斥，如果有冲突则显示确认弹窗（可选）
      * 1. 创建 ItemModifierUnit 用于收集副作用的清理函数
      * 2. 触发 possessOrgan 事件处理 possess 交互
      *    - 在事件中添加 triggers 和 modifiers
@@ -46,8 +46,12 @@ export class OrganModifier extends ItemModifier {
      *    - onComplete 回调中将副作用注册到 ItemModifierUnit
      * 3. 处理器官提供的卡牌（添加到牌组）
      * 4. 触发 get 交互（一次性效果）
+     *
+     * @param organ 要获得的器官
+     * @param source 器官来源
+     * @param skipConfirm 是否跳过部位冲突确认弹窗（默认 false）
      */
-    async acquireOrgan(organ: Organ, source: Entity) {
+    async acquireOrgan(organ: Organ, source: Entity, skipConfirm: boolean = false) {
         // 0. 检查部位互斥
         if (organ.part) {
             const maxCount = getPartMaxCount(organ.part)
@@ -62,19 +66,21 @@ export class OrganModifier extends ItemModifier {
                 // 计算吞噬获得的物质
                 const materialGain = this.calculateDevourMaterial(oldOrgan)
 
-                // 显示确认弹窗
-                const { showConfirm } = await import("@/ui/hooks/interaction/confirmModal")
-                const confirmed = await showConfirm(
-                    `部位${organ.part}已满`,
-                    `获取 ${organ.label} 将会吞噬旧器官 ${oldOrgan.label}，是否继续？`,
-                    oldOrgan,
-                    materialGain
-                )
+                // 如果不跳过确认，显示确认弹窗
+                if (!skipConfirm) {
+                    const { showConfirm } = await import("@/ui/hooks/interaction/confirmModal")
+                    const confirmed = await showConfirm(
+                        `部位${organ.part}已满`,
+                        `获取 ${organ.label} 将会吞噬旧器官 ${oldOrgan.label}，是否继续？`,
+                        oldOrgan,
+                        materialGain
+                    )
 
-                // 如果用户取消，直接返回
-                if (!confirmed) {
-                    newLog(["取消获取器官", organ.label])
-                    return
+                    // 如果用户取消，直接返回
+                    if (!confirmed) {
+                        newLog(["取消获取器官", organ.label])
+                        return
+                    }
                 }
 
                 newLog([`部位 ${organ.part} 已满，吞噬旧器官`, oldOrgan])
@@ -100,85 +106,8 @@ export class OrganModifier extends ItemModifier {
         // 2. 处理 possess 交互（持有期间的持续效果）
         const possessInteraction = organ.getInteraction("possess")
         if (possessInteraction) {
-            // 使用事件系统处理 possess 效果
-            doEvent({
-                key: "possessOrgan",
-                source,
-                medium: organ,
-                target: this.owner,
-                doWhat: () => {
-                    // 2.1. 处理 triggers - 挂载触发器
-                    if (possessInteraction.triggers) {
-                        for (const triggerDef of possessInteraction.triggers) {
-                            const when = triggerDef.when || "before"
-                            const how = triggerDef.how
-                            const key = triggerDef.key
-                            const level = triggerDef.level || 0
-
-                            // 为每个 event 创建触发器
-                            for (const eventConfig of triggerDef.event) {
-                                const triggerRemover = this.owner.appendTrigger({
-                                    when,
-                                    how,
-                                    key,
-                                    level,
-                                    callback: (event, effect, _triggerLevel) => {
-                                        // 使用公共的目标解析函数
-                                        const target = resolveTriggerEventTarget(
-                                            eventConfig.targetType,
-                                            event,
-                                            effect,       // 触发效果
-                                            organ,        // triggerSource: 器官本身
-                                            this.owner    // triggerOwner: 拥有者
-                                        )
-
-                                        // 使用 doEvent 创建事件，确保正确触发触发器
-                                        doEvent({
-                                            key: eventConfig.key,
-                                            source: organ,
-                                            medium: organ,
-                                            target,
-                                            info: {...eventConfig.info || {}},
-                                            effectUnits: eventConfig.effect || []
-                                        })
-                                    }
-                                })
-
-                                // 收集 remover
-                                unit.registerTriggerRemover(triggerRemover.remove, `${triggerDef.importantKey || triggerDef.key}`)
-                            }
-                        }
-                    }
-
-                    // 2.2. 处理 modifiers - 添加属性修饰器
-                    if (possessInteraction.modifiers) {
-                        for (const modifierDef of possessInteraction.modifiers) {
-                            const statusKey = modifierDef.statusKey
-                            const label = modifierDef.label || statusKey
-
-                            // 获取目标的 Status 对象
-                            const status = this.owner.status[statusKey]
-                            if (!status) {
-                                console.warn(`[OrganModifier] 实体 ${this.owner.label} 没有属性 ${statusKey}，跳过修饰器`)
-                                continue
-                            }
-
-                            // 添加修饰器
-                            const remover = status.addByJSON(organ, {
-                                targetLayer: modifierDef.targetLayer || "current",
-                                modifierType: modifierDef.modifierType || "additive",
-                                applyMode: modifierDef.applyMode,
-                                modifierValue: modifierDef.modifierValue || 0,
-                                clearable: modifierDef.clearable ?? false,  // 器官修饰器默认不可清理
-                                modifierFunc: modifierDef.modifierFunc
-                            })
-
-                            // 收集 remover
-                            unit.registerModifierRemover(remover, label)
-                        }
-                    }
-                }
-            })
+            // 使用父类的通用方法处理 possess 交互
+            this['processPossessInteraction'](organ, possessInteraction, unit, parentLog)
         }
 
         // 3. 处理 get 交互（一次性效果）

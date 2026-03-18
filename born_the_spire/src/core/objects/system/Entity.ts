@@ -1,5 +1,3 @@
-console.log('[Entity.ts] 模块开始执行')
-
 import type { StatusMap } from "@/core/types/StatusMapData";
 import type { ActionEvent } from "./ActionEvent";
 import type{ Describe } from "@/ui/hooks/express/describe";
@@ -34,17 +32,14 @@ export class Entity implements EventParticipant{
     public abilityCostModifiers?: Map<string, number>  // 能力消耗修改器 (abilityKey_costType -> modifier)
     constructor(map:EntityMap, beforeCurrentInit?: (this: Entity) => void){
         this.label = map.label
-        console.log(`[Entity] 构造 ${map.label}`)
         //初始化实体自带的触发器,并创建自带的触发器
         this.trigger = new Trigger()
         if(map.trigger){
-            console.log(`[Entity] ${map.label} 初始化 ${map.trigger.length} 个触发器`)
             //自带的触发器，其来源和目标都是自身
             this.trigger.initTriggerByMap(this,this,map.trigger)
         }
         //初始化属性
         if(map.status){
-            console.log(`[Entity] ${map.label} 初始化 ${Object.keys(map.status).length} 个属性`)
             for(let[key,value] of Object.entries(map.status)){
                 const status = createStatusFromMap(this,key,value)
                 appendStatus(this,status)
@@ -52,13 +47,10 @@ export class Entity implements EventParticipant{
         }
         //在初始化当前值之前，执行回调（用于子类插入逻辑，如初始化器官）
         if(beforeCurrentInit){
-            console.log(`[Entity] ${map.label} 执行 beforeCurrentInit 回调`)
             beforeCurrentInit.call(this)
-            console.log(`[Entity] ${map.label} beforeCurrentInit 回调完成`)
         }
         //初始化当前值 - 使用动态导入避免循环依赖
         if(map.current){
-            console.log(`[Entity] ${map.label} 初始化 Current`)
             // 动态导入以避免循环依赖
             import("./Current/current").then(({ initCurrentFromMap }) => {
                 initCurrentFromMap<typeof this>(this,map.current!)
@@ -66,7 +58,6 @@ export class Entity implements EventParticipant{
         }
         //初始化描述
         this.describe = map.describe??[]
-        console.log(`[Entity] ${map.label} 构造完成`)
     }
     //添加一个触发器
     appendTrigger(triggerObj:TriggerObj){
@@ -95,4 +86,3 @@ export type EntityMap<T extends Entity = Entity> = {
     current?:any//需要挂载的当前值对象的key及其起始值 - 改用 any 避免导入 CurrentMapData
 }
 
-console.log('[Entity.ts] 模块执行完成，Entity 类已定义')

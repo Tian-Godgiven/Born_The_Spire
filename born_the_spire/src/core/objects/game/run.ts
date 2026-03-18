@@ -148,23 +148,28 @@ export async function initDefaultGameObjects() {
 }
 
 //开始一局新游戏
-export async function startNewRun(seed?: string, ascensionLevel: number = 0, initialOrgans?: string[]){
+export async function startNewRun(seed?: string, ascensionLevel: number = 0, initialOrgans?: string[], existingPlayer?: Player){
     //创建本局（可选传入种子）
     const gameRun = new GameRun(seed)
     Object.assign(nowGameRun, gameRun)
 
-    //创建本局角色
-    const playerList = getLazyModule<Record<string, any>>('playerList')
-    const map = playerList["default"]
-    const player = await createPlayer(map)
-    nowPlayer = reactive(player) as unknown as Player  // 重新赋值，不要用 Object.assign
+    //创建本局角色（使用传入的 Player 或创建新的）
+    if (existingPlayer) {
+        // 使用传入的 Player（Setup 页面已经创建并配置好）
+        // 直接使用，不要重新包装，避免破坏内部结构
+        nowPlayer = existingPlayer
+    } else {
+        const playerList = getLazyModule<Record<string, any>>('playerList')
+        const map = playerList["default"]
+        const player = await createPlayer(map)
+        nowPlayer = reactive(player) as unknown as Player
+    }
 
     //添加到队伍中
     addToPlayerTeam(nowPlayer)
 
-    // 添加初始器官
-    if (initialOrgans && initialOrgans.length > 0) {
-        console.log(`[startNewRun] 添加 ${initialOrgans.length} 个初始器官`)
+    // 添加初始器官（仅在创建新 Player 时执行）
+    if (!existingPlayer && initialOrgans && initialOrgans.length > 0) {
         const { getOrganByKey } = await import("@/static/list/target/organList")
         const { gainOrgan } = await import("@/core/effects/item/gainItem")
 
@@ -180,7 +185,6 @@ export async function startNewRun(seed?: string, ascensionLevel: number = 0, ini
                         target: nowPlayer,
                         effectUnits: [{ key: "gainOrgan", params: { organKey } }]
                     })
-                    console.log(`[startNewRun] 已添加初始器官: ${organKey}`)
                 }
             } catch (error) {
                 console.error(`[startNewRun] 添加初始器官失败: ${organKey}`, error)
@@ -193,7 +197,6 @@ export async function startNewRun(seed?: string, ascensionLevel: number = 0, ini
         const { getAscensionConfig } = await import("@/static/list/system/ascensionList")
         const ascensionConfig = getAscensionConfig(ascensionLevel)
         if (ascensionConfig) {
-            console.log(`[startNewRun] 应用进阶 ${ascensionLevel} 触发器`)
             await nowGameRun.applyAscensionTriggers(ascensionConfig.triggers)
             nowGameRun.towerFire = ascensionLevel
         } else {
@@ -221,7 +224,6 @@ export async function startNewRun(seed?: string, ascensionLevel: number = 0, ini
     nowGameRun.floorManager.setCurrentFloor("floor_1")
 
     // 生成地图（使用 GameRun 的种子）
-    console.log("[startNewRun] 生成地图，种子:", nowGameRun.seed)
     const floorMap = nowGameRun.floorManager.generateMap({
         seed: nowGameRun.seed,  // 传递种子
         // 前3层不出现精英战斗和水池
@@ -234,7 +236,6 @@ export async function startNewRun(seed?: string, ascensionLevel: number = 0, ini
             4: { battle: 1, eliteBattle: 0.3, event: 0.3, pool: 0.5, blackStore: 0 }
         }
     })
-    console.log(`[startNewRun] 地图生成完成，共 ${floorMap.totalLayers} 层`)
 
     // 进入开场初始化房间（苏生）
     const { roomRegistry } = await import("@/static/registry/roomRegistry")

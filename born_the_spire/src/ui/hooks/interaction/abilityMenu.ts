@@ -152,14 +152,14 @@ export async function chooseTarget(params: TargetSelectionParams): Promise<Entit
  * 显示能力详情
  */
 export function showAbilityDetail(ability: ActiveAbility, item: Entity, owner: Entity): void {
-    console.log(`[AbilityDetail] 显示能力详情: ${ability.label}`)
     // 实现能力详情弹窗
+    //todo 都没做
 }
 
 /**
  * 显示能力不可用原因
  */
 export function showAbilityUnavailableReason(ability: ActiveAbility, reason: string): void {
-    console.log(`[AbilityUnavailable] ${ability.label} 不可用: ${reason}`)
     // 实现不可用原因提示
+    //todo 都没做
 }

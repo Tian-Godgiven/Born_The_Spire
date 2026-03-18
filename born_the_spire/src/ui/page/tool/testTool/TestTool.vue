@@ -92,6 +92,7 @@
     },{
         text:"打印玩家的特殊触发器",
         click:()=>{
+            //todo 调试器功能
             console.log("默认触发器:",nowPlayer.trigger._defaultTrigger)
             console.log("关键触发器:",nowPlayer.trigger._importantTrigger)
 

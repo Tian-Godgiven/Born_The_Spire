@@ -6,5 +6,4 @@ import { initOrganRewardActions } from "@/core/hooks/organRewardActions"
  */
 export function initAllOrganRewardActions() {
   initOrganRewardActions()
-  console.log("[OrganRewardActions] 器官奖励动作系统初始化完成")
 }

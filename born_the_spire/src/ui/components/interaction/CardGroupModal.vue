@@ -49,7 +49,7 @@ function handleClose() {
 
 <style scoped lang="scss">
 .card-group-overlay {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
@@ -64,9 +64,9 @@ function handleClose() {
 .card-group-modal {
   background: white;
   border: 2px solid black;
-  width: 90vw;
+  width: 90%;
   max-width: 1200px;
-  max-height: 90vh;
+  max-height: 90%;
   display: flex;
   flex-direction: column;
 }

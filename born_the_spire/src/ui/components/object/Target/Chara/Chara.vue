@@ -42,7 +42,7 @@
 <script setup lang='ts'>
     import { Chara } from '@/core/objects/target/Target';
     import { Enemy } from '@/core/objects/target/Enemy';
-    import { computed, ref } from 'vue';
+    import { watch, computed, ref } from 'vue';
     import Organ from '@/ui/components/object/Organ.vue';
     import Target from "@/ui/components/interaction/chooseTarget/Target.vue";
     import BloodLine from '@/ui/components/object/Target/Chara/components/BloodLine.vue';
@@ -51,21 +51,23 @@
     import MechanismDisplay from '@/ui/components/display/MechanismDisplay.vue';
     import { formatIntentDisplay } from '@/core/objects/system/Intent';
 
-    const {target,side} = defineProps<{target:Chara,side:'left'|"right"}>()
+    const props = defineProps<{target:Chara,side:'left'|"right"}>()
 
-    // target.organs 已经是 computed，直接使用
-    const organList = target.organs
+    // 使用 computed 确保 organs 的响应式被正确追踪
+    const organList = computed(() => {
+        return props.target.organs.value || []
+    })
 
     // 状态显示控制
     const showStateDisplay = ref(false)
 
     // 判断是否是敌人
-    const isEnemy = computed(() => target instanceof Enemy)
+    const isEnemy = computed(() => props.target instanceof Enemy)
 
     // 获取敌人意图显示文本
     const enemyIntentDisplay = computed(() => {
-        if (target instanceof Enemy && target.intent) {
-            return formatIntentDisplay(target.intent)
+        if (props.target instanceof Enemy && props.target.intent) {
+            return formatIntentDisplay(props.target.intent)
         }
         return null
     })

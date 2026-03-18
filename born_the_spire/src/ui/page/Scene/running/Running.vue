@@ -9,6 +9,9 @@
 
         <ConnectLine></ConnectLine>
         <PopUpContainer></PopUpContainer>
+
+        <!-- 卡牌组弹窗 -->
+        <CardGroupModal />
     </div>
     <!-- 测试工具 -->
     <div class="tool">
@@ -42,6 +45,7 @@ import PopUpContainer from '@/ui/components/global/PopUpContainer.vue'
 import LogPane from "@/ui/page/tool/logPane/LogPane.vue"
 import MapOverlay from "./MapOverlay.vue"
 import BattleDefeatModal from '@/ui/components/interaction/BattleDefeatModal.vue'
+import CardGroupModal from '@/ui/components/interaction/CardGroupModal.vue'
 import { nowGameRun } from '@/core/objects/game/run'
 import { getRoomComponent } from '@/ui/registry/roomComponentRegistry'
 import { setShowMapCallback } from '@/core/hooks/step'
@@ -99,7 +103,6 @@ const showBackToMapButton = computed(() => {
 // 注册显示地图的回调
 onMounted(() => {
     setShowMapCallback(showMap)
-    console.log('[Running] 地图回调已注册')
 })
 
 </script>

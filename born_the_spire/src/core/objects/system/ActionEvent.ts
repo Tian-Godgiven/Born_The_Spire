@@ -127,59 +127,6 @@ export class ActionEvent<
             effect.announce(triggerLevel)
         }
     }
-    //执行这个事件
-    async excute(){
-        // 检查事件是否已被取消
-        if(this._cancelled){
-            return
-        }
-
-        //触发事件的执行时函数
-        if(this.onExecute){
-            this.onExecute(this)
-        }
-        //触发事件的各个效果
-        for(let effect of this.effects){
-            await effect.apply()
-        }
-        //依次执行事件的各个阶段
-        for(let p of this.phase){
-            //验证条件
-            const result = p.condition?p.condition(this):true
-            if(result == true){
-                //获取该阶段的目标对象映射
-                let override_event:Partial<ActionEvent> = {}
-                const entityMap = p.entityMap
-                if(entityMap){
-                    if(entityMap.target){
-                        if(entityMap.target == "medium"){
-                            override_event.target = this.medium as unknown as t
-                        }
-                        else if(entityMap.target == "source"){
-                            override_event.target = this.source as unknown as t
-                        }
-                    }
-                }
-                //宣布并执行该阶段的效果
-                for(let effect of p.effects){
-                    effect.announce(this.triggerLevel??0)
-                    await effect.apply(override_event)
-                }
-            }
-            //失败时
-            else{
-                p.onFalse?.()
-                //提前中断
-                if(result == "break"){
-                    break;
-                }
-            }
-        }
-        //执行完成后调用回调
-        if(this.onComplete){
-            this.onComplete(this)
-        }
-    }
     //设置事件的阶段返回结果
     setEventResult(key:string,res:any){
         this._result[key] = res;

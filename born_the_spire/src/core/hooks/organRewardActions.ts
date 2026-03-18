@@ -22,7 +22,6 @@ export const assimilateAction: OrganRewardActionHandler = async (organ, player) 
     const unlocked = unlockOrgan(metaProgress, organ.key)
     if (unlocked) {
       saveMetaProgress(metaProgress)
-      console.log(`[assimilateAction] 解锁器官: ${organ.key}`)
     }
   }
 
@@ -99,5 +98,4 @@ export function initOrganRewardActions() {
     }
   }, sacrificeAction)
 
-  console.log("[OrganRewardActions] 内置器官奖励动作注册完成")
 }

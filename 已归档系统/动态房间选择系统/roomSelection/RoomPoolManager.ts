@@ -58,7 +58,6 @@ export class RoomPoolManager {
      */
     resetPool(type: keyof RoomPools): void {
         this.availablePools[type] = [...this.originalPools[type]]
-        console.log(`[RoomPoolManager] 重置池: ${type}`)
     }
 
     /**
@@ -67,7 +66,6 @@ export class RoomPoolManager {
     resetAllPools(): void {
         this.availablePools = this.deepCopyPools(this.originalPools)
         this.usedRooms.clear()
-        console.log(`[RoomPoolManager] 重置所有池`)
     }
 
     /**

@@ -44,12 +44,13 @@
     import Button from "@/ui/components/global/Button.vue"
     import ReserveDisplay from "@/ui/components/display/ReserveDisplay.vue"
     import PotionVue from "@/ui/components/object/Potion.vue"
-    import { showCardPile } from '@/ui/interaction/cardPile';
+    import { showCardGroup } from '@/ui/hooks/interaction/cardGroupModal';
     import { getStatusValue } from '@/core/objects/system/status/Status';
     import type { Potion } from '@/core/objects/item/Subclass/Potion';
     import { getPotionModifier } from '@/core/objects/system/modifier/PotionModifier';
     import { markRegistry } from '@/static/registry/markRegistry';
     import { getShowMapCallback } from '@/core/hooks/step';
+    import { getCardModifier } from '@/core/objects/system/modifier/CardModifier';
 
     // 打开地图（用于战斗中查看地图）
     function openMap() {
@@ -59,6 +60,13 @@
         } else {
             console.warn('[Top] 地图回调未注册')
         }
+    }
+
+    // 打开卡组弹窗
+    function showDeck() {
+        const cardModifier = getCardModifier(nowPlayer)
+        const allCards = cardModifier.getAllCards()
+        showCardGroup('卡组', allCards)
     }
 
     const health = computed(()=>{
@@ -108,7 +116,7 @@
 
     const abilities = [
         {label:"地图",click:()=>openMap()},
-        {label:"卡组",click:()=>showCardPile()},
+        {label:"卡组",click:()=>showDeck()},
         {label:"返回",click:()=>endRun()}
     ]
 

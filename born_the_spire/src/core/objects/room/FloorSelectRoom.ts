@@ -164,9 +164,7 @@ export class FloorSelectRoom extends Room {
         nowGameRun.floorManager.setCurrentFloor(this.selectedFloor.key)
 
         // 生成新楼层的地图
-        console.log(`[FloorSelectRoom] 生成楼层地图: ${this.selectedFloor.key}`)
         const floorMap = nowGameRun.floorManager.generateMap(this.selectedFloor.mapConfig)
-        console.log(`[FloorSelectRoom] 地图生成完成，共 ${floorMap.totalLayers} 层`)
 
         // 检查是否有楼层入口事件
         if (this.selectedFloor.entranceEvent) {

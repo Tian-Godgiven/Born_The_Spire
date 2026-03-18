@@ -4,6 +4,4 @@ import FloorSelectRoomComponent from "@/ui/page/Scene/running/FloorSelectRoom.vu
 
 export async function initFloorSelectRooms(): Promise<void> {
     roomRegistry.registerRoomType("floorSelect", FloorSelectRoom, FloorSelectRoomComponent)
-
-    console.log("[FloorSelectRooms] 楼层选择房间已注册")
 }

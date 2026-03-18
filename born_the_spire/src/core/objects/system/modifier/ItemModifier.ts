@@ -270,6 +270,14 @@ export class ItemModifier {
             source: item,
             medium: item,
             target: this.owner,
+            effectUnits: possessInteraction.effects || [],
+            onComplete: (event) => {
+                // 收集 effects 产生的副作用
+                const sideEffects = event.getSideEffects()
+                for (const remover of sideEffects) {
+                    unit.registerCustomRemover(remover, "possess effect")
+                }
+            },
             doWhat: () => {
                 // 2.1. 处理 triggers - 挂载触发器
                 if (possessInteraction.triggers) {

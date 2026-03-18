@@ -165,6 +165,11 @@ export class Transaction{
                 }
             }
         }
+
+        // 5. 调用 onComplete 回调（如果有）
+        if (event.onComplete) {
+            event.onComplete(event)
+        }
     }
 }
 // 事务队列：存储并发的多个事务，这些事务会按顺序执行

@@ -1,7 +1,6 @@
 import { Entity } from "../system/Entity";
 import type { ItemMap, Interaction } from "../item/Item";
 
-console.log('[Organ.ts] 模块开始执行 - Entity 导入完成:', typeof Entity)
 import { getOrganModifier } from "../system/modifier/OrganModifier";
 import { doEvent } from "../system/ActionEvent";
 import { resolveTriggerEventTarget } from "../system/trigger/Trigger";
@@ -67,7 +66,6 @@ export type OrganMap = ItemMap&TargetMap&{
     activeAbilities?: ActiveAbility[]
 }
 
-console.log('[Organ.ts] 准备定义 Organ 类，Entity =', typeof Entity)
 
 export class Organ extends Entity{
     public readonly targetType = 'organ' as const  // 类型标识

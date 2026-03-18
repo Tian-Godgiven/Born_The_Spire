@@ -13,15 +13,13 @@
     <!-- 中间 -->
      <div class="center">
         <div class="left-panel">
-            <PlayerPreview
-                :player="previewPlayer"
-                @remove-organ="removeOrgan"
-            />
+            <Chara v-if="previewPlayer" :target="previewPlayer" side='right' :key="previewPlayer.__id"></Chara>
+            <button class="deck-btn" @click="showDeckModal = true">查看卡组</button>
         </div>
 
         <OrganMap
             v-model="selectedOrgans"
-            :organs="unlockedOrgans"
+            :organs="displayOrgans"
             :meta-progress="metaProgress"
             :ascension-level="ascensionLevel"
             :budget-max="budgetMax"
@@ -54,11 +52,17 @@
         v-model:seed="seed"
         @close="showSeedDialog = false"
     />
+
+    <DeckViewModal
+        v-if="showDeckModal"
+        :cards="playerCards"
+        @close="showDeckModal = false"
+    />
 </div>
 </template>
 
 <script setup lang='ts'>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { startNewRun } from '@/core/objects/game/run'
 import {
@@ -74,10 +78,11 @@ import { getLazyModule } from '@/core/utils/lazyLoader'
 import { Organ } from '@/core/objects/target/Organ'
 import { Player, type PlayerMap } from '@/core/objects/target/Player'
 import { getOrganModifier } from '@/core/objects/system/modifier/OrganModifier'
-import { reactive } from 'vue'
 import SeedDialog from '../SeedDialog.vue'
 import OrganMap from './components/OrganMap.vue'
-import PlayerPreview from './components/PlayerPreview.vue'
+import Chara from '@/ui/components/object/Target/Chara/Chara.vue'
+import DeckViewModal from './components/DeckViewModal.vue'
+import { getCardModifier } from '@/core/objects/system/modifier/CardModifier'
 
 const HEART_KEY = 'original_organ_00001'
 
@@ -87,11 +92,12 @@ const router = useRouter()
 const seed = ref('')
 const ascensionLevel = ref(0)
 const showSeedDialog = ref(false)
+const showDeckModal = ref(false)
 const selectedOrgans = ref<string[]>([HEART_KEY]) // 默认包含心脏
 const metaProgress = ref<MetaProgressSave>(loadMetaProgress())
 
-// 预览 Player - 立即创建
-const previewPlayer = reactive(createPreviewPlayer()) as unknown as Player
+// 预览 Player - 用于显示属性
+const previewPlayer = shallowRef<Player | null>(null)
 
 // ========== 计算属性 ==========
 const maxAscension = computed(() => getMaxAscensionLevel())
@@ -117,9 +123,9 @@ const budgetMax = computed(() => getInitialOrganBudget(metaProgress.value))
 
 const selectedCost = computed(() => {
     return selectedOrgans.value.reduce((total, key) => {
-        const organ = getOrganByKey(key)
-        if (!organ) return total
-        return total + (ORGAN_RARITY_COST[organ.rarity] || 1)
+        const organData = allOrganData.value.find((o: any) => o.key === key)
+        if (!organData) return total
+        return total + (ORGAN_RARITY_COST[organData.rarity] || 1)
     }, 0)
 })
 
@@ -127,22 +133,30 @@ const canStart = computed(() => {
     return selectedCost.value <= budgetMax.value && selectedOrgans.value.length > 0
 })
 
-const unlockedOrgans = computed(() => {
+const allOrganData = computed(() => {
     const organList = getLazyModule<any[]>('organList')
-    const unlockedKeys = Object.keys(metaProgress.value.unlockedOrgans)
+    return organList
+})
 
-    return unlockedKeys.map(key => {
-        const organData = organList.find((o: any) => o.key === key)
-        if (!organData) return null
+const displayOrgans = computed(() => {
+    // 只在需要显示时创建 Organ 实例
+    return allOrganData.value.map((organData: any) => {
         return new Organ(organData)
-    }).filter((o): o is Organ => o !== null)
+    })
+})
+
+const playerCards = computed(() => {
+    if (!previewPlayer.value) return []
+    const cardModifier = getCardModifier(previewPlayer.value)
+    return cardModifier.getAllCards()
 })
 
 // ========== 预览 Player 管理 ==========
-function createPreviewPlayer(): Player {
+async function createPreviewPlayer(): Promise<Player> {
+
     const map: PlayerMap = {
-        label: "预览角色",
-        key: "preview_player",
+        label: "你",
+        key: "you",
         status: {
             "max-health": 50,
             "max-energy": 3,
@@ -152,47 +166,69 @@ function createPreviewPlayer(): Player {
         current: ["health", "energy", "isAlive"],
         trigger: [],
         potion: { now: [] },
-        organ: [],
-        card: [],
+        organ: [HEART_KEY],  // 创建时就包含心脏
+        card: [
+            "original_card_00001",  // 打击 x5
+            "original_card_00001",
+            "original_card_00001",
+            "original_card_00001",
+            "original_card_00001",
+            "original_card_00014",  // 防御 x5
+            "original_card_00014",
+            "original_card_00014",
+            "original_card_00014",
+            "original_card_00014",
+        ],
     }
-    return new Player(map)
+
+    const player = new Player(map)
+
+    // 等待 Current 和 Organ 初始化完成
+    await new Promise(resolve => setTimeout(resolve, 300))
+
+    return player
 }
 
+// 同步器官到 Player（通过事件系统）
 async function syncOrgansToPlayer() {
-    const organModifier = getOrganModifier(previewPlayer)
+    if (!previewPlayer.value) return
+
+    const organModifier = getOrganModifier(previewPlayer.value)
     const currentOrgans = organModifier.getOrgans()
     const currentKeys = currentOrgans.map(o => o.key)
 
-    // 移除不在选中列表的器官（心脏除外）
+    // 移除不在选中列表的器官
     for (const organ of currentOrgans) {
         if (!selectedOrgans.value.includes(organ.key)) {
             organModifier.loseOrgan(organ, false)
         }
     }
 
-    // 添加新选中的器官
+    // 添加新选中的器官（通过事件系统）
     for (const organKey of selectedOrgans.value) {
         if (!currentKeys.includes(organKey)) {
-            const organ = getOrganByKey(organKey)
-            if (organ) {
-                await organModifier.acquireOrgan(organ, previewPlayer)
+            const organData = allOrganData.value.find((o: any) => o.key === organKey)
+            if (organData) {
+                const organ = new Organ(organData)
+                await organModifier.acquireOrgan(organ, previewPlayer.value, true)  // 跳过确认弹窗
             }
         }
     }
-}
 
-function removeOrgan(organKey: string) {
-    // 心脏不可移除
-    if (organKey === HEART_KEY) return
-    const index = selectedOrgans.value.indexOf(organKey)
-    if (index !== -1) {
-        selectedOrgans.value.splice(index, 1)
+    // 同步完成后，更新 selectedOrgans 以反映实际拥有的器官
+    // 这样可以处理部位冲突导致的自动替换
+    const finalOrgans = organModifier.getOrgans()
+    const finalKeys = finalOrgans.map(o => o.key)
+
+    // 如果实际器官列表和选中列表不一致，更新选中列表
+    if (JSON.stringify(finalKeys.sort()) !== JSON.stringify([...selectedOrgans.value].sort())) {
+        selectedOrgans.value = finalKeys
     }
 }
 
-// 监听 selectedOrgans 变化
-watch(selectedOrgans, () => {
-    syncOrgansToPlayer()
+// 监听器官选择变化，通过事件系统同步
+watch(selectedOrgans, async () => {
+    await syncOrgansToPlayer()
 }, { deep: true })
 
 // ========== 方法 ==========
@@ -205,7 +241,7 @@ function nextAscension() {
 }
 
 function getOrganByKey(key: string): Organ | null {
-    return unlockedOrgans.value.find(o => o.key === key) || null
+    return displayOrgans.value.find(o => o.key === key) || null
 }
 
 function goBack() {
@@ -213,8 +249,9 @@ function goBack() {
 }
 
 async function startGame() {
-    if (!canStart.value) return
-    await startNewRun(seed.value || undefined, ascensionLevel.value, selectedOrgans.value)
+    if (!canStart.value || !previewPlayer.value) return
+    // 使用预创建的 Player 开始游戏（已包含所有选中的器官）
+    await startNewRun(seed.value || undefined, ascensionLevel.value, undefined, previewPlayer.value)
 }
 
 async function exportSave() {
@@ -233,7 +270,13 @@ async function importSave() {
 // 初始化
 onMounted(async () => {
     metaProgress.value = loadMetaProgress()
-    // 初始同步心脏器官
+
+    // 创建 Player（只创建一次）
+    const player = await createPreviewPlayer()
+
+    previewPlayer.value = player
+
+    // 初始同步器官
     await syncOrgansToPlayer()
 })
 </script>
@@ -262,7 +305,21 @@ onMounted(async () => {
     .left-panel {
         display: flex;
         flex-direction: column;
-        gap: 15px;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+
+        .deck-btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: 2px solid #000;
+            background: #fff;
+            cursor: pointer;
+
+            &:hover {
+                background: rgba(0, 0, 0, 0.05);
+            }
+        }
     }
 }
 
