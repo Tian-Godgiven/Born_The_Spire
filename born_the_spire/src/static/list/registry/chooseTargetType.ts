@@ -17,7 +17,9 @@ interface RegistryValue{
 //选择目标的约束函数注册表
 const chooseTargetType:Record<string,(targets:Target[],ifFilter:boolean)=>boolean|Target[]> = {
     "self":(targets:Target[],ifFilter:boolean)=>{
-        const func = (t:Target)=>t === nowPlayer.getSelf()
+        const self = nowPlayer.getSelf()
+        // 使用 __id 比较，因为 targets 中的对象可能是 Proxy 包装的
+        const func = (t:Target)=> t.__id === self.__id
         if(ifFilter){
             return targets.filter(t=>func(t))
         }

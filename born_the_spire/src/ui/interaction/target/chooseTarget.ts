@@ -78,28 +78,30 @@ function checkChooseNum(targetType:TargetType,specificTargets:Target[]|null){
         const faction = targetType.faction ?? "enemy"
         chooseAbleNum = nowBattle.value?.getTeam(faction === "opponent" ? "enemy" : faction as "player" | "enemy")?.length ?? 0
     }
-    
-    
+
+
     let needChooseNum = 0
-    let noNeedChoose = false//分为3种情况1.指定数量=可选数量=1，2.指定数量为"all" 3.指定阵营为"all"
-    //选中所有目标
+    let noNeedChoose = false
+
+    // 只有在以下情况才自动选择（不需要用户点击）：
+    // 1. 指定了 key（如 "self"）且只有1个可选目标
+    // 2. 指定数量为 "all" 或阵营为 "all"
     if(targetType.number === "all" || targetType.faction === "all"){
         noNeedChoose = true
         needChooseNum = 1
     }
-    else{
-        //默认数量为1
-        let targetChooseNum = targetType.number ?? 1
-        //目标数量=可选数量=1时，无需选中这一个目标
-        if(chooseAbleNum == 1 && targetChooseNum == chooseAbleNum){
-            noNeedChoose = true
-            needChooseNum = 1
-        }
-        //否则，需要选择的数量为较小的一方
-        else{
-            needChooseNum = targetChooseNum >= chooseAbleNum ? chooseAbleNum:targetChooseNum
-        }
+    else if(targetType.key && specificTargets && specificTargets.length === 1){
+        // 有明确的 key 约束（如 "self"）且只有1个目标，自动选择
+        noNeedChoose = true
+        needChooseNum = 1
     }
+    else{
+        // 其他情况：需要用户选择
+        let targetChooseNum = targetType.number ?? 1
+        needChooseNum = targetChooseNum >= chooseAbleNum ? chooseAbleNum : targetChooseNum
+        noNeedChoose = false
+    }
+
     return {
         noNeedChoose,
         noValidTargets:chooseAbleNum == 0,
@@ -138,8 +140,6 @@ export function startChooseTarget(option:ChooseOption,position:Position){
     //解析选择规则
     const rule = resolveTargetTypeRules(targetType, source)
 
- 
-
     //按规则设置可选框
     setChooseAbleBlock(rule)
     nowChooseAction.value = {
@@ -155,6 +155,8 @@ export function startChooseTarget(option:ChooseOption,position:Position){
     if(ifShowConnectLine != false){
         showConnectLine(position)
     }
+
+    // 不再立即自动选择，而是等待用户点击
 }
 //选择完成
 export function successChooseTarget(){
@@ -333,8 +335,8 @@ function startListenClick(onStop:(targets:Target[])=>void){
     function handleClick(event:MouseEvent){
         event.stopPropagation();
         //左键点击时，如果不需要选择目标则自动选择
-        if(event.button == 0 ){
-            //如果不需要选择目标的话
+        if(event.button == 0){
+            //如果不需要选择目标的话（只有1个可选目标）
             if(nowChooseAction.value.chooseRule?.noNeedChoose){
                 autoChooseTarget()
                 removeListeners()
@@ -346,7 +348,7 @@ function startListenClick(onStop:(targets:Target[])=>void){
             onStop([...nowChooseAction.value.chosenTargets] as any)
             removeListeners()
         }
-        
+
     }
     function handleContextMenu(event:MouseEvent){
         event.preventDefault()
@@ -354,7 +356,7 @@ function startListenClick(onStop:(targets:Target[])=>void){
         onStop([...nowChooseAction.value.chosenTargets] as any)
         removeListeners()
     }
-    
+
     const removeListeners = () => {
         document.removeEventListener("click", handleClick)
         document.removeEventListener("contextmenu", handleContextMenu)

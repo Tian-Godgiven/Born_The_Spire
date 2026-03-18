@@ -55,7 +55,19 @@
 
     // 使用 computed 确保 organs 的响应式被正确追踪
     const organList = computed(() => {
-        return props.target.organs.value || []
+        // 获取器官列表
+        let organs: any
+        if (props.target.organs && typeof props.target.organs === 'object' && 'value' in props.target.organs) {
+            // 如果是 ref/computed，访问 .value
+            organs = props.target.organs.value
+        } else if (Array.isArray(props.target.organs)) {
+            // 如果已经是数组（Vue props 自动解包）
+            organs = props.target.organs
+        } else {
+            organs = []
+        }
+
+        return organs || []
     })
 
     // 状态显示控制

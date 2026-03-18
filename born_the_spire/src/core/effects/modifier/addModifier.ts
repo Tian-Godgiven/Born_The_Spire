@@ -48,7 +48,8 @@ export const addMaxHealthAndHeal: EffectFunc = (event, effect) => {
         const remover = status.addByJSON(event.source, {
             targetLayer: "base",
             modifierType: "additive",
-            modifierValue: valueNum
+            modifierValue: valueNum,
+            clearable: false  // 器官提供的最大生命是永久的
         });
 
         // 2. 回复当前生命（+value）

@@ -14,27 +14,21 @@ import { doEvent } from "@/core/objects/system/ActionEvent"
  * @param result - 战斗结果 ('win' | 'lose')
  */
 export function endBattle(result: 'win' | 'lose'): void {
+    console.log('[endBattle hook] 被调用，结果:', result)
     const battle = nowBattle.value
     if (!battle) {
         console.warn('[endBattle] 当前没有进行中的战斗')
         return
     }
 
+    console.log('[endBattle hook] battle.isEnded:', battle.isEnded)
     if (battle.isEnded) {
         console.warn('[endBattle] 战斗已经结束')
         return
     }
 
-    // 设置战斗结束标志
-    battle.isEnded = true
-
-    // 触发 battleEnd 事件
-    doEvent({
-        key: "battleEnd",
-        source: nowPlayer,
-        medium: nowPlayer,
-        target: nowPlayer,
-        info: { result },
-        effectUnits: []
-    })
+    console.log('[endBattle hook] 调用 battle.endBattle')
+    // 调用 Battle 实例的 endBattle 方法
+    battle.endBattle(result === 'win' ? 'player_win' : 'player_lose')
+    console.log('[endBattle hook] battle.endBattle 调用完成')
 }

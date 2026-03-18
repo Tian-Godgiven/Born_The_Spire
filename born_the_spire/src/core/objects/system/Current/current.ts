@@ -168,6 +168,17 @@ export function changeCurrentValue(target:Entity,key:string,newValue:number,even
 
         //没有提前结束，则修改为新的值，并返回修改值
         const nowValue = current.value
+        // 限制 newValue 在合理范围内
+        const minBy = current.options.minBy
+        const maxBy = current.options.maxBy
+        if(minBy !== undefined && minBy !== null){
+            const minValue = getCurrentMaxOrMin(target,minBy)
+            newValue = Math.max(newValue, minValue)
+        }
+        if(maxBy !== undefined && maxBy !== null){
+            const maxValue = getCurrentMaxOrMin(target,maxBy)
+            newValue = Math.min(newValue, maxValue)
+        }
         current.value = newValue
         return Math.abs(newValue-nowValue)
     }

@@ -55,24 +55,49 @@
     import AllFactions from '@/ui/components/object/Target/AllFactions.vue';
     import TurnDisplay from '@/ui/components/display/TurnDisplay.vue';
     import RewardPage from '@/ui/components/interaction/RewardPage.vue';
+    import { getOrganModifier } from '@/core/objects/system/modifier/OrganModifier';
+
+    console.log('[Battle.vue] Script setup - nowPlayer:', nowPlayer)
+    console.log('[Battle.vue] nowPlayer 最大生命:', nowPlayer.status['max-health']?.value)
+    console.log('[Battle.vue] nowPlayer 器官数量:', nowPlayer.organs.value?.length)
 
     // 防止重复完成房间
     const hasCompleted = ref(false)
 
+    // 监听战斗变化，重置 hasCompleted
+    watch(() => nowBattle.value, (newBattle) => {
+        console.log('[Battle.vue] 战斗变化，重置 hasCompleted')
+        hasCompleted.value = false
+    })
+
     // 监听战斗结束
     watch(() => nowBattle.value?.isEnded, async (isEnded) => {
+        console.log('[Battle.vue watch] isEnded 变化:', isEnded)
+        console.log('[Battle.vue watch] nowBattle.value:', nowBattle.value)
+        console.log('[Battle.vue watch] hasCompleted.value:', hasCompleted.value)
+
         if (isEnded && nowBattle.value && !hasCompleted.value) {
+            console.log('[Battle.vue watch] 战斗结束，检查结果')
             // 检查战斗结果
             const result = nowBattle.value.checkBattleEnd()
+            console.log('[Battle.vue watch] 战斗结果:', result)
             if (result === 'player_win') {
                 // 标记为已完成，防止重复触发
                 hasCompleted.value = true
+                console.log('[Battle.vue watch] 玩家胜利，完成房间')
                 // 胜利：完成房间，显示奖励
                 await nowGameRun.completeCurrentRoom()
             } else if (result === 'player_lose') {
                 // 失败：处理失败逻辑
                 //todo 没有处理失败逻辑
+                console.log('[Battle.vue watch] 玩家失败')
             }
+        } else {
+            console.log('[Battle.vue watch] 条件不满足:', {
+                isEnded,
+                hasNowBattle: !!nowBattle.value,
+                hasCompleted: hasCompleted.value
+            })
         }
     })
 

@@ -85,6 +85,7 @@ import OrganMap from './components/OrganMap.vue'
 import Chara from '@/ui/components/object/Target/Chara/Chara.vue'
 import DeckViewModal from './components/DeckViewModal.vue'
 import { getCardModifier } from '@/core/objects/system/modifier/CardModifier'
+import { playerList } from '@/static/list/target/playerList'
 
 const HEART_KEY = 'original_organ_00001'
 
@@ -155,20 +156,13 @@ const playerCards = computed(() => {
 
 // ========== 预览 Player 管理 ==========
 async function createPreviewPlayer(): Promise<Player> {
+    // 使用标准 player 配置作为基础
+    const defaultPlayerMap = playerList["default"]
 
+    // 只覆盖需要定制的部分
     const map: PlayerMap = {
-        label: "你",
-        key: "you",
-        status: {
-            "max-health": 50,
-            "max-energy": 3,
-            "max-potion": 3,
-            "draw-per-turn": 5,
-        },
-        current: ["health", "energy", "isAlive"],
-        trigger: [],
-        potion: { now: [] },
-        organ: [HEART_KEY],  // 创建时就包含心脏
+        ...defaultPlayerMap,
+        organ: [HEART_KEY],  // 只包含心脏，其他器官通过 UI 选择
         card: [
             "original_card_00001",  // 打击 x5
             "original_card_00001",
@@ -181,6 +175,8 @@ async function createPreviewPlayer(): Promise<Player> {
             "original_card_00014",
             "original_card_00014",
         ],
+        potion: { now: [] },  // 预览时不需要药水
+        relic: []  // 预览时不需要遗物
     }
 
     const player = await createPlayer(map)
@@ -248,7 +244,13 @@ function goBack() {
 }
 
 async function startGame() {
-    if (!canStart.value || !previewPlayer.value) return
+    if (!canStart.value || !previewPlayer.value) {
+        return
+    }
+
+    console.log('[Setup.startGame] previewPlayer 最大生命:', previewPlayer.value.status['max-health']?.value)
+    console.log('[Setup.startGame] previewPlayer 器官列表:', previewPlayer.value.organs.value)
+
     // 使用预创建的 Player 开始游戏（已包含所有选中的器官）
     await startNewRun(seed.value || undefined, ascensionLevel.value, undefined, previewPlayer.value)
 }

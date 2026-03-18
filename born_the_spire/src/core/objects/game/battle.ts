@@ -2,7 +2,7 @@ import type { Enemy } from "@/core/objects/target/Enemy"
 import type { Player } from "@/core/objects/target/Player"
 import type { Chara } from "@/core/objects/target/Target"
 import { nanoid } from "nanoid"
-import { ref } from "vue"
+import { ref, shallowRef } from "vue"
 import { showDisplayMessage } from "@/ui/hooks/global/displayMessage"
 import { showBattleDefeat } from "@/ui/hooks/interaction/battleDefeat"
 import { isEnemy, isPlayer } from "@/core/utils/typeGuards"
@@ -177,15 +177,24 @@ export class Battle {
     /**
      * 结束战斗
      */
-    private endBattle(result: "player_win" | "player_lose") {
-        if (this.isEnded) return
+    endBattle(result: "player_win" | "player_lose") {
+        console.log('[Battle.endBattle] 被调用，结果:', result)
+        console.log('[Battle.endBattle] this.isEnded:', this.isEnded)
 
+        if (this.isEnded) {
+            console.log('[Battle.endBattle] 战斗已结束，提前返回')
+            return
+        }
+
+        console.log('[Battle.endBattle] 设置 isEnded = true')
         this.isEnded = true
 
+        console.log('[Battle.endBattle] 调用 handleActiveAbilitiesBattleEnd')
         // 处理主动能力系统的战斗结束
         this.handleActiveAbilitiesBattleEnd()
 
         if (result === "player_win") {
+            console.log('[Battle.endBattle] 玩家胜利')
             newLog(["===== 战斗胜利 ====="])
 
             doEvent({
@@ -197,6 +206,7 @@ export class Battle {
                 effectUnits: []
             })
         } else {
+            console.log('[Battle.endBattle] 玩家失败')
             newLog(["===== 战斗失败 ====="])
             doEvent({
                 key: "battleEnd",
@@ -210,6 +220,7 @@ export class Battle {
             // 显示战斗失败弹窗
             showBattleDefeat()
         }
+        console.log('[Battle.endBattle] 方法执行完成')
     }
 
     /**
@@ -239,6 +250,13 @@ export function addToEnemyTeam(target:Enemy|Chara){
 export const nowBattle = ref<Battle|null>(null)
 //开始新的战斗
 export async function startNewBattle(playerTeam:(Player|Chara)[],enemyTeam:(Enemy|Chara)[]):Promise<Battle>{
+    console.log('[startNewBattle] 开始战斗，playerTeam:', playerTeam)
+    if (playerTeam[0] && isPlayer(playerTeam[0])) {
+        const player = playerTeam[0] as Player
+        console.log('[startNewBattle] player 最大生命:', player.status['max-health']?.value)
+        console.log('[startNewBattle] player 器官数量:', player.organs.value?.length)
+    }
+
     const battle = new Battle(1,playerTeam,enemyTeam)
     nowBattle.value = battle
 

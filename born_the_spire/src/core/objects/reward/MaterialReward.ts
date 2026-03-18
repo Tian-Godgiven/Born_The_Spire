@@ -2,6 +2,7 @@ import { Reward } from "./Reward"
 import type { RewardConfig } from "./Reward"
 import { newLog } from "@/ui/hooks/global/log"
 import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
+import { nowPlayer } from "@/core/objects/game/run"
 
 /**
  * 物质奖励配置
@@ -31,10 +32,6 @@ export class MaterialReward extends Reward {
             console.warn("[MaterialReward] 奖励不可领取")
             return
         }
-
-        // 动态导入避免循环依赖
-        
-        
 
         const reserveModifier = getReserveModifier(nowPlayer)
         reserveModifier.gainReserve("material", this.amount, nowPlayer)

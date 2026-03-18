@@ -18,6 +18,7 @@ import { getOrganByKey } from "@/static/list/target/organList";
 import { gainOrgan } from "@/core/effects/item/gainItem";
 import { getAscensionConfig } from "@/static/list/system/ascensionList";
 import { goToNextStep } from "@/core/hooks/step";
+import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier";
 
 //当前的局（使用 reactive 包装，内部属性自动响应式）
 export const nowGameRun = reactive<GameRun>(new GameRun())
@@ -86,7 +87,8 @@ export async function initDefaultGameObjects() {
     // nowPlayer 已经在模块初始化时创建，这里只需要重新赋值
     const playerList = getLazyModule<Record<string, any>>('playerList')
     const defaultPlayer = await createPlayer(playerList["default"])
-    nowPlayer = reactive(defaultPlayer) as unknown as Player
+    // 直接使用，不要用 reactive() 包装，避免破坏内部 computed 属性
+    nowPlayer = defaultPlayer
 
     const defaultGameRun = new GameRun()
     Object.assign(nowGameRun, defaultGameRun)
@@ -155,6 +157,12 @@ export async function initDefaultGameObjects() {
 
 //开始一局新游戏
 export async function startNewRun(seed?: string, ascensionLevel: number = 0, initialOrgans?: string[], existingPlayer?: Player){
+    console.log('[startNewRun] 开始新游戏，existingPlayer:', existingPlayer)
+    if (existingPlayer) {
+        console.log('[startNewRun] existingPlayer 最大生命:', existingPlayer.status['max-health']?.value)
+        console.log('[startNewRun] existingPlayer 器官数量:', existingPlayer.organs.value?.length)
+    }
+
     //创建本局（可选传入种子）
     const gameRun = new GameRun(seed)
     Object.assign(nowGameRun, gameRun)
@@ -164,11 +172,14 @@ export async function startNewRun(seed?: string, ascensionLevel: number = 0, ini
         // 使用传入的 Player（Setup 页面已经创建并配置好）
         // 直接使用，不要重新包装，避免破坏内部结构
         nowPlayer = existingPlayer
+        console.log('[startNewRun] 使用 existingPlayer，nowPlayer 最大生命:', nowPlayer.status['max-health']?.value)
     } else {
         const playerList = getLazyModule<Record<string, any>>('playerList')
         const map = playerList["default"]
         const player = await createPlayer(map)
-        nowPlayer = reactive(player) as unknown as Player
+        // 直接使用，不要用 reactive() 包装，避免破坏内部 computed 属性
+        nowPlayer = player
+        console.log('[startNewRun] 创建新 Player，nowPlayer 最大生命:', nowPlayer.status['max-health']?.value)
     }
 
     //添加到队伍中
@@ -176,9 +187,6 @@ export async function startNewRun(seed?: string, ascensionLevel: number = 0, ini
 
     // 添加初始器官（仅在创建新 Player 时执行）
     if (!existingPlayer && initialOrgans && initialOrgans.length > 0) {
-        
-        
-
         for (const organKey of initialOrgans) {
             try {
                 const organData = await getOrganByKey(organKey)
@@ -200,7 +208,6 @@ export async function startNewRun(seed?: string, ascensionLevel: number = 0, ini
 
     // 应用进阶触发器
     if (ascensionLevel > 0) {
-        
         const ascensionConfig = getAscensionConfig(ascensionLevel)
         if (ascensionConfig) {
             await nowGameRun.applyAscensionTriggers(ascensionConfig.triggers)
@@ -236,7 +243,6 @@ export async function startNewRun(seed?: string, ascensionLevel: number = 0, ini
     })
 
     // 进入开场初始化房间（苏生）
-    
     const startEvent = roomRegistry.createRoom("init_game_start", 0)
 
     if (startEvent) {
@@ -249,7 +255,7 @@ export async function startNewRun(seed?: string, ascensionLevel: number = 0, ini
                 await nowGameRun.completeCurrentRoom()
 
                 // 显示地图UI（通过回调）
-                
+
                 await goToNextStep()
             }
         }, 100)

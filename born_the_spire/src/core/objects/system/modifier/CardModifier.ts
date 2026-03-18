@@ -10,6 +10,7 @@ import { reactive, toRaw } from "vue"
 
 import { nowBattle } from "../../game/battle"
 import { getCardByKey, getAllCards } from "@/static/list/item/cardList"
+import { isPlayer, isOrgan } from "@/core/utils/typeGuards"
 
 /**
  * 卡牌修饰器管理器
@@ -129,12 +130,12 @@ export class CardModifier {
         const source = card.source
 
         // 如果来源是 Player 类型（玩家的初始卡组），总是可以打出
-        if (source instanceof Player) {
+        if (isPlayer(source)) {
             return true
         }
 
         // 如果来源是器官，检查是否损坏
-        if (source instanceof Organ) {
+        if (isOrgan(source)) {
             if (source.isDisabled) {
                 return `来源器官 ${source.label} 已损坏`
             }

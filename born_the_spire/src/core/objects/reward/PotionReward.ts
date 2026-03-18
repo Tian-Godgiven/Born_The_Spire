@@ -6,6 +6,7 @@ import { getPotionModifier } from "@/core/objects/system/modifier/PotionModifier
 import { newLog } from "@/ui/hooks/global/log"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { createPotion } from "@/core/factories"
+import { nowPlayer } from "@/core/objects/game/run"
 
 /**
  * 药水奖励配置
@@ -57,10 +58,6 @@ export class PotionReward extends Reward {
 
         this.potion = await createPotion(this.potionConfig)
         newLog([`获得药水: ${this.potion.label}`])
-
-        // 将药水添加到玩家背包
-        
-        
 
         const potionModifier = getPotionModifier(nowPlayer)
         potionModifier.acquirePotion(this.potion, nowPlayer)
