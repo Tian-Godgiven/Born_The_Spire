@@ -1,39 +1,44 @@
 <template>
-<div class="top">
-    <div class="playerData">
-        <div class="name">
-            <div class="text">{{ nowPlayer.label }}</div>
-            <div class="state">
-                <transition-group name="fade-in" tag="div">
-                    <div class="stateText" :style="{color: value.color}" v-for="value in stateList" :key="value.text">
-                        &nbsp;&nbsp;{{ value.text }}
-                    </div>
-                </transition-group>
+<div class="top-container top">
+            <div class="playerData">
+            <div class="name">
+                <div class="text">{{ nowPlayer.label }}</div>
+                <div class="state">
+                    <transition-group name="fade-in" tag="div">
+                        <div class="stateText" :style="{color: value.color}" v-for="value in stateList" :key="value.text">
+                            &nbsp;&nbsp;{{ value.text }}
+                        </div>
+                    </transition-group>
+                </div>
+            </div>
+            <div class="health">
+                生命：
+                {{ health.now }} /
+                {{ health.max }}
+            </div>
+            <ReserveDisplay :player="nowPlayer" />
+            <div class="potions flex">
+                <PotionVue
+                    v-for="(potion, index) in potions"
+                    :key="index"
+                    :potion="potion"
+                />
             </div>
         </div>
-        <div class="health">
-            生命：
-            {{ health.now }} /
-            {{ health.max }}
-        </div>
-        <ReserveDisplay :player="nowPlayer" />
-        <div class="potions flex">
-            <PotionVue
-                v-for="(potion, index) in potions"
-                :key="index"
-                :potion="potion"
-            />
-        </div>
-    </div>
 
-    <div class="gameRunData">
-        <div>层数：{{ nowGameRun.towerLevel ?? 0 }}</div>
-        <div>进阶：{{ nowGameRun.towerFire ?? 0 }}</div>
-    </div>
-    <div class="ability flex">
-        <Button v-for="ability in abilities"
-            :click="ability.click"
-            :label="ability.label"/>
+        <div class="gameRunData">
+            <div>层数：{{ nowGameRun.towerLevel ?? 0 }}</div>
+            <div>进阶：{{ nowGameRun.towerFire ?? 0 }}</div>
+        </div>
+        <div class="ability flex">
+            <Button v-for="ability in abilities"
+                :click="ability.click"
+                :label="ability.label"/>
+        </div>
+
+    <!-- 遗物栏 - 在 topBar 下方单独一行 -->
+    <div class="relics-bar" v-if="relics.length > 0">
+        <Relic v-for="relic in relics" :relic="relic" :key="relic.key" />
     </div>
 </div>
 </template>
@@ -44,6 +49,7 @@
     import Button from "@/ui/components/global/Button.vue"
     import ReserveDisplay from "@/ui/components/display/ReserveDisplay.vue"
     import PotionVue from "@/ui/components/object/Potion.vue"
+    import Relic from "@/ui/components/object/Relic.vue"
     import { showCardGroup } from '@/ui/hooks/interaction/cardGroupModal';
     import { getStatusValue } from '@/core/objects/system/status/Status';
     import type { Potion } from '@/core/objects/item/Subclass/Potion';
@@ -51,6 +57,7 @@
     import { markRegistry } from '@/static/registry/markRegistry';
     import { getShowMapCallback } from '@/core/hooks/step';
     import { getCardModifier } from '@/core/objects/system/modifier/CardModifier';
+    import { showRelicList } from '@/ui/interaction/relicList';
 
     // 打开地图（用于战斗中查看地图）
     function openMap() {
@@ -117,12 +124,19 @@
     const abilities = [
         {label:"地图",click:()=>openMap()},
         {label:"卡组",click:()=>showDeck()},
+        {label:"遗物",click:()=>showRelicList()},
         {label:"返回",click:()=>endRun()}
     ]
+
+    const relics = computed(() => nowPlayer?.getRelicsList() ?? [])
 
 </script>
 
 <style scoped lang='scss'>
+.top-container {
+    display: flex;
+    flex-direction: column;
+}
 .top{
     display: grid;
     align-items: center;
@@ -136,6 +150,18 @@
         display: grid;
         grid-template-columns: repeat(2,1fr);
     }
+}
+.relics-bar{
+    position:absolute;
+    // bottom: 100%;
+    transform: translateY(calc(100% + 10px));
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    flex-wrap: wrap;
+    box-sizing: border-box;
+    z-index: 100;
 }
 .name{
     display: flex;

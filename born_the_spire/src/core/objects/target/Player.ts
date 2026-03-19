@@ -54,7 +54,6 @@ export class Player extends Chara{
     })
     //药水的持有情况 - 通过 PotionModifier 管理，这里不需要存储
     // public potions - 已移除，使用 getPotionModifier(this).getPotions() 获取
-    public relics:Relic[] = []//拥有的遗物
     // 启用的器官奖励动作（由遗物等解锁）
     public enabledOrganRewardActions: Set<string> = new Set()
     // 启用的水池行动（由遗物等解锁）
@@ -190,7 +189,8 @@ export class Player extends Chara{
     }
     //获取遗物列表
     getRelicsList(){
-        return this.relics
+        const relicModifier = getRelicModifier(this)
+        return relicModifier.getRelics()
     }
     //获取当前持有的卡牌
     getCardGroup(){

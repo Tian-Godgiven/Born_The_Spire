@@ -29,7 +29,7 @@ export const cardList:CardMap[] = [{
         damage:15,
         cost:1,
     },
-    entry:["exhaust"],
+    entry:["card_exhaust"],
     describe:[
         "造成",{key:["status","damage"]},"点伤害"
     ],
@@ -50,7 +50,7 @@ export const cardList:CardMap[] = [{
         damage:15,
         cost:1,
     },
-    entry:["void"],
+    entry:["card_void"],
     describe:[
         "造成",{key:["status","damage"]},"点伤害"
     ],
@@ -71,7 +71,7 @@ export const cardList:CardMap[] = [{
         damage:8,
         cost:1,
     },
-    entry:["inherent"],
+    entry:["card_inherent"],
     describe:[
         "造成",{key:["status","damage"]},"点伤害"
     ],

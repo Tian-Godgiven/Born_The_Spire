@@ -169,6 +169,8 @@ export async function useCard(card:Card,fromPile:Card[],source:Player,targets:Ta
 
     // 使用后处理（弃牌/消耗等）
     const afterUseEffect = card.getAfterUseEffect(fromPile)
+    console.log('[useCard] 卡牌使用后效果:', afterUseEffect)
+    console.log('[useCard] 卡牌词条:', card.hasEntry('card_exhaust'))
     doEvent({
         key: "afterUseCard",
         source,

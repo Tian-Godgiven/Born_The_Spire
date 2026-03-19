@@ -178,23 +178,14 @@ export class Battle {
      * 结束战斗
      */
     endBattle(result: "player_win" | "player_lose") {
-        console.log('[Battle.endBattle] 被调用，结果:', result)
-        console.log('[Battle.endBattle] this.isEnded:', this.isEnded)
+        if (this.isEnded) return
 
-        if (this.isEnded) {
-            console.log('[Battle.endBattle] 战斗已结束，提前返回')
-            return
-        }
-
-        console.log('[Battle.endBattle] 设置 isEnded = true')
         this.isEnded = true
 
-        console.log('[Battle.endBattle] 调用 handleActiveAbilitiesBattleEnd')
         // 处理主动能力系统的战斗结束
         this.handleActiveAbilitiesBattleEnd()
 
         if (result === "player_win") {
-            console.log('[Battle.endBattle] 玩家胜利')
             newLog(["===== 战斗胜利 ====="])
 
             doEvent({
@@ -206,7 +197,6 @@ export class Battle {
                 effectUnits: []
             })
         } else {
-            console.log('[Battle.endBattle] 玩家失败')
             newLog(["===== 战斗失败 ====="])
             doEvent({
                 key: "battleEnd",
@@ -220,7 +210,6 @@ export class Battle {
             // 显示战斗失败弹窗
             showBattleDefeat()
         }
-        console.log('[Battle.endBattle] 方法执行完成')
     }
 
     /**

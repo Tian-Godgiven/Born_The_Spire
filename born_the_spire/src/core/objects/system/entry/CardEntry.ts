@@ -9,6 +9,7 @@ import { isCard, isPlayer } from "@/core/utils/typeGuards"
  * 卡牌专用词条定义
  */
 export type CardEntryDefinition = {
+    label: string  // 词条显示名称
     describe: Describe
     conflictsWith?: string[]
     onApply: (owner: Entity, ownersOwner?: Entity) => Array<() => void>
@@ -34,6 +35,7 @@ function checkOwnerTypes(
 export const cardEntryDefinitions: Record<string, CardEntryDefinition> = {
     // 消耗词条
     card_exhaust: {
+        label: "消耗",
         describe: ["使用后，将其移入消耗堆，而非弃牌堆"],
         conflictsWith: ["card_void"],  // 与其他"使用后去向"词条互斥
         onApply: (owner, ownersOwner) => {
@@ -65,6 +67,7 @@ export const cardEntryDefinitions: Record<string, CardEntryDefinition> = {
 
     // 虚无词条
     card_void: {
+        label: "虚无",
         describe: ["若回合结束时仍在手牌中，会移入消耗堆而非弃牌堆"],
         conflictsWith: ["card_exhaust"],  // 与 exhaust 词条互斥
         onApply: (owner, ownersOwner) => {
@@ -104,6 +107,7 @@ export const cardEntryDefinitions: Record<string, CardEntryDefinition> = {
 
     // 固有词条
     card_inherent: {
+        label: "固有",
         describe: ["战斗开始时，必定会抽到此卡片"],
         onApply: (owner, ownersOwner) => {
             const result = checkOwnerTypes(owner, ownersOwner)

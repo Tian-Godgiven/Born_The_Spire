@@ -175,8 +175,8 @@ async function createPreviewPlayer(): Promise<Player> {
             "original_card_00014",
             "original_card_00014",
         ],
-        potion: { now: [] },  // 预览时不需要药水
-        relic: []  // 预览时不需要遗物
+        potion: { now: [] }  // 预览时不需要药水
+        // relic 使用 defaultPlayerMap 的默认值
     }
 
     const player = await createPlayer(map)

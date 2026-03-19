@@ -58,7 +58,7 @@ import type { Card } from '@/core/objects/item/Subclass/Card';
 import { getStatusValue, ifHaveStatus } from '@/core/objects/system/status/Status';
 import { getDescribe, getDescribeStructured, extractGlossaries, type DescribeSegment } from '@/ui/hooks/express/describe';
 import { computed, ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import { entryMap } from '@/static/list/system/entryMap';
+import { entryDefinitions } from '@/core/objects/system/Entry';
 import { glossaryMap } from '@/static/list/system/glossaryMap';
 import { getEntryModifier } from '@/core/objects/system/modifier/EntryModifier';
 import { nowPlayer } from '@/core/objects/game/run';
@@ -134,7 +134,7 @@ const entries = computed(() => {
 
 // 获取词条显示名称
 function getEntryLabel(entryKey: string): string {
-    return entryMap[entryKey]?.label || entryKey
+    return entryDefinitions[entryKey]?.label || entryKey
 }
 
 // 获取片段的CSS类
@@ -159,7 +159,7 @@ const allGlossaries = computed(() => {
 
     // 添加词条
     entries.value.forEach(entryKey => {
-        const entryLabel = entryMap[entryKey]?.label
+        const entryLabel = entryDefinitions[entryKey]?.label
         if (entryLabel && glossaryMap[entryLabel]) {
             glossaries.add(entryLabel)
         }

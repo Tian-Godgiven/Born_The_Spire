@@ -39,7 +39,7 @@ import type { Card } from '@/core/objects/item/Subclass/Card';
 import { getStatusValue, ifHaveStatus } from '@/core/objects/system/status/Status';
 import { getDescribeStructured, type DescribeSegment } from '@/ui/hooks/express/describe';
 import { computed } from 'vue';
-import { entryMap } from '@/static/list/system/entryMap';
+import { entryDefinitions } from '@/core/objects/system/Entry';
 import { getEntryModifier } from '@/core/objects/system/modifier/EntryModifier';
 
 const { card } = defineProps<{
@@ -67,7 +67,7 @@ const entries = computed(() => {
 
 // 获取词条显示名称
 function getEntryLabel(entryKey: string): string {
-    return entryMap[entryKey]?.label || entryKey
+    return entryDefinitions[entryKey]?.label || entryKey
 }
 
 // 获取片段的CSS类

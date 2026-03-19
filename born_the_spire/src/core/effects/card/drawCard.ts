@@ -46,6 +46,11 @@ export const drawFromDrawPile:EffectFunc = (event,effect)=>{
         number = valueParam as number
     }
 
+    // 支持额外抽牌数（由 addFirstTurnDraw 等效果通过 _addValue 追加）
+    if (effect.params._addValue) {
+        number += Number(effect.params._addValue)
+    }
+
     //牌堆数量不足：先洗牌
     if(length < number){
         if(length>0){

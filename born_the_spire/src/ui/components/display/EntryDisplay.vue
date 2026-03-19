@@ -20,7 +20,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { entryMap } from '@/static/list/system/entryMap'
+import { entryDefinitions } from '@/core/objects/system/Entry'
 import { getDescribe } from '@/ui/hooks/express/describe'
 
 const props = defineProps<{
@@ -35,13 +35,13 @@ const hasEntries = computed(() => {
 
 // 获取词条标签名（中文名称）
 function getEntryLabel(entryKey: string): string {
-    const entry = entryMap[entryKey]
+    const entry = entryDefinitions[entryKey]
     return entry?.label || entryKey
 }
 
 // 获取词条描述
 function getEntryDescription(entryKey: string): string {
-    const entry = entryMap[entryKey]
+    const entry = entryDefinitions[entryKey]
     if (!entry) return ''
 
     // 使用 getDescribe 处理 Describe 类型

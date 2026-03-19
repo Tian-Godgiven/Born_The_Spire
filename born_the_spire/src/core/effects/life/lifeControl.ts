@@ -44,22 +44,12 @@ export const killTarget: EffectFunc = (event: ActionEvent, effect) => {
         // 将 isAlive 设置为 0
         changeCurrentValue(t, "isAlive", 0, event)
 
-        console.log('[killTarget] 目标已死亡:', t.label)
-        console.log('[killTarget] nowBattle.value:', nowBattle.value)
-        console.log('[killTarget] nowBattle.value?.isEnded:', nowBattle.value?.isEnded)
-
         // 检查战斗是否应该结束
         if (nowBattle.value && !nowBattle.value.isEnded) {
-            console.log('[killTarget] 检查战斗是否结束...')
             const battleResult = nowBattle.value.checkBattleEnd()
-            console.log('[killTarget] 战斗结果:', battleResult)
             if (battleResult) {
-                console.log('[killTarget] 调用 endBattle:', battleResult)
                 endBattle(battleResult === 'player_win' ? 'win' : 'lose')
             }
-        } else {
-            console.log('[killTarget] 跳过战斗结束检查，原因:',
-                !nowBattle.value ? '没有战斗' : '战斗已结束')
         }
     })
 

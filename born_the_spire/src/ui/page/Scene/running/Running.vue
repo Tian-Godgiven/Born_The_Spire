@@ -1,14 +1,13 @@
 <template>
 <div class="running">
     <!-- 顶部内容 -->
-    <Top></Top>
+    <Top class="top"></Top>
     <!-- 房间内容 -->
     <div class="content">
         <!-- 根据房间类型动态显示对应组件 -->
         <component v-if="currentRoomComponent" :is="currentRoomComponent"></component>
 
         <ConnectLine></ConnectLine>
-        <PopUpContainer></PopUpContainer>
 
         <!-- 卡牌组弹窗 -->
         <CardGroupModal />
@@ -40,8 +39,6 @@
 import { computed, ref, onMounted } from 'vue'
 import Top from "./Top/index.vue"
 import ConnectLine from "@/ui/components/interaction/chooseTarget/ConnectLine.vue"
-import TestTool from "@/ui/page/tool/testTool/TestTool.vue"
-import PopUpContainer from '@/ui/components/global/PopUpContainer.vue'
 import LogPane from "@/ui/page/tool/logPane/LogPane.vue"
 import MapOverlay from "./MapOverlay.vue"
 import BattleDefeatModal from '@/ui/components/interaction/BattleDefeatModal.vue'

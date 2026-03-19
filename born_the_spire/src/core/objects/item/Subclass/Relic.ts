@@ -21,10 +21,12 @@ export type RelicMap = ItemMap & {
  */
 export class Relic extends Item {
     public readonly itemType = 'relic' as const  // 类型标识
+    public rarity?: "common" | "uncommon" | "rare"  // 遗物稀有度
     public activeAbilities?: ActiveAbility[]  // 主动能力列表
 
     constructor(map: RelicMap) {
         super(map)
+        this.rarity = map.rarity
         this.activeAbilities = map.activeAbilities
     }
 }

@@ -23,6 +23,7 @@ import { organEntryDefinitions } from "./entry/OrganEntry"
  * Mod 制作者可以在 onApply 函数中自由选择触发器的挂载位置
  */
 export type EntryDefinition = {
+    label: string        // 词条显示名称
     describe: Describe
     conflictsWith?: string[]  // 冲突的词条
     onApply: (owner: Entity, ownersOwner?: Entity) => Array<() => void>  // 返回移除函数数组

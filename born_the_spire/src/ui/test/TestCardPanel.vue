@@ -34,7 +34,7 @@
 import { getAllCards } from '@/static/list/item/cardList'
 import { getCardByKey } from '@/static/list/item/cardList'
 import { nowPlayer } from '@/core/objects/game/run'
-import { entryMap } from '@/static/list/system/entryMap'
+import { entryDefinitions } from '@/core/objects/system/Entry'
 import { getDescribe } from '../hooks/express/describe'
 
 // 定义 emit
@@ -47,7 +47,7 @@ const cardList = getAllCards()
 
 // 获取词条标签
 function getEntryLabel(entryKey: string): string {
-    return entryMap[entryKey]?.label || entryKey
+    return entryDefinitions[entryKey]?.label || entryKey
 }
 
 // 添加卡牌到抽牌堆

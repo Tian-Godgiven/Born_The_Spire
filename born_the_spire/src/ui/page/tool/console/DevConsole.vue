@@ -171,6 +171,9 @@ async function executeFunction(funcName: string, args: any[]) {
         case 'unlockAllOrgans':
             await unlockAllOrgans()
             break
+        case 'addRandomRelic':
+            await addRandomRelic()
+            break
         case 'help':
             showHelp()
             break
@@ -961,6 +964,40 @@ async function unlockAllOrgans() {
     addOutput(`  总计: ${organList.length} 个`, 'info')
 }
 
+// 随机获取一个遗物
+async function addRandomRelic() {
+    if (!nowGameRun) {
+        addOutput('游戏未开始，请先点击"开始游戏"', 'error')
+        return
+    }
+
+    try {
+        const { getAllRelics } = await import('@/static/list/item/relicList')
+        const { createRelic } = await import('@/core/factories')
+        const { getRelic } = await import('@/core/objects/item/Subclass/Relic')
+
+        const allRelics = getAllRelics()
+        if (allRelics.length === 0) {
+            addOutput('没有可用的遗物', 'error')
+            return
+        }
+
+        // 随机选择一个遗物
+        const randomIndex = Math.floor(Math.random() * allRelics.length)
+        const relicMap = allRelics[randomIndex]
+
+        const relic = await createRelic(relicMap)
+        const player = nowPlayer
+        getRelic(player, player, relic)
+
+        addOutput(`✓ 成功获得随机遗物: ${relic.label} [${relic.rarity}]`, 'result')
+        addOutput(`  key: ${relic.key}`, 'info')
+
+    } catch (error: any) {
+        addOutput(`获取随机遗物失败: ${error.message}`, 'error')
+    }
+}
+
 // 显示帮助
 function showHelp() {
     addOutput('=== 可用命令 ===', 'info')
@@ -998,6 +1035,8 @@ function showHelp() {
     addOutput('  例如: unlockAllOrgans()', 'info')
     addOutput('addOrgan("organKey") - 添加器官', 'info')
     addOutput('  例如: addOrgan("original_organ_00001")', 'info')
+    addOutput('addRandomRelic() - 随机获取一个遗物', 'info')
+    addOutput('  例如: addRandomRelic()', 'info')
     addOutput('breakOrgan("organKey") - 损坏器官', 'info')
     addOutput('  例如: breakOrgan("original_organ_00001")', 'info')
     addOutput('repairOrgan("organKey") - 修复器官', 'info')
