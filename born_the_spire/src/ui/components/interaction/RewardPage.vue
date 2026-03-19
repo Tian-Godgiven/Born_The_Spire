@@ -57,6 +57,50 @@
       </div>
     </div>
 
+    <!-- 器官奖励弹窗 -->
+    <div v-if="showOrganReward" class="choice-overlay" @click.self="organRewardCancelable ? closeOrganReward() : undefined">
+      <div class="organ-reward-modal">
+        <button v-if="organRewardCancelable" class="modal-close-btn" @click="closeOrganReward">×</button>
+        <div class="choice-title">选择器官</div>
+
+        <!-- 横向器官卡片 -->
+        <div class="organ-cards-row">
+          <div
+            v-for="organ in organRewardOptions"
+            :key="organ.key"
+            class="organ-detail-card"
+            :class="{ selected: selectedOrganKey === organ.key }"
+            @click="selectOrgan(organ.key)"
+          >
+            <div class="organ-card-name">{{ organ.label }}</div>
+            <div class="organ-card-meta">
+              <span class="organ-rarity" :class="organ.rarity">{{ getRarityLabel(organ.rarity) }}</span>
+              <span v-if="organ.part" class="organ-part">{{ getPartLabel(organ.part) }}</span>
+            </div>
+            <div class="organ-card-divider"></div>
+            <div v-if="organ.entry?.length" class="organ-card-entries">
+              <span v-for="entry in organ.entry" :key="entry" class="entry-tag">【{{ entry }}】</span>
+            </div>
+            <div class="organ-card-desc">{{ getOrganDescribe(organ) }}</div>
+          </div>
+        </div>
+
+        <!-- 底部行：动作按钮 -->
+        <div class="organ-reward-footer">
+          <button
+            v-for="action in organActions"
+            :key="action.key"
+            class="organ-action-btn"
+            @click="executeOrganAction(action.key)"
+          >
+            <span class="action-icon">{{ action.icon }}</span>
+            <span class="action-label">{{ action.label }}</span>
+            <span class="action-desc">{{ action.description }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- 遗物选择弹窗 -->
     <div v-if="showRelicChoice" class="choice-overlay" @click.self="closeRelicChoice">
       <div class="choice-modal">
@@ -96,30 +140,71 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { currentRewards, showRewardUI, confirmRewards } from '@/ui/hooks/interaction/rewardDisplay'
-import { showOrganChoice as openOrganRewardChoice } from '@/ui/hooks/interaction/organChoice'
+import { organRewardActionRegistry } from '@/static/registry/organRewardActionRegistry'
+import { nowPlayer } from '@/core/objects/game/run'
+import { getDescribe } from '@/ui/hooks/express/describe'
+import { getPartLabel } from '@/static/list/target/organPart'
+import type { OrganMap } from '@/core/objects/target/Organ'
+import type { OrganRewardAction } from '@/core/types/organRewardAction'
 
 const visible = computed(() => showRewardUI.value)
 const rewards = computed(() => currentRewards.value)
 
-const currentChoiceReward = ref<any>(null)
+// 器官奖励弹窗
+const showOrganReward = ref(false)
+const currentOrganReward = ref<any>(null)
+const selectedOrganKey = ref<string | null>(null)
+const organActions = ref<OrganRewardAction[]>([])
+const organRewardCancelable = ref(true)
 
-async function openOrganChoice(reward: any) {
-  const result = await openOrganRewardChoice({
-    title: '选择器官',
-    description: reward.getDisplayDescription(),
-    organKeys: reward.organOptions.map((organ: any) => organ.key),
-    minSelect: reward.selectCount,
-    maxSelect: reward.selectCount,
-    cancelable: true,
-    actionMode: 'selectThenAction'
-  })
+const organRewardOptions = computed<OrganMap[]>(() => currentOrganReward.value?.organOptions ?? [])
 
-  if (result.selectedKeys.length === 0) return
+function openOrganChoice(reward: any) {
+  currentOrganReward.value = reward
+  selectedOrganKey.value = null
+  organActions.value = []
+  organRewardCancelable.value = reward.cancelable !== false
+  showOrganReward.value = true
+}
 
-  reward.selectedOrgans = result.selectedKeys
-  reward.selectedActions = result.selectedActions ?? new Map()
+function closeOrganReward() {
+  showOrganReward.value = false
+  currentOrganReward.value = null
+  selectedOrganKey.value = null
+  organActions.value = []
+}
+
+function selectOrgan(organKey: string) {
+  selectedOrganKey.value = organKey
+  if (!nowPlayer) return
+  organActions.value = organRewardActionRegistry.getAvailableActions(null, nowPlayer, { source: 'battleReward' })
+    .filter(action => {
+      if (typeof action.enabled === 'function') {
+        return action.enabled(null as any, nowPlayer)
+      }
+      return action.enabled
+    })
+}
+
+async function executeOrganAction(actionKey: string) {
+  if (!selectedOrganKey.value || !currentOrganReward.value) return
+  const reward = currentOrganReward.value
+  reward.selectedOrgans = [selectedOrganKey.value]
+  reward.selectedActions = new Map([[selectedOrganKey.value, actionKey]])
+  closeOrganReward()
   await reward.claim()
 }
+
+function getOrganDescribe(organ: OrganMap): string {
+  return getDescribe(organ.describe, organ)
+}
+
+function getRarityLabel(rarity: string): string {
+  const map: Record<string, string> = { common: '普通', uncommon: '罕见', rare: '稀有' }
+  return map[rarity] ?? rarity
+}
+
+const currentChoiceReward = ref<any>(null)
 
 // 遗物选择弹窗
 const showRelicChoice = ref(false)
@@ -299,6 +384,135 @@ async function handleProceed() {
       background: #3d6026;
     }
   }
+}
+
+.organ-reward-modal {
+  position: relative;
+  background: white;
+  border: 2px solid black;
+  padding: 30px;
+  min-width: 700px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 2px 6px;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.05);
+  }
+}
+
+.organ-cards-row {
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.organ-detail-card {
+  flex: 0 0 200px;
+  min-height: 200px;
+  padding: 16px;
+  border: 2px solid #ccc;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  &:hover {
+    border-color: #888;
+    background: rgba(0, 0, 0, 0.02);
+  }
+
+  &.selected {
+    border-color: black;
+    background: rgba(0, 0, 0, 0.04);
+  }
+}
+
+.organ-card-name {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
+
+.organ-card-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  color: #666;
+}
+
+.organ-rarity {
+  &.common { color: #666; }
+  &.uncommon { color: #2d5016; }
+  &.rare { color: #1a3a6b; }
+}
+
+.organ-card-divider {
+  height: 1px;
+  background: #ddd;
+}
+
+.organ-card-entries {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.entry-tag {
+  font-size: 12px;
+  color: #555;
+  font-weight: bold;
+}
+
+.organ-card-desc {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.organ-reward-footer {
+  display: flex;
+  gap: 12px;
+  border-top: 2px solid black;
+  padding-top: 16px;
+  min-height: 72px;
+}
+
+.organ-action-btn {
+  flex: 1;
+  padding: 12px 16px;
+  background: white;
+  border: 2px solid black;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .action-icon { font-size: 20px; }
+  .action-label { font-size: 15px; font-weight: bold; }
+  .action-desc { font-size: 12px; color: #666; }
 }
 
 // 选择弹窗样式
