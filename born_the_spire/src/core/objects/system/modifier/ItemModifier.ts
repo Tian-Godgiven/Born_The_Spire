@@ -295,6 +295,19 @@ export class ItemModifier {
                                 key,
                                 level,
                                 callback: (event, _effect, _triggerLevel) => {
+                                    // 如果 targetType 是 triggerEffect 但 effect 为 null（事件级触发），跳过
+                                    if (eventConfig.targetType === "triggerEffect" && !_effect) return
+                                    // 检查触发条件
+                                    if (triggerDef.condition?.sourceStatus) {
+                                        const { key, value, op = "eq" } = triggerDef.condition.sourceStatus
+                                        const statusVal = item.status[key]?.value
+                                        if (statusVal === undefined) return
+                                        if (op === "eq" && statusVal !== value) return
+                                        if (op === "lte" && statusVal > value) return
+                                        if (op === "gte" && statusVal < value) return
+                                        if (op === "lt" && statusVal >= value) return
+                                        if (op === "gt" && statusVal <= value) return
+                                    }
                                     // 使用公共的目标解析函数
                                     const target = resolveTriggerEventTarget(
                                         eventConfig.targetType,
@@ -304,6 +317,19 @@ export class ItemModifier {
                                         this.owner      // triggerOwner: 拥有者
                                     )
 
+                                    // 解析 effect params 中的 $triggerValue
+                                    const triggerValue = (_effect as any)?.params?.value
+                                    const resolvedEffects = triggerValue !== undefined
+                                        ? eventConfig.effect?.map((eu: any) => ({
+                                            ...eu,
+                                            params: Object.fromEntries(
+                                                Object.entries(eu.params || {}).map(([k, v]) =>
+                                                    [k, v === "$triggerValue" ? triggerValue : v]
+                                                )
+                                            )
+                                        }))
+                                        : eventConfig.effect
+
                                     // 执行事件
                                     doEvent({
                                         key: eventConfig.key,
@@ -311,7 +337,7 @@ export class ItemModifier {
                                         medium: item,
                                         target,
                                         info: eventConfig.info || {},
-                                        effectUnits: eventConfig.effect
+                                        effectUnits: resolvedEffects
                                     })
                                 }
                             })

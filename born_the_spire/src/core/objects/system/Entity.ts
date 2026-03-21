@@ -11,6 +11,7 @@ import { nanoid } from "nanoid";
 import { appendStatus, createStatusFromMap, Status } from "./status/Status";
 import { Trigger } from "./trigger/Trigger";
 import { initCurrentFromMap } from "./Current/current";
+import { markRaw } from "vue";
 
 
 
@@ -57,8 +58,8 @@ export class Entity implements EventParticipant{
         this._beforeCurrentInit = beforeCurrentInit
         this._currentMapData = map.current
 
-        //初始化描述
-        this.describe = map.describe??[]
+        //初始化描述（使用 markRaw 避免 Vue 递归转换数组内的对象）
+        this.describe = markRaw(map.describe ?? [])
     }
 
     /**

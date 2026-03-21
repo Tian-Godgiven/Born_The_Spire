@@ -41,16 +41,21 @@ export const relicList: RelicMap[] = [
         status: {
             "damage": 10
         },
-        interaction: {
-            use: {
-                label: "投掷",
-                target: { faction: "enemy" },
-                effects: [{
-                    key: "damage",
-                    params: { value: 10 }
-                }]
-            }
-        }
+        activeAbilities: [{
+            key: "throw",
+            label: "投掷",
+            describe: ["对所有敌人造成10点伤害"],
+            usage: {
+                type: "allTargets",
+                targetType: "enemy"
+            },
+            disableAfterUse: true,
+            effects: [{
+                key: "damage",
+                params: { value: 10 }
+            }]
+        }],
+        interaction: {}
     },
     // 多功能遗物 - 多个 use
     {
@@ -63,39 +68,30 @@ export const relicList: RelicMap[] = [
             "draw": 2,
             "damage": 50
         },
-        interaction: {
-            possess: {
-                target: { key: "self" },
-                effects: [],
-                // 可以添加持有时的被动效果
+        activeAbilities: [
+            {
+                key: "activate",
+                label: "激活",
+                describe: ["获得1点能量"],
+                usage: { type: "direct" },
+                effects: [{ key: "getEnergy", params: { value: 1 } }]
             },
-            use: [
-                {
-                    label: "激活",
-                    target: { key: "self" },
-                    effects: [{
-                        key: "gainEnergy",
-                        params: { value: 1 }
-                    }]
-                },
-                {
-                    label: "充能",
-                    target: { key: "self" },
-                    effects: [{
-                        key: "drawCard",
-                        params: { value: 2 }
-                    }]
-                },
-                {
-                    label: "粉碎（销毁遗物）",
-                    target: { faction: "enemy" },
-                    effects: [{
-                        key: "damage",
-                        params: { value: 50 }
-                    }]
-                }
-            ]
-        }
+            {
+                key: "charge",
+                label: "充能",
+                describe: ["抽2张牌"],
+                usage: { type: "direct" },
+                effects: [{ key: "drawFromDrawPile", params: { value: 2 } }]
+            },
+            {
+                key: "smash",
+                label: "粉碎",
+                describe: ["对所有敌人造成50点伤害"],
+                usage: { type: "allTargets", targetType: "enemy" },
+                effects: [{ key: "damage", params: { value: 50 } }]
+            }
+        ],
+        interaction: {}
     },
     // 献祭遗物 - 解锁器官奖励中的献祭动作
     {
@@ -202,12 +198,205 @@ export const relicList: RelicMap[] = [
                 }]
             }
         }
+    },
+    {
+        label: "袖珍手枪",
+        describe: ["战斗中右键使用：对指定敌人造成10点伤害", "3回合冷却（跨战斗）"],
+        key: "original_relic_pistol",
+        rarity: "uncommon",
+        activeAbilities: [{
+            key: "shoot",
+            label: "射击",
+            describe: ["对指定敌人造成10点伤害"],
+
+            usage: {
+                type: "selectTarget",
+                targetType: "enemy"
+            },
+
+            restrictions: {
+                cooldown: 3,
+                conditions: {
+                    scene: "combat"
+                }
+            },
+
+            effects: [{
+                key: "damage",
+                params: { value: 10 }
+            }]
+        }],
+        interaction: {}
+    },
+    {
+        label: "草莓",
+        describe: ["获得时", "最大生命+5"],
+        key: "original_relic_00006",
+        rarity: "common",
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                effects: [{
+                    key: "addMaxHealthAndHeal",
+                    params: { value: 5 }
+                }]
+            }
+        }
+    },
+    {
+        label: "金刚杵",
+        describe: ["战斗开始时", "获得力量1层"],
+        key: "original_relic_vajra",
+        rarity: "uncommon",
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                triggers: [{
+                    when: "after",
+                    how: "take",
+                    key: "battleStart",
+                    event: [{
+                        targetType: "owner",
+                        key: "applyState",
+                        effect: [{
+                            key: "applyState",
+                            params: { stateKey: "power", stacks: 1 }
+                        }]
+                    }]
+                }]
+            }
+        }
+    },
+    {
+        label: "荆棘手套",
+        describe: ["每次打出卡牌时", "对随机一个敌人造成5点伤害"],
+        key: "original_relic_thorns_glove",
+        rarity: "common",
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                triggers: [{
+                    when: "after",
+                    how: "make",
+                    key: "useCard",
+                    event: [{
+                        targetType: "randomEnemy",
+                        key: "damage",
+                        effect: [{
+                            key: "damage",
+                            params: { value: 5 }
+                        }]
+                    }]
+                }]
+            }
+        }
+    },
+    {
+        label: "节拍器",
+        describe: ["每3回合，回合开始时", "对随机敌人造成8点伤害"],
+        key: "original_relic_metronome",
+        rarity: "uncommon",
+        status: {
+            "cooldown": 3,
+            "maxCooldown": 3
+        },
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                triggers: [
+                    // 每回合递减冷却（level: 1，先于条件检查触发）
+                    {
+                        when: "after",
+                        how: "make",
+                        key: "turnStart",
+                        level: 1,
+                        event: [{
+                            targetType: "triggerSource",
+                            key: "decrementCooldown",
+                            effect: [{
+                                key: "decrementStatus",
+                                params: { statusKey: "cooldown", amount: 1 }
+                            }]
+                        }]
+                    },
+                    // 冷却为0时触发效果并重置冷却
+                    {
+                        when: "after",
+                        how: "make",
+                        key: "turnStart",
+                        condition: { sourceStatus: { key: "cooldown", value: 0, op: "lte" } },
+                        event: [
+                            {
+                                targetType: "randomEnemy",
+                                key: "damage",
+                                effect: [{
+                                    key: "damage",
+                                    params: { value: 8 }
+                                }]
+                            },
+                            {
+                                targetType: "triggerSource",
+                                key: "resetCooldown",
+                                effect: [{
+                                    key: "resetCooldown"
+                                }]
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    },
+    {
+        label: "吸血徽章",
+        describe: ["每累积", { key: ["status", "point"] }, "点伤害", "回复1生命"],
+        key: "original_relic_vampiric_badge",
+        rarity: "uncommon",
+        status: {
+            "point": 0
+        },
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                triggers: [
+                    // 受到伤害时累积
+                    {
+                        when: "after",
+                        how: "take",
+                        key: "damage",
+                        event: [{
+                            targetType: "triggerSource",
+                            key: "accumulateDamage",
+                            effect: [{
+                                key: "addStatusBase",
+                                params: { statusKey: "point", value: "$triggerValue" }
+                            }]
+                        }]
+                    },
+                    // 累积达到10时回复并重置
+                    {
+                        when: "after",
+                        how: "take",
+                        key: "damage",
+                        condition: { sourceStatus: { key: "point", value: 10, op: "gte" } },
+                        event: [
+                            {
+                                targetType: "owner",
+                                key: "heal",
+                                effect: [{ key: "heal", params: { value: 1 } }]
+                            },
+                            {
+                                targetType: "triggerSource",
+                                key: "resetAccumulator",
+                                effect: [{ key: "addStatusBase", params: { statusKey: "point", value: -10 } }]
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
     }
 ]
-
-/**
- * 获取遗物对象
- */
 export async function getRelicByKey(relicKey: string) {
     // 获取数据
     const map = relicList.find(item => item.key == relicKey)

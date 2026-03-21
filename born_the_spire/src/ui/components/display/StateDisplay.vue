@@ -10,7 +10,7 @@
             状态效果
         </div>
         <div class="popover-content">
-            <div v-for="state in target.state" :key="state.key" class="state-item">
+            <div v-for="state in states" :key="state.key" class="state-item">
                 <div class="state-header">
                     <span class="state-label">{{ state.label }}</span>
                     <span class="state-stack" v-if="hasVisibleStack(state)">
@@ -33,15 +33,20 @@
 import { computed } from 'vue'
 import type { Target } from '@/core/objects/target/Target'
 import type { State } from '@/core/objects/system/State'
+import { getStateModifier } from '@/core/objects/system/modifier/StateModifier'
 
 const props = defineProps<{
     target: Target
     side: 'left' | 'right'  // 显示在左侧还是右侧
 }>()
 
+// 获取 StateModifier 的响应式状态列表
+const stateModifier = computed(() => getStateModifier(props.target))
+const states = computed(() => stateModifier.value.states.value)
+
 // 是否有状态
 const hasStates = computed(() => {
-    return props.target.state && props.target.state.length > 0
+    return states.value.length > 0
 })
 
 // 检查状态是否有可见的层数

@@ -58,6 +58,7 @@ export interface TriggerEventConfig{
         "triggerOwner"|//持有该触发器的对象
         "triggerEffect"|//触发这个触发器的效果对象
         "owner"|//持有者（别名，等同于 triggerOwner）
+        "randomEnemy"|//当前战斗中随机一个存活的敌人
         Entity//某个指定的对象
     effect:EffectUnit[]
 }
@@ -70,6 +71,17 @@ export interface TriggerMapItemBase {
     level?: number;  // 触发优先级
     event: TriggerEventConfig[];  // 触发器所产生的事件
     info?: string;
+    condition?: TriggerCondition;  // 触发条件（可选）
+}
+
+// 触发条件
+export interface TriggerCondition {
+    // 检查触发器来源（item/relic/organ 自身）的 status 值
+    sourceStatus?: {
+        key: string       // status 的 key
+        value: number     // 期望的值
+        op?: "eq" | "lte" | "gte" | "lt" | "gt"  // 比较运算符，默认 "eq"
+    }
 }
 
 // 没有 importantKey 的接口

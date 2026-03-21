@@ -174,7 +174,11 @@ export async function createStateByKey(key: string, stacks: Stack[] | number): P
  * 获取目标指定状态的指定层数值
  */
 export function getStateStack(target: Target, stateKey: string, stackKey: string = "default"): number | false {
-    const state = target.state.find(state => state.key === stateKey)
+    // 通过 StateModifier 获取状态
+    const { getStateModifier } = require("./modifier/StateModifier")
+    const stateModifier = getStateModifier(target)
+    const state = stateModifier.getState(stateKey)
+
     if (state) {
         const stack = state.stacks.find(stack => stack.key === stackKey)
         if (stack) {
@@ -193,7 +197,11 @@ export function changeStateStack(
     stateKey: string,
     stackKey: string = "default"
 ): boolean {
-    const state = target.state.find(state => state.key === stateKey)
+    // 通过 StateModifier 获取状态
+    const { getStateModifier } = require("./modifier/StateModifier")
+    const stateModifier = getStateModifier(target)
+    const state = stateModifier.getState(stateKey)
+
     if (state) {
         const stack = state.stacks.find(stack => stack.key === stackKey)
         if (stack) {

@@ -3,7 +3,7 @@ import type { Relic } from "../../item/Subclass/Relic"
 import { ItemModifier } from "./ItemModifier"
 import { newLog } from "@/ui/hooks/global/log"
 import type { LogUnit } from "@/ui/hooks/global/log"
-import { computed } from "vue"
+import { computed, toRaw } from "vue"
 import { createRelic } from "@/core/factories"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 
@@ -152,8 +152,9 @@ const relicModifierMap = new WeakMap<Entity, RelicModifier>()
  * 为实体初始化遗物管理器
  */
 export function initRelicModifier(entity: Entity): RelicModifier {
-    const modifier = new RelicModifier(entity)
-    relicModifierMap.set(entity, modifier)
+    const raw = toRaw(entity)
+    const modifier = new RelicModifier(raw)
+    relicModifierMap.set(raw, modifier)
     return modifier
 }
 
@@ -161,9 +162,10 @@ export function initRelicModifier(entity: Entity): RelicModifier {
  * 获取实体的遗物管理器
  */
 export function getRelicModifier(entity: Entity): RelicModifier {
-    let modifier = relicModifierMap.get(entity)
+    const raw = toRaw(entity)
+    let modifier = relicModifierMap.get(raw)
     if (!modifier) {
-        modifier = initRelicModifier(entity)
+        modifier = initRelicModifier(raw)
     }
     return modifier
 }

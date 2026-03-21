@@ -8,6 +8,8 @@ import type { Effect } from "../effect/Effect";
 import { doEvent } from "../ActionEvent";
 import { nanoid } from "nanoid";
 import { isEntity } from "@/core/utils/typeGuards";
+import { nowBattle } from "../../game/battle";
+import { randomChoice } from "@/core/hooks/random";
 import { newError } from "@/ui/hooks/global/alert";
 
 // 触发器是基于事件总线的，一系列在个体上的响应器
@@ -102,11 +104,40 @@ export function createTriggerByTriggerMap(source:Entity,target:Entity, item:Trig
     const {when ="before", how, key, level} = item
 
     const callback:TriggerFunc = async(triggerEvent,triggerEffect,_triggerLevel)=>{
+        // 检查触发条件
+        if (item.condition) {
+            const cond = item.condition
+            if (cond.sourceStatus) {
+                const { key, value, op = "eq" } = cond.sourceStatus
+                const statusVal = source.status[key]?.value
+                if (statusVal === undefined) return
+                if (op === "eq" && statusVal !== value) return
+                if (op === "lte" && statusVal > value) return
+                if (op === "gte" && statusVal < value) return
+                if (op === "lt" && statusVal >= value) return
+                if (op === "gt" && statusVal <= value) return
+            }
+        }
         //回调函数将会创建并发生n个事件
         for(let eventConfig of item.event){
             const {key:eventKey,info={},targetType,effect:effectUnit} = eventConfig
+            // 如果 targetType 是 triggerEffect 但 effect 为 null（事件级触发），跳过
+            if (targetType === "triggerEffect" && !triggerEffect) continue
             //获取目标
             const eventTarget = resolveTriggerEventTarget(targetType, triggerEvent, triggerEffect, source, target)
+
+            // 解析 effect params 中的 $triggerValue
+            const triggerValue = (triggerEffect as any)?.params?.value
+            const resolvedEffects = (triggerValue !== undefined && effectUnit)
+                ? effectUnit.map((eu: any) => ({
+                    ...eu,
+                    params: Object.fromEntries(
+                        Object.entries(eu.params || {}).map(([k, v]) =>
+                            [k, v === "$triggerValue" ? triggerValue : v]
+                        )
+                    )
+                }))
+                : effectUnit
 
             // 使用 doEvent 创建事件，会自动添加到 eventCollector
             doEvent({
@@ -115,7 +146,7 @@ export function createTriggerByTriggerMap(source:Entity,target:Entity, item:Trig
                 medium: target,  // 触发器持有者
                 target: eventTarget,  // 该触发器的目标
                 info: info,
-                effectUnits: effectUnit ?? []
+                effectUnits: resolvedEffects ?? []
             })
         }
     }
@@ -188,6 +219,13 @@ export function resolveTriggerEventTarget(
                 throw new Error("触发效果为null，无法作为目标")
             }
             return triggerEffect;
+        case "randomEnemy": {//当前战斗中随机一个存活的敌人
+            const battle = nowBattle.value
+            if (!battle) throw new Error("没有进行中的战斗，无法获取随机敌人")
+            const aliveEnemies = battle.getAliveEnemies()
+            if (aliveEnemies.length === 0) throw new Error("没有存活的敌人")
+            return randomChoice(aliveEnemies, "randomEnemy")
+        }
         default:
             // 检查是否是实体（通过 participantType 而不是 instanceof）
             if (typeof targetType === 'object' && targetType !== null && 'participantType' in targetType && targetType.participantType === 'entity') {

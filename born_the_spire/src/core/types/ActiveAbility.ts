@@ -45,7 +45,7 @@ export interface ActiveAbility {
 
     // 使用方式
     usage: {
-        type: "direct" | "selectTarget" | "toggle"
+        type: "direct" | "selectTarget" | "toggle" | "allTargets"
         targetType?: "enemy" | "ally" | "card" | "organ"
     }
 
@@ -54,6 +54,9 @@ export interface ActiveAbility {
 
     // 效果定义
     effects: EffectUnit[]
+
+    // 使用后永久失效
+    disableAfterUse?: boolean
 
     // 自定义执行逻辑（高级）
     onActivate?: (item: Entity, owner: Entity, context: any) => void

@@ -13,6 +13,7 @@ import { usageTracker } from "./UsageTracker"
 import { doEvent } from "./ActionEvent"
 import { newError } from "@/ui/hooks/global/alert"
 import { newLog } from "@/ui/hooks/global/log"
+import { showDisplayMessage } from "@/ui/hooks/global/displayMessage"
 
 import { DisplayManager } from "./DisplayManager"
 
@@ -137,30 +138,56 @@ export class ActiveAbilityManager {
         ability: ActiveAbility,
         selectedTargets?: Entity[]
     ): Promise<boolean> {
+        // 0. 检查物品是否失效
+        const asItem = item as any
+        if ('isDisabled' in asItem && asItem.isDisabled) {
+            showDisplayMessage(`${item.label} 已失效，无法使用`, 2000)
+            return false
+        }
+
         // 1. 检查能力是否可用
         const usageState = usageTracker.getUsageState(item)
         const checkResult = this.restrictionChecker.checkAbility(item, ability, owner, usageState)
 
         if (!checkResult.canUse) {
-            newError([`无法使用 ${ability.label}:`, checkResult.reason || "未知原因"])
+            showDisplayMessage(`${ability.label}: ${checkResult.reason}`, 2000)
             return false
         }
 
         // 2. 根据使用方式处理
+        let result: boolean
         switch (ability.usage.type) {
             case "direct":
-                return await this.executeDirectAbility(item, owner, ability)
+                result = await this.executeDirectAbility(item, owner, ability)
+                break
 
             case "selectTarget":
-                return await this.executeTargetAbility(item, owner, ability, selectedTargets)
+                result = await this.executeTargetAbility(item, owner, ability, selectedTargets)
+                break
 
             case "toggle":
-                return await this.executeToggleAbility(item, owner, ability)
+                result = await this.executeToggleAbility(item, owner, ability)
+                break
+
+            case "allTargets":
+                result = await this.executeAllTargetsAbility(item, owner, ability)
+                break
 
             default:
                 newError([`未知的使用方式: ${ability.usage.type}`])
-                return false
+                result = false
         }
+
+        // 3. 检查是否需要失效
+        if (result && ability.disableAfterUse) {
+            const asItem = item as any
+            if ('isDisabled' in asItem) {
+                asItem.isDisabled = true
+                newLog([`${item.label} 已失效`])
+            }
+        }
+
+        return result
     }
 
     /**
@@ -323,6 +350,58 @@ export class ActiveAbilityManager {
         }
 
         newLog([`${newState ? "激活" : "关闭"}了 ${ability.label}`])
+        return true
+    }
+
+    /**
+     * 执行对所有指定阵营目标起效的能力
+     */
+    private async executeAllTargetsAbility(
+        item: Entity,
+        owner: Entity,
+        ability: ActiveAbility
+    ): Promise<boolean> {
+        // 应用消耗
+        if (ability.restrictions) {
+            const costApplied = this.restrictionChecker.applyCosts(ability.restrictions, owner)
+            if (!costApplied) {
+                newError(["应用消耗失败"])
+                return false
+            }
+        }
+
+        // 根据 targetType 获取所有目标
+        const faction = ability.usage.targetType || "enemy"
+        const { nowBattle } = await import("@/core/objects/game/battle")
+        const battle = nowBattle.value
+        if (!battle) {
+            newError(["没有进行中的战斗"])
+            return false
+        }
+        const targets = faction === "ally" ? battle.getTeam("player") : battle.getTeam("enemy")
+
+        if (ability.onActivate) {
+            try {
+                await ability.onActivate(item, owner, { ability, selectedTargets: targets })
+            } catch (error) {
+                console.error("[ActiveAbilityManager] 自定义执行逻辑失败:", error)
+                newError(["能力执行失败"])
+                return false
+            }
+        } else {
+            for (const target of targets) {
+                doEvent({
+                    key: "abilityActivate",
+                    source: owner,
+                    medium: item,
+                    target: target,
+                    effectUnits: ability.effects
+                })
+            }
+        }
+
+        this.recordAbilityUsage(item, owner, ability)
+        newLog([`使用了 ${ability.label}`])
         return true
     }
 

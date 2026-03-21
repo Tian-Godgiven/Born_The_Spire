@@ -1,6 +1,6 @@
 <template>
 <div class="relic"
-    :class="{ 'has-abilities': hasActiveAbilities }"
+    :class="{ 'has-abilities': hasActiveAbilities, 'is-disabled': relic.isDisabled }"
     ref="relicRef"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
@@ -10,6 +10,16 @@
     <!-- 主动能力标识 -->
     <div class="ability-indicator" v-if="hasActiveAbilities">
         ⚡
+    </div>
+
+    <!-- 冷却角标 -->
+    <div class="cooldown-badge" v-if="cooldownValue !== null">
+        {{ cooldownValue > 0 ? cooldownValue : '✓' }}
+    </div>
+
+    <!-- 点数角标 -->
+    <div class="point-badge" v-if="pointValue !== null">
+        {{ pointValue }}
     </div>
 
     <div>{{ relic.label }}</div>
@@ -60,6 +70,16 @@
 
     const hasActiveAbilities = computed(() => {
         return relic.activeAbilities && relic.activeAbilities.length > 0
+    })
+
+    const cooldownValue = computed(() => {
+        if (!relic.status || !relic.status["cooldown"]) return null
+        return relic.status["cooldown"].value
+    })
+
+    const pointValue = computed(() => {
+        if (!relic.status || !relic.status["point"]) return null
+        return relic.status["point"].value
     })
 
     const rarityText = computed(() => {
@@ -135,10 +155,40 @@
         if (!hasActiveAbilities.value) return
 
         try {
+            // 为遗物提供默认的右键触发配置
+            const triggerConfig = {
+                rightClick: {
+                    type: "menu" as const
+                }
+            }
+
+            // 如果只有一个能力，直接执行；否则显示菜单
+            const abilities = relic.activeAbilities!
+            let menuConfig
+
+            if (abilities.length === 1) {
+                // 单能力：直接执行
+                triggerConfig.rightClick.type = "ability"
+                triggerConfig.rightClick.abilityKey = abilities[0].key
+            } else {
+                // 多能力：显示菜单
+                menuConfig = {
+                    items: abilities.map(ability => ({
+                        type: "ability" as const,
+                        abilityKey: ability.key,
+                        label: ability.label,
+                        describe: ability.describe,
+                        canUse: () => true
+                    }))
+                }
+            }
+
             await handleItemRightClick(
                 relic,
                 nowPlayer,
-                relic.activeAbilities!
+                abilities,
+                triggerConfig,
+                menuConfig
             )
         } catch (error) {
             console.error('[Relic] 右键点击处理失败:', error)
@@ -173,6 +223,42 @@
         font-weight: bold;
         border-radius: 0 0 4px 0;
         z-index: 1;
+    }
+
+    .cooldown-badge {
+        position: absolute;
+        bottom: -2px;
+        right: -2px;
+        background-color: #666;
+        color: white;
+        font-size: 10px;
+        padding: 1px 3px;
+        font-weight: bold;
+        border-radius: 4px 0 0 0;
+        z-index: 1;
+        min-width: 12px;
+        text-align: center;
+    }
+
+    .point-badge {
+        position: absolute;
+        bottom: -2px;
+        left: -2px;
+        background-color: #e67e22;
+        color: white;
+        font-size: 10px;
+        padding: 1px 3px;
+        font-weight: bold;
+        border-radius: 0 4px 0 0;
+        z-index: 1;
+        min-width: 12px;
+        text-align: center;
+    }
+
+    &.is-disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        text-decoration: line-through;
     }
 
     &:hover {

@@ -5,6 +5,7 @@ import { toRaw } from "vue";
 import { glossaryMap } from "@/static/list/system/glossaryMap";
 import { isStatus } from "@/core/utils/typeGuards";
 import { getLazyModule } from "@/core/utils/lazyLoader";
+import { getCardModifier } from "@/core/objects/system/modifier/CardModifier";
 
 //对象的描述，存储为数据，使用时翻译为对应的字符串
 export type Describe = (
@@ -54,15 +55,46 @@ export function getDescribe(describe:Describe|undefined,target?:Object){
             }
             //卡牌实例引用
             else if("@" in value){
-                const cardIndex = value["@"]
+                // @ 的值可能是索引（数字）或卡牌实例的 __id（字符串）
+                const cardIndexOrId = value["@"]
                 let cardLabel = "[卡牌]"
 
-                if (target && 'cards' in target && Array.isArray(target.cards)) {
-                    const cardKey = target.cards[cardIndex]
-                    if (cardKey) {
-                        const cardList = getLazyModule<any[]>('cardList')
-                        const cardConfig = cardList.find((c: any) => c.key === cardKey)
-                        if (cardConfig) cardLabel = cardConfig.label
+                // 获取 target 的 cards 数组
+                const targetCards = target?.cards
+                if (targetCards && Array.isArray(toRaw(targetCards))) {
+                    // 尝试作为索引访问
+                    if (typeof cardIndexOrId === 'number') {
+                        const cardKey = targetCards[cardIndexOrId]
+                        if (cardKey && typeof cardKey === 'string') {
+                            try {
+                                const cardList = getLazyModule<any[]>('cardList')
+                                const cardConfig = cardList.find((c: any) => c.key === cardKey)
+                                if (cardConfig) cardLabel = cardConfig.label
+                            } catch {
+                                // cardList 尚未加载，保持默认值
+                            }
+                        }
+                    }
+                    // 尝试作为卡牌实例 ID 访问（器官的 @ 引用会被替换为卡牌实例的 __id）
+                    else if (typeof cardIndexOrId === 'string') {
+                        // 查找目标的卡牌修饰器，根据 __id 找到卡牌实例
+                        try {
+                            if (target && 'targetType' in target && (target as any).targetType === 'organ') {
+                                // 这是器官，获取它提供的卡牌实例
+                                const organ = target as any
+                                // 器官的 owner 是 Player
+                                if (organ.owner) {
+                                    const cardModifier = getCardModifier(organ.owner)
+                                    const cardsFromOrgan = cardModifier.getCardsFromSource(organ)
+                                    const cardInstance = cardsFromOrgan.find((c: any) => c.__id === cardIndexOrId)
+                                    if (cardInstance) {
+                                        cardLabel = cardInstance.label || cardInstance.key || "[卡牌]"
+                                    }
+                                }
+                            }
+                        } catch {
+                            // 卡牌实例 ID 查找失败，保持默认值
+                        }
                     }
                 }
                 text += cardLabel
@@ -72,9 +104,15 @@ export function getDescribe(describe:Describe|undefined,target?:Object){
                 const cardKey = value["#"]
                 let cardLabel = "[卡牌]"
 
-                const cardList = getLazyModule<any[]>('cardList')
-                const cardConfig = cardList.find((c: any) => c.key === cardKey)
-                if (cardConfig) cardLabel = cardConfig.label
+                if (cardKey && typeof cardKey === 'string') {
+                    try {
+                        const cardList = getLazyModule<any[]>('cardList')
+                        const cardConfig = cardList.find((c: any) => c.key === cardKey)
+                        if (cardConfig) cardLabel = cardConfig.label
+                    } catch {
+                        // cardList 尚未加载，保持默认值
+                    }
+                }
                 text += cardLabel
             }
             //这是一个数组，并且会尝试访问target的key属性

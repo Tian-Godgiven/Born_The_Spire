@@ -22,7 +22,7 @@
                     <!-- 动态渲染所有 healthBarRight 位置的机制 -->
                     <MechanismDisplay :entity="target" position="healthBarRight" />
                 </div>
-                <div class="states" v-for="state in target.state" :key="state.key">
+                <div class="states" v-for="state in stateList" :key="state.key">
                     <State :state></State>
                 </div>
             </div>
@@ -50,6 +50,7 @@
     import StateDisplay from '@/ui/components/display/StateDisplay.vue';
     import MechanismDisplay from '@/ui/components/display/MechanismDisplay.vue';
     import { formatIntentDisplay } from '@/core/objects/system/Intent';
+    import { getStateModifier } from '@/core/objects/system/modifier/StateModifier';
 
     const props = defineProps<{target:Chara,side:'left'|"right"}>()
 
@@ -68,6 +69,12 @@
         }
 
         return organs || []
+    })
+
+    // 获取状态列表（通过 StateModifier）
+    const stateList = computed(() => {
+        const stateModifier = getStateModifier(props.target)
+        return stateModifier.states.value
     })
 
     // 状态显示控制

@@ -1,5 +1,6 @@
 import type { Entity } from "@/core/objects/system/Entity"
 import type { AbilityUsageState, ActiveAbility } from "@/core/types/ActiveAbility"
+import { toRaw } from "vue"
 
 /**
  * 使用状态追踪器
@@ -12,8 +13,9 @@ export class UsageTracker {
      * 获取实体的使用状态
      */
     getUsageState(entity: Entity): AbilityUsageState {
-        if (!this.usageStates.has(entity)) {
-            this.usageStates.set(entity, {
+        const raw = toRaw(entity)
+        if (!this.usageStates.has(raw)) {
+            this.usageStates.set(raw, {
                 usesThisTurn: {},
                 usesThisBattle: {},
                 usesThisFloor: {},
@@ -23,7 +25,7 @@ export class UsageTracker {
                 toggleStates: {}
             })
         }
-        return this.usageStates.get(entity)!
+        return this.usageStates.get(raw)!
     }
 
     /**
@@ -203,7 +205,7 @@ export class UsageTracker {
      * 清理实体的使用状态
      */
     clearUsageState(entity: Entity): void {
-        this.usageStates.delete(entity)
+        this.usageStates.delete(toRaw(entity))
     }
 
     /**

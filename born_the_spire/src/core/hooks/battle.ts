@@ -16,12 +16,10 @@ import { doEvent } from "@/core/objects/system/ActionEvent"
 export function endBattle(result: 'win' | 'lose'): void {
     const battle = nowBattle.value
     if (!battle) {
-        console.warn('[endBattle] 当前没有进行中的战斗')
         return
     }
 
     if (battle.isEnded) {
-        console.warn('[endBattle] 战斗已经结束')
         return
     }
 

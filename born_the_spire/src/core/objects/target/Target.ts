@@ -23,7 +23,7 @@ export class Target extends Entity{
     public readonly targetType: string = 'target'  // 类型标识，子类应该覆盖
     public label:string = "";//名称
     public readonly __key:string = nanoid() //唯一键
-    public state:State[] = []//状态数组
+    public state:State[] = []//状态数组（由 StateModifier 管理，内部响应式）
     constructor(map:TargetMap, beforeCurrentInit?: (this: Entity) => void){
         super(map, beforeCurrentInit)
         //名称

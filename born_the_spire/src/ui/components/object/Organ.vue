@@ -51,7 +51,7 @@ import { nowPlayer } from '@/core/objects/game/run';
     const showDetail = ref(false)
 
     const describe = computed(()=>{
-        return getDescribe(organ.describe,organ)
+        return getDescribe(organ.describe, organ)
     })
 
     const hasActiveAbilities = computed(() => {

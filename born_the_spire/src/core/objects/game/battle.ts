@@ -239,11 +239,8 @@ export function addToEnemyTeam(target:Enemy|Chara){
 export const nowBattle = ref<Battle|null>(null)
 //开始新的战斗
 export async function startNewBattle(playerTeam:(Player|Chara)[],enemyTeam:(Enemy|Chara)[]):Promise<Battle>{
-    console.log('[startNewBattle] 开始战斗，playerTeam:', playerTeam)
     if (playerTeam[0] && isPlayer(playerTeam[0])) {
         const player = playerTeam[0] as Player
-        console.log('[startNewBattle] player 最大生命:', player.status['max-health']?.value)
-        console.log('[startNewBattle] player 器官数量:', player.organs.value?.length)
     }
 
     const battle = new Battle(1,playerTeam,enemyTeam)

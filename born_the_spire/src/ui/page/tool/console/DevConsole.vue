@@ -174,6 +174,18 @@ async function executeFunction(funcName: string, args: any[]) {
         case 'addRandomRelic':
             await addRandomRelic()
             break
+        case 'gainRelic':
+            await gainRelic(args[0])
+            break
+        case 'removeRelic':
+            await removeRelic(args[0])
+            break
+        case 'listRelics':
+            await listRelics()
+            break
+        case 'listAllRelics':
+            await listAllRelics()
+            break
         case 'help':
             showHelp()
             break
@@ -430,7 +442,7 @@ async function addTestOrgan(organKey: string) {
 }
 
 // 列出当前拥有的主动能力
-function listActiveAbilities() {
+async function listActiveAbilities() {
     if (!nowGameRun) {
         addOutput('游戏未开始，请先点击"开始游戏"', 'error')
         return
@@ -438,14 +450,14 @@ function listActiveAbilities() {
 
     try {
         const player = nowPlayer
-        const { getOrganModifier } = require('@/core/objects/system/modifier/OrganModifier')
-        const { getRelicModifier } = require('@/core/objects/system/modifier/RelicModifier')
+        const { getOrganModifier } = await import('@/core/objects/system/modifier/OrganModifier')
+        const { getRelicModifier } = await import('@/core/objects/system/modifier/RelicModifier')
 
         const organModifier = getOrganModifier(player)
         const relicModifier = getRelicModifier(player)
 
-        const organs = organModifier.getOwnedOrgans()
-        const relics = relicModifier.getOwnedRelics()
+        const organs = organModifier.getOrgans()
+        const relics = relicModifier.getRelics()
 
         let totalAbilities = 0
 
@@ -998,6 +1010,119 @@ async function addRandomRelic() {
     }
 }
 
+// 获得指定遗物
+async function gainRelic(relicKey: string) {
+    if (!nowGameRun) {
+        addOutput('游戏未开始，请先点击"开始游戏"', 'error')
+        return
+    }
+
+    if (!relicKey) {
+        addOutput('用法: gainRelic("relicKey")', 'error')
+        addOutput('例如: gainRelic("original_relic_00001")', 'info')
+        addOutput('使用 listAllRelics() 查看所有可用遗物', 'info')
+        return
+    }
+
+    try {
+        const { getRelicByKey } = await import('@/static/list/item/relicList')
+        const { getRelic } = await import('@/core/objects/item/Subclass/Relic')
+
+        const relic = await getRelicByKey(relicKey)
+        const player = nowPlayer
+        getRelic(player, player, relic)
+
+        addOutput(`✓ 成功获得遗物: ${relic.label} [${relic.rarity}]`, 'result')
+    } catch (error: any) {
+        addOutput(`获得遗物失败: ${error.message}`, 'error')
+    }
+}
+
+// 移除指定遗物
+async function removeRelic(relicKey: string) {
+    if (!nowGameRun) {
+        addOutput('游戏未开始，请先点击"开始游戏"', 'error')
+        return
+    }
+
+    if (!relicKey) {
+        addOutput('用法: removeRelic("relicKeyOrId")', 'error')
+        addOutput('例如: removeRelic("original_relic_00001")', 'info')
+        addOutput('或: removeRelic("<__id>")', 'info')
+        addOutput('使用 listRelics() 查看当前拥有的遗物', 'info')
+        return
+    }
+
+    try {
+        const { getRelicModifier } = await import('@/core/objects/system/modifier/RelicModifier')
+        const player = nowPlayer
+        const relicModifier = getRelicModifier(player)
+
+        const relic = relicModifier.getRelics().find(r => r.__id === relicKey) ?? relicModifier.getRelicByKey(relicKey)
+        if (!relic) {
+            addOutput(`未拥有遗物: ${relicKey}`, 'error')
+            return
+        }
+
+        const relicName = relic.label
+        relicModifier.loseRelic(relic, player)
+        addOutput(`✓ 成功移除遗物: ${relicName}`, 'result')
+    } catch (error: any) {
+        addOutput(`移除遗物失败: ${error.message}`, 'error')
+    }
+}
+
+// 列出当前拥有的遗物
+async function listRelics() {
+    if (!nowGameRun) {
+        addOutput('游戏未开始，请先点击"开始游戏"', 'error')
+        return
+    }
+
+    try {
+        const { getRelicModifier } = await import('@/core/objects/system/modifier/RelicModifier')
+        const player = nowPlayer
+        const relicModifier = getRelicModifier(player)
+        const relics = relicModifier.getRelics()
+
+        if (relics.length === 0) {
+            addOutput('当前没有拥有的遗物', 'info')
+            return
+        }
+
+        addOutput(`=== 当前拥有 ${relics.length} 个遗物 ===`, 'info')
+        for (const relic of relics) {
+            addOutput(`  [${relic.rarity}] ${relic.label} (${relic.key}) __id: ${relic.__id}`, 'result')
+        }
+        addOutput('', 'info')
+        addOutput('使用 removeRelic("key") 移除遗物', 'info')
+    } catch (error: any) {
+        addOutput(`列出遗物失败: ${error.message}`, 'error')
+    }
+}
+
+// 列出所有可用遗物
+async function listAllRelics() {
+    try {
+        const { getAllRelics } = await import('@/static/list/item/relicList')
+        const allRelics = getAllRelics()
+
+        if (!allRelics || allRelics.length === 0) {
+            addOutput('没有可用的遗物数据', 'info')
+            return
+        }
+
+        addOutput(`=== 共有 ${allRelics.length} 个可用遗物 ===`, 'info')
+        for (const relic of allRelics) {
+            addOutput(`  [${relic.rarity || 'common'}] ${relic.label} - ${relic.key}`, 'result')
+        }
+        addOutput('', 'info')
+        addOutput('使用 gainRelic("key") 获得遗物', 'info')
+    } catch (error: any) {
+        addOutput(`列出可用遗物失败: ${error.message}`, 'error')
+    }
+}
+
 // 显示帮助
 function showHelp() {
     addOutput('=== 可用命令 ===', 'info')
@@ -1028,6 +1153,16 @@ function showHelp() {
     addOutput('  例如: addTestOrgan("testEnhancedHeart")', 'info')
     addOutput('listActiveAbilities() - 列出当前拥有的主动能力', 'info')
     addOutput('', 'info')
+    addOutput('=== 遗物系统命令 ===', 'info')
+    addOutput('listRelics() - 列出当前拥有的遗物', 'info')
+    addOutput('listAllRelics() - 列出所有可用遗物', 'info')
+    addOutput('gainRelic("relicKey") - 获得指定遗物', 'info')
+    addOutput('  例如: gainRelic("original_relic_00001")', 'info')
+    addOutput('removeRelic("relicKey") - 移除指定遗物', 'info')
+    addOutput('  例如: removeRelic("original_relic_00001")', 'info')
+    addOutput('addRandomRelic() - 随机获取一个遗物', 'info')
+    addOutput('  例如: addRandomRelic()', 'info')
+    addOutput('', 'info')
     addOutput('=== 器官系统命令 ===', 'info')
     addOutput('listOrgans() - 列出当前拥有的器官', 'info')
     addOutput('listAllOrgans() - 列出所有可用器官', 'info')
@@ -1035,8 +1170,6 @@ function showHelp() {
     addOutput('  例如: unlockAllOrgans()', 'info')
     addOutput('addOrgan("organKey") - 添加器官', 'info')
     addOutput('  例如: addOrgan("original_organ_00001")', 'info')
-    addOutput('addRandomRelic() - 随机获取一个遗物', 'info')
-    addOutput('  例如: addRandomRelic()', 'info')
     addOutput('breakOrgan("organKey") - 损坏器官', 'info')
     addOutput('  例如: breakOrgan("original_organ_00001")', 'info')
     addOutput('repairOrgan("organKey") - 修复器官', 'info')
@@ -1108,18 +1241,31 @@ function toggle() {
     }
 }
 
+// 全局按键监听
+function handleGlobalKeydown(e: KeyboardEvent) {
+    const tag = (document.activeElement as HTMLElement)?.tagName
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return
+    if (e.key === 'p' || e.key === 'P') {
+        toggle()
+    }
+}
+
 // 生命周期
 onMounted(() => {
     // 暴露到全局
     ;(window as any).openConsole = open
     ;(window as any).closeConsole = close
     ;(window as any).toggleConsole = toggle
+    // 注册全局按键监听
+    document.addEventListener('keydown', handleGlobalKeydown)
 })
 
 onUnmounted(() => {
     delete (window as any).openConsole
     delete (window as any).closeConsole
     delete (window as any).toggleConsole
+    // 移除全局按键监听
+    document.removeEventListener('keydown', handleGlobalKeydown)
 })
 
 defineExpose({ open, close, toggle })

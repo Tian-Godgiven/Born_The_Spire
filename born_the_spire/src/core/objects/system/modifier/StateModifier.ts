@@ -10,6 +10,7 @@ import { nanoid } from "nanoid"
 import _ from "lodash"
 import { State } from "../State"
 import { modifierManager } from "@/core/managers/ModifierManager"
+import { computed, reactive } from "vue"
 /**
  * StateModifierUnit - 管理单个 state 的副作用
  */
@@ -51,11 +52,16 @@ class StateModifierUnit {
  */
 export class StateModifier {
     public owner: Target
-    private units: StateModifierUnit[] = []
+    private units: StateModifierUnit[] = reactive([])  // 响应式，用于触发 UI 更新
 
     constructor(owner: Target) {
         this.owner = owner
     }
+
+    // 响应式的状态列表（用于 UI 显示）
+    public states = computed(() => {
+        return this.units.map(u => u.state)
+    })
 
     /**
      * 添加状态
@@ -66,7 +72,7 @@ export class StateModifier {
      */
     addState(stateData: StateData, stacks: number | Array<{key: string, stack: number}>, source: Entity) {
         // 检查是否已有该状态
-        const existingState = this.owner.state.find(s => s.key === stateData.key)
+        const existingState = this.getState(stateData.key)
 
         if (existingState) {
             // 已有该状态，根据 repeate 行为处理
@@ -83,10 +89,7 @@ export class StateModifier {
             stacks: stacks
         })
 
-        // 添加到 owner 的 state 列表
-        this.owner.state.push(state)
-
-        // 创建 unit 管理副作用
+        // 创建 unit 管理副作用（同时添加到响应式 units 数组）
         const unit = new StateModifierUnit(state)
         this.units.push(unit)
 
@@ -289,12 +292,11 @@ export class StateModifier {
      * 移除状态
      */
     removeState(stateKey: string, triggerRemoveEffect: boolean = false) {
-        const stateIndex = this.owner.state.findIndex(s => s.key === stateKey)
-        if (stateIndex === -1) {
+        const state = this.getState(stateKey)
+        if (!state) {
             return false
         }
 
-        const state = this.owner.state[stateIndex]
         const parentLog = newLog([this.owner, "失去了状态", state])
 
         // 找到对应的 unit
@@ -303,12 +305,9 @@ export class StateModifier {
             const unit = this.units[unitIndex]
             // 清理副作用
             unit.cleanup(parentLog)
-            // 移除 unit
+            // 移除 unit（响应式数组，会自动触发 UI 更新）
             this.units.splice(unitIndex, 1)
         }
-
-        // 从 owner 的 state 列表移除
-        this.owner.state.splice(stateIndex, 1)
 
         // 触发 remove 交互（一次性效果）
         if (triggerRemoveEffect) {
@@ -332,7 +331,7 @@ export class StateModifier {
      * 如果层数归0，自动移除状态
      */
     changeStack(stateKey: string, stackKey: string, delta: number) {
-        const state = this.owner.state.find(s => s.key === stateKey)
+        const state = this.getState(stateKey)
         if (!state) return false
 
         const stack = state.stacks.find(s => s.key === stackKey)
@@ -358,21 +357,22 @@ export class StateModifier {
      * 获取指定状态
      */
     getState(stateKey: string): State | undefined {
-        return this.owner.state.find(s => s.key === stateKey)
+        const unit = this.units.find(u => u.state.key === stateKey)
+        return unit?.state
     }
 
     /**
      * 检查是否拥有指定状态
      */
     hasState(stateKey: string): boolean {
-        return this.owner.state.some(s => s.key === stateKey)
+        return this.units.some(u => u.state.key === stateKey)
     }
 
     /**
-     * 获取所有状态
+     * 获取所有状态（用于内部逻辑）
      */
     getAllStates(): State[] {
-        return this.owner.state
+        return this.units.map(u => u.state)
     }
 }
 

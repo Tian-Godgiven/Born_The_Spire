@@ -58,6 +58,7 @@ export const playerList:Record<string,PlayerMap> = {
         relic:[
             "original_relic_00001",  // 回血石 - 战斗结束时回复生命
             "original_relic_00005",  // 先手之戒 - 第一回合额外抽2张牌
+            "original_relic_pistol",  // 袖珍手枪 - 战斗中右键射击敌人
         ]
     }
 }

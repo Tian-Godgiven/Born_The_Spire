@@ -3,6 +3,7 @@ import type { Relic } from "../item/Subclass/Relic"
 import type { Card } from "../item/Subclass/Card";
 import type { CharaMap } from "./Target";
 import type { Entity } from "../system/Entity";
+import { getStateModifier } from "../system/modifier/StateModifier";
 
 
 
@@ -170,9 +171,14 @@ export class Player extends Chara{
         this.cardPiles.exhaustPile = []
         this.cardPiles.handPile = []
     }
-    //初始化状态
+    //初始化状态（通过 StateModifier 清空所有状态）
     initState(){
-        this.state = []
+        const stateModifier = getStateModifier(this)
+        // 获取所有状态key并逐个移除
+        const allStates = stateModifier.getAllStates()
+        for (const state of [...allStates]) {
+            stateModifier.removeState(state.key, false)
+        }
     }
 
     //获取药水列表（用于 UI 显示，包含空槽位）

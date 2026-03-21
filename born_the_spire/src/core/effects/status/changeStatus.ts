@@ -29,6 +29,51 @@ export const addStatusBase:EffectFunc = (event,effect)=>{
 
 }
 
+//直接设置属性基础值
+export const setBaseStatus: EffectFunc = (event, effect) => {
+    const { target } = event
+    const { statusKey, value } = effect.params
+
+    if (!statusKey || value === undefined) {
+        newError(["效果缺少必要参数: statusKey, value"])
+        return
+    }
+
+    handleEventEntity(target, (e) => {
+        if (!isEntity(e)) return
+        const status = e.status[String(statusKey)]
+        if (!status) {
+            console.warn(`实体 ${e.label} 没有属性 ${statusKey}`)
+            return
+        }
+        // 直接设置原始基础值，清除所有现有修饰器
+        status.setOriginalBaseValue(Number(value))
+    })
+}
+
+//递减属性值（直接设置为 value - 1）
+export const decrementStatus: EffectFunc = (event, effect) => {
+    const { target } = event
+    const { statusKey, amount = 1 } = effect.params
+
+    if (!statusKey) {
+        newError(["效果缺少目标属性的key"])
+        return
+    }
+
+    handleEventEntity(target, (e) => {
+        if (!isEntity(e)) return
+        const status = e.status[String(statusKey)]
+        if (!status) {
+            console.warn(`实体 ${e.label} 没有属性 ${statusKey}`)
+            return
+        }
+        // 直接设置为当前值减去 amount
+        const newValue = status.baseValue - Number(amount)
+        status.setOriginalBaseValue(newValue)
+    })
+}
+
 /**
  * 乘法修改属性基础值
  * 支持条件参数：onlyIfElite, onlyIfBoss
@@ -58,6 +103,26 @@ export const multiplyStatusBase: EffectFunc = (event, effect) => {
         const currentBase = status.baseValue
         const newBase = Math.floor(currentBase * Number(multiplier))
         status.setOriginalBaseValue(newBase)
+    })
+}
+
+/**
+ * 重置冷却：将 cooldownKey 重置为 maxKey 的值
+ * 默认 cooldownKey="cooldown", maxKey="maxCooldown"
+ */
+export const resetCooldown: EffectFunc = (event, effect) => {
+    const { target } = event
+    const { cooldownKey = "cooldown", maxKey = "maxCooldown" } = effect.params || {}
+
+    handleEventEntity(target, (e) => {
+        if (!isEntity(e)) return
+        const maxStatus = e.status[String(maxKey)]
+        const cooldownStatus = e.status[String(cooldownKey)]
+        if (!maxStatus || !cooldownStatus) {
+            console.warn(`[resetCooldown] 实体 ${e.label} 缺少 ${cooldownKey} 或 ${maxKey} 属性`)
+            return
+        }
+        cooldownStatus.setOriginalBaseValue(maxStatus.value)
     })
 }
 
