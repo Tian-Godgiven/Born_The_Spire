@@ -7,7 +7,10 @@
     <div class="output" ref="outputRef">
         <div v-for="(line, index) in outputLines" :key="index" class="output-line">
             <span v-if="line.type === 'command'" class="prompt">&gt; </span>
-            <span :class="['text', line.type]">{{ line.text }}</span>
+            <span
+                :class="['text', line.type, { clickable: !!(line.clickable || line.action) }]"
+                @click="line.action ? line.action() : (line.clickable ? fillInput(line.clickable) : undefined)"
+            >{{ line.text }}</span>
         </div>
     </div>
     <div class="input-area">
@@ -16,8 +19,8 @@
             ref="inputRef"
             v-model="currentInput"
             @keydown.enter="executeCommand"
-            @keydown.up="historyUp"
-            @keydown.down="historyDown"
+            @keydown.up.prevent="historyUp"
+            @keydown.down.prevent="historyDown"
             placeholder="输入命令... (输入 help 查看帮助)"
         />
     </div>
@@ -31,8 +34,11 @@ import { roomRegistry } from '@/static/registry/roomRegistry'
 import router from '@/ui/router'
 
 interface OutputLine {
-    type: 'command' | 'result' | 'error' | 'info'
+    type: 'command' | 'result' | 'error' | 'info' | 'example'
     text: string
+    clickable?: string    // 点击后填入输入栏的命令文本
+    action?: () => void   // 点击后执行的自定义动作（优先于 clickable）
+    sectionKey?: string   // 所属区域（用于折叠/展开控制）
 }
 
 const isVisible = ref(false)
@@ -43,14 +49,109 @@ const historyIndex = ref(-1)
 const outputRef = ref<HTMLElement>()
 const inputRef = ref<HTMLInputElement>()
 
+const HISTORY_STORAGE_KEY = 'dev-console-history'
+const HISTORY_MAX = 20
+
+// 帮助区域定义
+const helpSections: Array<{ key: string, title: string, items: Array<{ cmd: string, desc: string, examples?: string[] }> }> = [
+    {
+        key: '房间',
+        title: '房间命令',
+        items: [
+            { cmd: 'listRooms()', desc: '列出所有房间', examples: ['listRooms("battle")'] },
+            { cmd: 'enterRoom("key", layer?)', desc: '进入指定房间', examples: ['enterRoom("battle_elite_hydra", 1)'] },
+            { cmd: 'unlockAllRooms()', desc: '解锁地图所有房间' },
+        ]
+    },
+    {
+        key: '战斗',
+        title: '战斗调试命令',
+        items: [
+            { cmd: 'startBattle("enemyKey", layer?)', desc: '立即开始战斗', examples: ['startBattle("test_enemy_slime")'] },
+            { cmd: 'listEnemies()', desc: '列出所有敌人' },
+            { cmd: 'dealDamage(伤害)', desc: '测试造成伤害', examples: ['dealDamage(25)'] },
+            { cmd: 'gameOver()', desc: '触发游戏失败' },
+        ]
+    },
+    {
+        key: '遗物',
+        title: '遗物系统命令',
+        items: [
+            { cmd: 'listRelics()', desc: '列出当前遗物' },
+            { cmd: 'listAllRelics()', desc: '列出所有遗物' },
+            { cmd: 'gainRelic("key")', desc: '获得指定遗物', examples: ['gainRelic("original_relic_00001")'] },
+            { cmd: 'removeRelic("key")', desc: '移除指定遗物' },
+            { cmd: 'addRandomRelic()', desc: '随机获取遗物' },
+        ]
+    },
+    {
+        key: '器官',
+        title: '器官系统命令',
+        items: [
+            { cmd: 'listOrgans()', desc: '列出当前器官' },
+            { cmd: 'listAllOrgans()', desc: '列出所有器官' },
+            { cmd: 'addOrgan("key")', desc: '添加器官', examples: ['addOrgan("original_organ_00001")'] },
+            { cmd: 'breakOrgan("key")', desc: '损坏器官' },
+            { cmd: 'repairOrgan("key")', desc: '修复器官' },
+            { cmd: 'upgradeOrgan("key")', desc: '升级器官' },
+            { cmd: 'removeOrgan("key")', desc: '吞噬器官' },
+        ]
+    },
+    {
+        key: '临时物品',
+        title: '临时物品命令',
+        items: [
+            { cmd: 'addTempCard("key", "removeOn")', desc: '添加临时卡牌' },
+            { cmd: 'addTempOrgan("key", "removeOn")', desc: '添加临时器官' },
+            { cmd: 'listTempItems()', desc: '列出临时物品' },
+        ]
+    },
+    {
+        key: '主动',
+        title: '主动能力命令',
+        items: [
+            { cmd: 'listActiveAbilities()', desc: '列出主动能力' },
+        ]
+    },
+    {
+        key: '调试',
+        title: '调试工具命令',
+        items: [
+            { cmd: 'listTriggers("target")', desc: '列出触发器' },
+            { cmd: 'removeTrigger("target", "id")', desc: '移除触发器' },
+        ]
+    },
+    {
+        key: '控制台',
+        title: '控制台命令',
+        items: [
+            { cmd: 'clear', desc: '清空控制台' },
+            { cmd: 'help', desc: '显示全部帮助' },
+            { cmd: 'help --区域', desc: '只显示指定区域' },
+            { cmd: 'help --all', desc: '展开显示全部' },
+        ]
+    },
+]
+
+// 折叠状态：key 为区域名，value 为是否折叠（默认全部收起）
+const collapsedSections = ref<Record<string, boolean>>(
+    Object.fromEntries(helpSections.map(s => [s.key, true]))
+)
+
 // 添加输出行
-function addOutput(text: string, type: OutputLine['type'] = 'result') {
-    outputLines.value.push({ type, text })
+function addOutput(text: string, type: OutputLine['type'] = 'result', clickable?: string, action?: () => void) {
+    outputLines.value.push({ type, text, clickable, action })
     nextTick(() => {
         if (outputRef.value) {
             outputRef.value.scrollTop = outputRef.value.scrollHeight
         }
     })
+}
+
+// 点击命令行，填入输入栏
+function fillInput(command: string) {
+    currentInput.value = command
+    nextTick(() => inputRef.value?.focus())
 }
 
 // 执行命令
@@ -61,8 +162,17 @@ async function executeCommand() {
     // 显示命令
     addOutput(command, 'command')
 
-    // 添加到历史
-    commandHistory.value.push(command)
+    // 添加到历史（去重：如果末尾已有相同命令则不重复添加）
+    if (commandHistory.value[commandHistory.value.length - 1] !== command) {
+        commandHistory.value.push(command)
+        if (commandHistory.value.length > HISTORY_MAX) {
+            commandHistory.value.splice(0, commandHistory.value.length - HISTORY_MAX)
+        }
+        // 持久化到 localStorage
+        try {
+            localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(commandHistory.value))
+        } catch {}
+    }
     historyIndex.value = commandHistory.value.length
 
     // 清空输入
@@ -95,8 +205,10 @@ async function parseAndExecute(command: string) {
         }) : []
 
         await executeFunction(funcName, args)
-    } else if (command === 'help') {
-        showHelp()
+    } else if (command === 'help' || command.startsWith('help --')) {
+        const filter = command.startsWith('help --') ? command.slice(7).trim() : undefined
+        helpBlockStart = -1  // 重置，作为新的帮助块
+        showHelp(filter)
     } else if (command === 'clear') {
         outputLines.value = []
     } else {
@@ -127,7 +239,7 @@ async function executeFunction(funcName: string, args: any[]) {
             await addTemporaryOrgan(args[0], args[1] || 'battleEnd')
             break
         case 'listTempItems':
-            listTemporaryItems()
+            await listTemporaryItems()
             break
         case 'addTestRelic':
             await addTestRelic(args[0])
@@ -139,10 +251,10 @@ async function executeFunction(funcName: string, args: any[]) {
             listActiveAbilities()
             break
         case 'listOrgans':
-            listOrgans()
+            await listOrgans()
             break
         case 'listAllOrgans':
-            listAllOrgans()
+            await listAllOrgans()
             break
         case 'addOrgan':
             await addOrgan(args[0])
@@ -163,7 +275,7 @@ async function executeFunction(funcName: string, args: any[]) {
             await testOrganFlow()
             break
         case 'listTriggers':
-            listTriggers(args[0])
+            await listTriggers(args[0])
             break
         case 'removeTrigger':
             await removeTrigger(args[0], args[1])
@@ -180,11 +292,20 @@ async function executeFunction(funcName: string, args: any[]) {
         case 'removeRelic':
             await removeRelic(args[0])
             break
+        case 'dealDamage':
+            await dealDamage(args[0])
+            break
         case 'listRelics':
             await listRelics()
             break
         case 'listAllRelics':
             await listAllRelics()
+            break
+        case 'startBattle':
+            await startBattle(args[0], args[1])
+            break
+        case 'listEnemies':
+            await listEnemies()
             break
         case 'help':
             showHelp()
@@ -340,14 +461,14 @@ async function addTemporaryOrgan(organKey: string, removeOn: string = 'battleEnd
 }
 
 // 列出所有临时物品
-function listTemporaryItems() {
+async function listTemporaryItems() {
     if (!nowGameRun) {
         addOutput('游戏未开始，请先点击"开始游戏"', 'error')
         return
     }
 
     try {
-        const { getAllTemporaryItems } = require('@/core/hooks/temporary')
+        const { getAllTemporaryItems } = await import('@/core/hooks/temporary')
         const tempItems = getAllTemporaryItems()
 
         if (tempItems.length === 0) {
@@ -499,7 +620,7 @@ async function listActiveAbilities() {
 }
 
 // 列出玩家当前拥有的器官
-function listOrgans() {
+async function listOrgans() {
     if (!nowGameRun) {
         addOutput('游戏未开始，请先点击"开始游戏"', 'error')
         return
@@ -507,7 +628,7 @@ function listOrgans() {
 
     try {
         const player = nowPlayer
-        const { getOrganModifier } = require('@/core/objects/system/modifier/OrganModifier')
+        const { getOrganModifier } = await import('@/core/objects/system/modifier/OrganModifier')
         const organModifier = getOrganModifier(player)
         const organs = organModifier.getOrgans()
 
@@ -540,9 +661,9 @@ function listOrgans() {
 }
 
 // 列出所有可用器官（从配置）
-function listAllOrgans() {
+async function listAllOrgans() {
     try {
-        const organList = (require('@/static/list/target/organList')).organList
+        const { organList } = await import('@/static/list/target/organList')
 
         if (!organList || organList.length === 0) {
             addOutput('没有可用的器官数据', 'info')
@@ -846,21 +967,21 @@ async function testOrganFlow() {
 // ========== 触发器调试命令 ==========
 
 // 列出实体的触发器
-function listTriggers(targetType?: string) {
+async function listTriggers(targetType?: string) {
     if (!nowGameRun) {
         addOutput('游戏未开始，请先点击"开始游戏"', 'error')
         return
     }
 
     try {
-        const { getEntityTriggers, formatTriggerReport } = require('@/core/hooks/triggerDebug')
+        const { getEntityTriggers, formatTriggerReport } = await import('@/core/hooks/triggerDebug')
 
         let entity: any
         switch (targetType) {
             case 'enemy':
             case 'e':
                 // 列出所有敌人的触发器
-                const { nowBattle } = require('@/core/objects/game/battle')
+                const { nowBattle } = await import('@/core/objects/game/battle')
                 if (!nowBattle || nowBattle.enemies.length === 0) {
                     addOutput('当前没有敌人', 'error')
                     return
@@ -913,13 +1034,13 @@ async function removeTrigger(targetType: string, triggerId: string) {
     }
 
     try {
-        const { removeTriggerById, getEntityTriggers } = require('@/core/hooks/triggerDebug')
+        const { removeTriggerById } = await import('@/core/hooks/triggerDebug')
 
         let entity: any
         switch (targetType) {
             case 'enemy':
             case 'e':
-                const { nowBattle } = require('@/core/objects/game/battle')
+                const { nowBattle } = await import('@/core/objects/game/battle')
                 if (!nowBattle || nowBattle.enemies.length === 0) {
                     addOutput('当前没有敌人', 'error')
                     return
@@ -1007,6 +1128,34 @@ async function addRandomRelic() {
 
     } catch (error: any) {
         addOutput(`获取随机遗物失败: ${error.message}`, 'error')
+    }
+}
+
+// 对当前玩家造成伤害
+async function dealDamage(value: number) {
+    if (!nowPlayer) {
+        addOutput('玩家不存在', 'error')
+        return
+    }
+
+    if (value === undefined || isNaN(value)) {
+        addOutput('用法: dealDamage(伤害值)', 'error')
+        addOutput('  例如: dealDamage(25)', 'info')
+        return
+    }
+
+    try {
+        const { doEvent } = await import('@/core/objects/system/ActionEvent')
+        await doEvent({
+            key: 'testDamage',
+            source: nowPlayer,
+            medium: nowPlayer,
+            target: nowPlayer,
+            effectUnits: [{ key: 'damage', params: { value } }]
+        })
+        addOutput(`✓ 对玩家造成了 ${value} 点伤害`, 'result')
+    } catch (error: any) {
+        addOutput(`造成伤害失败: ${error.message}`, 'error')
     }
 }
 
@@ -1123,78 +1272,151 @@ async function listAllRelics() {
     }
 }
 
+// 立即开始与指定敌人的战斗
+async function startBattle(enemyKey: string, layer?: number) {
+    if (!nowGameRun) {
+        addOutput('游戏未开始，请先点击"开始游戏"', 'error')
+        return
+    }
+
+    if (!enemyKey) {
+        addOutput('用法: startBattle("enemyKey", layer?)', 'error')
+        addOutput('例如: startBattle("test_enemy_slime", 1)', 'error')
+        addOutput('使用 listRooms("battle") 查看所有战斗房间', 'info')
+        return
+    }
+
+    try {
+        const { BattleRoom } = await import('@/core/objects/room/BattleRoom')
+        const { hasEnemy } = await import('@/static/list/target/enemyList')
+
+        // 验证敌人是否存在
+        if (!hasEnemy(enemyKey)) {
+            addOutput(`未找到敌人: ${enemyKey}`, 'error')
+            return
+        }
+
+        // 确定层级
+        const battleLayer = layer !== undefined ? layer : (nowGameRun.currentRoom?.layer || 1)
+
+        addOutput(`准备与 ${enemyKey} 战斗 (层级: ${battleLayer})`, 'info')
+
+        // 如果当前有房间，先完成并退出
+        if (nowGameRun.currentRoom) {
+            addOutput('退出当前房间...', 'info')
+            await nowGameRun.completeCurrentRoom()
+        }
+
+        // 创建战斗房间
+        const battleRoom = new BattleRoom({
+            type: 'battle',
+            layer: battleLayer,
+            battleType: 'normal',
+            enemyConfigs: [enemyKey]
+        })
+
+        addOutput(`✓ 创建战斗房间成功`, 'result')
+
+        // 进入战斗房间
+        await nowGameRun.enterRoom(battleRoom)
+        addOutput(`✓ 进入战斗房间`, 'result')
+
+        // 处理房间内容（启动战斗）
+        await battleRoom.process()
+        addOutput(`✓ 战斗开始！`, 'result')
+
+        // 如果不在 running 页面，跳转过去
+        if (router.currentRoute.value.path !== '/running') {
+            router.replace('/running')
+        }
+
+    } catch (error: any) {
+        addOutput(`开始战斗失败: ${error.message}`, 'error')
+        console.error(error)
+    }
+}
+
+// 列出所有可用敌人
+async function listEnemies() {
+    try {
+        const { enemyList } = await import('@/static/list/target/enemyList')
+
+        if (!enemyList || enemyList.length === 0) {
+            addOutput('没有可用的敌人数据', 'info')
+            return
+        }
+
+        addOutput(`=== 共有 ${enemyList.length} 个可用敌人 ===`, 'info')
+        for (const enemy of enemyList) {
+            const maxHealth = enemy.status?.['max-health'] || '?'
+            addOutput(`  [血量: ${maxHealth}] ${enemy.label} - ${enemy.key}`, 'result')
+        }
+        addOutput('', 'info')
+        addOutput('使用 startBattle("enemyKey") 开始战斗', 'info')
+    } catch (error: any) {
+        addOutput(`列出敌人失败: ${error.message}`, 'error')
+    }
+}
+
+// 记录当前帮助块的起始行索引（用于折叠/展开时原地替换）
+let helpBlockStart = -1
+
 // 显示帮助
-function showHelp() {
-    addOutput('=== 可用命令 ===', 'info')
+function showHelp(filter?: string) {
+    // 'all' 展开所有区域
+    const showAll = filter === 'all'
+    const effectiveFilter = showAll ? undefined : filter
+
+    // 过滤要显示的区域
+    let sections: typeof helpSections = helpSections
+    if (effectiveFilter) {
+        sections = helpSections.filter(s => s.key === effectiveFilter || s.title.includes(effectiveFilter))
+        if (sections.length === 0) {
+            addOutput(`未找到区域 "${effectiveFilter}"，可用区域: ${helpSections.map(s => s.key).join(' / ')}`, 'error')
+            return
+        }
+    }
+
+    // 如果是折叠/展开操作（helpBlockStart 有效），原地替换帮助块
+    const isRefresh = helpBlockStart >= 0 && helpBlockStart < outputLines.value.length
+    if (isRefresh) {
+        outputLines.value.splice(helpBlockStart)
+    } else {
+        helpBlockStart = outputLines.value.length
+    }
+
+    // 标题
+    if (!effectiveFilter) {
+        addOutput('=== 可用命令 ===  提示: 点击标题收起/展开，点击命令或例子填入输入栏', 'info')
+        addOutput('可用区域: ' + helpSections.map(s => s.key).join(' / '), 'info')
+    }
     addOutput('', 'info')
-    addOutput('listRooms() - 列出所有房间', 'info')
-    addOutput('listRooms("类型") - 列出指定类型的房间', 'info')
-    addOutput('  例如: listRooms("battle")', 'info')
-    addOutput('  例如: listRooms("treasure")', 'info')
-    addOutput('', 'info')
-    addOutput('enterRoom("房间key") - 进入指定房间', 'info')
-    addOutput('enterRoom("房间key", 层级) - 进入指定房间并设置层级', 'info')
-    addOutput('  例如: enterRoom("battle_elite_hydra", 1)', 'info')
-    addOutput('  例如: enterRoom("treasure_default", 1)', 'info')
-    addOutput('', 'info')
-    addOutput('unlockAllRooms() - 解锁地图上所有房间', 'info')
-    addOutput('  例如: unlockAllRooms()', 'info')
-    addOutput('', 'info')
-    addOutput('addTempCard("cardKey", "removeOn") - 添加临时卡牌', 'info')
-    addOutput('  例如: addTempCard("original_card_00001", "battleEnd")', 'info')
-    addOutput('addTempOrgan("organKey", "removeOn") - 添加临时器官', 'info')
-    addOutput('  例如: addTempOrgan("original_organ_00001", "turnEnd")', 'info')
-    addOutput('listTempItems() - 列出所有临时物品', 'info')
-    addOutput('  移除时机: battleEnd, turnEnd, floorEnd', 'info')
-    addOutput('', 'info')
-    addOutput('addTestRelic("relicKey") - 添加测试遗物', 'info')
-    addOutput('  例如: addTestRelic("testHealingPotion")', 'info')
-    addOutput('addTestOrgan("organKey") - 添加测试器官', 'info')
-    addOutput('  例如: addTestOrgan("testEnhancedHeart")', 'info')
-    addOutput('listActiveAbilities() - 列出当前拥有的主动能力', 'info')
-    addOutput('', 'info')
-    addOutput('=== 遗物系统命令 ===', 'info')
-    addOutput('listRelics() - 列出当前拥有的遗物', 'info')
-    addOutput('listAllRelics() - 列出所有可用遗物', 'info')
-    addOutput('gainRelic("relicKey") - 获得指定遗物', 'info')
-    addOutput('  例如: gainRelic("original_relic_00001")', 'info')
-    addOutput('removeRelic("relicKey") - 移除指定遗物', 'info')
-    addOutput('  例如: removeRelic("original_relic_00001")', 'info')
-    addOutput('addRandomRelic() - 随机获取一个遗物', 'info')
-    addOutput('  例如: addRandomRelic()', 'info')
-    addOutput('', 'info')
-    addOutput('=== 器官系统命令 ===', 'info')
-    addOutput('listOrgans() - 列出当前拥有的器官', 'info')
-    addOutput('listAllOrgans() - 列出所有可用器官', 'info')
-    addOutput('unlockAllOrgans() - 解锁所有器官（元进度）', 'info')
-    addOutput('  例如: unlockAllOrgans()', 'info')
-    addOutput('addOrgan("organKey") - 添加器官', 'info')
-    addOutput('  例如: addOrgan("original_organ_00001")', 'info')
-    addOutput('breakOrgan("organKey") - 损坏器官', 'info')
-    addOutput('  例如: breakOrgan("original_organ_00001")', 'info')
-    addOutput('repairOrgan("organKey") - 修复器官', 'info')
-    addOutput('  例如: repairOrgan("original_organ_00001")', 'info')
-    addOutput('upgradeOrgan("organKey") - 升级器官', 'info')
-    addOutput('  例如: upgradeOrgan("original_organ_00001")', 'info')
-    addOutput('removeOrgan("organKey") - 吞噬器官', 'info')
-    addOutput('  例如: removeOrgan("original_organ_00001")', 'info')
-    addOutput('testOrganFlow() - 自动化测试器官完整流程', 'info')
-    addOutput('', 'info')
-    addOutput('=== 调试工具命令 ===', 'info')
-    addOutput('listTriggers("target") - 列出实体的触发器', 'info')
-    addOutput('  target: player(默认) 或 enemy', 'info')
-    addOutput('  例如: listTriggers()', 'info')
-    addOutput('  例如: listTriggers("enemy")', 'info')
-    addOutput('removeTrigger("target", "id") - 移除特定触发器', 'info')
-    addOutput('  例如: removeTrigger("player", "abc123")', 'info')
-    addOutput('', 'info')
-    addOutput('gameOver() - 触发游戏失败', 'info')
-    addOutput('  例如: gameOver()', 'info')
-    addOutput('', 'info')
-    addOutput('clear - 清空控制台', 'info')
-    addOutput('help - 显示此帮助信息', 'info')
-    addOutput('', 'info')
-    addOutput('提示: 使用 ↑↓ 键浏览命令历史', 'info')
+
+    // 渲染每个区域
+    for (const section of sections) {
+        const isCollapsed = collapsedSections.value[section.key]
+        const collapseHint = effectiveFilter ? '' : (isCollapsed ? '[+] ' : '[-] ')
+        addOutput(`=== ${collapseHint}${section.title} ===`, 'info', undefined, () => {
+            collapsedSections.value[section.key] = !collapsedSections.value[section.key]
+            showHelp(filter)
+        })
+
+        if (!isCollapsed || !!effectiveFilter || showAll) {
+            for (const item of section.items) {
+                addOutput(`  ${item.cmd}  —  ${item.desc}`, 'info', item.cmd)
+                if (item.examples && item.examples.length > 0) {
+                    for (const ex of item.examples) {
+                        addOutput(`   示例: ${ex}`, 'example', ex)
+                    }
+                }
+            }
+        }
+        addOutput('', 'info')
+    }
+
+    if (!effectiveFilter) {
+        addOutput('提示: 使用 ↑↓ 键浏览历史命令（跨会话保留）', 'info')
+    }
 }
 
 // 历史命令导航
@@ -1252,6 +1474,18 @@ function handleGlobalKeydown(e: KeyboardEvent) {
 
 // 生命周期
 onMounted(() => {
+    // 从 localStorage 恢复历史记录
+    try {
+        const stored = localStorage.getItem(HISTORY_STORAGE_KEY)
+        if (stored) {
+            const loaded = JSON.parse(stored)
+            if (Array.isArray(loaded)) {
+                commandHistory.value = loaded.slice(-HISTORY_MAX)
+                historyIndex.value = commandHistory.value.length
+            }
+        }
+    } catch {}
+
     // 暴露到全局
     ;(window as any).openConsole = open
     ;(window as any).closeConsole = close
@@ -1344,6 +1578,19 @@ defineExpose({ open, close, toggle })
 
                 &.info {
                     color: #9cdcfe;
+                }
+
+                &.example {
+                    color: #adadad;
+                    padding-left: 18px;
+                }
+
+                &.clickable {
+                    cursor: pointer;
+                    &:hover {
+                        text-decoration: underline;
+                        background: rgba(78, 201, 176, 0.1);
+                    }
                 }
             }
         }

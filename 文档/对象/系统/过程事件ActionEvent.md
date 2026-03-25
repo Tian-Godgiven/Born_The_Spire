@@ -19,7 +19,6 @@
     target: EventParticipant|EventParticipant[]  // 接受该事件的目标
     info: Record<string,any>       // 该事件执行全程的信息
     effects: Effect[]              // 该事件将会产生的效果
-    phase: EventPhase[]            // 事件的多个阶段
     transaction?: Transaction      // 所属事务
     simulate: boolean              // 是否为模拟事件（不实际执行效果）
     onExecute?: (event) => void    // 事件执行时的回调
@@ -33,7 +32,7 @@
 
 创建 (doEvent)
   创建 ActionEvent 实例
-  存储事件相关的各种信息（source, medium, target, effects, phase）
+  存储事件相关的各种信息（source, medium, target, effects）
 
 收集到队列
   根据上下文决定收集方式：
@@ -56,9 +55,6 @@
   Event after 触发器
     收集触发器产生的新事件到 eventCollector
     递归执行这些新事件
-  执行 Phase 阶段（如果有）
-    按顺序执行每个阶段
-    每个阶段包含：条件判断 → 效果执行（before → apply → after）
 
 ## 过程事件与触发器
 
@@ -73,41 +69,6 @@
   在效果函数中：新事件插入到当前事务队列（可指定位置）
 
 这是触发触发器的唯一方法，请始终通过过程事件与实体的触发器交互
-
-## 事件阶段 Phase
-
-一个过程事件可以存在多个不同的阶段，阶段是线性的，严格按照顺序执行
-后续阶段可以使用前面阶段的结果
-
-使用场景示例：
-  使用卡牌事件包含2个阶段：
-    阶段1：消耗卡牌对应的能量
-    阶段2：消耗成功时，执行卡牌的效果
-
-阶段结构：
-
-```typescript
-{
-    effectUnits: EffectUnit[]      // 该阶段中将会启用的效果单元
-    condition?: (event) => boolean | "break"  // 阶段执行前的判断
-    onFalse?: () => void           // 条件不满足时的回调
-    entityMap?: {                  // 效果对象映射
-        target?: "source" | "medium"  // 将该阶段的目标映射到事件的 source 或 medium
-    }
-}
-```
-
-condition 返回值：
-  true：执行该阶段
-  false：跳过该阶段，继续下一阶段
-  "break"：跳过该阶段，并提前结束整个事件
-
-执行顺序：
-  先执行 effects 中的效果
-  再按顺序执行 phase 中的各个阶段
-  每个阶段的效果都会触发 before/after 触发器
-
-
 
 ## 核心方法
 
@@ -131,7 +92,6 @@ condition 返回值：
 执行顺序：
   调用 onExecute 回调
   执行 effects 中的所有效果
-  依次执行 phase 中的各个阶段
   调用 onComplete 回调
 
 ### spawnEvent(event)
@@ -157,7 +117,6 @@ doEvent({
     target: EventParticipant | EventParticipant[]  // 事件目标
     info?: Record<string,any>      // 事件信息
     effectUnits?: EffectUnit[]     // 效果单元数组
-    phase?: EventPhase[]           // 事件阶段数组
     doWhat?: () => void            // 事件执行时的回调
     onComplete?: (event) => void   // 事件完成后的回调
 }, {

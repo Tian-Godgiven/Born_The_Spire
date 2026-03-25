@@ -144,5 +144,20 @@ export const cardEntryDefinitions: Record<string, CardEntryDefinition> = {
             // 返回恢复函数
             return [remove]
         }
+    },
+
+    // 不能被打出词条
+    card_cannot_play: {
+        label: "不能被打出",
+        describe: ["该卡牌无法被使用"],
+        onApply: (owner, ownersOwner) => {
+            const result = checkOwnerTypes(owner, ownersOwner)
+            if (!result) {
+                return []
+            }
+            // 实际逻辑在 CardModifier.canPlayCard 中检查词条
+            // 这里不需要做任何事，返回空数组
+            return []
+        }
     }
 }

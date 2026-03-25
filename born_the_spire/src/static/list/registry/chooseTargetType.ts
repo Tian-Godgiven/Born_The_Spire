@@ -123,7 +123,6 @@ function selectTarget(targets:Target[],func:(target:Target)=>boolean,number?:num
 }
 function limitNumber(target:Target[],number:number){
     if(target.length > number){
-        console.log(`选择数量不正确，只能选择${number}个对象`)
         return false
     }
     return true

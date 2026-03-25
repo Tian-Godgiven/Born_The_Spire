@@ -6,8 +6,8 @@
             >
         <div class="chara-content">
             <!-- 意图显示（仅敌人） -->
-            <div v-if="isEnemy && enemyIntentDisplay" class="intent-display">
-                {{ enemyIntentDisplay }}
+            <div v-if="isEnemy && enemyIntent" class="intent-display">
+                <IntentDisplay :intent="enemyIntent" />
             </div>
 
             <div class="organs">
@@ -49,7 +49,7 @@
     import State from '@/ui/components/object/State.vue';
     import StateDisplay from '@/ui/components/display/StateDisplay.vue';
     import MechanismDisplay from '@/ui/components/display/MechanismDisplay.vue';
-    import { formatIntentDisplay } from '@/core/objects/system/Intent';
+    import IntentDisplay from '@/ui/components/display/IntentDisplay.vue';
     import { getStateModifier } from '@/core/objects/system/modifier/StateModifier';
 
     const props = defineProps<{target:Chara,side:'left'|"right"}>()
@@ -83,10 +83,11 @@
     // 判断是否是敌人
     const isEnemy = computed(() => props.target instanceof Enemy)
 
-    // 获取敌人意图显示文本
-    const enemyIntentDisplay = computed(() => {
+    // 获取敌人意图对象
+    const enemyIntent = computed(() => {
         if (props.target instanceof Enemy && props.target.intent) {
-            return formatIntentDisplay(props.target.intent)
+            console.log('[Chara] intent:', props.target.intent.type, 'visibility:', props.target.intent.visibility, 'actions:', props.target.intent.actions.map(c => c.label))
+            return props.target.intent
         }
         return null
     })
@@ -112,12 +113,10 @@
         top: -30px;
         left: 50%;
         transform: translateX(-50%);
-        padding: 4px 8px;
-        background: white;
-        border: 2px solid black;
         font-size: 12px;
         white-space: nowrap;
         z-index: 10;
+        overflow: visible;
     }
 
     .organs{

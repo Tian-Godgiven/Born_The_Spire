@@ -1,6 +1,6 @@
 import { Card } from "@/core/objects/item/Subclass/Card"
 import { newError } from "@/ui/hooks/global/alert"
-import {shuffle} from "lodash"
+import { shuffle } from "lodash"
 
 //将卡牌从一个牌堆放到另一个牌堆
 export function cardMove(from:Card[],card:Card,to:Card[]){
@@ -14,7 +14,7 @@ export function cardMove(from:Card[],card:Card,to:Card[]){
         from.splice(index,1)
         return true
     }
-    
+
     newError(["没有在来源牌堆找到目标卡牌！"])
 }
 

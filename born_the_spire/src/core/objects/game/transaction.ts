@@ -116,56 +116,6 @@ export class Transaction{
             await this.executeEvent(e)
         }
 
-        // 4. 处理 phase
-        for (let phase of event.phase) {
-            const conditionMet = phase.condition ? phase.condition(event) : true
-            if (conditionMet === true) {
-                // 执行该阶段的效果
-                for (let effect of phase.effects) {
-                    // Effect before 触发器
-                    const effectBeforeEvents: ActionEvent[] = []
-                    setEventCollector(effectBeforeEvents)
-                    effect.trigger("before", 0)
-                    clearEventCollector()
-                    for (const e of effectBeforeEvents) {
-                        await this.executeEvent(e)
-                    }
-
-                    // 执行效果（支持 entityMap 重新映射目标）
-                    let override_event: Partial<any> = {}
-                    const entityMap = phase.entityMap
-                    if (entityMap) {
-                        if (entityMap.target) {
-                            if (entityMap.target === "medium") {
-                                override_event.target = event.medium
-                            } else if (entityMap.target === "source") {
-                                override_event.target = event.source
-                            }
-                        }
-                    }
-                    await effect.apply(override_event)
-
-                    // Effect after 触发器
-                    const effectAfterEvents: ActionEvent[] = []
-                    setEventCollector(effectAfterEvents)
-                    effect.trigger("after", 0)
-                    clearEventCollector()
-                    for (const e of effectAfterEvents) {
-                        await this.executeEvent(e)
-                    }
-                }
-            } else {
-                // 失败时调用 onFalse
-                if (phase.onFalse) {
-                    phase.onFalse()
-                }
-                // 提前中断
-                if (conditionMet === "break") {
-                    break
-                }
-            }
-        }
-
         // 5. 调用 onComplete 回调（如果有）
         if (event.onComplete) {
             event.onComplete(event)
@@ -246,5 +196,4 @@ export function setNowTransaction(ts:Transaction){
 
 //打印当前事务
 export function printNowTransaction(){
-    console.log(nowTransaction)
 }

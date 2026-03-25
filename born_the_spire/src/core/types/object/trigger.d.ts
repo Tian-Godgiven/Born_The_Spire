@@ -60,6 +60,11 @@ export interface TriggerEventConfig{
         "owner"|//持有者（别名，等同于 triggerOwner）
         "randomEnemy"|//当前战斗中随机一个存活的敌人
         Entity//某个指定的对象
+    mediumType?://事件的 medium 来源（可选）
+        "source"|//使用 trigger 的 source
+        "target"|//使用 trigger 的 target（默认）
+        "triggerEventMedium"|//使用原始事件的 medium
+        "triggerEffect"|//使用触发效果（即 damage 效果）
     effect:EffectUnit[]
 }
 
@@ -72,6 +77,11 @@ export interface TriggerMapItemBase {
     event: TriggerEventConfig[];  // 触发器所产生的事件
     info?: string;
     condition?: TriggerCondition;  // 触发条件（可选）
+    triggerTarget?: {
+        participantType: "entity"
+        key: string  // 通过 key 指定目标，如 "player" 表示当前战斗中的玩家
+    }
+    timing?: "immediate" | "battleStart"  // 触发器挂载时机，默认 immediate
 }
 
 // 触发条件

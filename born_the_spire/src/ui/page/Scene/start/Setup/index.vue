@@ -164,16 +164,9 @@ async function createPreviewPlayer(): Promise<Player> {
         ...defaultPlayerMap,
         organ: [HEART_KEY],  // 只包含心脏，其他器官通过 UI 选择
         card: [
-            "original_card_00001",  // 打击 x5
-            "original_card_00001",
-            "original_card_00001",
-            "original_card_00001",
-            "original_card_00001",
-            "original_card_00014",  // 防御 x5
-            "original_card_00014",
-            "original_card_00014",
-            "original_card_00014",
-            "original_card_00014",
+            "test_card_kill",       // 终结一击 - 快速击杀敌人
+            "original_card_00100",  // 伤口 x2
+            "original_card_00100",
         ],
         potion: { now: [] }  // 预览时不需要药水
         // relic 使用 defaultPlayerMap 的默认值
@@ -247,9 +240,6 @@ async function startGame() {
     if (!canStart.value || !previewPlayer.value) {
         return
     }
-
-    console.log('[Setup.startGame] previewPlayer 最大生命:', previewPlayer.value.status['max-health']?.value)
-    console.log('[Setup.startGame] previewPlayer 器官列表:', previewPlayer.value.organs.value)
 
     // 使用预创建的 Player 开始游戏（已包含所有选中的器官）
     await startNewRun(seed.value || undefined, ascensionLevel.value, undefined, previewPlayer.value)

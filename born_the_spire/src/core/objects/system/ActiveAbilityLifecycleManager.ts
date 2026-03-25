@@ -20,8 +20,6 @@ export class ActiveAbilityLifecycleManager {
 
         // 触发回合开始的充能获取
         usageTracker.triggerChargeGain(entity, "turnStart", abilities)
-
-        console.log(`[ActiveAbilityLifecycle] ${entity.label} 回合开始处理完成`)
     }
 
     /**
@@ -30,8 +28,6 @@ export class ActiveAbilityLifecycleManager {
     onTurnEnd(entity: Entity, abilities: ActiveAbility[]): void {
         // 触发回合结束的充能获取
         usageTracker.triggerChargeGain(entity, "turnEnd", abilities)
-
-        console.log(`[ActiveAbilityLifecycle] ${entity.label} 回合结束处理完成`)
     }
 
     /**
@@ -43,8 +39,6 @@ export class ActiveAbilityLifecycleManager {
 
         // 触发战斗开始的充能获取
         usageTracker.triggerChargeGain(entity, "battleStart", abilities)
-
-        console.log(`[ActiveAbilityLifecycle] ${entity.label} 战斗开始处理完成`)
     }
 
     /**
@@ -56,8 +50,6 @@ export class ActiveAbilityLifecycleManager {
 
         // 触发战斗结束的充能获取
         usageTracker.triggerChargeGain(entity, "battleEnd", abilities)
-
-        console.log(`[ActiveAbilityLifecycle] ${entity.label} 战斗结束处理完成`)
     }
 
     /**
@@ -69,8 +61,6 @@ export class ActiveAbilityLifecycleManager {
 
         // 触发层级开始的充能获取
         usageTracker.triggerChargeGain(entity, "floorStart", abilities)
-
-        console.log(`[ActiveAbilityLifecycle] ${entity.label} 层级开始处理完成`)
     }
 
     /**
@@ -79,8 +69,6 @@ export class ActiveAbilityLifecycleManager {
     onFloorEnd(entity: Entity, abilities: ActiveAbility[]): void {
         // 触发层级结束的充能获取
         usageTracker.triggerChargeGain(entity, "floorEnd", abilities)
-
-        console.log(`[ActiveAbilityLifecycle] ${entity.label} 层级结束处理完成`)
     }
 
     /**
@@ -117,7 +105,6 @@ export class ActiveAbilityLifecycleManager {
      */
     onEntityRemoved(entity: Entity): void {
         usageTracker.clearUsageState(entity)
-        console.log(`[ActiveAbilityLifecycle] 清理了 ${entity.label} 的使用状态`)
     }
 
     /**
@@ -125,7 +112,6 @@ export class ActiveAbilityLifecycleManager {
      */
     onGameReset(): void {
         usageTracker.resetAll()
-        console.log(`[ActiveAbilityLifecycle] 重置了所有使用状态`)
     }
 }
 

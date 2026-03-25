@@ -28,7 +28,6 @@ export function addAbilityChargesEffect(event: ActionEvent, effect: Effect) {
     for (const target of targets) {
         if (target instanceof Entity) {
             addCharges(target, abilityKey, amount)
-            console.log(`[addAbilityChargesEffect] 为 ${target.label} 的能力 ${abilityKey} 添加了 ${amount} 点充能`)
         }
     }
 }
@@ -49,7 +48,6 @@ export function reduceAbilityCooldownEffect(event: ActionEvent, effect: Effect) 
     for (const target of targets) {
         if (target instanceof Entity) {
             reduceCooldown(target, abilityKey, amount)
-            console.log(`[reduceAbilityCooldownEffect] 为 ${target.label} 的能力 ${abilityKey} 减少了 ${amount} 回合冷却`)
         }
     }
 }
@@ -70,7 +68,6 @@ export function setAbilityToggleEffect(event: ActionEvent, effect: Effect) {
     for (const target of targets) {
         if (target instanceof Entity) {
             setToggleState(target, abilityKey, active)
-            console.log(`[setAbilityToggleEffect] 设置 ${target.label} 的能力 ${abilityKey} 状态为 ${active ? "激活" : "关闭"}`)
         }
     }
 }
@@ -91,7 +88,6 @@ export function resetAbilityUsesEffect(event: ActionEvent, effect: Effect) {
     for (const target of targets) {
         if (target instanceof Entity) {
             resetAbilityUses(target, abilityKey, type ?? "turn")
-            console.log(`[resetAbilityUsesEffect] 重置了 ${target.label} 的能力 ${abilityKey} 的 ${type ?? "turn"} 使用次数`)
         }
     }
 }
@@ -110,7 +106,6 @@ export async function forceExecuteAbilityEffect(event: ActionEvent, effect: Effe
 
     // 这里需要找到能力定义并执行
     // 由于需要访问具体的能力定义，这个效果可能需要在具体的物品上下文中实现
-    console.log(`[forceExecuteAbilityEffect] 强制执行能力 ${abilityKey}`)
 
     // 暂时跳过具体实现，因为需要更多上下文信息
 }
@@ -139,10 +134,8 @@ export function setAbilityEnabledEffect(event: ActionEvent, effect: Effect) {
 
             if (enabled) {
                 target.disabledAbilities.delete(abilityKey)
-                console.log(`[setAbilityEnabledEffect] 启用了 ${target.label} 的能力 ${abilityKey}`)
             } else {
                 target.disabledAbilities.add(abilityKey)
-                console.log(`[setAbilityEnabledEffect] 禁用了 ${target.label} 的能力 ${abilityKey}`)
             }
         }
     }
@@ -173,8 +166,6 @@ export function modifyAbilityCostEffect(event: ActionEvent, effect: Effect) {
             const key = `${abilityKey}_${costType}`
             const currentModifier = target.abilityCostModifiers.get(key) || 0
             target.abilityCostModifiers.set(key, currentModifier + modifier)
-
-            console.log(`[modifyAbilityCostEffect] 修改了 ${target.label} 的能力 ${abilityKey} 的 ${costType} 消耗: ${modifier > 0 ? '+' : ''}${modifier}`)
         }
     }
 }
@@ -196,7 +187,6 @@ export function copyAbilityUsesEffect(event: ActionEvent, effect: Effect) {
         if (target instanceof Entity) {
             // 这里需要访问 usageTracker 来复制使用状态
             // 暂时跳过具体实现
-            console.log(`[copyAbilityUsesEffect] 复制 ${target.label} 的能力使用次数: ${fromAbilityKey} -> ${toAbilityKey}`)
         }
     }
 }

@@ -128,7 +128,6 @@ export async function chooseTarget(params: TargetSelectionParams): Promise<Entit
 
                 const entity = nowBattle.value.getEntityById(entityId)
                 if (entity) {
-                    console.log(`[TargetSelection] 选中实体: ${entity.label} (${entityId})`)
                     // 这里可以调用回调函数或触发事件
                     // 例如: params.onSelect?.(entity)
                 } else {

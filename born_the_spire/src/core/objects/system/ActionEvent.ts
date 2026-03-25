@@ -16,23 +16,6 @@ import {
     endTransaction
 } from "../game/transaction";
 
-// 使得一个阶段事件产生并发生:阶段事件是指单个事件过程中的多个效果会分阶段执行，在每个阶段开始时判断条件后记录效果的返回值。每个效果都对应一个阶段
-type EventPhaseBase= {
-    //效果对象映射，该阶段的【目标】会转而使用指定的相较于事件对象的映射,但事件来源和媒介均不可以映射修改
-    entityMap?:{
-        target?:"source"|"medium"
-    },
-    //该阶段在进行前的判断效果，返回true时进行该阶段,返回false时跳过该阶段，返回break时整个事件提前结束
-    condition?:(event:ActionEvent)=>boolean|"break",
-    onFalse?:()=>any,//该阶段未能正确进行时的回调函数
-}
-type EventPhase = EventPhaseBase&{
-    effectUnits:EffectUnit[],//该阶段中将会启用的效果单元
-}
-type EventPhase_inObj = EventPhaseBase&{
-    effects:Effect[],
-}
-
 export class ActionEvent<
     s extends EventParticipant = EventParticipant,
     m extends EventParticipant = EventParticipant,
@@ -48,9 +31,7 @@ export class ActionEvent<
     public effects:Effect[] = [];
     public onExecute?:(actionEvent:ActionEvent)=>void|Promise<void>//事件执行时，执行的函数
     public onComplete?:(actionEvent:ActionEvent)=>void//事件执行完成后的回调
-    //效果阶段
-    public phase:EventPhase_inObj[];
-    private _result:Record<string,any> = {}//阶段的返回值
+    private _result:Record<string,any> = {}//效果的返回值
     private _sideEffects:Array<()=>void> = []//副作用收集器，用于收集effect执行时产生的副作用（如修饰器的remover）
     private transactionCollector?:(e:ActionEvent,triggerLevel?:number)=>void//该事件所属的事务的收集器，通过该收集器可以将任意事件添加到该事务中，从而完成事件的内部收集
     public logUnit?:LogUnit//该事件的日志单元，用于收集子日志
@@ -65,8 +46,7 @@ export class ActionEvent<
         key:string,//触发key
         source:s,medium:m,target:t|t[],
         info:Record<string,any>,
-        effectUnits:EffectUnit[],
-        phase:EventPhase[] = []
+        effectUnits:EffectUnit[]
     ){
         this.key = key;
         this.uuId = nanoid()
@@ -79,17 +59,6 @@ export class ActionEvent<
             const effect = createEffectByUnit(this,effectUnit)
             this.effects.push(effect)
         }
-        //构建各个阶段包含的效果
-        this.phase = phase.map((p):EventPhase_inObj=>{
-            return {
-                effects:p.effectUnits.map(eu=>{
-                    return createEffectByUnit(this,eu)
-                }),
-                condition:p.condition,
-                onFalse:p.onFalse,
-                entityMap:p.entityMap
-            }
-        })
     }
     //触发事件
     trigger(when:"before"|"after",triggerLevel:number){
@@ -210,7 +179,6 @@ type DoEventType = {
     target:EventParticipant|EventParticipant[],
     info?:Record<string,any>,
     effectUnits?:EffectUnit[]
-    phase?:EventPhase[]
     doWhat?:()=>void,//可选，在事件执行时进行的函数
     onComplete?:(event:ActionEvent)=>void//可选，在事件执行完成后的回调
 }
@@ -220,11 +188,11 @@ type DoEventOptions = {
 }
 
 export function doEvent(
-    {key,source,medium,target,info={},effectUnits=[],phase=[],doWhat=()=>{},onComplete}:DoEventType,
+    {key,source,medium,target,info={},effectUnits=[],doWhat=()=>{},onComplete}:DoEventType,
     options?: DoEventOptions
 ): ActionEvent {
     //创建行为事件
-    const event = new ActionEvent(key,source,medium,target,info,effectUnits,phase)
+    const event = new ActionEvent(key,source,medium,target,info,effectUnits)
     if(onComplete){
         event.onComplete = onComplete
     }

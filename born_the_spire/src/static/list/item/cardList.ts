@@ -282,7 +282,7 @@ export const cardList:CardMap[] = [{
     }
 },{
     label:"防御",
-    tags:["skill", "basic"],
+    tags:["skill", "basic", "defence"],
     status:{
         armor:5,
         cost:1
@@ -300,7 +300,7 @@ export const cardList:CardMap[] = [{
     }
 },{
     label:"铁壁",
-    tags:["skill"],
+    tags:["skill", "defence"],
     status:{
         armor:12,
         cost:1
@@ -367,6 +367,66 @@ export const cardList:CardMap[] = [{
             effects:[{
                 key:"damage",
                 params:{value:6},
+            }]
+        }
+    }
+},{
+    label:"伤口",
+    tags:["status"],
+    status:{
+        cost:0
+    },
+    entry:["card_cannot_play"],
+    describe:["状态牌","无法被打出"],
+    key:"original_card_00100",
+    interaction:{}
+},{
+    label:"余热回收",
+    tags:["skill", "enemy", "defence"],
+    status:{
+        armor:5,
+        bonusArmor:5,
+        cost:1
+    },
+    describe:[
+        "获得",{key:["status","armor"]},"点护甲",
+        "若玩家的弃牌堆中有状态牌，消耗一张并额外获得",{key:["status","bonusArmor"]},"点护甲"
+    ],
+    key:"enemy_waste_heat_recovery",
+    interaction:{
+        use:{
+            target:{key:"self"},
+            effects:[{
+                key:"gainArmor",
+                params:{value:5},
+            },{
+                key:"card_wasteHeatRecovery",
+                params:{pile:"discardPile", hasTag:"status", targetType:"player", bonusArmor:5},
+            }]
+        }
+    }
+},{
+    label:"余热回收",
+    tags:["skill", "defence"],
+    status:{
+        armor:5,
+        bonusArmor:5,
+        cost:1
+    },
+    describe:[
+        "获得",{key:["status","armor"]},"点护甲",
+        "若手牌中有状态牌，消耗一张并额外获得",{key:["status","bonusArmor"]},"点护甲"
+    ],
+    key:"player_waste_heat_recovery",
+    interaction:{
+        use:{
+            target:{key:"self"},
+            effects:[{
+                key:"gainArmor",
+                params:{value:5},
+            },{
+                key:"card_wasteHeatRecovery",
+                params:{pile:"handPile", hasTag:"status", targetType:"self", bonusArmor:5},
             }]
         }
     }

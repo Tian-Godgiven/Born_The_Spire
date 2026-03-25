@@ -97,6 +97,18 @@ const effectParamsSchemas: Record<string, EffectParamsSchema> = {
     count: { type: "number", default: 1, description: "消耗数量" }
   },
 
+  exhaustRandomCardByTag: {
+    pile: { type: "string", default: "discardPile", description: "来源牌堆" },
+    hasTag: { type: "string", default: "status", description: "要消耗的卡牌标签" },
+    targetType: { type: "string", default: "self", description: "目标类型" }
+  },
+
+  checkPileHasTag: {
+    pile: { type: "string", default: "discardPile", description: "要检查的牌堆" },
+    hasTag: { type: "string", default: "status", description: "要检查的卡牌标签" },
+    targetType: { type: "string", default: "self", description: "目标类型" }
+  },
+
   discoverCard: {
     count: { type: "number", default: 3, description: "展示卡牌数量" },
     selectCount: { type: ["number", "array"], default: 1, description: "选择数量（数字或[min,max]）" },
@@ -180,6 +192,19 @@ const effectParamsSchemas: Record<string, EffectParamsSchema> = {
 
   addTriggerToTarget: {
     triggerConfig: { type: "object", description: "触发器配置" }
+  },
+
+  // ========== 计数类遗物 ==========
+  accumulateAndTrigger: {
+    pointKey: { type: "string", default: "point", description: "计数器使用的状态key" },
+    on: { type: "object", required: true, description: "触发器配置 { when, how, key }" },
+    gain: { type: "any", required: true, description: "每次获得的点数（数字或 \"$triggerValue\"）" },
+    threshold: { type: "number", default: 10, description: "触发阈值" },
+    consume: { type: ["number", "string"], default: 1, description: "每次触发消耗的点数，或 \"all\" 表示清空所有点数" },
+    repeat: { type: "boolean", default: true, description: "是否循环触发直到点数不足" },
+    maxRepeat: { type: "number", default: Infinity, description: "每次事件最多触发的次数" },
+    targetType: { type: "string", default: "owner", description: "效果目标类型" },
+    effects: { type: "array", required: true, description: "要触发的效果数组" }
   }
 }
 

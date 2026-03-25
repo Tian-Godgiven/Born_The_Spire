@@ -7,7 +7,7 @@
 
             <div class="modal-content">
                 <div class="card-grid">
-                    <CardDisplay
+                    <Card
                         v-for="card in cards"
                         :key="card.__id"
                         :card="card"
@@ -26,11 +26,11 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Card } from '@/core/objects/item/Subclass/Card'
-import CardDisplay from '@/ui/components/object/CardDisplay.vue'
+import type { Card as CardData } from '@/core/objects/item/Subclass/Card'
+import Card from '@/ui/components/object/Card.vue'
 
 const props = defineProps<{
-    cards: Card[]
+    cards: CardData[]
 }>()
 
 const emit = defineEmits<{

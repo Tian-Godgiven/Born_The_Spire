@@ -43,6 +43,16 @@
                 </span>
             </div>
 
+            <!-- 玩家版本卡牌悬浮按钮 -->
+            <div
+                v-if="playerVersionCard"
+                class="player-version-btn"
+                @mouseenter="showPlayerVersionCard"
+                @mouseleave="hidePlayerVersionCard"
+            >
+                显示玩家版本
+            </div>
+
             <!-- 卡牌悬停显示 -->
             <Teleport to="body">
                 <div
@@ -91,6 +101,14 @@ function getEntryDescription(entryKey: string): string {
     return getDescribe(entryDef.describe)
 }
 
+// 检查器官是否有玩家版本的卡牌
+const playerVersionCard = computed(() => {
+    if (props.organ.cardsByOwner?.player) {
+        return true
+    }
+    return false
+})
+
 // 卡牌获取函数
 async function getCardFromSegment(segment: DescribeSegment): Promise<CardType | null> {
     if (!segment.cardRef) return null
@@ -109,6 +127,29 @@ async function getCardFromSegment(segment: DescribeSegment): Promise<CardType | 
     }
 
     return null
+}
+
+// 显示玩家版本卡牌
+async function showPlayerVersionCard(event: MouseEvent) {
+    if (!props.organ.cardsByOwner?.player) return
+
+    const cardKey = Array.isArray(props.organ.cardsByOwner.player)
+        ? props.organ.cardsByOwner.player[0]
+        : props.organ.cardsByOwner.player
+
+    const card = await createCardFromKey(cardKey)
+    if (card) {
+        hoveredCard.value = card
+
+        nextTick(() => {
+            updateCardPopoverPosition(event.target as HTMLElement)
+        })
+    }
+}
+
+// 隐藏玩家版本卡牌
+function hidePlayerVersionCard() {
+    hoveredCard.value = null
 }
 
 function findCardById(cardId: string): CardType | null {
@@ -394,5 +435,23 @@ function updateCardPopoverPosition(triggerElement: HTMLElement) {
     background: white;
     border: 2px solid black;
     padding: 4px;
+}
+
+.player-version-btn {
+    position: absolute;
+    right: -2px;
+    top: 50%;
+    transform: translate(100%, -50%);
+    background: white;
+    border: 2px solid black;
+    padding: 4px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    z-index: 10000;
+
+    &:hover {
+        background: rgba(0, 0, 0, 0.05);
+    }
 }
 </style>

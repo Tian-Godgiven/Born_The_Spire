@@ -2,8 +2,7 @@ import { Entity } from "../system/Entity";
 import type { ItemMap, Interaction } from "../item/Item";
 
 import { getOrganModifier } from "../system/modifier/OrganModifier";
-import { doEvent } from "../system/ActionEvent";
-import { resolveTriggerEventTarget } from "../system/trigger/Trigger";
+import { createTriggerByTriggerMap } from "../system/trigger/Trigger";
 import type { OrganRarity, OrganPart } from "@/core/types/OrganTypes";
 import { calculateAbsorbValue } from "@/static/list/target/organQuality";
 import type { TargetMap } from "./Target";
@@ -11,6 +10,8 @@ import type { Describe } from "@/ui/hooks/express/describe";
 import type { EffectUnit } from "../system/effect/EffectUnit";
 import type { Component } from "vue";
 import type { ActiveAbility } from "@/core/types/ActiveAbility";
+import { nowBattle } from "../game/battle";
+import { isEntity } from "@/core/utils/typeGuards";
 
 /**
  * 器官升级里程碑配置
@@ -46,6 +47,10 @@ export type OrganMap = ItemMap&TargetMap&{
     key:string,
     describe?:Describe,
     cards?: string[]  // 器官提供的卡牌列表（卡牌的 key）
+    cardsByOwner?: {  // 根据持有者类型提供不同卡牌
+        player?: string[]
+        enemy?: string[]
+    }
     entry?: string[]  // 器官的词条列表（词条的 key）
 
     // 新增属性
@@ -73,6 +78,10 @@ export class Organ extends Entity{
     public readonly key:string
     public interaction:Interaction[]
     public cards:string[] = []  // 器官提供的卡牌列表
+    public cardsByOwner?: {  // 根据持有者类型提供不同卡牌
+        player?: string[]
+        enemy?: string[]
+    }
     public entry:string[] = []  // 器官的词条列表
     public owner?: Entity   // 器官持有者（通常是 Player 或 Enemy）
     public isDisabled:boolean = false // 器官是否损坏
@@ -97,6 +106,7 @@ export class Organ extends Entity{
         this.label = map.label;
         this.key = map.key;
         this.cards = map.cards || []  // 初始化卡牌列表
+        this.cardsByOwner = map.cardsByOwner  // 初始化按持有者类型分配的卡牌
         this.entry = map.entry || []  // 初始化词条列表
 
         // 初始化新属性
@@ -180,40 +190,30 @@ export class Organ extends Entity{
         if(!interaction.triggers) return removers
 
         for(const triggerDef of interaction.triggers) {
-            const when = triggerDef.when || "before"
-            const how = triggerDef.how
-            const key = triggerDef.key
-            const level = triggerDef.level || 0
-
-            for(const eventConfig of triggerDef.event) {
-                const remover = owner.appendTrigger({
-                    when,
-                    how,
-                    key,
-                    level,
-                    callback: (event, effect, _triggerLevel) => {
-                        // 使用公共的目标解析函数
-                        const target = resolveTriggerEventTarget(
-                            eventConfig.targetType,
-                            event,
-                            effect,  // 触发效果
-                            this,    // triggerSource: 器官本身
-                            owner    // triggerOwner: 拥有者
-                        )
-
-                        doEvent({
-                            key: eventConfig.key,
-                            source: this,
-                            medium: this,
-                            target,
-                            info: eventConfig.info || {},
-                            effectUnits: eventConfig.effect || []
-                        })
+            // 确定触发器挂载的目标
+            let triggerMountTarget: Entity = owner
+            if (triggerDef.triggerTarget) {
+                if (triggerDef.triggerTarget.participantType === "entity") {
+                    const battle = nowBattle.value
+                    if (battle) {
+                        const targetKey = triggerDef.triggerTarget.key
+                        if (targetKey === "player") {
+                            const player = battle.getTeam("player")?.[0]
+                            if (player && isEntity(player)) {
+                                triggerMountTarget = player
+                            }
+                        }
                     }
-                })
-
-                removers.push(remover.remove)
+                }
             }
+
+            // 使用 Trigger.ts 的 createTriggerByTriggerMap 创建触发器
+            // source=this（器官本身），target=owner（器官拥有者）
+            const triggerObj = createTriggerByTriggerMap(this, owner, triggerDef as any)
+
+            // 将触发器挂载到指定目标上
+            const { remove } = triggerMountTarget.trigger.appendTrigger(triggerObj)
+            removers.push(remove)
         }
 
         return removers

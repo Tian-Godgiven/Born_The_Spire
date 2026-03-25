@@ -4,10 +4,11 @@ import { newLog } from "@/ui/hooks/global/log";
 import { Card } from "../item/Subclass/Card";
 import { getOrganModifier } from "../system/modifier/OrganModifier";
 import { getCardByKey } from "@/static/list/item/cardList";
+import { getCardModifier } from "../system/modifier/CardModifier";
 import { cardsToIntent } from "../system/Intent";
 import type { Intent, IntentVisibility } from "../system/Intent";
 import { doEvent } from "../system/ActionEvent";
-import { Player } from "./Player";
+import type { Player } from "./Player";
 import { selectAction } from "../system/EnemyBehavior";
 import type { EnemyBehaviorConfig } from "../system/EnemyBehavior";
 
@@ -59,6 +60,12 @@ export class Enemy extends Chara{
     async initialize(): Promise<void> {
         await super.initialize()
 
+        // 初始化专属卡牌到牌组
+        if (this.exclusiveCards.length > 0) {
+            const cardModifier = getCardModifier(this)
+            await cardModifier.addCardsFromSource(this, this.exclusiveCards)
+        }
+
         doEvent({
             key: "enemyCreation",
             source: this,
@@ -71,62 +78,25 @@ export class Enemy extends Chara{
     /**
      * 获取敌人当前可用的卡牌列表
      *
-     * 从器官和专属卡牌列表获取卡牌
+     * 从 CardModifier 获取所有卡牌（包括器官提供的和专属卡牌）
      * 如果没有可用卡牌，返回兜底的"挣扎"卡牌
      * @returns 可用卡牌列表
      */
     async getAvailableCards(): Promise<Card[]> {
-        const availableCards: Card[] = []
+        const cardModifier = getCardModifier(this)
+        const availableCards = cardModifier.getAllCards()
 
-        // 1. 从器官获取卡牌
-        const organModifier = getOrganModifier(this)
-        const organs = organModifier.getOrgans()
-
-        for (const organ of organs) {
-            // 跳过损坏的器官
-            if (organ.isDisabled) {
-                continue
-            }
-
-            // 获取器官提供的卡牌
-            if (organ.cards && organ.cards.length > 0) {
-                for (const cardKey of organ.cards) {
-                    try {
-                        const card = await getCardByKey(cardKey)
-                        // 设置卡牌来源
-                        card.source = organ
-                        card.owner = this
-                        availableCards.push(card)
-                    } catch (error) {
-                        console.warn(`[Enemy.getAvailableCards] 无法创建器官卡牌 ${cardKey}:`, error)
-                    }
-                }
-            }
-        }
-
-        // 2. 添加敌人专属卡牌
-        for (const cardKey of this.exclusiveCards) {
-            try {
-                const card = await getCardByKey(cardKey)
-                // 设置卡牌来源为敌人自己
-                card.source = this
-                card.owner = this
-                availableCards.push(card)
-            } catch (error) {
-                console.warn(`[Enemy.getAvailableCards] 无法创建专属卡牌 ${cardKey}:`, error)
-            }
-        }
-
-        // 3. 兜底机制：如果没有可用卡牌，使用"挣扎"
+        // 兜底机制：如果没有可用卡牌，使用"挣扎"
         if (availableCards.length === 0) {
             console.warn(`[Enemy.getAvailableCards] ${this.label} 没有可用卡牌，使用兜底"挣扎"`)
             try {
                 const struggleCard = await getCardByKey("fallback_struggle")
                 struggleCard.source = this
                 struggleCard.owner = this
-                availableCards.push(struggleCard)
+                return [struggleCard]
             } catch (error) {
                 console.error(`[Enemy.getAvailableCards] 无法创建兜底卡牌:`, error)
+                return []
             }
         }
 
@@ -141,7 +111,7 @@ export class Enemy extends Chara{
      * @param cards 要执行的卡牌列表
      * @param visibility 可见性等级（默认为 exact）
      */
-    setIntent(cards: Card[], visibility: IntentVisibility = "exact") {
+    setIntent(cards: Card[], visibility: IntentVisibility = "card") {
         this.intent = cardsToIntent(cards, this, visibility)
         newLog(["敌人设置意图", this.label, this.intent])
     }

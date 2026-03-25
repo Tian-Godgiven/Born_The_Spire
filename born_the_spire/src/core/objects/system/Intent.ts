@@ -20,6 +20,7 @@ export type IntentVisibility =
     | "type"        // 只能看到类型（攻击/防御/增益等）
     | "range"       // 能看到大致范围（低/中/高）
     | "exact"       // 能看到精确数值
+    | "card"        // 能看到具体卡牌名称
 
 /**
  * 意图对象
@@ -112,7 +113,7 @@ export function getIntentTypeInfo(type: IntentType): IntentTypeInfo | undefined 
 export function cardsToIntent(
     cards: Card[],
     owner: Entity,  // 改为 Entity 类型
-    visibility: IntentVisibility = "exact"
+    visibility: IntentVisibility = "card"
 ): Intent {
     if (cards.length === 0) {
         return {
@@ -256,6 +257,15 @@ export function formatIntentDisplay(intent: Intent): string {
             if (intent.value !== undefined) {
                 const countText = intent.count ? ` x${intent.count}` : ""
                 return `${typeName}: ${intent.value}${countText}`
+            }
+            return typeName
+
+        case "card":
+            // 显示所有执行的卡牌名称
+            if (intent.actions.length > 0) {
+                const cardNames = intent.actions.map(card => card.label).join(" + ")
+                const countText = intent.count ? ` x${intent.count}` : ""
+                return `${typeName}: ${cardNames}${countText}`
             }
             return typeName
     }

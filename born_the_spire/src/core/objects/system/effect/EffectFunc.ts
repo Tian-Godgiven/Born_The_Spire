@@ -23,6 +23,7 @@ export type EffectParams = {
  *
  * 支持的语法：
  * - $r.xxx: 从事件结果获取
+ * - $triggerValue: 使用触发事件的值（仅在触发器上下文中有效）
  * - $source.stack.xxx: 从 source 状态获取层数
  * - $medium.stack.xxx: 从 medium 状态获取层数
  * - $target.stack.xxx: 从 target 状态获取层数
@@ -39,6 +40,11 @@ export function resolveEffectParams(param: EffectParams[string], event: ActionEv
     if (param.startsWith("$r.")) {
         const key = param.substring(3)
         return event.getEventResult(key)
+    }
+
+    // 特殊 token：$triggerValue（在触发器上下文中由效果函数自己处理）
+    if (param === "$triggerValue") {
+        return param  // 原样返回，让效果函数在运行时处理
     }
 
     // 随机值语法：$random[min,max]

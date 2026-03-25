@@ -4,6 +4,7 @@ import type { Enemy } from "../target/Enemy"
 import type { Player } from "../target/Player"
 
 import { selectCards } from "./CardSelector"
+import { getCardByKey } from "@/static/list/item/cardList"
 
 /**
  * 敌人行为配置系统
@@ -187,23 +188,53 @@ export function evaluateCondition(
 }
 
 /**
+ * 获取兜底卡牌
+ *
+ * 当筛选器没有匹配到卡牌时，根据 selector 的 tags 返回兜底卡牌：
+ * - tags 包含 "defence"：返回基础防御卡
+ * - 其他情况（包括 "attack" 或无 tags）：返回基础打击卡
+ */
+async function getFallbackCard(availableCards: Card[], selector: CardSelector): Promise<Card | null> {
+    const tags = selector.tags
+    const hasDefenceTag = tags?.includes("defence")
+
+    const fallbackKey = hasDefenceTag ? "original_card_00014" : "original_card_00001"
+
+    // 优先从可用卡牌中找
+    const fallbackCard = availableCards.find(card => card.key === fallbackKey)
+    if (fallbackCard) return fallbackCard
+
+    // 兜底中的兜底：动态创建
+    try {
+        return await getCardByKey(fallbackKey)
+    } catch {
+        return null
+    }
+}
+
+/**
  * 根据行为模式选择卡牌
  *
  * @param pattern 行为模式
  * @param availableCards 可用卡牌列表
  * @returns 选择的卡牌列表
  */
-export function selectActionCards(
+export async function selectActionCards(
     pattern: BehaviorPattern,
     availableCards: Card[]
-): Card[] {
+): Promise<Card[]> {
     const { selector, mode = "random", weights, sequence, sequenceIndex = 0 } = pattern.action
 
     // 先用筛选器过滤卡牌
     let filteredCards = selectCards(availableCards, selector)
 
     if (filteredCards.length === 0) {
-        console.warn("[EnemyBehavior] 没有符合条件的卡牌")
+        // 兜底逻辑：根据 selector 的 tags 决定兜底卡牌
+        const fallbackCard = await getFallbackCard(availableCards, selector)
+        if (fallbackCard) {
+            return [fallbackCard]
+        }
+        console.warn("[EnemyBehavior] 没有符合条件的卡牌，也无法兜底")
         return []
     }
 
@@ -338,7 +369,7 @@ export async function selectAction(
         }
 
         // 条件满足，选择卡牌
-        const selectedCards = selectActionCards(pattern, availableCards)
+        const selectedCards = await selectActionCards(pattern, availableCards)
         if (selectedCards.length > 0) {
             return selectedCards
         }
@@ -346,7 +377,7 @@ export async function selectAction(
 
     // 所有条件都不满足，使用默认行为
     if (behaviorConfig.fallback) {
-        return selectActionCards(behaviorConfig.fallback, availableCards)
+        return await selectActionCards(behaviorConfig.fallback, availableCards)
     }
 
     // 兜底：随机选择一张

@@ -172,6 +172,62 @@ export const enemyList:EnemyMap[] = [
         }
     },
 
+    // 示例5：敌人 - 污染源 + 余热炉
+    {
+        label:"污染者",
+        key:"enemy_pollution_source",
+        status:{
+            "max-health":20,
+            "action-order": 5
+        },
+        organ:[
+            "enemy_organ_pollution_source",  // 污染源：追踪玩家出牌
+            "enemy_organ_waste_heat"         // 余热炉：提供余热回收
+        ],
+        cards:[
+            "enemy_stone_strike"  // 基础攻击
+        ],
+        behavior: {
+            patterns: [
+                {
+                    // 第一回合：攻击 + 防御
+                    priority: 5,
+                    condition: {
+                        turn: { equals: 1 }
+                    },
+                    action: {
+                        selector: {},
+                        mode: "sequence",
+                        sequence: [
+                            "enemy_stone_strike",  // 第一张：攻击
+                            "original_card_00014"  // 第二张：防御
+                        ]
+                    },
+                    describe: "第1回合：攻击+防御"
+                },
+                {
+                    // 偶数回合：防御
+                    priority: 3,
+                    condition: {
+                        turn: { mod: [2, 0] }  // 偶数
+                    },
+                    action: {
+                        selector: { tags: ["defence"] },
+                        mode: "random"
+                    },
+                    describe: "偶数回合：防御"
+                }
+            ],
+            fallback: {
+                action: {
+                    selector: { tags: ["attack"] },
+                    mode: "random"
+                },
+                describe: "默认：攻击"
+            }
+        }
+    },
+
     // 示例5：Boss - 多阶段行为
     {
         label:"守护者",
@@ -245,4 +301,11 @@ export async function getEnemyByKey(key:string){
     if(!data)throw new Error("没有指定的敌人存在")
     const enemy = await createEnemy(data as any)
     return reactive(enemy) as unknown as Enemy
+}
+
+/**
+ * 检查敌人是否存在（不创建实例）
+ */
+export function hasEnemy(key: string): boolean {
+    return enemyList.some(value => value.key === key)
 }

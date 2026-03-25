@@ -11,8 +11,7 @@ import { roomRegistry } from "@/static/registry/roomRegistry";
 
 import { reactive } from "vue";
 import router from "@/ui/router";
-import { addToPlayerTeam } from "@/core/objects/game/battle";
-import { nowBattle } from "@/core/objects/game/battle";
+import { addToPlayerTeam, nowPlayerTeam, nowBattle } from "@/core/objects/game/battle";
 import { gameOver } from "@/core/hooks/game";
 import { getOrganByKey } from "@/static/list/target/organList";
 import { gainOrgan } from "@/core/effects/item/gainItem";
@@ -157,12 +156,6 @@ export async function initDefaultGameObjects() {
 
 //开始一局新游戏
 export async function startNewRun(seed?: string, ascensionLevel: number = 0, initialOrgans?: string[], existingPlayer?: Player){
-    console.log('[startNewRun] 开始新游戏，existingPlayer:', existingPlayer)
-    if (existingPlayer) {
-        console.log('[startNewRun] existingPlayer 最大生命:', existingPlayer.status['max-health']?.value)
-        console.log('[startNewRun] existingPlayer 器官数量:', existingPlayer.organs.value?.length)
-    }
-
     //创建本局（可选传入种子）
     const gameRun = new GameRun(seed)
     Object.assign(nowGameRun, gameRun)
@@ -172,14 +165,12 @@ export async function startNewRun(seed?: string, ascensionLevel: number = 0, ini
         // 使用传入的 Player（Setup 页面已经创建并配置好）
         // 直接使用，不要重新包装，避免破坏内部结构
         nowPlayer = existingPlayer
-        console.log('[startNewRun] 使用 existingPlayer，nowPlayer 最大生命:', nowPlayer.status['max-health']?.value)
     } else {
         const playerList = getLazyModule<Record<string, any>>('playerList')
         const map = playerList["default"]
         const player = await createPlayer(map)
         // 直接使用，不要用 reactive() 包装，避免破坏内部 computed 属性
         nowPlayer = player
-        console.log('[startNewRun] 创建新 Player，nowPlayer 最大生命:', nowPlayer.status['max-health']?.value)
     }
 
     //添加到队伍中
@@ -264,5 +255,11 @@ export async function startNewRun(seed?: string, ascensionLevel: number = 0, ini
 
 //结束一局游戏，返回初始菜单
 export function endRun(){
+    // 清理玩家队伍
+    nowPlayerTeam.length = 0
+    // 清理战斗状态
+    nowBattle.value = null
+    // 清理玩家引用
+    nowPlayer = null as any
     router.replace("/")
 }

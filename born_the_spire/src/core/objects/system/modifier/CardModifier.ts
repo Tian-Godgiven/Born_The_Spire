@@ -11,6 +11,7 @@ import { reactive, toRaw } from "vue"
 import { nowBattle } from "../../game/battle"
 import { getCardByKey, getAllCards } from "@/static/list/item/cardList"
 import { isPlayer, isOrgan } from "@/core/utils/typeGuards"
+import { getEntryModifier } from "./EntryModifier"
 
 /**
  * 卡牌修饰器管理器
@@ -56,8 +57,8 @@ export class CardModifier {
             card.setOwner(this.owner, entries)
 
             // 如果在战斗中且 owner 是 Player，将卡牌添加到弃牌堆
-            if (isInBattle && this.owner instanceof Player) {
-                this.owner.cardPiles.discardPile.push(card)
+            if (isInBattle && isPlayer(this.owner)) {
+                (this.owner as Player).cardPiles.discardPile.push(card)
             }
 
             // 记录到来源映射
@@ -93,7 +94,7 @@ export class CardModifier {
         const isInBattle = nowBattle.value !== null
 
         // 如果在战斗中且 owner 是 Player，从各个牌堆中移除
-        if (isInBattle && this.owner instanceof Player) {
+        if (isInBattle && isPlayer(this.owner)) {
             for (const card of cards) {
                 const piles: (keyof typeof this.owner.cardPiles)[] = ['drawPile', 'discardPile', 'handPile', 'exhaustPile']
                 for (const pileName of piles) {
@@ -122,6 +123,12 @@ export class CardModifier {
      * @returns 如果卡牌可以打出返回 true，否则返回失败原因
      */
     canPlayCard(card: Card): true | string {
+        // 检查卡牌是否有"不能被打出"词条
+        const entryModifier = getEntryModifier(card)
+        if (entryModifier.hasEntry("card_cannot_play")) {
+            return `该卡牌无法被打出`
+        }
+
         // 如果卡牌没有来源，说明是初始卡组的卡牌，总是可以打出
         if (!card.source) {
             return true

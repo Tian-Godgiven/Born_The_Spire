@@ -50,10 +50,8 @@ export const playerList:Record<string,PlayerMap> = {
         ],
         card:[
                 "test_card_kill",       // 终结一击 - 快速击杀敌人
-                "original_card_00001",  // 打击 x2
-                "original_card_00001",
-                "original_card_00014",  // 防御 - 测试护甲
-                "original_card_00015",  // 铁壁 - 测试护甲
+                "original_card_00100",  // 伤口 x2
+                "original_card_00100",
             ],
         relic:[
             "original_relic_00001",  // 回血石 - 战斗结束时回复生命

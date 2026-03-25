@@ -59,42 +59,45 @@ export function getDescribe(describe:Describe|undefined,target?:Object){
                 const cardIndexOrId = value["@"]
                 let cardLabel = "[卡牌]"
 
-                // 获取 target 的 cards 数组
-                const targetCards = target?.cards
-                if (targetCards && Array.isArray(toRaw(targetCards))) {
-                    // 尝试作为索引访问
-                    if (typeof cardIndexOrId === 'number') {
-                        const cardKey = targetCards[cardIndexOrId]
-                        if (cardKey && typeof cardKey === 'string') {
-                            try {
-                                const cardList = getLazyModule<any[]>('cardList')
-                                const cardConfig = cardList.find((c: any) => c.key === cardKey)
-                                if (cardConfig) cardLabel = cardConfig.label
-                            } catch {
-                                // cardList 尚未加载，保持默认值
-                            }
+                if (typeof cardIndexOrId === 'number') {
+                    // 先尝试 cards 数组，再 fallback 到 cardsByOwner.player
+                    let cardKey: string | undefined
+                    const targetCards = (target as any)?.cards
+                    if (targetCards && Array.isArray(toRaw(targetCards))) {
+                        cardKey = targetCards[cardIndexOrId]
+                    }
+                    if (!cardKey) {
+                        const cardsByOwner = (target as any)?.cardsByOwner
+                        if (cardsByOwner?.player) {
+                            const playerCards = Array.isArray(cardsByOwner.player) ? cardsByOwner.player : [cardsByOwner.player]
+                            cardKey = playerCards[cardIndexOrId]
                         }
                     }
-                    // 尝试作为卡牌实例 ID 访问（器官的 @ 引用会被替换为卡牌实例的 __id）
-                    else if (typeof cardIndexOrId === 'string') {
-                        // 查找目标的卡牌修饰器，根据 __id 找到卡牌实例
+                    if (cardKey && typeof cardKey === 'string') {
                         try {
-                            if (target && 'targetType' in target && (target as any).targetType === 'organ') {
-                                // 这是器官，获取它提供的卡牌实例
-                                const organ = target as any
-                                // 器官的 owner 是 Player
-                                if (organ.owner) {
-                                    const cardModifier = getCardModifier(organ.owner)
-                                    const cardsFromOrgan = cardModifier.getCardsFromSource(organ)
-                                    const cardInstance = cardsFromOrgan.find((c: any) => c.__id === cardIndexOrId)
-                                    if (cardInstance) {
-                                        cardLabel = cardInstance.label || cardInstance.key || "[卡牌]"
-                                    }
+                            const cardList = getLazyModule<any[]>('cardList')
+                            const cardConfig = cardList.find((c: any) => c.key === cardKey)
+                            if (cardConfig) cardLabel = cardConfig.label
+                        } catch {
+                            // cardList 尚未加载，保持默认值
+                        }
+                    }
+                } else if (typeof cardIndexOrId === 'string') {
+                    // 卡牌实例 ID，从器官的卡牌修饰器中查找
+                    try {
+                        if (target && 'targetType' in target && (target as any).targetType === 'organ') {
+                            const organ = target as any
+                            if (organ.owner) {
+                                const cardModifier = getCardModifier(organ.owner)
+                                const cardsFromOrgan = cardModifier.getCardsFromSource(organ)
+                                const cardInstance = cardsFromOrgan.find((c: any) => c.__id === cardIndexOrId)
+                                if (cardInstance) {
+                                    cardLabel = cardInstance.label || cardInstance.key || "[卡牌]"
                                 }
                             }
-                        } catch {
-                            // 卡牌实例 ID 查找失败，保持默认值
                         }
+                    } catch {
+                        // 查找失败，保持默认值
                     }
                 }
                 text += cardLabel
@@ -169,16 +172,28 @@ export function getDescribeStructured(describe:Describe|undefined,target?:Object
                 const cardIndex = value["@"]
                 let cardLabel = "[卡牌]"
 
-                // 尝试从 target 的 cards 数组中获取卡牌名称
-                if (target && 'cards' in target && Array.isArray(target.cards)) {
-                    const cardKey = target.cards[cardIndex]
-                    if (cardKey) {
-                        // 使用懒加载获取 cardList
+                // 先尝试 cards 数组，再 fallback 到 cardsByOwner.player
+                let cardKey: string | undefined
+                const targetCards = (target as any)?.cards
+                if (targetCards && Array.isArray(targetCards)) {
+                    cardKey = targetCards[cardIndex]
+                }
+                if (!cardKey) {
+                    const cardsByOwner = (target as any)?.cardsByOwner
+                    if (cardsByOwner?.player) {
+                        const playerCards = Array.isArray(cardsByOwner.player) ? cardsByOwner.player : [cardsByOwner.player]
+                        cardKey = playerCards[cardIndex]
+                    }
+                }
+                if (cardKey && typeof cardKey === 'string') {
+                    try {
                         const cardList = getLazyModule<any[]>('cardList')
                         const cardConfig = cardList.find((c: any) => c.key === cardKey)
                         if (cardConfig) {
                             cardLabel = cardConfig.label
                         }
+                    } catch {
+                        // cardList 尚未加载
                     }
                 }
 

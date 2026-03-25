@@ -342,6 +342,7 @@ onBeforeUnmount(() => {
     }
 
     .describe{
+        text-wrap: wrap;
         padding:0 5px;
         overflow-y: auto;
 

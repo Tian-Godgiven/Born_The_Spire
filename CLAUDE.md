@@ -152,7 +152,7 @@ The game uses a sophisticated event-driven architecture centered around three co
   - Subclasses: Target (Player, Enemy, Organ) and Item (Card, Potion, Relic)
 
 - **ActionEvent** (`ActionEvent.ts`): Represents a game event
-  - Contains `source`, `medium`, `target`, `effects[]`, `phase[]`
+  - Contains `source`, `medium`, `target`, `effects[]`
   - Handles event triggering, announcement, and execution
 
 - **Transaction** (`game/transaction.ts`): Manages event execution

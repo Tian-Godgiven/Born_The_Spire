@@ -84,7 +84,6 @@ export class TemporaryManager {
             const index = pile.indexOf(card)
             if (index !== -1) {
                 pile.splice(index, 1)
-                console.log(`[TemporaryManager] 移除临时卡牌 ${card.label} 从 ${pileName}`)
                 break
             }
         }
@@ -95,7 +94,6 @@ export class TemporaryManager {
      */
     private async removeTemporaryOrgan(organ: Organ, owner: Entity) {
         removeOrgan(owner, organ, false) // 不触发失去效果
-        console.log(`[TemporaryManager] 移除临时器官 ${organ.label}`)
     }
 
     /**

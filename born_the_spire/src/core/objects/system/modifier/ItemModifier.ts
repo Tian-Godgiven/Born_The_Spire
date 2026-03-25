@@ -7,6 +7,8 @@ import type { LogUnit } from "@/ui/hooks/global/log"
 import { doEvent } from "../ActionEvent"
 import type { EffectUnit } from "../effect/EffectUnit"
 import { resolveTriggerEventTarget } from "../trigger/Trigger"
+import { nowBattle } from "@/core/objects/game/battle"
+import { isEntity } from "@/core/utils/typeGuards"
 
 /**
  * 物品修饰单元 - 记录单个物品（器官/遗物/卡牌等）产生的所有副作用
@@ -122,6 +124,184 @@ export class ItemModifier {
         this.owner = owner
     }
 
+    private resolvePossessTriggerMountTarget(triggerDef: any): Entity | null {
+        if (triggerDef.triggerTarget?.participantType === "entity" && triggerDef.triggerTarget.key === "player") {
+            const battle = nowBattle.value
+            if (!battle) {
+                return null
+            }
+            const player = battle.getTeam("player")?.[0]
+            return player && isEntity(player) ? player : null
+        }
+
+        return this.owner
+    }
+
+    private mountPossessTrigger(
+        item: Item,
+        triggerDef: any,
+        triggerMountTarget: Entity,
+        unit: ItemModifierUnit
+    ) {
+        const when = triggerDef.when || "before"
+        const how = triggerDef.how
+        const key = triggerDef.key
+        const level = triggerDef.level || 0
+
+        for (const eventConfig of triggerDef.event) {
+            const triggerRemover = triggerMountTarget.appendTrigger({
+                when,
+                how,
+                key,
+                level,
+                callback: (event, _effect, _triggerLevel) => {
+                    if (eventConfig.targetType === "triggerEffect" && !_effect) return
+
+                    if (triggerDef.condition?.sourceStatus) {
+                        const { key, value, op = "eq" } = triggerDef.condition.sourceStatus
+                        const statusVal = item.status[key]?.value
+                        if (statusVal === undefined) return
+                        if (op === "eq" && statusVal !== value) return
+                        if (op === "lte" && statusVal > value) return
+                        if (op === "gte" && statusVal < value) return
+                        if (op === "lt" && statusVal >= value) return
+                        if (op === "gt" && statusVal <= value) return
+                    }
+
+                    // 解析 source（支持 sourceType）
+                    const source = eventConfig.sourceType
+                        ? resolveTriggerEventTarget(
+                            eventConfig.sourceType,
+                            event,
+                            _effect,
+                            item,
+                            this.owner
+                        )
+                        : item
+
+                    // 解析 medium（支持 mediumType）
+                    const medium = eventConfig.mediumType
+                        ? resolveTriggerEventTarget(
+                            eventConfig.mediumType,
+                            event,
+                            _effect,
+                            item,
+                            this.owner
+                        )
+                        : item
+
+                    // 解析 target
+                    const target = resolveTriggerEventTarget(
+                        eventConfig.targetType,
+                        event,
+                        _effect,
+                        item,
+                        this.owner
+                    )
+
+                    const triggerValue = (_effect as any)?.params?.value
+                    const resolvedEffects = triggerValue !== undefined
+                        ? eventConfig.effect?.map((eu: any) => ({
+                            ...eu,
+                            params: Object.fromEntries(
+                                Object.entries(eu.params || {}).map(([k, v]) =>
+                                    [k, v === "$triggerValue" ? triggerValue : v]
+                                )
+                            )
+                        }))
+                        : eventConfig.effect
+
+                    doEvent({
+                        key: eventConfig.key,
+                        source,
+                        medium,
+                        target,
+                        info: eventConfig.info || {},
+                        effectUnits: resolvedEffects
+                    })
+                }
+            })
+
+            unit.registerTriggerRemover(triggerRemover.remove, `${triggerDef.importantKey || triggerDef.key}`)
+
+            // 当触发器挂载到非 owner（如 player）时，需要额外的清理机制
+            if (triggerMountTarget !== this.owner) {
+                // 1. 战斗结束清理：监听 owner 的 battleEnd 事件
+                const battleEndCleanup = this.owner.appendTrigger({
+                    when: "after",
+                    how: "take",
+                    key: "battleEnd",
+                    callback: () => {
+                        triggerRemover.remove()
+                        battleEndCleanup.remove()
+                        ownerDeathCleanup?.remove()
+                    }
+                })
+                unit.registerTriggerRemover(battleEndCleanup.remove, `battleEnd-cleanup-${triggerDef.importantKey || triggerDef.key}`)
+
+                // 2. 拥有者死亡清理：监听 owner 的 death 事件
+                const ownerDeathCleanup = this.owner.appendTrigger({
+                    when: "after",
+                    how: "take",
+                    key: "death",
+                    callback: () => {
+                        triggerRemover.remove()
+                        battleEndCleanup.remove()
+                        ownerDeathCleanup.remove()
+                    }
+                })
+                unit.registerTriggerRemover(ownerDeathCleanup.remove, `ownerDeath-cleanup-${triggerDef.importantKey || triggerDef.key}`)
+            }
+        }
+    }
+
+    private registerBattleStartDeferredTrigger(
+        item: Item,
+        triggerDef: any,
+        unit: ItemModifierUnit
+    ) {
+        const deferRemover = this.owner.appendTrigger({
+            when: "after",
+            how: "take",
+            key: "battleStart",
+            callback: () => {
+                const triggerMountTarget = this.resolvePossessTriggerMountTarget(triggerDef)
+                if (!triggerMountTarget) return
+
+                this.mountPossessTrigger(item, triggerDef, triggerMountTarget, unit)
+                deferRemover.remove()
+            }
+        })
+
+        unit.registerTriggerRemover(deferRemover.remove, `defer-${triggerDef.importantKey || triggerDef.key}`)
+    }
+
+    private processPossessTrigger(
+        item: Item,
+        triggerDef: any,
+        unit: ItemModifierUnit
+    ) {
+        const timing = triggerDef.timing || "immediate"
+        const triggerMountTarget = this.resolvePossessTriggerMountTarget(triggerDef)
+
+        if (timing === "battleStart") {
+            if (triggerMountTarget) {
+                this.mountPossessTrigger(item, triggerDef, triggerMountTarget, unit)
+                return
+            }
+
+            this.registerBattleStartDeferredTrigger(item, triggerDef, unit)
+            return
+        }
+
+        if (!triggerMountTarget) {
+            console.warn(`[ItemModifier] 无法解析触发器挂载目标: ${triggerDef.importantKey || triggerDef.key}`)
+            return
+        }
+
+        this.mountPossessTrigger(item, triggerDef, triggerMountTarget, unit)
+    }
+
     /**
      * 添加物品，创建并返回修饰单元
      * 返回的单元用于后续注册副作用的清理函数
@@ -209,6 +389,70 @@ export class ItemModifier {
     }
 
     /**
+     * 处理 possess 交互（持有期间的持续效果）
+     * 从 OrganModifier 提取的通用逻辑
+     */
+    private processPossessInteraction(
+        item: Item,
+        possessInteraction: any,
+        unit: ItemModifierUnit,
+        _parentLog?: LogUnit
+    ) {
+
+        // 使用事件系统处理 possess 效果
+        doEvent({
+            key: "possessItem",
+            source: item,
+            medium: item,
+            target: this.owner,
+            effectUnits: possessInteraction.effects || [],
+            onComplete: (event) => {
+                // 收集 effects 产生的副作用
+                const sideEffects = event.getSideEffects()
+                for (const remover of sideEffects) {
+                    unit.registerCustomRemover(remover, "possess effect")
+                }
+            },
+            doWhat: () => {
+                // 2.1. 处理 triggers - 挂载触发器
+                if (possessInteraction.triggers) {
+                    for (const triggerDef of possessInteraction.triggers) {
+                        this.processPossessTrigger(item, triggerDef, unit)
+                    }
+                }
+
+                // 2.2. 处理 modifiers - 添加属性修饰器
+                if (possessInteraction.modifiers) {
+                    for (const modifierDef of possessInteraction.modifiers) {
+                        const statusKey = modifierDef.statusKey
+                        const label = modifierDef.label || statusKey
+
+                        // 获取目标的 Status 对象
+                        const status = this.owner.status[statusKey]
+                        if (!status) {
+                            console.warn(`[ItemModifier] 实体 ${this.owner.label} 没有属性 ${statusKey}，跳过修饰器`)
+                            continue
+                        }
+
+                        // 添加修饰器
+                        const remover = status.addByJSON(item, {
+                            targetLayer: modifierDef.targetLayer || "current",
+                            modifierType: modifierDef.modifierType || "additive",
+                            applyMode: modifierDef.applyMode || "absolute",
+                            modifierValue: modifierDef.modifierValue || 0,
+                            clearable: modifierDef.clearable,
+                            modifierFunc: modifierDef.modifierFunc
+                        })
+
+                        // 收集 remover
+                        unit.registerModifierRemover(remover, label)
+                    }
+                }
+            }
+        })
+    }
+
+    /**
      * 通用交互处理：获得物品
      *
      * 处理流程：
@@ -252,131 +496,6 @@ export class ItemModifier {
         })
 
         return unit
-    }
-
-    /**
-     * 处理 possess 交互（持有期间的持续效果）
-     * 从 OrganModifier 提取的通用逻辑
-     */
-    private processPossessInteraction(
-        item: Item,
-        possessInteraction: any,
-        unit: ItemModifierUnit,
-        _parentLog?: LogUnit
-    ) {
-        // 使用事件系统处理 possess 效果
-        doEvent({
-            key: "possessItem",
-            source: item,
-            medium: item,
-            target: this.owner,
-            effectUnits: possessInteraction.effects || [],
-            onComplete: (event) => {
-                // 收集 effects 产生的副作用
-                const sideEffects = event.getSideEffects()
-                for (const remover of sideEffects) {
-                    unit.registerCustomRemover(remover, "possess effect")
-                }
-            },
-            doWhat: () => {
-                // 2.1. 处理 triggers - 挂载触发器
-                if (possessInteraction.triggers) {
-                    for (const triggerDef of possessInteraction.triggers) {
-                        const when = triggerDef.when || "before"
-                        const how = triggerDef.how
-                        const key = triggerDef.key
-                        const level = triggerDef.level || 0
-
-                        // 为每个 event 创建触发器
-                        for (const eventConfig of triggerDef.event) {
-                            const triggerRemover = this.owner.appendTrigger({
-                                when,
-                                how,
-                                key,
-                                level,
-                                callback: (event, _effect, _triggerLevel) => {
-                                    // 如果 targetType 是 triggerEffect 但 effect 为 null（事件级触发），跳过
-                                    if (eventConfig.targetType === "triggerEffect" && !_effect) return
-                                    // 检查触发条件
-                                    if (triggerDef.condition?.sourceStatus) {
-                                        const { key, value, op = "eq" } = triggerDef.condition.sourceStatus
-                                        const statusVal = item.status[key]?.value
-                                        if (statusVal === undefined) return
-                                        if (op === "eq" && statusVal !== value) return
-                                        if (op === "lte" && statusVal > value) return
-                                        if (op === "gte" && statusVal < value) return
-                                        if (op === "lt" && statusVal >= value) return
-                                        if (op === "gt" && statusVal <= value) return
-                                    }
-                                    // 使用公共的目标解析函数
-                                    const target = resolveTriggerEventTarget(
-                                        eventConfig.targetType,
-                                        event,
-                                        _effect,
-                                        item,           // triggerSource: 物品本身
-                                        this.owner      // triggerOwner: 拥有者
-                                    )
-
-                                    // 解析 effect params 中的 $triggerValue
-                                    const triggerValue = (_effect as any)?.params?.value
-                                    const resolvedEffects = triggerValue !== undefined
-                                        ? eventConfig.effect?.map((eu: any) => ({
-                                            ...eu,
-                                            params: Object.fromEntries(
-                                                Object.entries(eu.params || {}).map(([k, v]) =>
-                                                    [k, v === "$triggerValue" ? triggerValue : v]
-                                                )
-                                            )
-                                        }))
-                                        : eventConfig.effect
-
-                                    // 执行事件
-                                    doEvent({
-                                        key: eventConfig.key,
-                                        source: item,
-                                        medium: item,
-                                        target,
-                                        info: eventConfig.info || {},
-                                        effectUnits: resolvedEffects
-                                    })
-                                }
-                            })
-
-                            // 收集 remover
-                            unit.registerTriggerRemover(triggerRemover.remove, `${triggerDef.importantKey || triggerDef.key}`)
-                        }
-                    }
-                }
-
-                // 2.2. 处理 modifiers - 添加属性修饰器
-                if (possessInteraction.modifiers) {
-                    for (const modifierDef of possessInteraction.modifiers) {
-                        const statusKey = modifierDef.statusKey
-                        const label = modifierDef.label || statusKey
-
-                        // 获取目标的 Status 对象
-                        const status = this.owner.status[statusKey]
-                        if (!status) {
-                            console.warn(`[ItemModifier] 实体 ${this.owner.label} 没有属性 ${statusKey}，跳过修饰器`)
-                            continue
-                        }
-
-                        // 添加修饰器
-                        const remover = status.addByJSON(item, {
-                            targetLayer: modifierDef.targetLayer || "current",
-                            modifierType: modifierDef.modifierType || "additive",
-                            applyMode: modifierDef.applyMode || "absolute",
-                            modifierValue: modifierDef.modifierValue || 0,
-                            clearable: modifierDef.clearable,
-                            modifierFunc: modifierDef.modifierFunc
-                        })
-
-                        // 收集 remover
-                        unit.registerModifierRemover(remover, label)
-                    }
-                }
-            }
-        })
     }
 
     /**
@@ -595,15 +714,15 @@ export function initItemModifier(entity: Entity): ItemModifier {
 /**
  * 获取实体的物品修饰器管理器
  */
-export function getItemModifier(entity: Entity): ItemModifier {
+export async function getItemModifier(entity: Entity): Promise<ItemModifier> {
     const rawEntity = toRaw(entity)
 
     // 先尝试从 ModifierManager 获取
     let modifier: ItemModifier | undefined
 
-    // 同步导入检查（如果已加载）
+    // 异步导入检查
     try {
-        const { modifierManager } = require("@/core/managers/ModifierManager")
+        const { modifierManager } = await import("@/core/managers/ModifierManager")
         modifier = modifierManager.getItemModifier(rawEntity)
     } catch {
         // ModifierManager 未加载，创建新实例

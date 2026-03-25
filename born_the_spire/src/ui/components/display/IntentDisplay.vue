@@ -19,18 +19,22 @@
     </div>
 
     <!-- 悬停显示详情 -->
-    <div class="intent-tooltip" v-if="showTooltip">
-        <div class="tooltip-header">
-            {{ intentLabel }}
-        </div>
+    <div class="intent-tooltip">
         <div class="tooltip-content">
-            <div v-if="intent.value !== undefined">
+            <!-- 显示值的描述（非 card 模式） -->
+            <div v-if="intent.value !== undefined && intent.visibility !== 'card'">
                 {{ intentDescription }}
             </div>
+
+            <!-- card 级别：悬停显示卡牌详情 -->
+            <div v-if="intent.visibility === 'card'" class="tooltip-card-list">
+                <Card v-for="card in intent.actions" :key="card.key" :card="card" />
+            </div>
+
             <div v-if="intent.count && intent.count > 1" class="tooltip-count">
                 攻击 {{ intent.count }} 次
             </div>
-            <div class="tooltip-visibility" v-if="intent.visibility !== 'exact'">
+            <div class="tooltip-visibility" v-if="intent.visibility !== 'exact' && intent.visibility !== 'card'">
                 {{ visibilityHint }}
             </div>
         </div>
@@ -39,14 +43,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import type { Intent } from '@/core/objects/system/Intent'
+import Card from '@/ui/components/object/Card.vue'
 
 const props = defineProps<{
     intent?: Intent
 }>()
-
-const showTooltip = ref(false)
 
 // 意图类型对应的 CSS 类
 const intentTypeClass = computed(() => {
@@ -96,11 +99,12 @@ const intentLabel = computed(() => {
     }
 })
 
-// 是否显示数值
+// 是否显示数值/卡牌名称
 const showValue = computed(() => {
     if (!props.intent) return false
     if (props.intent.visibility === 'hidden') return false
     if (props.intent.visibility === 'type') return false
+    // card 模式同 exact，显示类型+数值，悬停时再显示卡牌详情
     return props.intent.value !== undefined
 })
 
@@ -115,7 +119,7 @@ const displayValue = computed(() => {
         return `${min}-${max}`
     }
 
-    // exact 或默认：显示精确值
+    // exact 或 card 模式：显示精确值
     return props.intent.value.toString()
 })
 
@@ -152,6 +156,8 @@ const visibilityHint = computed(() => {
             return '（具体数值未知）'
         case 'range':
             return '（数值为估算范围）'
+        case 'card':
+            return '（显示具体卡牌）'
         default:
             return ''
     }
@@ -270,28 +276,20 @@ const visibilityHint = computed(() => {
     top: 100%;
     left: 50%;
     transform: translateX(-50%);
-    margin-top: 8px;
-    background: white;
-    border: 2px solid black;
-    padding: 8px 12px;
-    min-width: 150px;
     z-index: 1000;
-    pointer-events: none;
-
-    .tooltip-header {
-        font-weight: bold;
-        margin-bottom: 4px;
-        padding-bottom: 4px;
-        border-bottom: 1px solid #ccc;
-    }
+    pointer-events: auto;
 
     .tooltip-content {
-        font-size: 13px;
-        line-height: 1.4;
+        // card 模式下的卡牌列表
+        .tooltip-card-list {
+            display: flex;
+            gap: 8px;
+        }
 
         .tooltip-count {
             margin-top: 4px;
             color: #666;
+            font-size: 13px;
         }
 
         .tooltip-visibility {

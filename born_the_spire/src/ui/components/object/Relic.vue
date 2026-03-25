@@ -79,7 +79,12 @@
 
     const pointValue = computed(() => {
         if (!relic.status || !relic.status["point"]) return null
-        return relic.status["point"].value
+        const point = relic.status["point"].value
+        const maxPoint = relic.status["maxPoint"]?.value
+        if (maxPoint !== undefined) {
+            return `${point}/${maxPoint}`
+        }
+        return point
     })
 
     const rarityText = computed(() => {

@@ -120,11 +120,34 @@ export function createTriggerByTriggerMap(source:Entity,target:Entity, item:Trig
         }
         //回调函数将会创建并发生n个事件
         for(let eventConfig of item.event){
-            const {key:eventKey,info={},targetType,effect:effectUnit} = eventConfig
+            const {key:eventKey,info={},targetType,effect:effectUnit,mediumType} = eventConfig
             // 如果 targetType 是 triggerEffect 但 effect 为 null（事件级触发），跳过
             if (targetType === "triggerEffect" && !triggerEffect) continue
             //获取目标
             const eventTarget = resolveTriggerEventTarget(targetType, triggerEvent, triggerEffect, source, target)
+
+            // 确定事件的 medium
+            // mediumType 可以是:
+            // - "source": 使用 trigger 的 source
+            // - "target": 使用 trigger 的 target (默认)
+            // - "triggerEventMedium": 使用原始事件的 medium
+            // - "triggerEffect": 使用触发效果
+            let eventMedium: Entity
+            if (mediumType === "source") {
+                eventMedium = source
+            } else if (mediumType === "triggerEventMedium") {
+                if (!isEntity(triggerEvent.medium)) {
+                    throw new Error("原始事件的 medium 不是 Entity 类型")
+                }
+                eventMedium = triggerEvent.medium
+            } else if (mediumType === "triggerEffect") {
+                if (!triggerEffect || !isEntity(triggerEffect)) {
+                    throw new Error("触发效果不是 Entity 类型")
+                }
+                eventMedium = triggerEffect as any
+            } else {
+                eventMedium = target  // 默认使用 target
+            }
 
             // 解析 effect params 中的 $triggerValue
             const triggerValue = (triggerEffect as any)?.params?.value
@@ -143,7 +166,7 @@ export function createTriggerByTriggerMap(source:Entity,target:Entity, item:Trig
             doEvent({
                 key: eventKey,
                 source: source,  // 触发器来源
-                medium: target,  // 触发器持有者
+                medium: eventMedium,  // 根据 mediumType 确定
                 target: eventTarget,  // 该触发器的目标
                 info: info,
                 effectUnits: resolvedEffects ?? []
@@ -219,6 +242,11 @@ export function resolveTriggerEventTarget(
                 throw new Error("触发效果为null，无法作为目标")
             }
             return triggerEffect;
+        case "triggerEventMedium"://原始触发事件的 medium
+            if (!isEntity(triggerEvent.medium)) {
+                throw new Error("触发事件的 medium 不是 Entity 类型")
+            }
+            return triggerEvent.medium
         case "randomEnemy": {//当前战斗中随机一个存活的敌人
             const battle = nowBattle.value
             if (!battle) throw new Error("没有进行中的战斗，无法获取随机敌人")

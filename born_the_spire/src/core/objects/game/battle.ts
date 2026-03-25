@@ -260,6 +260,7 @@ export async function startNewBattle(playerTeam:(Player|Chara)[],enemyTeam:(Enem
         }
 
         // 触发 battleStart 事件
+        // player 是 source 和 target，所以同时触发 make 和 take
         doEvent({
             key: "battleStart",
             source: nowPlayer,
@@ -267,6 +268,17 @@ export async function startNewBattle(playerTeam:(Player|Chara)[],enemyTeam:(Enem
             target: nowPlayer,
             effectUnits: []
         })
+
+        // 给所有敌人也发送 battleStart（让敌人能收到 take battleStart）
+        for (const enemy of enemyTeam) {
+            doEvent({
+                key: "battleStart",
+                source: nowPlayer,
+                medium: battle,
+                target: enemy,
+                effectUnits: []
+            })
+        }
 
         // 准备敌人意图（第一回合）
         const aliveEnemies = battle.getAliveEnemies()

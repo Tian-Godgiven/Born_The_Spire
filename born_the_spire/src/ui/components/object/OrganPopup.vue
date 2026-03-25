@@ -121,12 +121,19 @@ async function getCardFromSegment(segment: DescribeSegment): Promise<CardType | 
     let cardKey: string | null = null
 
     if (segment.cardRefType === 'instance') {
-        // 索引类型 - 从器官的 cards 数组获取 cardKey
+        // 索引类型 - 先查 cards 数组，再 fallback 到 cardsByOwner.player
         if (typeof segment.cardRef === 'number') {
             const index = segment.cardRef
             const cardsArray = props.organ.cards
             if (index >= 0 && index < cardsArray.length) {
                 cardKey = cardsArray[index]
+            }
+            if (!cardKey) {
+                const playerCards = props.organ.cardsByOwner?.player
+                if (playerCards) {
+                    const arr = Array.isArray(playerCards) ? playerCards : [playerCards]
+                    cardKey = arr[index] ?? null
+                }
             }
         }
     } else if (segment.cardRefType === 'key') {

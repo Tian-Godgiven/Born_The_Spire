@@ -349,50 +349,84 @@ export const relicList: RelicMap[] = [
     },
     {
         label: "吸血徽章",
-        describe: ["每累积", { key: ["status", "point"] }, "点伤害", "回复1生命"],
+        describe: ["每累积", { key: ["status", "point"] }, "/", { key: ["status", "maxPoint"] }, "点伤害", "回复1生命"],
         key: "original_relic_vampiric_badge",
         rarity: "uncommon",
         status: {
-            "point": 0
+            "point": 0,
+            "maxPoint": 10
         },
         interaction: {
             possess: {
                 target: { key: "owner" },
-                triggers: [
-                    // 受到伤害时累积
-                    {
-                        when: "after",
-                        how: "take",
-                        key: "damage",
-                        event: [{
-                            targetType: "triggerSource",
-                            key: "accumulateDamage",
-                            effect: [{
-                                key: "addStatusBase",
-                                params: { statusKey: "point", value: "$triggerValue" }
-                            }]
-                        }]
-                    },
-                    // 累积达到10时回复并重置
-                    {
-                        when: "after",
-                        how: "take",
-                        key: "damage",
-                        condition: { sourceStatus: { key: "point", value: 10, op: "gte" } },
-                        event: [
-                            {
-                                targetType: "owner",
-                                key: "heal",
-                                effect: [{ key: "heal", params: { value: 1 } }]
-                            },
-                            {
-                                targetType: "triggerSource",
-                                key: "resetAccumulator",
-                                effect: [{ key: "addStatusBase", params: { statusKey: "point", value: -10 } }]
-                            }
-                        ]
+                effects: [{
+                    key: "accumulateAndTrigger",
+                    params: {
+                        pointKey: "point",
+                        on: { when: "after", how: "take", key: "damage" },
+                        gain: "$triggerValue",
+                        threshold: 10,
+                        consume: 10,
+                        targetType: "owner",
+                        effects: [{ key: "heal", params: { value: 1 } }]
                     }
-                ]
+                }]
+            }
+        }
+    },
+    {
+        label: "学者笔记",
+        describe: ["每打出", { key: ["status", "maxPoint"] }, "张牌", "抽1张牌"],
+        key: "original_relic_scholar_note",
+        rarity: "common",
+        status: {
+            "point": 0,
+            "maxPoint": 5
+        },
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                effects: [{
+                    key: "accumulateAndTrigger",
+                    params: {
+                        pointKey: "point",
+                        on: { when: "after", how: "via", key: "useCard" },
+                        gain: 1,
+                        threshold: 5,
+                        consume: 5,
+                        targetType: "owner",
+                        effects: [{ key: "drawFromDrawPile", params: { value: 1 } }]
+                    }
+                }]
+            }
+        }
+    },
+    {
+        label: "过载电池",
+        describe: ["每累积", { key: ["status", "maxPoint"] }, "点伤害", "回复", { key: ["status", "healAmount"] }, "生命", "（单次触发，清空计数）"],
+        key: "original_relic_overload_battery",
+        rarity: "uncommon",
+        status: {
+            "point": 0,
+            "maxPoint": 15,
+            "healAmount": 8
+        },
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                effects: [{
+                    key: "accumulateAndTrigger",
+                    params: {
+                        pointKey: "point",
+                        on: { when: "after", how: "take", key: "damage" },
+                        gain: "$triggerValue",
+                        threshold: 15,
+                        consume: "all",  // 触发后清空所有point
+                        repeat: false,
+                        targetType: "owner",
+                        effects: [{ key: "heal", params: { value: 8 } }]
+                    }
+                }]
             }
         }
     }

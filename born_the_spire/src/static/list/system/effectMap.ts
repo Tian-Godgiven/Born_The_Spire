@@ -31,6 +31,11 @@ import { enablePoolAction, disablePoolAction } from "@/core/effects/pool/poolAct
 import { addTemporaryCardEffect, addTemporaryOrganEffect, markCardTemporaryEffect, markOrganTemporaryEffect } from "@/core/effects/temporary/temporaryEffects"
 import { addAbilityChargesEffect, reduceAbilityCooldownEffect, setAbilityToggleEffect, resetAbilityUsesEffect, setAbilityEnabledEffect, modifyAbilityCostEffect } from "@/core/effects/ability/abilityEffects"
 import { addStatusModifier, addMaxHealthAndHeal } from "@/core/effects/modifier/addModifier"
+import { accumulateAndTrigger } from "@/core/effects/relic/accumulateAndTrigger"
+import { exhaustRandomCardByTag } from "@/core/effects/card/exhaustRandomCardByTag"
+import { card_wasteHeatRecovery } from "@/core/effects/card/cardSpecificEffects"
+import { addCardToHand } from "@/core/effects/card/addCardToHand"
+import { countAndTrigger } from "@/core/effects/status/countAndTrigger"
 
 type EffectData = {
     label?:string,
@@ -405,5 +410,25 @@ export const effectMap:EffectData[] = [
     label:"添加最大生命并回复",
     key:"addMaxHealthAndHeal",
     effect:addMaxHealthAndHeal
+},{
+    label:"积累计数并触发效果",
+    key:"accumulateAndTrigger",
+    effect:accumulateAndTrigger
+},{
+    label:"随机消耗指定标签的卡牌",
+    key:"exhaustRandomCardByTag",
+    effect:exhaustRandomCardByTag
+},{
+    label:"余热回收：检查牌堆并消耗卡牌获得额外护甲",
+    key:"card_wasteHeatRecovery",
+    effect:card_wasteHeatRecovery
+},{
+    label:"向手牌添加卡牌",
+    key:"addCardToHand",
+    effect:addCardToHand
+},{
+    label:"计数并触发效果",
+    key:"countAndTrigger",
+    effect:countAndTrigger
 }]
 

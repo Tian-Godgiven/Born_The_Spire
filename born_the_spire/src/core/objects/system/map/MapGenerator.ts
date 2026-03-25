@@ -64,23 +64,19 @@ export class MapGenerator {
       violations = this.validateMap(map)
 
       if (violations.length === 0) {
-        console.log(`[MapGenerator] 地图生成成功（第${attempt + 1}次尝试）`)
         return map
       }
 
       if (attempt < maxRetries) {
-        console.warn(`[MapGenerator] 第${attempt + 1}次生成不满足约束，重试...`)
+        // 继续重试
       }
     }
 
     // 所有重试都失败
-    console.warn(`[MapGenerator] ${maxRetries + 1}次尝试都不满足约束`)
 
     // 是否修正
     const fixOnFailure = this.config.validationStrategy?.fixOnFailure ?? true
     if (fixOnFailure && map) {
-      console.log("[MapGenerator] 尝试修正地图...")
-
       if (this.config.validationStrategy?.customFix) {
         this.config.validationStrategy.customFix(map, violations, this.config)
       } else {
@@ -96,8 +92,6 @@ export class MapGenerator {
           for (const v of newViolations) {
             console.warn(`  - ${v.message}`)
           }
-        } else {
-          console.log("[MapGenerator] 修正后验证通过")
         }
       }
     }
@@ -522,7 +516,6 @@ export class MapGenerator {
         const strategy = this.config.roomAssignmentStrategy?.exhaustionStrategy?.[node.roomType] || "reset"
 
         if (strategy === "reset") {
-          console.log(`[MapGenerator] ${node.roomType} 池耗尽，重置`)
           usedSet.clear()
           // 重新选择
           const nodeRng = this.rng.derive(node.id)
@@ -530,7 +523,6 @@ export class MapGenerator {
           usedSet.add(roomKey)
           return roomKey
         } else if (strategy === "allow-repeat") {
-          console.log(`[MapGenerator] ${node.roomType} 池耗尽，允许重复`)
           const nodeRng = this.rng.derive(node.id)
           return nodeRng.choice(pool)
         } else {

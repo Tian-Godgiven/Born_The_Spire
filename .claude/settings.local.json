@@ -50,7 +50,8 @@
       "Bash(echo \"=== $file ===\")",
       "Read(//d/tian/Born_The_Spire/born_the_spire/src/**)",
       "Bash(cd:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(git -C D:/tian/Born_The_Spire/.claude/worktrees/agent-abed514f status --short)"
     ]
   }
 }

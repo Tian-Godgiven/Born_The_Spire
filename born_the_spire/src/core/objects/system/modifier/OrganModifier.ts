@@ -18,6 +18,7 @@ import { modifierManager } from "@/core/managers/ModifierManager"
 import { showComponent } from "@/core/hooks/componentManager"
 
 import { getCardModifier } from "./CardModifier"
+import { isPlayer } from "@/core/utils/typeGuards"
 
 
 
@@ -52,6 +53,7 @@ export class OrganModifier extends ItemModifier {
      * @param skipConfirm 是否跳过部位冲突确认弹窗（默认 false）
      */
     async acquireOrgan(organ: Organ, source: Entity, skipConfirm: boolean = false) {
+
         // 0. 检查部位互斥
         if (organ.part) {
             const maxCount = getPartMaxCount(organ.part)
@@ -130,11 +132,27 @@ export class OrganModifier extends ItemModifier {
         // work 触发器的 remover 会在器官内部管理，损坏时自动移除，修复时自动添加
         organ.activateWorkTriggers(this.owner)
 
-        // 5. 处理器官提供的卡牌（如果 owner 是 Player）
-        // 使用 targetType 检查而不是 instanceof，避免循环依赖
-        if ((this.owner as any).targetType === 'player' && organ.cards.length > 0) {
-            const cardModifier = getCardModifier(this.owner as Player)
-            const addedCards = await cardModifier.addCardsFromSource(organ, organ.cards, parentLog)
+        // 5. 处理器官提供的卡牌
+        // 支持两种格式：
+        // - cards: string[] - 直接提供卡牌key列表
+        // - cardsByOwner: {player: string, enemy: string} - 根据持有者类型提供不同卡牌
+        let cardKeys: string[] = []
+
+        if (organ.cardsByOwner) {
+            // 根据持有者类型选择卡牌
+            const ownerType = isPlayer(this.owner) ? 'player' : 'enemy'
+            const ownerCards = organ.cardsByOwner[ownerType]
+            if (ownerCards) {
+                cardKeys = ownerCards
+            }
+        } else if (organ.cards.length > 0) {
+            // 使用默认的 cards 字段
+            cardKeys = organ.cards
+        }
+
+        if (cardKeys.length > 0) {
+            const cardModifier = getCardModifier(this.owner)
+            const addedCards = await cardModifier.addCardsFromSource(organ, cardKeys, parentLog)
 
             // 更新器官的describe，将卡牌索引替换为实例ID
             if (addedCards.length > 0 && organ.describe) {

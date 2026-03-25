@@ -102,15 +102,12 @@ export class Card extends Item{
 
 //对目标使用卡牌
 export async function useCard(card:Card,fromPile:Card[],source:Player,targets:Target[]){
-    // 检查卡牌来源是否有效（如果有来源）
-    if(card.source) {
-        const cardModifier = getCardModifier(source)
-        const canPlay = cardModifier.canPlayCard(card)
-        if(canPlay !== true) {
-            // 来源无效，无法打出
-            newError(["无法使用该卡牌:", canPlay])
-            return
-        }
+    // 检查卡牌是否可以打出（包括词条检查和来源检查）
+    const cardModifier = getCardModifier(source)
+    const canPlay = cardModifier.canPlayCard(card)
+    if(canPlay !== true) {
+        newError(["无法使用该卡牌:", canPlay])
+        return
     }
 
     const cardCost = getStatusValue(card,"cost")
@@ -169,8 +166,6 @@ export async function useCard(card:Card,fromPile:Card[],source:Player,targets:Ta
 
     // 使用后处理（弃牌/消耗等）
     const afterUseEffect = card.getAfterUseEffect(fromPile)
-    console.log('[useCard] 卡牌使用后效果:', afterUseEffect)
-    console.log('[useCard] 卡牌词条:', card.hasEntry('card_exhaust'))
     doEvent({
         key: "afterUseCard",
         source,
