@@ -3,7 +3,7 @@ import type { Relic } from "../../item/Subclass/Relic"
 import { ItemModifier } from "./ItemModifier"
 import { newLog } from "@/ui/hooks/global/log"
 import type { LogUnit } from "@/ui/hooks/global/log"
-import { computed, toRaw } from "vue"
+import { toRaw } from "vue"
 import { createRelic } from "@/core/factories"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 
@@ -16,7 +16,9 @@ import { getLazyModule } from "@/core/utils/lazyLoader"
  * 遗物相对器官来说更简单，主要依赖基类的通用交互处理逻辑
  */
 export class RelicModifier extends ItemModifier {
-    public relics = computed(() => this.units.map(u => u.item as Relic))
+    public relics = () => {
+        return this.units.map(u => u.item as Relic)
+    }
 
     constructor(owner: Entity) {
         super(owner)
@@ -97,7 +99,7 @@ export class RelicModifier extends ItemModifier {
      * 获取所有遗物（响应式）
      */
     getRelics(): Relic[] {
-        return this.relics.value
+        return this.relics()
     }
 
     /**

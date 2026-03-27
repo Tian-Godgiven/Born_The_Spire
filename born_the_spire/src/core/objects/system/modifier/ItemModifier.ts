@@ -219,7 +219,7 @@ export class ItemModifier {
                         }))
                         : eventConfig.effect
 
-                    doEvent({
+                    const newEvent = doEvent({
                         key: eventConfig.key,
                         source,
                         medium,
@@ -227,6 +227,12 @@ export class ItemModifier {
                         info: eventConfig.info || {},
                         effectUnits: resolvedEffects
                     })
+
+                    // 设置触发器上下文，让效果函数（如 countAndTrigger）可以访问 owner（持有者）
+                    newEvent.triggerContext = event.triggerContext || {
+                        source: item,              // 触发器来源（器官/遗物）
+                        owner: triggerMountTarget, // 触发器挂载目标（玩家）
+                    }
 
                     // 触发成功后，如果配置了 disableUntil，则失效物品直到指定事件发生时恢复
                     if (disableUntil && !item.isDisabled) {

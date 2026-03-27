@@ -29,7 +29,10 @@ import { isPlayer } from "@/core/utils/typeGuards"
  * 每个角色应该有一个 OrganModifier 实例
  */
 export class OrganModifier extends ItemModifier {
-    public organs = computed(() => this.units.map(u => u.item as unknown as Organ))
+    public organs = computed(() => {
+        // 直接返回 items，_isDisabled 是 ref，模板中直接使用 _isDisabled 即可
+        return this.units.map(u => u.item as unknown as Organ)
+    })
 
     constructor(owner: Entity) {
         super(owner)

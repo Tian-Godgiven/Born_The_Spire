@@ -1,6 +1,6 @@
 <template>
 <div class="relic"
-    :class="{ 'has-abilities': hasActiveAbilities, 'is-disabled': relic.isDisabled || isUsedUp }"
+    :class="{ 'has-abilities': hasActiveAbilities, 'is-disabled': relic._isDisabled || isUsedUp }"
     ref="relicRef"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"

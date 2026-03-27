@@ -7,8 +7,8 @@
 
 import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import { newLog } from "@/ui/hooks/global/log"
-import { doEvent } from "@/core/objects/system/ActionEvent"
 import { newError } from "@/ui/hooks/global/alert"
+import { doEvent } from "@/core/objects/system/ActionEvent"
 
 /**
  * 计数并触发效果
@@ -16,7 +16,7 @@ import { newError } from "@/ui/hooks/global/alert"
  * @param effect.params.countKey     - 计数器状态的 key（在 target 上）
  * @param effect.params.threshold    - 触发阈值（默认 1）
  * @param effect.params.onTrigger    - 达到阈值时触发的事件配置
- *                                     格式：{ key, source, medium, target, effectUnits }
+ *                                     格式：{ key, label, targetType, mediumType, effect }
  *
  * 使用方式：
  * effect: {
@@ -26,8 +26,9 @@ import { newError } from "@/ui/hooks/global/alert"
  *         threshold: 5,
  *         onTrigger: {
  *             key: "effect-name",
- *             targetType: "self",
- *             effectUnits: [{ key: "someEffect", params: {...} }]
+ *             targetType: "triggerOwner",
+ *             mediumType: "triggerEventMedium",
+ *             effect: [{ key: "someEffect", params: {...} }]
  *         }
  *     }
  * }
@@ -55,17 +56,8 @@ export const countAndTrigger: EffectFunc = (event, effect) => {
 
     // 计数器存储在 target 上（通常是器官或物品本身）
     const target = event.target
-
-    // 调试日志
-    console.log(`[countAndTrigger] 执行计数器`, {
-        countKey,
-        threshold,
-        targetLabel: (target as any)?.label || target,
-        targetType: (target as any)?.targetType,
-        hasStatus: !!(target as any)?.status,
-        availableStatus: Object.keys((target as any)?.status || {}),
-        currentCardCount: (target as any)?.status?.['card-count']?.value
-    })
+    const source = event.source
+    const medium = event.medium
 
     // 检查 target 是否有 status
     if (!target || !target.status || typeof target !== 'object') {
@@ -115,24 +107,17 @@ export const countAndTrigger: EffectFunc = (event, effect) => {
         newLog(logParts)
 
         if (params.onTrigger && params.onTrigger.key) {
+            // onTrigger 的目标优先使用 triggerContext.owner（触发器持有者）
+            // 没有上下文时退回 event.target
+            const onTriggerTarget = (event.triggerContext?.owner ?? event.target) as any
             for (let i = 0; i < triggerCount; i++) {
-                const onTrigger = params.onTrigger
-
-                // smt 支持 "source"/"medium"/"target" 字符串映射到原始 event 的对应对象
-                const resolveSmt = (val: any) => {
-                    if (val === "source") return event.source
-                    if (val === "medium") return event.medium
-                    if (val === "target") return event.target
-                    return val
-                }
-
                 doEvent({
-                    key: onTrigger.key || "thresholdReached",
-                    source: resolveSmt(onTrigger.source) ?? event.source,
-                    medium: resolveSmt(onTrigger.medium) ?? event.medium,
-                    target: resolveSmt(onTrigger.target) ?? event.target,
-                    info: onTrigger.info,
-                    effectUnits: onTrigger.effectUnits ?? []
+                    key: params.onTrigger.key || "thresholdReached",
+                    source: event.source,
+                    medium: event.medium,
+                    target: onTriggerTarget,
+                    info: params.onTrigger.info,
+                    effectUnits: params.onTrigger.effect ?? []
                 })
             }
         }

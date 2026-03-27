@@ -42,6 +42,12 @@ export class ActionEvent<
     public transaction?: any  // Transaction 类型，避免循环依赖
     //是否已取消（用于复活等机制）
     private _cancelled:boolean = false
+    //触发器上下文（保存触发器执行时的上下文信息）
+    public triggerContext?: {
+        source: any,    // 触发器来源（如器官）
+        owner: any,     // 触发器持有者（如玩家）
+        triggerEvent?: ActionEvent  // 原始触发事件
+    }
     constructor(
         key:string,//触发key
         source:s,medium:m,target:t|t[],

@@ -7,6 +7,7 @@ import type { TargetType } from "@/core/types/TargetType";
 import { newLog } from "@/ui/hooks/global/log";
 import type { TriggerMap, ReactionMap } from "@/core/types/object/trigger";
 import type { ModifierOptions } from "../system/status/type";
+import { ref } from "vue";
 
 // 物品修饰器
 export type ItemModifierDef = {
@@ -38,8 +39,17 @@ export class Item extends Entity{
     public readonly key:string;
     public interaction:Interaction[]//交互
     public reaction?: ReactionMap  // 响应配置
-    public isDisabled:boolean = false // 物品是否失效（器官损坏、遗物失效等）
+    // 使用 public readonly 允许模板直接访问 _isDisabled（响应式 ref）
+    public readonly _isDisabled = ref(false)
     public useInteractions:Interaction[] = [] // 所有的 use 交互
+
+    get isDisabled() {
+        return this._isDisabled.value
+    }
+
+    set isDisabled(value: boolean) {
+        this._isDisabled.value = value
+    }
 
     constructor(map:ItemMap){
         super(map)

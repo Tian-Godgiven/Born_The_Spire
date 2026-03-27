@@ -16,6 +16,28 @@ export const pollutionSourceOrgan: OrganMap = {
         'card-count': 0
     },
     current: ['mass', 'card-count'],
+    reaction: {
+        countAndAddWound: [{
+            key: 'count-and-add-wound',
+            targetType: 'triggerSource',
+            mediumType: 'triggerEventMedium',
+            effect: [{
+                key: 'countAndTrigger',
+                params: {
+                    countKey: 'card-count',
+                    threshold: 5,
+                    onTrigger: {
+                        key: 'add-wound',
+                        targetType: 'triggerOwner',
+                        effect: [{
+                            key: 'addCardToHand',
+                            params: { cardKey: 'original_card_00100', count: 2 }
+                        }]
+                    }
+                }
+            }]
+        }]
+    },
     interaction: {
         possess: {
             target: { key: 'self' },
@@ -25,27 +47,7 @@ export const pollutionSourceOrgan: OrganMap = {
                 key: 'useCard',
                 timing: 'battleStart',
                 triggerTarget: { participantType: 'entity', key: 'player' },
-                event: [{
-                    key: 'count-and-add-wound',
-                    sourceType: 'eventSource',
-                    targetType: 'triggerSource',
-                    mediumType: 'triggerEventMedium',
-                    effect: [{
-                        key: 'countAndTrigger',
-                        params: {
-                            countKey: 'card-count',
-                            threshold: 5,
-                            onTrigger: {
-                                key: 'add-wound',
-                                target: 'source',
-                                effectUnits: [{
-                                    key: 'addCardToHand',
-                                    params: { cardKey: 'original_card_00100', count: 2 }
-                                }]
-                            }
-                        }
-                    }]
-                }]
+                action: 'countAndAddWound'
             }]
         }
     }

@@ -166,14 +166,22 @@ export function executeReactionEvents(params: {
             : effectUnit
 
         // 使用 doEvent 创建事件，会自动添加到 eventCollector
-        doEvent({
+        const newEvent = doEvent({
             key: eventKey,
-            source: source,
+            source: owner,  // 使用 owner（触发器持有者）作为 source
             medium: eventMedium,
             target: eventTarget,
             info: info,
             effectUnits: resolvedEffects ?? []
         })
+
+        // 保存触发器上下文到事件中，让效果函数可以访问
+        // 如果 triggerEvent 已经有 triggerContext，则继承它（用于嵌套 reaction）
+        newEvent.triggerContext = triggerEvent.triggerContext || {
+            source: source,        // 触发器来源（器官）
+            owner: owner,          // 触发器持有者（玩家）
+            triggerEvent: triggerEvent  // 原始触发事件
+        }
     }
 }
 
@@ -212,7 +220,16 @@ export function createTriggerByTriggerMap(source:Entity,target:Entity, item:Trig
         // 通过 action 查找 source 上的 reaction
         const reactionEvents = (source as any).reaction?.[item.action]
         if (!reactionEvents) {
-            newError([`触发器 action "${item.action}" 在 source 上找不到对应的 reaction`])
+            const sourceInfo = (source as any).label || (source as any).key || source.constructor.name
+            const targetInfo = (target as any).label || (target as any).key || target.constructor.name
+            newError([
+                `触发器错误:`,
+                `  action: "${item.action}"`,
+                `  when/how/key: ${when} ${how} ${key}`,
+                `  source: ${sourceInfo}`,
+                `  target: ${targetInfo}`,
+                `  错误: source 上找不到对应的 reaction`
+            ])
             return
         }
         executeReactionEvents({
