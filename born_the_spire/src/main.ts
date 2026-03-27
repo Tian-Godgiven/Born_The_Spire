@@ -27,7 +27,11 @@ Promise.all([
     });
 
     // 预加载所有数据层模块（避免循环依赖）
-    preloadAllLazyModules().then(() => {
+    preloadAllLazyModules().then(async () => {
+
+        // 加载所有 mod（在懒加载完成后，容器初始化前）
+        const { loadAllMods } = await import('@/mods/loader')
+        await loadAllMods()
 
         // 初始化依赖注入容器
         initContainer()

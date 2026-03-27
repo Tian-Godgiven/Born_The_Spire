@@ -1,6 +1,6 @@
 <template>
 <div class="relic"
-    :class="{ 'has-abilities': hasActiveAbilities, 'is-disabled': relic.isDisabled }"
+    :class="{ 'has-abilities': hasActiveAbilities, 'is-disabled': relic.isDisabled || isUsedUp }"
     ref="relicRef"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
@@ -77,7 +77,19 @@
         return relic.status["cooldown"].value
     })
 
+    const isUsedUp = computed(() => {
+        if (!relic.status || !relic.status["used"]) return false
+        const used = relic.status["used"].value
+        const maxUse = relic.status["maxUse"]?.value
+        if (maxUse !== undefined && used >= maxUse) {
+            return true
+        }
+        return false
+    })
+
     const pointValue = computed(() => {
+        // 已用完的遗物不显示计数器
+        if (isUsedUp.value) return null
         if (!relic.status || !relic.status["point"]) return null
         const point = relic.status["point"].value
         const maxPoint = relic.status["maxPoint"]?.value

@@ -158,21 +158,7 @@ const playerCards = computed(() => {
 async function createPreviewPlayer(): Promise<Player> {
     // 使用标准 player 配置作为基础
     const defaultPlayerMap = playerList["default"]
-
-    // 只覆盖需要定制的部分
-    const map: PlayerMap = {
-        ...defaultPlayerMap,
-        organ: [HEART_KEY],  // 只包含心脏，其他器官通过 UI 选择
-        card: [
-            "test_card_kill",       // 终结一击 - 快速击杀敌人
-            "original_card_00100",  // 伤口 x2
-            "original_card_00100",
-        ],
-        potion: { now: [] }  // 预览时不需要药水
-        // relic 使用 defaultPlayerMap 的默认值
-    }
-
-    const player = await createPlayer(map)
+    const player = await createPlayer(defaultPlayerMap)
 
     return player
 }

@@ -47,7 +47,7 @@ export const relicList: RelicMap[] = [
             describe: ["对所有敌人造成10点伤害"],
             usage: {
                 type: "allTargets",
-                targetType: "enemy"
+                target: { faction: "enemy", number: "all" }
             },
             disableAfterUse: true,
             effects: [{
@@ -87,7 +87,7 @@ export const relicList: RelicMap[] = [
                 key: "smash",
                 label: "粉碎",
                 describe: ["对所有敌人造成50点伤害"],
-                usage: { type: "allTargets", targetType: "enemy" },
+                usage: { type: "allTargets", target: { faction: "enemy", number: "all" } },
                 effects: [{ key: "damage", params: { value: 50 } }]
             }
         ],
@@ -211,7 +211,7 @@ export const relicList: RelicMap[] = [
 
             usage: {
                 type: "selectTarget",
-                targetType: "enemy"
+                target: { faction: "enemy" }
             },
 
             restrictions: {
@@ -390,7 +390,7 @@ export const relicList: RelicMap[] = [
                     key: "accumulateAndTrigger",
                     params: {
                         pointKey: "point",
-                        on: { when: "after", how: "via", key: "useCard" },
+                        on: { when: "after", how: "make", key: "useCard" },
                         gain: 1,
                         threshold: 5,
                         consume: 5,
@@ -403,12 +403,14 @@ export const relicList: RelicMap[] = [
     },
     {
         label: "过载电池",
-        describe: ["每累积", { key: ["status", "maxPoint"] }, "点伤害", "回复", { key: ["status", "healAmount"] }, "生命", "（单次触发，清空计数）"],
+        describe: ["每场战斗一次", "受到超过", { key: ["status", "minDamage"] }, "点伤害时", "回复", { key: ["status", "healAmount"] }, "生命"],
         key: "original_relic_overload_battery",
         rarity: "uncommon",
         status: {
             "point": 0,
-            "maxPoint": 15,
+            "used": 0,
+            "maxUse": 1,
+            "minDamage": 10,
             "healAmount": 8
         },
         interaction: {
@@ -418,14 +420,122 @@ export const relicList: RelicMap[] = [
                     key: "accumulateAndTrigger",
                     params: {
                         pointKey: "point",
+                        usedKey: "used",
                         on: { when: "after", how: "take", key: "damage" },
                         gain: "$triggerValue",
-                        threshold: 15,
-                        consume: "all",  // 触发后清空所有point
+                        minGain: 10,
+                        threshold: 1,
+                        consume: "all",
                         repeat: false,
+                        maxTriggerPerBattle: 1,
                         targetType: "owner",
                         effects: [{ key: "heal", params: { value: 8 } }]
                     }
+                }]
+            }
+        }
+    },
+    // 战前仪式：战斗开始时获得3层力量
+    {
+        label: "战前仪式",
+        describe: ["战斗开始时", "获得3层力量"],
+        key: "original_relic_pre_battle_ritual",
+        rarity: "uncommon",
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                triggers: [{
+                    when: "after",
+                    how: "take",
+                    key: "battleStart",
+                    disableUntil: "battleEnd",
+                    event: [{
+                        targetType: "owner",
+                        key: "applyState",
+                        effect: [{
+                            key: "applyState",
+                            params: { stateKey: "power", stacks: 3 }
+                        }]
+                    }]
+                }]
+            }
+        }
+    },
+    // 怒气结晶：每次受到伤害，获得1层力量
+    {
+        label: "怒气结晶",
+        describe: ["每次受到伤害", "获得1层力量"],
+        key: "original_relic_rage_crystal",
+        rarity: "uncommon",
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                triggers: [{
+                    when: "after",
+                    how: "take",
+                    key: "damage",
+                    event: [{
+                        targetType: "owner",
+                        key: "applyState",
+                        effect: [{
+                            key: "applyState",
+                            params: { stateKey: "power", stacks: 1 }
+                        }]
+                    }]
+                }]
+            }
+        }
+    },
+    {
+        label: "低血战旗",
+        describe: ["每回合开始，当生命低于50%时", "获得2层力量"],
+        key: "original_relic_low_health_banner",
+        rarity: "rare",
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                triggers: [{
+                    when: "after",
+                    how: "make",
+                    key: "turnStart",
+                    condition: { ownerHealthPercent: { value: 0.5, op: "lte" } },
+                    event: [{
+                        targetType: "owner",
+                        key: "applyState",
+                        effect: [{
+                            key: "applyState",
+                            params: { stateKey: "power", stacks: 2 }
+                        }]
+                    }]
+                }]
+            }
+        }
+    },
+    // 热血腰带：每回合开始获得3层临时力量（回合结束失去）
+    {
+        label: "热血腰带",
+        describe: ["每回合开始", "获得3层临时力量"],
+        key: "original_relic_hot_belt",
+        rarity: "rare",
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                triggers: [{
+                    when: "after",
+                    how: "make",
+                    key: "turnStart",
+                    event: [
+                        {
+                            targetType: "owner",
+                            key: "applyState",
+                            effect: [{ key: "applyState", params: { stateKey: "power", stacks: 3 } }]
+                        },
+                        {
+                            targetType: "owner",
+                            key: "applyState",
+                            effect: [{ key: "applyState", params: { stateKey: "tempPower", stacks: 3 } }]
+                        }
+                    ]
                 }]
             }
         }

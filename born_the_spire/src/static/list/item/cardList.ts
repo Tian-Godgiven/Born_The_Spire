@@ -363,7 +363,7 @@ export const cardList:CardMap[] = [{
     key:"enemy_stone_strike",
     interaction:{
         use:{
-            target:{faction:"opponent"},  // 攻击敌对阵营
+            target:{faction:"opponent"},
             effects:[{
                 key:"damage",
                 params:{value:6},

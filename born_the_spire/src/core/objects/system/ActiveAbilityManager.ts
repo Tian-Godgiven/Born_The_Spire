@@ -248,9 +248,11 @@ export class ActiveAbilityManager {
             // 调用目标选择UI
             const { chooseTarget } = await import("@/ui/interaction/target/chooseTarget")
 
+            const targetType = ability.usage.target || { faction: "enemy" }
             const targets = await chooseTarget({
-                targetType: { faction: ability.usage.targetType || "enemy" } as TargetType,
-                amount: 1,
+                targetType,
+                source: owner,
+                amount: targetType.number === "all" ? undefined : (targetType.number || 1),
                 title: `选择 ${ability.label} 的目标`
             })
 
@@ -370,15 +372,28 @@ export class ActiveAbilityManager {
             }
         }
 
-        // 根据 targetType 获取所有目标
-        const faction = ability.usage.targetType || "enemy"
+        // 根据 target 获取所有目标
+        const targetType = ability.usage.target || { faction: "enemy", number: "all" }
+        const { resolveTargetTypeRules } = await import("@/ui/interaction/target/chooseTarget")
         const { nowBattle } = await import("@/core/objects/game/battle")
         const battle = nowBattle.value
         if (!battle) {
             newError(["没有进行中的战斗"])
             return false
         }
-        const targets = faction === "ally" ? battle.getTeam("player") : battle.getTeam("enemy")
+
+        const rule = resolveTargetTypeRules(targetType, owner)
+        let targets = rule.specificTargets
+
+        if (!targets) {
+            if (rule.faction === "all") {
+                targets = [...battle.getTeam("player"), ...battle.getTeam("enemy")]
+            } else if (rule.faction === "player") {
+                targets = battle.getTeam("player")
+            } else {
+                targets = battle.getTeam("enemy")
+            }
+        }
 
         if (ability.onActivate) {
             try {

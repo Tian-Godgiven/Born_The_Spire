@@ -49,9 +49,12 @@ export const playerList:Record<string,PlayerMap> = {
             "test_organ_cards_002",  // 狂暴腺体 - 提供消耗打击和肌肉强化
         ],
         card:[
-                "test_card_kill",       // 终结一击 - 快速击杀敌人
-                "original_card_00100",  // 伤口 x2
-                "original_card_00100",
+                "original_card_00001",
+                "original_card_00001",
+                "original_card_00001",
+                "original_card_00014",
+                "original_card_00014",
+                "original_card_00014",
             ],
         relic:[
             "original_relic_00001",  // 回血石 - 战斗结束时回复生命

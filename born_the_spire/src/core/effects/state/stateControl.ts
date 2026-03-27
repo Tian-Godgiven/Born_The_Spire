@@ -90,14 +90,15 @@ export const removeState: EffectFunc = (event: ActionEvent, effect) => {
 export const changeStateStack: EffectFunc = (event: ActionEvent, effect) => {
     const stateKey = effect.params.stateKey as string
     const stackKey = (effect.params.stackKey as string) ?? "default"
-    const delta = effect.params.delta as number
+    const rawDelta = effect.params.delta as number
+    const delta = effect.params.negate ? -rawDelta : rawDelta
 
     if (!stateKey) {
         newError(["changeStateStack 效果缺少 stateKey 参数"])
         return false
     }
 
-    if (delta === undefined) {
+    if (rawDelta === undefined) {
         newError(["changeStateStack 效果缺少 delta 参数"])
         return false
     }

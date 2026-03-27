@@ -82,6 +82,7 @@ export interface TriggerMapItemBase {
         key: string  // 通过 key 指定目标，如 "player" 表示当前战斗中的玩家
     }
     timing?: "immediate" | "battleStart"  // 触发器挂载时机，默认 immediate
+    disableUntil?: "battleEnd"  // 触发后失效，直到指定事件发生时恢复
 }
 
 // 触发条件

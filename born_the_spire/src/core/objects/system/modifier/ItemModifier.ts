@@ -147,6 +147,7 @@ export class ItemModifier {
         const how = triggerDef.how
         const key = triggerDef.key
         const level = triggerDef.level || 0
+        const disableUntil = triggerDef.disableUntil as string | undefined
 
         for (const eventConfig of triggerDef.event) {
             const triggerRemover = triggerMountTarget.appendTrigger({
@@ -219,6 +220,23 @@ export class ItemModifier {
                         info: eventConfig.info || {},
                         effectUnits: resolvedEffects
                     })
+
+                    // 触发成功后，如果配置了 disableUntil，则失效物品直到指定事件发生时恢复
+                    if (disableUntil && !item.isDisabled) {
+                        item.isDisabled = true
+                        if (disableUntil === "battleEnd") {
+                            const restore = this.owner.appendTrigger({
+                                when: "after",
+                                how: "take",
+                                key: "battleEnd",
+                                callback: () => {
+                                    item.isDisabled = false
+                                    restore.remove()
+                                }
+                            })
+                            unit.registerTriggerRemover(restore.remove, `restore-${triggerDef.importantKey || triggerDef.key}`)
+                        }
+                    }
                 }
             })
 

@@ -113,5 +113,38 @@ export const stateList: StateData[] = [
                 }]
             }
         }
+    },
+    // 临时力量标记：回合结束时失去等量力量层数
+    {
+        label: "临时力量",
+        key: "tempPower",
+        describe: ["回合结束时失去等量力量"],
+        showType: "number",
+        repeate: "stack",
+        interaction: {
+            possess: {
+                triggers: [{
+                    when: "after",
+                    how: "take",
+                    key: "turnEnd",
+                    event: [{
+                        key: "removeTempPower",
+                        label: "移除临时力量",
+                        targetType: "triggerOwner",
+                        effect: [{
+                            key: "changeStateStack",
+                            params: {
+                                stateKey: "power",
+                                delta: "$source.stack.default",
+                                negate: true  // 取负数，减少力量层数
+                            }
+                        }, {
+                            key: "removeState",
+                            params: { stateKey: "tempPower" }
+                        }]
+                    }]
+                }]
+            }
+        }
     }
 ]

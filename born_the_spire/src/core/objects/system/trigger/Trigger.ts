@@ -11,6 +11,7 @@ import { isEntity } from "@/core/utils/typeGuards";
 import { nowBattle } from "../../game/battle";
 import { randomChoice } from "@/core/hooks/random";
 import { newError } from "@/ui/hooks/global/alert";
+import { getCurrentValue } from "../Current/current";
 
 // 触发器是基于事件总线的，一系列在个体上的响应器
 // 触发器的实现原理是：在某一个时刻(trigger_key)执行对应时刻的回调函数
@@ -116,6 +117,18 @@ export function createTriggerByTriggerMap(source:Entity,target:Entity, item:Trig
                 if (op === "gte" && statusVal < value) return
                 if (op === "lt" && statusVal >= value) return
                 if (op === "gt" && statusVal <= value) return
+            }
+            if (cond.ownerHealthPercent) {
+                const { value, op = "lte" } = cond.ownerHealthPercent
+                const maxHealth = target.status["maxHealth"]?.value
+                const currentHealth = getCurrentValue(target as any, "health", 0)
+                if (!maxHealth || maxHealth === 0) return
+                const percent = currentHealth / maxHealth
+                if (op === "eq" && percent !== value) return
+                if (op === "lte" && percent > value) return
+                if (op === "gte" && percent < value) return
+                if (op === "lt" && percent >= value) return
+                if (op === "gt" && percent <= value) return
             }
         }
         //回调函数将会创建并发生n个事件

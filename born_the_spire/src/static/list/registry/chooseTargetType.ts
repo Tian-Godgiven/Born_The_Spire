@@ -25,6 +25,14 @@ const chooseTargetType:Record<string,(targets:Target[],ifFilter:boolean)=>boolea
         }
         return selectTarget(targets,func,1)
     },
+    "nonOrgan":(targets:Target[],ifFilter:boolean)=>{
+        // 过滤掉器官类型的目标
+        const func = (t:Target)=> t.targetType !== "organ"
+        if(ifFilter){
+            return targets.filter(t=>func(t))
+        }
+        return targets.every(t=>func(t))
+    },
 }
 
 //示例注册“选择非自身”的1个目标类型

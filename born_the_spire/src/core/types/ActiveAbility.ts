@@ -1,6 +1,7 @@
 import { Entity } from "@/core/objects/system/Entity"
 import type { EffectUnit } from "@/core/objects/system/effect/EffectUnit"
 import type { Describe } from "@/ui/hooks/express/describe"
+import type { TargetType } from "@/core/types/TargetType"
 
 /**
  * 主动能力触发配置
@@ -46,7 +47,7 @@ export interface ActiveAbility {
     // 使用方式
     usage: {
         type: "direct" | "selectTarget" | "toggle" | "allTargets"
-        targetType?: "enemy" | "ally" | "card" | "organ"
+        target?: TargetType  // 使用完整的 TargetType 系统
     }
 
     // 使用限制
