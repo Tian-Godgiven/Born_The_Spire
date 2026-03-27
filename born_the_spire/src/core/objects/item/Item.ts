@@ -5,7 +5,7 @@ import { Entity } from "../system/Entity";
 import type { EffectUnit } from "../system/effect/EffectUnit";
 import type { TargetType } from "@/core/types/TargetType";
 import { newLog } from "@/ui/hooks/global/log";
-import type { TriggerMap } from "@/core/types/object/trigger";
+import type { TriggerMap, ReactionMap } from "@/core/types/object/trigger";
 import type { ModifierOptions } from "../system/status/type";
 
 // 物品修饰器
@@ -28,6 +28,7 @@ export type ItemMap = EntityMap & {
     describe?:Describe,
     key:string,
     interaction:Record<string, InteractionData | InteractionData[]>
+    reaction?: ReactionMap  // 响应配置：action -> 事件配置数组
 }
 
 // 物品：一系列可以被玩家交互的对象
@@ -36,6 +37,7 @@ export class Item extends Entity{
     public label:string;
     public readonly key:string;
     public interaction:Interaction[]//交互
+    public reaction?: ReactionMap  // 响应配置
     public isDisabled:boolean = false // 物品是否失效（器官损坏、遗物失效等）
     public useInteractions:Interaction[] = [] // 所有的 use 交互
 
@@ -44,6 +46,7 @@ export class Item extends Entity{
         this.label = map.label;
         this.describe = map.describe??[""];
         this.key = map.key;
+        this.reaction = map.reaction;
         const interaction:Interaction[] = []
         for(let key in map.interaction){
             const data = map.interaction[key]

@@ -20,16 +20,19 @@ export const relicList: RelicMap[] = [
                     when: "after",
                     how: "make",
                     key: "battleEnd",
-                    event: [{
-                        targetType: "owner",
-                        key: "heal",
-                        effect: [{
-                            key: "heal",
-                            params: { value: 5 }
-                        }]
-                    }]
+                    action: "healOwner"
                 }]
             }
+        },
+        reaction: {
+            healOwner: [{
+                targetType: "owner",
+                key: "heal",
+                effect: [{
+                    key: "heal",
+                    params: { value: 5 }
+                }]
+            }]
         }
     },
     // 主动遗物 - 单个 use
@@ -160,16 +163,19 @@ export const relicList: RelicMap[] = [
                     when: "after",
                     how: "make",
                     key: "battleStart",
-                    event: [{
-                        targetType: "owner",
-                        key: "addFirstTurnDrawBonus",
-                        effect: [{
-                            key: "addFirstTurnDraw",
-                            params: { value: 2 }
-                        }]
-                    }]
+                    action: "addFirstTurnDraw"
                 }]
             }
+        },
+        reaction: {
+            addFirstTurnDraw: [{
+                targetType: "owner",
+                key: "addFirstTurnDrawBonus",
+                effect: [{
+                    key: "addFirstTurnDraw",
+                    params: { value: 2 }
+                }]
+            }]
         }
     },
     // 锻炼遗物 - 解锁水池中的锻炼行动
@@ -255,16 +261,19 @@ export const relicList: RelicMap[] = [
                     when: "after",
                     how: "take",
                     key: "battleStart",
-                    event: [{
-                        targetType: "owner",
-                        key: "applyState",
-                        effect: [{
-                            key: "applyState",
-                            params: { stateKey: "power", stacks: 1 }
-                        }]
-                    }]
+                    action: "gainPower"
                 }]
             }
+        },
+        reaction: {
+            gainPower: [{
+                targetType: "owner",
+                key: "applyState",
+                effect: [{
+                    key: "applyState",
+                    params: { stateKey: "power", stacks: 1 }
+                }]
+            }]
         }
     },
     {
@@ -279,16 +288,19 @@ export const relicList: RelicMap[] = [
                     when: "after",
                     how: "make",
                     key: "useCard",
-                    event: [{
-                        targetType: "randomEnemy",
-                        key: "damage",
-                        effect: [{
-                            key: "damage",
-                            params: { value: 5 }
-                        }]
-                    }]
+                    action: "damageRandomEnemy"
                 }]
             }
+        },
+        reaction: {
+            damageRandomEnemy: [{
+                targetType: "randomEnemy",
+                key: "damage",
+                effect: [{
+                    key: "damage",
+                    params: { value: 5 }
+                }]
+            }]
         }
     },
     {
@@ -310,14 +322,7 @@ export const relicList: RelicMap[] = [
                         how: "make",
                         key: "turnStart",
                         level: 1,
-                        event: [{
-                            targetType: "triggerSource",
-                            key: "decrementCooldown",
-                            effect: [{
-                                key: "decrementStatus",
-                                params: { statusKey: "cooldown", amount: 1 }
-                            }]
-                        }]
+                        action: "decrementCooldown"
                     },
                     // 冷却为0时触发效果并重置冷却
                     {
@@ -325,26 +330,37 @@ export const relicList: RelicMap[] = [
                         how: "make",
                         key: "turnStart",
                         condition: { sourceStatus: { key: "cooldown", value: 0, op: "lte" } },
-                        event: [
-                            {
-                                targetType: "randomEnemy",
-                                key: "damage",
-                                effect: [{
-                                    key: "damage",
-                                    params: { value: 8 }
-                                }]
-                            },
-                            {
-                                targetType: "triggerSource",
-                                key: "resetCooldown",
-                                effect: [{
-                                    key: "resetCooldown"
-                                }]
-                            }
-                        ]
+                        action: "damageAndReset"
                     }
                 ]
             }
+        },
+        reaction: {
+            decrementCooldown: [{
+                targetType: "triggerSource",
+                key: "decrementCooldown",
+                effect: [{
+                    key: "decrementStatus",
+                    params: { statusKey: "cooldown", amount: 1 }
+                }]
+            }],
+            damageAndReset: [
+                {
+                    targetType: "randomEnemy",
+                    key: "damage",
+                    effect: [{
+                        key: "damage",
+                        params: { value: 8 }
+                    }]
+                },
+                {
+                    targetType: "triggerSource",
+                    key: "resetCooldown",
+                    effect: [{
+                        key: "resetCooldown"
+                    }]
+                }
+            ]
         }
     },
     {
@@ -449,16 +465,19 @@ export const relicList: RelicMap[] = [
                     how: "take",
                     key: "battleStart",
                     disableUntil: "battleEnd",
-                    event: [{
-                        targetType: "owner",
-                        key: "applyState",
-                        effect: [{
-                            key: "applyState",
-                            params: { stateKey: "power", stacks: 3 }
-                        }]
-                    }]
+                    action: "gainPower3"
                 }]
             }
+        },
+        reaction: {
+            gainPower3: [{
+                targetType: "owner",
+                key: "applyState",
+                effect: [{
+                    key: "applyState",
+                    params: { stateKey: "power", stacks: 3 }
+                }]
+            }]
         }
     },
     // 怒气结晶：每次受到伤害，获得1层力量
@@ -474,16 +493,19 @@ export const relicList: RelicMap[] = [
                     when: "after",
                     how: "take",
                     key: "damage",
-                    event: [{
-                        targetType: "owner",
-                        key: "applyState",
-                        effect: [{
-                            key: "applyState",
-                            params: { stateKey: "power", stacks: 1 }
-                        }]
-                    }]
+                    action: "gainPowerOnDamage"
                 }]
             }
+        },
+        reaction: {
+            gainPowerOnDamage: [{
+                targetType: "owner",
+                key: "applyState",
+                effect: [{
+                    key: "applyState",
+                    params: { stateKey: "power", stacks: 1 }
+                }]
+            }]
         }
     },
     {
@@ -499,16 +521,19 @@ export const relicList: RelicMap[] = [
                     how: "make",
                     key: "turnStart",
                     condition: { ownerHealthPercent: { value: 0.5, op: "lte" } },
-                    event: [{
-                        targetType: "owner",
-                        key: "applyState",
-                        effect: [{
-                            key: "applyState",
-                            params: { stateKey: "power", stacks: 2 }
-                        }]
-                    }]
+                    action: "gainPower2"
                 }]
             }
+        },
+        reaction: {
+            gainPower2: [{
+                targetType: "owner",
+                key: "applyState",
+                effect: [{
+                    key: "applyState",
+                    params: { stateKey: "power", stacks: 2 }
+                }]
+            }]
         }
     },
     // 热血腰带：每回合开始获得3层临时力量（回合结束失去）
@@ -524,20 +549,23 @@ export const relicList: RelicMap[] = [
                     when: "after",
                     how: "make",
                     key: "turnStart",
-                    event: [
-                        {
-                            targetType: "owner",
-                            key: "applyState",
-                            effect: [{ key: "applyState", params: { stateKey: "power", stacks: 3 } }]
-                        },
-                        {
-                            targetType: "owner",
-                            key: "applyState",
-                            effect: [{ key: "applyState", params: { stateKey: "tempPower", stacks: 3 } }]
-                        }
-                    ]
+                    action: "gainTempPower"
                 }]
             }
+        },
+        reaction: {
+            gainTempPower: [
+                {
+                    targetType: "owner",
+                    key: "applyState",
+                    effect: [{ key: "applyState", params: { stateKey: "power", stacks: 3 } }]
+                },
+                {
+                    targetType: "owner",
+                    key: "applyState",
+                    effect: [{ key: "applyState", params: { stateKey: "tempPower", stacks: 3 } }]
+                }
+            ]
         }
     }
 ]

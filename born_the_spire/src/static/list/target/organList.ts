@@ -50,16 +50,19 @@ export const organList:OrganMap[] = [
                     when:"before",
                     how:"take",
                     key:"damage",
-                    event:[{
-                        key:"reduceDamage",
-                        label:"石肤防护",
-                        targetType:"triggerEffect",  // 把触发效果（damage效果）作为目标
-                        effect:[
-                            {key:"reduceDamageValue",params:{value:1}}
-                        ]
-                    }]
+                    action:"reduceDamage1"
                 }]
             }
+        },
+        reaction:{
+            reduceDamage1:[{
+                key:"reduceDamage",
+                label:"石肤防护",
+                targetType:"triggerEffect",
+                effect:[
+                    {key:"reduceDamageValue",params:{value:1}}
+                ]
+            }]
         }
     },{
         label:"战斗之心",
@@ -115,7 +118,7 @@ export const organList:OrganMap[] = [
             "max-mass": 35
         },
         current: ["mass"],
-        cards:["original_card_00005"],  // 提供"旋风斩"
+        cards:["original_card_00005"],
         interaction:{
             work:{
                 target:{"key":"self"},
@@ -123,17 +126,20 @@ export const organList:OrganMap[] = [
                 triggers:[{
                     how:"make",
                     key:"useCard",
-                    event:[{
-                        key:"drawCard",
-                        label:"旋风引擎：打牌时抽1张",
-                        targetType:"triggerOwner",
-                        effect:[{
-                            key:"drawFromDrawPile",
-                            params:{value:1}
-                        }]
-                    }]
+                    action:"drawOnUseCard"
                 }]
             }
+        },
+        reaction:{
+            drawOnUseCard:[{
+                key:"drawCard",
+                label:"旋风引擎：打牌时抽1张",
+                targetType:"triggerOwner",
+                effect:[{
+                    key:"drawFromDrawPile",
+                    params:{value:1}
+                }]
+            }]
         }
     },{
         label:"末日核心",
@@ -162,7 +168,7 @@ export const organList:OrganMap[] = [
         describe:["回合开始时该器官收到1点伤害并获得1点能量"],
         rarity: OrganRarity.Common,
         part: OrganPartEnum.Heart,
-        tags: [OrganTags.CURSED, OrganTags.CANCER],  // 诅咒 + 癌变标签
+        tags: [OrganTags.CURSED, OrganTags.CANCER],
         status: {
             "max-mass": 10
         },
@@ -175,23 +181,26 @@ export const organList:OrganMap[] = [
                     when:"after",
                     how:"make",
                     key:"turnStart",
-                    event:[{
-                        key:"damage",
-                        targetType:"triggerOwner",
-                        effect:[{
-                            key:"damage",
-                            params:{value:1}
-                        }]
-                    },{
-                        key:"gainEnergy",
-                        targetType:"triggerOwner",
-                        effect:[{
-                            key:"gainEnergy",
-                            params:{value:1}
-                        }]
-                    }]
+                    action:"damageAndEnergy"
                 }]
             }
+        },
+        reaction:{
+            damageAndEnergy:[{
+                key:"damage",
+                targetType:"triggerOwner",
+                effect:[{
+                    key:"damage",
+                    params:{value:1}
+                }]
+            },{
+                key:"gainEnergy",
+                targetType:"triggerOwner",
+                effect:[{
+                    key:"gainEnergy",
+                    params:{value:1}
+                }]
+            }]
         }
     },{
         label:"脆弱之心",
@@ -239,7 +248,7 @@ export const organList:OrganMap[] = [
         describe:["此器官不会损坏","受到的伤害值-2"],
         rarity: OrganRarity.Rare,
         part: OrganPartEnum.Skin,
-        entry: ["organ_sturdy"],  // 坚固词条（使用 organ_ 前缀）
+        entry: ["organ_sturdy"],
         status: {
             "max-mass": 50
         },
@@ -252,16 +261,19 @@ export const organList:OrganMap[] = [
                     when:"before",
                     how:"take",
                     key:"damage",
-                    event:[{
-                        key:"reduceDamage",
-                        label:"坚固外壳防护",
-                        targetType:"triggerEffect",
-                        effect:[
-                            {key:"reduceDamageValue",params:{value:2}}
-                        ]
-                    }]
+                    action:"reduceDamage2"
                 }]
             }
+        },
+        reaction:{
+            reduceDamage2:[{
+                key:"reduceDamage",
+                label:"坚固外壳防护",
+                targetType:"triggerEffect",
+                effect:[
+                    {key:"reduceDamageValue",params:{value:2}}
+                ]
+            }]
         }
     },
     // ========== 升级系统示例 ==========
@@ -356,7 +368,6 @@ export const organList:OrganMap[] = [
         upgrade: {
             maxLevel: 5,
             cost: (organ) => {
-                // 动态成本：等级越高成本越高
                 return 10 + organ.level * 5
             },
             perLevel: {
@@ -386,16 +397,19 @@ export const organList:OrganMap[] = [
                     when:"before",
                     how:"take",
                     key:"damage",
-                    event:[{
-                        key:"reduceDamage",
-                        label:"适应性外壳",
-                        targetType:"triggerEffect",
-                        effect:[
-                            {key:"reduceDamageValue",params:{value:1}}
-                        ]
-                    }]
+                    action:"adaptiveReduction"
                 }]
             }
+        },
+        reaction:{
+            adaptiveReduction:[{
+                key:"reduceDamage",
+                label:"适应性外壳",
+                targetType:"triggerEffect",
+                effect:[
+                    {key:"reduceDamageValue",params:{value:1}}
+                ]
+            }]
         }
     },{
         label:"终极核心",

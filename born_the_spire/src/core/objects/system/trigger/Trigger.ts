@@ -99,6 +99,83 @@ export class Trigger{
     }
 }
 
+/**
+ * 执行反应事件（reaction events）
+ * 这个函数负责解析 targetType、mediumType，以及 $triggerValue，
+ * 然后调用 doEvent 创建并触发事件。
+ *
+ * @param reactionEvents - 要执行的事件配置数组
+ * @param triggerEvent - 触发该反应的原始事件
+ * @param trigger - 运行时触发器对象，包含owner/source等上下文
+ * @param triggerEffect - 触发该反应的效果对象（可能为 null）
+ */
+export function executeReactionEvents(params: {
+    reactionEvents: TriggerEventConfig[],
+    triggerEvent: ActionEvent,
+    trigger: {
+        owner: Entity,
+        source: Entity,
+        action?: string
+    },
+    triggerEffect: Effect | null
+}): void {
+    const { reactionEvents, triggerEvent, trigger, triggerEffect } = params
+    const { owner, source } = trigger
+
+    for (let eventConfig of reactionEvents) {
+        const { key: eventKey, info = {}, targetType, effect: effectUnit, mediumType } = eventConfig
+        // 如果 targetType 是 triggerEffect 但 triggerEffect 为 null（事件级触发），跳过
+        if (targetType === "triggerEffect" && !triggerEffect) continue
+        // 获取目标
+        const eventTarget = resolveTriggerEventTarget(targetType, triggerEvent, triggerEffect, source, owner)
+
+        // 确定事件的 medium
+        // mediumType 可以是:
+        // - "source": 使用 trigger 的 source
+        // - "target": 使用 trigger 的 owner (默认，因为 owner 是挂载 trigger 的实体)
+        // - "triggerEventMedium": 使用原始事件的 medium
+        // - "triggerEffect": 使用触发效果
+        let eventMedium: Entity
+        if (mediumType === "source") {
+            eventMedium = source
+        } else if (mediumType === "triggerEventMedium") {
+            if (!isEntity(triggerEvent.medium)) {
+                throw new Error("原始事件的 medium 不是 Entity 类型")
+            }
+            eventMedium = triggerEvent.medium
+        } else if (mediumType === "triggerEffect") {
+            if (!triggerEffect || !isEntity(triggerEffect)) {
+                throw new Error("触发效果不是 Entity 类型")
+            }
+            eventMedium = triggerEffect as any
+        } else {
+            eventMedium = owner  // 默认使用 owner（挂载 trigger 的实体）
+        }
+
+        // 解析 effect params 中的 $triggerValue
+        const triggerValue = (triggerEffect as any)?.params?.value
+        const resolvedEffects = (triggerValue !== undefined && effectUnit)
+            ? effectUnit.map((eu: any) => ({
+                ...eu,
+                params: Object.fromEntries(
+                    Object.entries(eu.params || {}).map(([k, v]) =>
+                        [k, v === "$triggerValue" ? triggerValue : v]
+                    )
+                )
+            }))
+            : effectUnit
+
+        // 使用 doEvent 创建事件，会自动添加到 eventCollector
+        doEvent({
+            key: eventKey,
+            source: source,
+            medium: eventMedium,
+            target: eventTarget,
+            info: info,
+            effectUnits: resolvedEffects ?? []
+        })
+    }
+}
 
 //通过triggerMap生成触发器
 export function createTriggerByTriggerMap(source:Entity,target:Entity, item:TriggerMap[number]){
@@ -131,60 +208,19 @@ export function createTriggerByTriggerMap(source:Entity,target:Entity, item:Trig
                 if (op === "gt" && percent <= value) return
             }
         }
-        //回调函数将会创建并发生n个事件
-        for(let eventConfig of item.event){
-            const {key:eventKey,info={},targetType,effect:effectUnit,mediumType} = eventConfig
-            // 如果 targetType 是 triggerEffect 但 effect 为 null（事件级触发），跳过
-            if (targetType === "triggerEffect" && !triggerEffect) continue
-            //获取目标
-            const eventTarget = resolveTriggerEventTarget(targetType, triggerEvent, triggerEffect, source, target)
 
-            // 确定事件的 medium
-            // mediumType 可以是:
-            // - "source": 使用 trigger 的 source
-            // - "target": 使用 trigger 的 target (默认)
-            // - "triggerEventMedium": 使用原始事件的 medium
-            // - "triggerEffect": 使用触发效果
-            let eventMedium: Entity
-            if (mediumType === "source") {
-                eventMedium = source
-            } else if (mediumType === "triggerEventMedium") {
-                if (!isEntity(triggerEvent.medium)) {
-                    throw new Error("原始事件的 medium 不是 Entity 类型")
-                }
-                eventMedium = triggerEvent.medium
-            } else if (mediumType === "triggerEffect") {
-                if (!triggerEffect || !isEntity(triggerEffect)) {
-                    throw new Error("触发效果不是 Entity 类型")
-                }
-                eventMedium = triggerEffect as any
-            } else {
-                eventMedium = target  // 默认使用 target
-            }
-
-            // 解析 effect params 中的 $triggerValue
-            const triggerValue = (triggerEffect as any)?.params?.value
-            const resolvedEffects = (triggerValue !== undefined && effectUnit)
-                ? effectUnit.map((eu: any) => ({
-                    ...eu,
-                    params: Object.fromEntries(
-                        Object.entries(eu.params || {}).map(([k, v]) =>
-                            [k, v === "$triggerValue" ? triggerValue : v]
-                        )
-                    )
-                }))
-                : effectUnit
-
-            // 使用 doEvent 创建事件，会自动添加到 eventCollector
-            doEvent({
-                key: eventKey,
-                source: source,  // 触发器来源
-                medium: eventMedium,  // 根据 mediumType 确定
-                target: eventTarget,  // 该触发器的目标
-                info: info,
-                effectUnits: resolvedEffects ?? []
-            })
+        // 通过 action 查找 source 上的 reaction
+        const reactionEvents = (source as any).reaction?.[item.action]
+        if (!reactionEvents) {
+            newError([`触发器 action "${item.action}" 在 source 上找不到对应的 reaction`])
+            return
         }
+        executeReactionEvents({
+            reactionEvents,
+            triggerEvent,
+            trigger: { owner: target, source, action: item.action },
+            triggerEffect
+        })
     }
     if(item.importantKey){
         const {importantKey,onlyKey} = item

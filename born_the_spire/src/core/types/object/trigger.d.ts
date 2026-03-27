@@ -74,7 +74,7 @@ export interface TriggerMapItemBase {
     how: "make" | "via" | "take";
     key: string;  // 触发关键字 triggerKey
     level?: number;  // 触发优先级
-    event: TriggerEventConfig[];  // 触发器所产生的事件
+    action: string;  // 指定响应名称
     info?: string;
     condition?: TriggerCondition;  // 触发条件（可选）
     triggerTarget?: {
@@ -85,6 +85,9 @@ export interface TriggerMapItemBase {
     disableUntil?: "battleEnd"  // 触发后失效，直到指定事件发生时恢复
 }
 
+// 反应映射：action 名称 -> 事件配置数组
+export type ReactionMap = Record<string, TriggerEventConfig[]>
+
 // 触发条件
 export interface TriggerCondition {
     // 检查触发器来源（item/relic/organ 自身）的 status 值
@@ -92,6 +95,11 @@ export interface TriggerCondition {
         key: string       // status 的 key
         value: number     // 期望的值
         op?: "eq" | "lte" | "gte" | "lt" | "gt"  // 比较运算符，默认 "eq"
+    }
+    // 检查持有者当前生命百分比
+    ownerHealthPercent?: {
+        value: number
+        op?: "eq" | "lte" | "gte" | "lt" | "gt"
     }
 }
 

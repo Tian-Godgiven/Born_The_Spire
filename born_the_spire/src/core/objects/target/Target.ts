@@ -1,7 +1,7 @@
 
 import type { EntityMap } from "../system/Entity";
 import type { State } from "../system/State";
-import type { TriggerMap } from "@/core/types/object/trigger";
+import type { TriggerMap, ReactionMap } from "@/core/types/object/trigger";
 
 import { nanoid } from "nanoid";
 import { Entity } from "../system/Entity";
@@ -34,9 +34,11 @@ export class Target extends Entity{
 export type CharaMap = TargetMap & {
     organ:string[]
     trigger?:TriggerMap
+    reaction?:ReactionMap
 }
 //用于角色和敌人
 export class Chara extends Target{
+    public reaction?: ReactionMap
     // 从 OrganModifier 动态获取器官列表（用于 UI 显示）
     public organs = computed(() => {
         const modifier = getOrganModifier(this)
@@ -50,6 +52,10 @@ export class Chara extends Target{
             // 初始化器官（在 Current 初始化之前）
             // 此时 this 指向正在构造的 Chara 实例
             const chara = this as Chara
+
+            // 初始化 reaction
+            chara.reaction = map.reaction
+
             if (map.organ) {
                 const organList = getLazyModule<any[]>('organList')
 

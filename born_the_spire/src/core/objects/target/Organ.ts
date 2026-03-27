@@ -4,6 +4,7 @@ import type { ItemMap, Interaction } from "../item/Item";
 import { getOrganModifier } from "../system/modifier/OrganModifier";
 import { createTriggerByTriggerMap } from "../system/trigger/Trigger";
 import type { OrganRarity, OrganPart } from "@/core/types/OrganTypes";
+import type { ReactionMap } from "@/core/types/object/trigger";
 import { calculateAbsorbValue } from "@/static/list/target/organQuality";
 import type { TargetMap } from "./Target";
 import type { Describe } from "@/ui/hooks/express/describe";
@@ -97,6 +98,8 @@ export class Organ extends Entity{
     public readonly tags: string[]         // 标签列表
     public activeAbilities?: ActiveAbility[]  // 主动能力列表
 
+    public reaction?: ReactionMap  // 响应配置
+
     // 内部管理的触发器移除函数
     workTriggerRemovers: Array<()=>void> = []
     brokenTriggerRemovers: Array<()=>void> = []
@@ -105,6 +108,7 @@ export class Organ extends Entity{
         super(map)
         this.label = map.label;
         this.key = map.key;
+        this.reaction = map.reaction;
         this.cards = map.cards || []  // 初始化卡牌列表
         this.cardsByOwner = map.cardsByOwner  // 初始化按持有者类型分配的卡牌
         this.entry = map.entry || []  // 初始化词条列表

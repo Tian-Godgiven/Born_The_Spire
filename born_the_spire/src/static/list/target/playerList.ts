@@ -17,7 +17,18 @@ export const playerList:Record<string,PlayerMap> = {
         current:["health","energy","isAlive"],
         //默认触发器：回合开始时抽牌（数量由 draw-per-turn 属性决定）
         trigger:[
-            {when:"after",how:"take",key:"turnStart","event":[{
+            {when:"after",how:"take",key:"turnStart",action:"drawCardOnTurnStart",
+            importantKey:"turnStart_drawCard",
+            onlyKey:"turnStart_drawCard"
+        },
+        // 回合结束时弃掉所有手牌
+        {when:"after",how:"take",key:"turnEnd",action:"discardOnTurnEnd",
+        importantKey:"discardOnTurnEnd",
+        onlyKey:"discardAll"
+        }
+        ],
+        reaction:{
+            drawCardOnTurnStart:[{
                 key:"turnStartDrawCard",
                 label:"回合开始时抽卡",
                 targetType:"triggerOwner",
@@ -25,22 +36,27 @@ export const playerList:Record<string,PlayerMap> = {
                     {key:"drawFromDrawPile",params:{value:{fromStatus:"draw-per-turn"}}}
                 ]
             }],
-            importantKey:"turnStart_drawCard",
-            onlyKey:"turnStart_drawCard"
+            discardOnTurnEnd:[{
+                key:"discardAllHandCard",
+                label:"回合结束时弃牌",
+                targetType:"triggerOwner",
+                effect:[
+                    {key:"discardAllCard",params:{pileName:"handPile"}}
+                ]
+            }],
+            recoverEnergy:[{
+                key:"turnStart_recoverEnergy",
+                label:"回合开始时恢复能量",
+                effect:[{key:"getEnergy", params:{value:"max"}}],
+                targetType:"triggerOwner",
+            }],
+            emptyEnergy:[{
+                key:"turnEnd_emptyEnergy",
+                label:"回合结束时清空能量",
+                effect:[{key:"emptyEnergy", params:{}}],
+                targetType:"triggerOwner",
+            }]
         },
-        // 回合结束时弃掉所有手牌
-        {when:"after",how:"take",key:"turnEnd","event":[{
-            key:"discardAllHandCard",
-            label:"回合结束时弃牌",
-            targetType:"triggerOwner",
-            effect:[
-                {key:"discardAllCard",params:{pileName:"handPile"}}
-            ]
-        }],
-        importantKey:"discardOnTurnEnd",
-        onlyKey:"discardAll"
-        }
-        ],
         potion:{
             now:["original_potion_00001","original_potion_00004"]  // 生命药剂 + 火焰药水
         },

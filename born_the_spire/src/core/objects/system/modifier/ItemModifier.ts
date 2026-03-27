@@ -149,7 +149,14 @@ export class ItemModifier {
         const level = triggerDef.level || 0
         const disableUntil = triggerDef.disableUntil as string | undefined
 
-        for (const eventConfig of triggerDef.event) {
+        // 获取 reaction 事件配置
+        const reactionEvents = item.reaction?.[triggerDef.action]
+        if (!reactionEvents) {
+            console.error(`触发器 action "${triggerDef.action}" 在 item 上找不到对应的 reaction`, item)
+            return
+        }
+
+        for (const eventConfig of reactionEvents) {
             const triggerRemover = triggerMountTarget.appendTrigger({
                 when,
                 how,

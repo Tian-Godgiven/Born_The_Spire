@@ -4,7 +4,7 @@ import { isString } from "lodash";
 export function newError(info:(string|Object|undefined)[]):never{
     console.group("报错：");
     for(let i of info){
-        if(isString(info)){
+        if(isString(i)){
             console.error("Message:",i);
         }
         else if(!i){
@@ -16,5 +16,5 @@ export function newError(info:(string|Object|undefined)[]):never{
     }
     console.groupEnd();
     throw new Error("运行过程发生错误")
-    
+
 }
