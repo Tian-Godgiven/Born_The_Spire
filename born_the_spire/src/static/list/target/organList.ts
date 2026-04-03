@@ -124,6 +124,7 @@ export const organList:OrganMap[] = [
                 target:{"key":"self"},
                 effects:[],
                 triggers:[{
+                    when:"after",
                     how:"make",
                     key:"useCard",
                     action:"drawOnUseCard"

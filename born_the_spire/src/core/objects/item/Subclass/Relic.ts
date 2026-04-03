@@ -2,6 +2,7 @@ import { Item } from "../Item";
 import type { ItemMap } from "../Item";
 import { Entity } from "../../system/Entity";
 import { getRelicModifier } from "../../system/modifier/RelicModifier";
+import type { LogUnit } from "@/ui/hooks/global/log";
 import type { ActiveAbility } from "@/core/types/ActiveAbility";
 
 export type RelicMap = ItemMap & {
@@ -42,9 +43,9 @@ export function getRelic(entity: Entity, source: Entity, relic: Relic) {
 /**
  * 失去遗物（包装函数）
  */
-export function removeRelic(entity: Entity, relic: Relic, triggerLoseEffect: boolean = false) {
+export function removeRelic(entity: Entity, relic: Relic, parentLog?: LogUnit) {
     const relicModifier = getRelicModifier(entity)
-    relicModifier.loseRelic(relic, triggerLoseEffect)
+    relicModifier.loseRelic(relic, parentLog)
 }
 
 /**

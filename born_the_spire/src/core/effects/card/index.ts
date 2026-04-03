@@ -1,6 +1,7 @@
 import { Card } from "@/core/objects/item/Subclass/Card"
 import { newError } from "@/ui/hooks/global/alert"
 import { shuffle } from "lodash"
+import * as addTemporaryEffect from "./addTemporaryEffect"
 
 //将卡牌从一个牌堆放到另一个牌堆
 export function cardMove(from:Card[],card:Card,to:Card[]){
@@ -24,3 +25,6 @@ export function washPile(pile:Card[]){
     pile.length = 0;
     pile.push(...newPiles)
 }
+
+// 导出临时效果相关函数
+export { addTemporaryEffect }

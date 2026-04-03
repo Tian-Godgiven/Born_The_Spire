@@ -80,7 +80,17 @@ export class ActionEvent<
                 this.source.makeEvent(when,this.key,this,null,triggerLevel);
             }
             if (isEntity(this.medium)) {
-                this.medium.viaEvent(when,this.key,this,null,triggerLevel)
+                // 添加调试检查
+                if (typeof this.medium.viaEvent !== 'function') {
+                    console.error('[ActionEvent.trigger] medium 通过了 isEntity 检查但没有 viaEvent 方法:', {
+                        medium: this.medium,
+                        participantType: this.medium?.participantType,
+                        hasViaEvent: typeof this.medium?.viaEvent,
+                        eventKey: this.key
+                    })
+                } else {
+                    this.medium.viaEvent(when,this.key,this,null,triggerLevel)
+                }
             }
             handleEventEntity(this.target,(e)=>{
                 if (isEntity(e)) {

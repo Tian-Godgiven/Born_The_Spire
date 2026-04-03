@@ -43,29 +43,29 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { shallowRef, computed, type PropType } from 'vue'
 import type { Card } from '@/core/objects/item/Subclass/Card'
 import CardVue from '@/ui/components/object/Card.vue'
 import type { CardSelector } from '@/core/objects/system/CardSelector'
 
-const props = defineProps<{
-  title: string                    // 标题
-  description?: string             // 描述文本
-  cards: Card[]                    // 可选卡牌列表
-  selector?: CardSelector          // 筛选器（可选）
-  minSelect?: number               // 最少选择数量（默认0）
-  maxSelect?: number               // 最多选择数量（默认1）
-  cancelable?: boolean             // 是否可取消（默认true）
-  filter?: (card: Card) => boolean // 自定义筛选函数（可选）
-}>()
+const props = defineProps({
+  title: { type: String, required: true },
+  description: { type: String, required: false },
+  cards: { type: Array as PropType<Card[]>, required: true },
+  selector: { type: Object as PropType<CardSelector>, required: false },
+  minSelect: { type: Number, default: 0 },
+  maxSelect: { type: Number, default: 1 },
+  cancelable: { type: Boolean, default: false },
+  filter: { type: Function as PropType<(card: Card) => boolean>, required: false }
+})
 
 const emit = defineEmits<{
   complete: [cards: Card[]]
   cancel: []
 }>()
 
-// 已选择的卡牌
-const selectedCards = ref<Card[]>([])
+// 已选择的卡牌（使用 shallowRef 避免深度响应式）
+const selectedCards = shallowRef<Card[]>([])
 
 // 默认值
 const minSelect = computed(() => props.minSelect ?? 0)

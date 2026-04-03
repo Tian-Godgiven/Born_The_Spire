@@ -55,20 +55,22 @@
 
 <script setup lang='ts'>
 import type { Card } from '@/core/objects/item/Subclass/Card';
+import type { Entity } from '@/core/objects/system/Entity';
 import { getStatusValue, ifHaveStatus } from '@/core/objects/system/status/Status';
 import { getDescribe, getDescribeStructured, extractGlossaries, type DescribeSegment } from '@/ui/hooks/express/describe';
-import { computed, ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { computed, ref, onMounted, onBeforeUnmount, nextTick, type PropType } from 'vue';
 import { entryDefinitions } from '@/core/objects/system/Entry';
 import { glossaryMap } from '@/static/list/system/glossaryMap';
 import { getEntryModifier } from '@/core/objects/system/modifier/EntryModifier';
 import { nowPlayer } from '@/core/objects/game/run';
 import { previewCardEffects } from '@/core/utils/effectPreview';
+import { getTemporaryEffectDescribe } from '@/core/effects/card/addTemporaryEffect';
 
-const {card, side, hoverTarget} = defineProps<{
-    card: Card
-    side?: 'left' | 'right'  // 可选，默认右侧
-    hoverTarget?: any  // 可选，鼠标悬停的目标
-}>()
+const {card, side, hoverTarget} = defineProps({
+    card: { type: Object as PropType<Card>, required: true },
+    side: { type: String as PropType<'left' | 'right'>, required: false },
+    hoverTarget: { type: Object as PropType<Entity | Entity[] | undefined>, required: false }
+})
 
 // 预览卡牌效果
 const previewResult = computed(() => {
@@ -113,9 +115,17 @@ const enhancedCard = computed(() => {
     })
 })
 
-// 结构化描述
+// 结构化描述（合并临时效果描述）
 const describeSegments = computed(() => {
-    return getDescribeStructured(card.describe, enhancedCard.value)
+    // 获取临时效果描述
+    const tempDescribe = getTemporaryEffectDescribe(card)
+
+    // 如果有临时效果，将它们添加到卡牌描述后
+    const describeToUse = tempDescribe.length > 0
+        ? [...card.describe, ...tempDescribe]
+        : card.describe
+
+    return getDescribeStructured(describeToUse, enhancedCard.value)
 })
 
 const cost = computed(()=>{
@@ -153,7 +163,7 @@ function getSegmentStyle(segment: DescribeSegment): Record<string, string> | und
     return undefined
 }
 
-// 收集所有需要显示的术语（词条 + describe中的术语）
+// 收集所有需要显示的术语（词条 + describe中的术语 + 临时效果中的术语）
 const allGlossaries = computed(() => {
     const glossaries = new Set<string>()
 
@@ -168,6 +178,13 @@ const allGlossaries = computed(() => {
     // 添加describe中的术语
     const describeGlossaries = extractGlossaries(card.describe)
     describeGlossaries.forEach(key => glossaries.add(key))
+
+    // 添加临时效果描述中的术语
+    const tempDescribe = getTemporaryEffectDescribe(card)
+    for (const desc of tempDescribe) {
+        const tempGlossaries = extractGlossaries([desc])
+        tempGlossaries.forEach(key => glossaries.add(key))
+    }
 
     return Array.from(glossaries)
 })

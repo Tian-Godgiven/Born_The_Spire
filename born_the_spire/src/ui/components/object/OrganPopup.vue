@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, markRaw, shallowRef } from 'vue'
 import { Organ } from '@/core/objects/target/Organ'
 import { getDescribeStructured, type DescribeSegment } from '@/ui/hooks/express/describe'
 import Card from '@/ui/components/object/Card.vue'
@@ -53,7 +53,7 @@ const props = defineProps<{
 }>()
 
 // 卡牌悬停状态
-const hoveredCard = ref<CardType | null>(null)
+const hoveredCard = shallowRef<CardType | null>(null)
 const cardPopoverRef = ref<HTMLElement>()
 const cardPopoverStyle = ref<Record<string, string>>({})
 let mouseX = 0
@@ -183,7 +183,8 @@ async function handleSegmentHover(segment: DescribeSegment, event: MouseEvent) {
     const card = await getCardFromSegment(segment)
     if (!card) return
 
-    hoveredCard.value = card
+    // 使用 markRaw 防止 Card 对象被 ref 深度包装
+    hoveredCard.value = markRaw(card)
 
     nextTick(() => {
         updateCardPopoverPosition()

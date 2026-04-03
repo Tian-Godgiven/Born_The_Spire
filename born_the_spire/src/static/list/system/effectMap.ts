@@ -29,6 +29,7 @@ import { addFirstTurnDraw } from "@/core/effects/card/addFirstTurnDraw"
 import { enableOrganRewardAction, disableOrganRewardAction } from "@/core/effects/organReward/organRewardActionEffects"
 import { enablePoolAction, disablePoolAction } from "@/core/effects/pool/poolActionEffects"
 import { addTemporaryCardEffect, addTemporaryOrganEffect, markCardTemporaryEffect, markOrganTemporaryEffect } from "@/core/effects/temporary/temporaryEffects"
+import { addTemporaryEffect } from "@/core/effects/card/addTemporaryEffect"
 import { addAbilityChargesEffect, reduceAbilityCooldownEffect, setAbilityToggleEffect, resetAbilityUsesEffect, setAbilityEnabledEffect, modifyAbilityCostEffect } from "@/core/effects/ability/abilityEffects"
 import { addStatusModifier, addMaxHealthAndHeal } from "@/core/effects/modifier/addModifier"
 import { accumulateAndTrigger } from "@/core/effects/relic/accumulateAndTrigger"
@@ -36,6 +37,9 @@ import { exhaustRandomCardByTag } from "@/core/effects/card/exhaustRandomCardByT
 import { card_wasteHeatRecovery } from "@/core/effects/card/cardSpecificEffects"
 import { addCardToHand } from "@/core/effects/card/addCardToHand"
 import { countAndTrigger } from "@/core/effects/status/countAndTrigger"
+import { toggleStatus } from "@/core/effects/status/toggleStatus"
+import { disableRandomOrgans, disableRandomOrgansForTarget, cleanupAllDisabledOrgans, isOrganDisabled } from "@/core/effects/organ/disableOrgan"
+import { giveTemporaryEffectToRandomCards } from "@/core/effects/card/giveTemporaryEffectToRandomCards"
 
 type EffectData = {
     label?:string,
@@ -430,5 +434,21 @@ export const effectMap:EffectData[] = [
     label:"计数并触发效果",
     key:"countAndTrigger",
     effect:countAndTrigger
+},{
+    label:"切换状态值",
+    key:"toggleStatus",
+    effect:toggleStatus
+},{
+    label:"给卡牌添加临时效果",
+    key:"addTemporaryEffect",
+    effect:addTemporaryEffect
+},{
+    label:"随机禁用器官",
+    key:"disableRandomOrgans",
+    effect:disableRandomOrgans
+},{
+    label:"给随机卡牌添加临时效果",
+    key:"giveTemporaryEffectToRandomCards",
+    effect:giveTemporaryEffectToRandomCards
 }]
 

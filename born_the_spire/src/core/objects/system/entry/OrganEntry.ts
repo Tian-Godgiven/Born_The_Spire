@@ -1,11 +1,13 @@
 import type { Describe } from "@/ui/hooks/express/describe"
 import { Entity } from "@/core/objects/system/Entity"
 import { createTriggerByTriggerMap } from "@/core/objects/system/trigger/Trigger"
+import type { Chara } from "@/core/objects/target/Target"
 
 /**
  * 器官专用词条定义
  */
 export type OrganEntryDefinition = {
+    label?: string  // 词条显示名称（可选，因为器官词条通常不需要显示名称）
     describe: Describe
     conflictsWith?: string[]
     onApply: (owner: Entity, ownersOwner?: Entity) => Array<() => void>
@@ -25,29 +27,37 @@ export const organEntryDefinitions: Record<string, OrganEntryDefinition> = {
             }
 
             const organ = owner
+            const chara = ownersOwner as Chara
 
-            // 在 ownersOwner 上添加触发器，监听其受到伤害
+            // 为 chara 添加 reaction
+            if (!chara.reaction) {
+                chara.reaction = {}
+            }
+            chara.reaction.fragileBreak = [{
+                key: "fragileBreak",
+                label: "脆弱：50%概率损坏器官",
+                targetType: organ,
+                effect: [{
+                    key: "fragileBreak",
+                    describe: ["脆弱：50%概率损坏器官"],
+                    params: { organ }
+                }]
+            }]
+
+            // 在 chara 上添加触发器，监听其受到伤害
             const triggerObj = createTriggerByTriggerMap(
-                ownersOwner,  // source
-                ownersOwner,  // target (触发器挂载到 ownersOwner)
+                chara,  // source
+                chara,  // target (触发器挂载到 chara)
                 {
                     when: "after",
                     how: "take",
-                    key: "damage",  // 监听 ownersOwner 受到伤害
-                    event: [{
-                        key: "fragileBreak",
-                        targetType: organ,  // 目标是器官
-                        effect: [{
-                            key: "fragileBreak",
-                            describe: ["脆弱：50%概率损坏器官"],
-                            params: { organ }
-                        }]
-                    }]
+                    key: "damage",  // 监听 chara 受到伤害
+                    action: "fragileBreak"
                 }
             )
 
-            // 添加触发器到 ownersOwner 上
-            const { remove } = ownersOwner.appendTrigger(triggerObj)
+            // 添加触发器到 chara 上
+            const { remove } = chara.appendTrigger(triggerObj)
 
             // 返回恢复函数
             return [remove]
@@ -80,29 +90,37 @@ export const organEntryDefinitions: Record<string, OrganEntryDefinition> = {
             }
 
             const organ = owner
+            const chara = ownersOwner as Chara
 
-            // 在 ownersOwner 上添加触发器，监听战斗结束
+            // 为 chara 添加 reaction
+            if (!chara.reaction) {
+                chara.reaction = {}
+            }
+            chara.reaction.regenerateMass = [{
+                key: "regenerateMass",
+                label: "再生：恢复器官质量",
+                targetType: organ,
+                effect: [{
+                    key: "regenerateMass",
+                    describe: ["再生：恢复器官质量"],
+                    params: { organ, value: 5 }
+                }]
+            }]
+
+            // 在 chara 上添加触发器，监听战斗结束
             const triggerObj = createTriggerByTriggerMap(
-                ownersOwner,  // source
-                ownersOwner,  // target (触发器挂载到 ownersOwner)
+                chara,  // source
+                chara,  // target (触发器挂载到 chara)
                 {
                     when: "after",
                     how: "make",
-                    key: "battleEnd",  // 监听 ownersOwner 的战斗结束事件
-                    event: [{
-                        key: "regenerateMass",
-                        targetType: organ,  // 目标是器官
-                        effect: [{
-                            key: "regenerateMass",
-                            describe: ["再生：恢复器官质量"],
-                            params: { organ, value: 5 }
-                        }]
-                    }]
+                    key: "battleEnd",  // 监听 chara 的战斗结束事件
+                    action: "regenerateMass"
                 }
             )
 
-            // 添加触发器到 ownersOwner 上
-            const { remove } = ownersOwner.appendTrigger(triggerObj)
+            // 添加触发器到 chara 上
+            const { remove } = chara.appendTrigger(triggerObj)
 
             // 返回恢复函数
             return [remove]

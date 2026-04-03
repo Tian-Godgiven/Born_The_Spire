@@ -20,7 +20,6 @@ import { getStatusValue } from "../system/status/Status";
 import { nanoid } from "nanoid";
 import { reactive } from "vue";
 import { getPotionByKey } from "@/static/list/item/potionList";
-import { applyStrengthTrigger, applyVulnerableTrigger, applyWeakTrigger } from "@/core/effects/state/stateTriggers";
 import { handleBattleStart, handleBattleEnd } from "@/core/hooks/activeAbility";
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier";
 
@@ -128,11 +127,6 @@ export class Player extends Chara{
         this.initCardPile()
         //初始化状态：清空状态栏
         this.initState()
-
-        // 应用状态触发器
-        applyStrengthTrigger(this)
-        applyVulnerableTrigger(this)
-        applyWeakTrigger(this)
 
         // 处理主动能力系统的战斗开始
         await this.handleActiveAbilitiesBattleStart()

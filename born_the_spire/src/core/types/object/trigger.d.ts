@@ -1,6 +1,7 @@
 import { Effect } from "@/core/objects/system/effect/Effect"
 import { EffectUnit } from "@/core/objects/system/effect/EffectUnit"
 import { Entity } from "@/core/objects/system/Entity"
+import { TargetTypeString } from "@/core/types/TargetSpec"
 
 //触发器的回调函数，其总是会提供触发该触发器的事件对象
 export type TriggerFunc<
@@ -51,67 +52,85 @@ export interface TriggerEventConfig{
     label?:string,
     info?:Record<string,any>
     targetType://事件目标是参与触发事件的哪个对象
-        "eventSource"|//触发事件中的来源
-        "eventMedium"|//触发事件中的媒介
-        "eventTarget"|//触发事件中的目标
-        "triggerSource"|//触发器的来源对象
-        "triggerOwner"|//持有该触发器的对象
-        "triggerEffect"|//触发这个触发器的效果对象
-        "owner"|//持有者（别名，等同于 triggerOwner）
-        "randomEnemy"|//当前战斗中随机一个存活的敌人
-        Entity//某个指定的对象
-    mediumType?://事件的 medium 来源（可选）
-        "source"|//使用 trigger 的 source
-        "target"|//使用 trigger 的 target（默认）
-        "triggerEventMedium"|//使用原始事件的 medium
-        "triggerEffect"|//使用触发效果（即 damage 效果）
+        | TargetTypeString  // 使用统一的 targetType 字符串
+        | Entity            // 某个指定的对象
+    sourceTargetType?: TargetTypeString  // 事件的 source 来源（可选），使用统一的 targetType 格式
+    mediumTargetType?: TargetTypeString  // 事件的 medium 来源（可选），使用统一的 targetType 格式
     effect:EffectUnit[]
-}
-
-// 基础接口
-export interface TriggerMapItemBase {
-    when?: "before" | "after";  // 触发时机
-    how: "make" | "via" | "take";
-    key: string;  // 触发关键字 triggerKey
-    level?: number;  // 触发优先级
-    action: string;  // 指定响应名称
-    info?: string;
-    condition?: TriggerCondition;  // 触发条件（可选）
-    triggerTarget?: {
-        participantType: "entity"
-        key: string  // 通过 key 指定目标，如 "player" 表示当前战斗中的玩家
-    }
-    timing?: "immediate" | "battleStart"  // 触发器挂载时机，默认 immediate
-    disableUntil?: "battleEnd"  // 触发后失效，直到指定事件发生时恢复
+    condition?: TriggerCondition  // 条件检查（可选）。满足条件时才触发
 }
 
 // 反应映射：action 名称 -> 事件配置数组
 export type ReactionMap = Record<string, TriggerEventConfig[]>
 
-// 触发条件
+// 触发条件 - 通用格式
 export interface TriggerCondition {
-    // 检查触发器来源（item/relic/organ 自身）的 status 值
-    sourceStatus?: {
-        key: string       // status 的 key
-        value: number     // 期望的值
-        op?: "eq" | "lte" | "gte" | "lt" | "gt"  // 比较运算符，默认 "eq"
-    }
-    // 检查持有者当前生命百分比
-    ownerHealthPercent?: {
-        value: number
-        op?: "eq" | "lte" | "gte" | "lt" | "gt"
-    }
+  // 检查触发器来源（item/relic/organ 自身）的 status 值（旧格式，向后兼容）
+  sourceStatus?: {
+    key: string       // status 的 key
+    value: number | string     // 期望的值（可为字符串）
+    op?: "eq" | "lte" | "gte" | "lt" | "gt"  // 比较运算符，默认 "eq"
+  }
+  // 检查持有者当前生命百分比（旧格式，向后兼容）
+  ownerHealthPercent?: {
+    value: number
+    op?: "eq" | "lte" | "gte" | "lt" | "gt"
+  }
+  // 检查持有者其他属性（新通用格式）
+  status?: {
+    status: string    // 属性名（health/energy 或 status key）
+    op: "<" | "<=" | ">" | ">=" | "="
+    value: number | string  // 数值或百分比字符串（如 "50%"）
+  }
+  // 检查当前回合数
+  turnNumber?: {
+    equals?: number       // 等于该回合数时触发
+    mod?: [number, number]  // [除数, 余数]，例如 [3, 0] 表示每3回合触发
+  }
 }
 
-// 没有 importantKey 的接口
-export interface TriggerMapItem extends TriggerMapItemBase {
-    importantKey?: never;
+// 旧格式：直接定义事件配置（向后兼容）
+export interface TriggerMapItemWithEvent {
+    when: "before" | "after";
+    how: "make" | "via" | "take";
+    key: string;
+    level?: number;
+    event: TriggerEventConfig | TriggerEventConfig[];  // 直接定义事件
+    info?: string;
+    condition?: TriggerCondition;
 }
 
-// 有 importantKey 的接口
-export interface ImportantTriggerMapItem extends TriggerMapItemBase {
-    importantKey: string;  // 关键触发器
+// 新格式：使用 action + reaction（推荐）
+export interface TriggerMapItemWithAction {
+    when: "before" | "after";
+    how: "make" | "via" | "take";
+    key: string;
+    level?: number;
+    action: string;  // 指定响应名称（与 event 互斥）
+    info?: string;
+    condition?: TriggerCondition;
+    triggerTarget?: {
+        participantType: "entity"
+        key: string  // 通过 key 指定目标，如 "player" 表示当前战斗中的玩家
+    }
+    timing?: "immediate" | "battleStart"
+    disableUntil?: "battleEnd"
+}
+
+// 触发器映射项：支持旧格式或新格式
+export type TriggerMapItem = TriggerMapItemWithEvent | TriggerMapItemWithAction
+
+// 有 importantKey 的版本（仅支持新格式）
+export interface ImportantTriggerMapItem {
+    when: "before" | "after";
+    how: "make" | "via" | "take";
+    key: string;
+    level?: number;
+    action: string;
+    importantKey: string;
     onlyKey?: string;
+    info?: string;
+    condition?: TriggerCondition;
 }
 
 export type TriggerMap = (TriggerMapItem|ImportantTriggerMapItem)[]

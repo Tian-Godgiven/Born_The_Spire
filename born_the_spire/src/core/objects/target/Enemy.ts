@@ -11,6 +11,7 @@ import { doEvent } from "../system/ActionEvent";
 import type { Player } from "./Player";
 import { selectAction } from "../system/EnemyBehavior";
 import type { EnemyBehaviorConfig } from "../system/EnemyBehavior";
+import { isOrganDisabled } from "@/core/effects/organ/disableOrgan";
 
 export type EnemyMap = CharaMap & {
     key:string
@@ -24,6 +25,7 @@ export class Enemy extends Chara{
     public intent?: Intent  // 当前意图（下回合要执行的行动）
     public behavior?: EnemyBehaviorConfig  // 敌人行为配置
     public exclusiveCards: string[] = []  // 敌人专属卡牌key列表
+    public disabledOrgans?: Map<string, { source: any, disabledAtTurn: number }>  // 被禁用的器官（organ.key -> 禁用信息）
     constructor(
         map:EnemyMap
     ){
@@ -79,12 +81,24 @@ export class Enemy extends Chara{
      * 获取敌人当前可用的卡牌列表
      *
      * 从 CardModifier 获取所有卡牌（包括器官提供的和专属卡牌）
+     * 过滤掉被禁用器官提供的卡牌
      * 如果没有可用卡牌，返回兜底的"挣扎"卡牌
      * @returns 可用卡牌列表
      */
     async getAvailableCards(): Promise<Card[]> {
         const cardModifier = getCardModifier(this)
-        const availableCards = cardModifier.getAllCards()
+        const allCards = cardModifier.getAllCards()
+
+        // 过滤掉被禁用器官提供的卡牌
+        const availableCards = allCards.filter(card => {
+            // 如果卡牌没有 source，认为是专属卡牌，允许使用
+            if (!card.source) return true
+            // 检查卡牌来源是否被禁用
+            if (card.source && (card.source as any).targetType === 'organ' && isOrganDisabled(card.source as any, this)) {
+                return false
+            }
+            return true
+        })
 
         // 兜底机制：如果没有可用卡牌，使用"挣扎"
         if (availableCards.length === 0) {
@@ -193,6 +207,12 @@ export class Enemy extends Chara{
      * @param target 目标
      */
     private async playCard(card: Card, target: Player) {
+        // 检查卡牌来源的器官是否被禁用
+        if (card.source && (card.source as any).targetType === 'organ' && isOrganDisabled(card.source as any, this)) {
+            newLog(["敌人使用卡牌被禁用", this.label, card.label])
+            return
+        }
+
         newLog(["敌人使用卡牌", this.label, card.label])
 
         // 获取卡牌的使用效果

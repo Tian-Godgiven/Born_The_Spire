@@ -196,11 +196,12 @@ export class Organ extends Entity{
         for(const triggerDef of interaction.triggers) {
             // 确定触发器挂载的目标
             let triggerMountTarget: Entity = owner
-            if (triggerDef.triggerTarget) {
-                if (triggerDef.triggerTarget.participantType === "entity") {
+            // 新格式：使用 triggerTarget 指定挂载目标（默认挂载到 owner）
+            if ((triggerDef as any).triggerTarget) {
+                if ((triggerDef as any).triggerTarget.participantType === "entity") {
                     const battle = nowBattle.value
                     if (battle) {
-                        const targetKey = triggerDef.triggerTarget.key
+                        const targetKey = (triggerDef as any).triggerTarget.key
                         if (targetKey === "player") {
                             const player = battle.getTeam("player")?.[0]
                             if (player && isEntity(player)) {

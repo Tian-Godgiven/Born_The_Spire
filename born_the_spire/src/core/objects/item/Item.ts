@@ -1,5 +1,6 @@
 import type { Describe } from "@/ui/hooks/express/describe";
 import type { EntityMap } from "../system/Entity";
+import { ref, type Ref } from "vue";
 
 import { Entity } from "../system/Entity";
 import type { EffectUnit } from "../system/effect/EffectUnit";
@@ -7,7 +8,6 @@ import type { TargetType } from "@/core/types/TargetType";
 import { newLog } from "@/ui/hooks/global/log";
 import type { TriggerMap, ReactionMap } from "@/core/types/object/trigger";
 import type { ModifierOptions } from "../system/status/type";
-import { ref } from "vue";
 
 // 物品修饰器
 export type ItemModifierDef = {
@@ -19,7 +19,7 @@ export type ItemModifierDef = {
 export type InteractionData = {
     label?: string//交互的显示名称（如"饮用"、"投掷"、"激活"）
     target: TargetType//这个交互可以指定的对象
-    effects: EffectUnit[]//交互将会造成的即时效果
+    effects?: EffectUnit[]//交互将会造成的即时效果（可选，用于纯触发器场景）
     triggers?: TriggerMap//交互将会添加的触发器
     modifiers?: ItemModifierDef[]//交互将会添加的修饰器
 }
@@ -39,17 +39,9 @@ export class Item extends Entity{
     public readonly key:string;
     public interaction:Interaction[]//交互
     public reaction?: ReactionMap  // 响应配置
-    // 使用 public readonly 允许模板直接访问 _isDisabled（响应式 ref）
+    // isDisabled 用 ref 属性，通过 getter/setter 自动解包访问
     public readonly _isDisabled = ref(false)
     public useInteractions:Interaction[] = [] // 所有的 use 交互
-
-    get isDisabled() {
-        return this._isDisabled.value
-    }
-
-    set isDisabled(value: boolean) {
-        this._isDisabled.value = value
-    }
 
     constructor(map:ItemMap){
         super(map)
@@ -106,6 +98,15 @@ export class Item extends Entity{
      */
     getUse(index: number = 0): Interaction | undefined {
         return this.useInteractions[index]
+    }
+
+    // isDisabled 的 getter 和 setter，自动解包 ref
+    get isDisabled(): boolean {
+        return this._isDisabled.value
+    }
+
+    set isDisabled(value: boolean) {
+        this._isDisabled.value = value
     }
 
     //使用item

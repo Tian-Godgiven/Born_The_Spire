@@ -383,15 +383,15 @@ export class ActiveAbilityManager {
         }
 
         const rule = resolveTargetTypeRules(targetType, owner)
-        let targets = rule.specificTargets
+        let targets: Entity[] = rule.specificTargets ?? []
 
-        if (!targets) {
+        if (targets.length === 0) {
             if (rule.faction === "all") {
-                targets = [...battle.getTeam("player"), ...battle.getTeam("enemy")]
+                targets = [...battle.getTeam("player") ?? [], ...battle.getTeam("enemy") ?? []]
             } else if (rule.faction === "player") {
-                targets = battle.getTeam("player")
+                targets = battle.getTeam("player") ?? []
             } else {
-                targets = battle.getTeam("enemy")
+                targets = battle.getTeam("enemy") ?? []
             }
         }
 

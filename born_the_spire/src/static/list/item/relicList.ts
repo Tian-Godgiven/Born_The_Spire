@@ -357,7 +357,8 @@ export const relicList: RelicMap[] = [
                     targetType: "triggerSource",
                     key: "resetCooldown",
                     effect: [{
-                        key: "resetCooldown"
+                        key: "resetCooldown",
+                        params: {}
                     }]
                 }
             ]
@@ -566,6 +567,104 @@ export const relicList: RelicMap[] = [
                     effect: [{ key: "applyState", params: { stateKey: "tempPower", stacks: 3 } }]
                 }
             ]
+        }
+    },
+    // 遗物：抽牌强化 + 器官禁用
+    {
+        label: "命运之轮",
+        describe: [
+            "偶数回合：每抽3张牌，为抽牌堆随机2张牌添加效果（打出时抽2张牌）",
+            "奇数回合：随机禁用所有敌人1个器官"
+        ],
+        key: "original_relic_wheel",
+        rarity: "rare",
+        status: {
+            "mode": {
+                label: "模式",
+                value: "even",
+                calc: false,
+                displayMap: { "even": "偶", "odd": "奇" }
+            }
+        },
+        interaction: {
+            possess: {
+                target: { key: "owner" },  // 触发器挂在玩家身上，监听玩家的事件
+                effects: [],
+                triggers: [{
+                    // 回合开始时切换模式
+                    // 玩家回合开始时，遗物切换自己的mode状态
+                    when: "after",
+                    how: "make",
+                    key: "turnStart",
+                    action: "toggleMode"
+                }, {
+                    // 偶数模式：抽牌计数，每3张牌触发效果
+                    // 玩家抽牌时，如果遗物是偶数模式，则计数
+                    when: "after",
+                    how: "make",
+                    key: "drawCard",
+                    condition: { sourceStatus: { key: "mode", value: "even" } },
+                    action: "countDrawAndGiveEffect"
+                }, {
+                    // 奇数模式：回合开始禁用敌人器官
+                    // 玩家回合开始时，如果遗物是奇数模式，则禁用敌人器官
+                    when: "after",
+                    how: "make",
+                    key: "turnStart",
+                    condition: { sourceStatus: { key: "mode", value: "odd" } },
+                    action: "disableOrgans"
+                }]
+            }
+        },
+        reaction: {
+            toggleMode: [{
+                targetType: "self",
+                key: "toggleStatus",
+                effect: [{
+                    key: "toggleStatus",
+                    params: {
+                        statusKey: "mode",
+                        values: ["even", "odd"]
+                    }
+                }]
+            }],
+            countDrawAndGiveEffect: [{
+                targetType: "self",
+                key: "countAndTrigger",
+                effect: [{
+                    key: "countAndTrigger",
+                    params: {
+                        countKey: "drawCount",
+                        threshold: 3,
+                        onTrigger: {
+                            key: "giveTemporaryEffectToRandomCards",
+                            targetType: "self",
+                            effect: [{
+                                key: "giveTemporaryEffectToRandomCards",
+                                params: {
+                                    count: 2,
+                                    effectKey: "drawOnUseCard_bonus",
+                                    label: "额外抽牌",
+                                    describe: ["打出时抽2张牌"],
+                                    effect: [{
+                                        key: "drawFromDrawPile",
+                                        params: { value: 2 }
+                                    }],
+                                    sourceKey: "original_relic_wheel"
+                                }
+                            }]
+                        }
+                    }
+                }]
+            }],
+            disableOrgans: [{
+                targetType: "allEnemies",
+                key: "disableRandomOrgans",
+                effect: [{
+                    key: "disableRandomOrgans",
+                    params: { count: 1 }
+                }]
+            }]
         }
     }
 ]

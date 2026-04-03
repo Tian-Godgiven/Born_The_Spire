@@ -153,7 +153,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, markRaw, shallowRef } from 'vue'
 import { currentRewards, showRewardUI, confirmRewards } from '@/ui/hooks/interaction/rewardDisplay'
 import { organRewardActionRegistry } from '@/static/registry/organRewardActionRegistry'
 import { nowPlayer } from '@/core/objects/game/run'
@@ -218,7 +218,7 @@ function getOrganDescribe(organ: OrganMap): string {
 }
 
 // 器官卡牌预览相关
-const organHoveredCard = ref<CardType | null>(null)
+const organHoveredCard = shallowRef<CardType | null>(null)
 const organCardPopoverRef = ref<HTMLElement | null>(null)
 const organCardPopoverStyle = ref<Record<string, string>>({})
 
@@ -240,7 +240,8 @@ async function handleOrganCardHover(organ: OrganMap, segment: DescribeSegment, e
 
   const card = await createOrganCardFromKey(cardKey)
   if (card) {
-    organHoveredCard.value = card
+    // 使用 markRaw 防止 Card 对象被 ref 深度包装
+    organHoveredCard.value = markRaw(card)
     nextTick(() => updateOrganCardPopoverPosition(event.target as HTMLElement))
   }
 }

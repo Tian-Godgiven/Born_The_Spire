@@ -109,7 +109,17 @@ export class Effect implements EventParticipant{
                 event.source.makeEvent(when,this.key,event,this,triggerLevel);
             }
             if (isEntity(event.medium)) {
-                event.medium.viaEvent(when,this.key,event,this,triggerLevel)
+                // 添加调试检查
+                if (typeof event.medium.viaEvent !== 'function') {
+                    console.error('[Effect.trigger] medium 通过了 isEntity 检查但没有 viaEvent 方法:', {
+                        medium: event.medium,
+                        participantType: event.medium?.participantType,
+                        hasViaEvent: typeof event.medium?.viaEvent,
+                        eventKey: event.key
+                    })
+                } else {
+                    event.medium.viaEvent(when,this.key,event,this,triggerLevel)
+                }
             }
             handleEventEntity(event.target,(e)=>{
                 // 只对 Entity 类型调用触发器

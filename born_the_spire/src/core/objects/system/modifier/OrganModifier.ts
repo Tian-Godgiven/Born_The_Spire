@@ -3,6 +3,7 @@ import type { Organ } from "../../target/Organ"
 import type { Item } from "../../item/Item"
 import type { EffectUnit } from "../effect/EffectUnit"
 import type { Player } from "../../target/Player"
+import type { Chara } from "../../target/Target"
 
 import { ItemModifier } from "./ItemModifier"
 import { newLog } from "@/ui/hooks/global/log"
@@ -119,7 +120,7 @@ export class OrganModifier extends ItemModifier {
         const getInteraction = organ.getInteraction("get")
         let effectUnits: EffectUnit[] = []
         if (getInteraction) {
-            effectUnits = getInteraction.effects
+            effectUnits = getInteraction.effects ?? []
         }
 
         // 触发 getOrgan 事件
@@ -154,7 +155,7 @@ export class OrganModifier extends ItemModifier {
         }
 
         if (cardKeys.length > 0) {
-            const cardModifier = getCardModifier(this.owner)
+            const cardModifier = getCardModifier(this.owner as Chara)
             const addedCards = await cardModifier.addCardsFromSource(organ, cardKeys, parentLog)
 
             // 更新器官的describe，将卡牌索引替换为实例ID

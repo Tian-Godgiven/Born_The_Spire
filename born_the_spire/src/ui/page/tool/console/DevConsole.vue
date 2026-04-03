@@ -32,6 +32,7 @@ import { ref, nextTick, onMounted, onUnmounted } from 'vue'
 import { nowGameRun, nowPlayer } from '@/core/objects/game/run'
 import { roomRegistry } from '@/static/registry/roomRegistry'
 import router from '@/ui/router'
+import { getDescribe } from '@/ui/hooks/express/describe'
 
 interface OutputLine {
     type: 'command' | 'result' | 'error' | 'info' | 'example'
@@ -591,7 +592,7 @@ async function listActiveAbilities() {
             if (relic.activeAbilities && relic.activeAbilities.length > 0) {
                 addOutput(`  ${relic.label}:`, 'result')
                 for (const ability of relic.activeAbilities) {
-                    addOutput(`    - ${ability.label}: ${ability.description || '无描述'}`, 'result')
+                    addOutput(`    - ${ability.label}: ${getDescribe(ability.describe) || '无描述'}`, 'result')
                     totalAbilities++
                 }
             }
@@ -604,7 +605,7 @@ async function listActiveAbilities() {
             if (organ.activeAbilities && organ.activeAbilities.length > 0) {
                 addOutput(`  ${organ.label}:`, 'result')
                 for (const ability of organ.activeAbilities) {
-                    addOutput(`    - ${ability.label}: ${ability.description || '无描述'}`, 'result')
+                    addOutput(`    - ${ability.label}: ${getDescribe(ability.describe) || '无描述'}`, 'result')
                     totalAbilities++
                 }
             }
@@ -982,13 +983,14 @@ async function listTriggers(targetType?: string) {
             case 'e':
                 // 列出所有敌人的触发器
                 const { nowBattle } = await import('@/core/objects/game/battle')
-                if (!nowBattle || nowBattle.enemies.length === 0) {
+                const enemies = nowBattle?.value?.getTeam("enemy") ?? []
+                if (enemies.length === 0) {
                     addOutput('当前没有敌人', 'error')
                     return
                 }
-                addOutput(`=== 战场上 ${nowBattle.enemies.length} 个敌人的触发器 ===`, 'info')
+                addOutput(`=== 战场上 ${enemies.length} 个敌人的触发器 ===`, 'info')
                 addOutput('', 'info')
-                for (const enemy of nowBattle.enemies) {
+                for (const enemy of enemies) {
                     const report = getEntityTriggers(enemy)
                     const lines = formatTriggerReport(report)
                     for (const line of lines) {
@@ -1041,12 +1043,13 @@ async function removeTrigger(targetType: string, triggerId: string) {
             case 'enemy':
             case 'e':
                 const { nowBattle } = await import('@/core/objects/game/battle')
-                if (!nowBattle || nowBattle.enemies.length === 0) {
+                const enemies = nowBattle?.value?.getTeam("enemy") ?? []
+                if (enemies.length === 0) {
                     addOutput('当前没有敌人', 'error')
                     return
                 }
                 // 尝试在所有敌人中查找并移除
-                for (const enemy of nowBattle.enemies) {
+                for (const enemy of enemies) {
                     const success = removeTriggerById(enemy, triggerId)
                     if (success) {
                         addOutput(`✓ 已从敌人 ${enemy.label} 移除触发器`, 'result')
@@ -1079,7 +1082,7 @@ async function unlockAllOrgans() {
     const { getLazyModule } = await import('@/core/utils/lazyLoader')
     const { loadMetaProgress, saveMetaProgress, unlockOrgan } = await import('@/core/persistence/metaProgress')
 
-    const organList = getLazyModule('organList')
+    const organList = getLazyModule<any[]>('organList')
     const metaProgress = loadMetaProgress()
 
     let unlockedCount = 0
@@ -1214,7 +1217,7 @@ async function removeRelic(relicKey: string) {
         }
 
         const relicName = relic.label
-        relicModifier.loseRelic(relic, player)
+        relicModifier.loseRelic(relic)
         addOutput(`✓ 成功移除遗物: ${relicName}`, 'result')
     } catch (error: any) {
         addOutput(`移除遗物失败: ${error.message}`, 'error')

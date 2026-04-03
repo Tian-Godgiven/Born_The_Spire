@@ -37,31 +37,31 @@ export class PotionModifier extends ItemModifier {
      *
      * 完整流程：
      * 1. 调用基类 loseItem 清理所有副作用
-     * 2. 可选：触发 lose 交互
+     * 2. 触发 lose 交互
      */
-    losePotion(potion: Potion, triggerLoseEffect: boolean = false, parentLog?: LogUnit) {
+    losePotion(potion: Potion, parentLog?: LogUnit) {
         const log = parentLog || newLog([this.owner, "失去了药水", potion])
 
         // 使用基类的通用方法处理失去逻辑
-        this.loseItem(potion, triggerLoseEffect, log)
+        this.loseItem(potion, log)
     }
 
     /**
      * 移除药水（通过药水对象）
      * @alias losePotion
      */
-    removePotion(potion: Potion, triggerLoseEffect: boolean = false, parentLog?: LogUnit): boolean {
-        this.losePotion(potion, triggerLoseEffect, parentLog)
+    removePotion(potion: Potion, parentLog?: LogUnit): boolean {
+        this.losePotion(potion, parentLog)
         return true
     }
 
     /**
      * 移除药水（通过药水 key）
      */
-    removePotionByKey(potionKey: string, triggerLoseEffect: boolean = false, parentLog?: LogUnit): boolean {
+    removePotionByKey(potionKey: string, parentLog?: LogUnit): boolean {
         const potion = this.getPotionByKey(potionKey)
         if (potion) {
-            this.losePotion(potion, triggerLoseEffect, parentLog)
+            this.losePotion(potion, parentLog)
             return true
         }
         return false
@@ -102,7 +102,7 @@ export class PotionModifier extends ItemModifier {
 
         // 如果使用成功，移除药水（药水使用后通常会消失）
         if (result === "success") {
-            this.losePotion(potion, false)
+            this.losePotion(potion)
         }
 
         return result
@@ -131,7 +131,7 @@ export class PotionModifier extends ItemModifier {
         }
 
         // 直接移除，不触发 lose 效果
-        this.loseItem(potion, false)
+        this.loseItem(potion)
 
         newLog([this.owner, "丢弃了", potion])
         return "success"

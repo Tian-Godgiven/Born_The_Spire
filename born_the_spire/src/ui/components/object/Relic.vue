@@ -1,6 +1,6 @@
 <template>
 <div class="relic"
-    :class="{ 'has-abilities': hasActiveAbilities, 'is-disabled': relic._isDisabled || isUsedUp }"
+    :class="{ 'has-abilities': hasActiveAbilities, 'is-disabled': relic.isDisabled || isUsedUp }"
     ref="relicRef"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
@@ -20,6 +20,13 @@
     <!-- 点数角标 -->
     <div class="point-badge" v-if="pointValue !== null">
         {{ pointValue }}
+    </div>
+
+    <!-- 其他状态角标（如命运之轮的模式） -->
+    <div class="status-badge" v-for="(status, key) in relic.status" :key="key"
+        v-if="shouldShowStatusBadge(key, status)"
+    >
+        {{ getStatusBadgeText(key, status) }}
     </div>
 
     <div>{{ relic.label }}</div>
@@ -99,6 +106,40 @@
         return point
     })
 
+    // 判断是否应该显示某个状态的角标
+    const shouldShowStatusBadge = (key: string, status: any) => {
+        // skip special keys
+        if (key === 'cooldown' || key === 'used' || key === 'point' || key === 'maxPoint' || key === 'maxUse') {
+            return false
+        }
+        if (!status) return false
+        // 非 calc 的状态显示（calc=false 表示不计算，直接显示）
+        // 如果 calc 不存在或不是 true，都显示
+        if (status.calc === false) {
+            return true
+        }
+        // 如果不是数字类型（如字符串 "even"/"odd"），也显示
+        if (typeof status.value === 'string') {
+            return true
+        }
+        // 显示有自定义 label 的状态
+        return !!(status.label && status.label.value !== undefined)
+    }
+
+    // 获取状态角标的显示文本
+    const getStatusBadgeText = (key: string, status: any) => {
+        if (!status) return ''
+        // 如果有 displayMap，优先使用
+        if (status.displayMap && status.value in status.displayMap) {
+            return status.displayMap[status.value]
+        }
+        // 如果有自定义 label，显示 label；否则直接显示值
+        if (status.label && status.label.value !== undefined) {
+            return status.label.value
+        }
+        return status.value
+    }
+
     const rarityText = computed(() => {
         const rarityMap = {
             'common': '普通',
@@ -172,24 +213,27 @@
         if (!hasActiveAbilities.value) return
 
         try {
-            // 为遗物提供默认的右键触发配置
-            const triggerConfig = {
-                rightClick: {
-                    type: "menu" as const
-                }
-            }
-
             // 如果只有一个能力，直接执行；否则显示菜单
             const abilities = relic.activeAbilities!
-            let menuConfig
 
             if (abilities.length === 1) {
-                // 单能力：直接执行
-                triggerConfig.rightClick.type = "ability"
-                triggerConfig.rightClick.abilityKey = abilities[0].key
+                // 单能力：直接执行 - 使用类型断言绕过编译器检查
+                const triggerConfig = {
+                    rightClick: {
+                        type: "ability" as const,
+                        abilityKey: abilities[0].key
+                    }
+                }
+                await handleItemRightClick(
+                    relic,
+                    nowPlayer,
+                    abilities,
+                    triggerConfig,
+                    undefined
+                )
             } else {
                 // 多能力：显示菜单
-                menuConfig = {
+                const menuConfig = {
                     items: abilities.map(ability => ({
                         type: "ability" as const,
                         abilityKey: ability.key,
@@ -198,15 +242,19 @@
                         canUse: () => true
                     }))
                 }
+                const triggerConfig = {
+                    rightClick: {
+                        type: "menu" as const
+                    }
+                }
+                await handleItemRightClick(
+                    relic,
+                    nowPlayer,
+                    abilities,
+                    triggerConfig,
+                    menuConfig
+                )
             }
-
-            await handleItemRightClick(
-                relic,
-                nowPlayer,
-                abilities,
-                triggerConfig,
-                menuConfig
-            )
         } catch (error) {
             console.error('[Relic] 右键点击处理失败:', error)
         }
@@ -267,6 +315,21 @@
         padding: 1px 3px;
         font-weight: bold;
         border-radius: 0 4px 0 0;
+        z-index: 1;
+        min-width: 12px;
+        text-align: center;
+    }
+
+    .status-badge {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        background-color: #9b59b6;
+        color: white;
+        font-size: 10px;
+        padding: 1px 3px;
+        font-weight: bold;
+        border-radius: 0 0 0 4px;
         z-index: 1;
         min-width: 12px;
         text-align: center;

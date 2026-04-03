@@ -33,15 +33,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, type PropType } from 'vue'
 import { Entity } from '@/core/objects/system/Entity'
 // import { AbilityTargetConfig } from '@/core/types/ActiveAbility'
 
-interface Props {
-  targetConfig: any // AbilityTargetConfig
+interface TargetConfig {
+    type: string
+    count?: { min: number; max: number }
+    filter?: (target: Entity) => boolean
 }
 
-const props = defineProps<Props>()
+const props = defineProps({
+    targetConfig: { type: Object as PropType<TargetConfig>, required: true }
+})
 
 const emit = defineEmits<{
   confirm: [targets: Entity[]]

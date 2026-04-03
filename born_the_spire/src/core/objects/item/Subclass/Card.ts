@@ -10,6 +10,7 @@ import { newError } from "@/ui/hooks/global/alert";
 import { getStatusValue } from "@/core/objects/system/status/Status";
 import { getCardModifier } from "@/core/objects/system/modifier/CardModifier";
 import { getEntryModifier } from "@/core/objects/system/modifier/EntryModifier";
+import type { TemporaryEffectConfig } from "@/core/effects/card/addTemporaryEffect";
 
 export type CardMap = ItemMap & {
     status:{
@@ -48,6 +49,7 @@ export class Card extends Item{
     public level: number = 0  // 卡牌等级（用于升级系统）
     public isTemporary: boolean = false  // 是否为临时卡牌
     public temporaryRemoveOn?: "battleEnd" | "turnEnd" | "floorEnd"  // 临时卡牌的移除时机
+    public _temporaryEffects?: TemporaryEffectConfig[]  // 临时效果列表
 
     constructor(map:CardMap){
         super(map)

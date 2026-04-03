@@ -34,9 +34,9 @@ export class Entity implements EventParticipant{
     public abilityCostModifiers?: Map<string, number>  // 能力消耗修改器 (abilityKey_costType -> modifier)
 
     // 两阶段初始化相关字段
-    private _initialized: boolean = false
-    private _currentMapData?: any
-    private _beforeCurrentInit?: (this: Entity) => void
+    public _initialized: boolean = false
+    public _currentMapData?: any
+    public _beforeCurrentInit?: (this: Entity) => void
 
     constructor(map:EntityMap, beforeCurrentInit?: (this: Entity) => void){
         this.label = map.label

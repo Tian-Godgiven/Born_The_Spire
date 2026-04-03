@@ -9,7 +9,6 @@ import { newLog } from "@/ui/hooks/global/log"
 import { getCardByKey } from "@/static/list/item/cardList"
 import { isEnemy, isEntity, isPlayer } from "@/core/utils/typeGuards"
 import type { Player } from "@/core/objects/target/Player"
-import type { Enemy } from "@/core/objects/target/Enemy"
 
 /**
  * 向指定目标的手牌添加卡牌
@@ -58,13 +57,19 @@ export const addCardToHand: EffectFunc = async (event, effect) => {
     }
 
     // 获取卡牌实例并添加（每次都创建新实例）
+    const targetAny = target as any
+    if (!targetAny.cardPiles) {
+        console.error("[addCardToHand] 目标没有 cardPiles")
+        return
+    }
+
     for (let i = 0; i < count; i++) {
         const card = await getCardByKey(cardKey)
         if (!card) {
             console.error("[addCardToHand] 未找到卡牌", cardKey)
             return
         }
-        target.cardPiles.handPile.push(card)
+        targetAny.cardPiles.handPile.push(card)
     }
 
     newLog([target, `获得了 ${count} 张卡牌`, cardKey])

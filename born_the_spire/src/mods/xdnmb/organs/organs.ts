@@ -8,19 +8,20 @@ import { OrganRarity, OrganPartEnum } from '@/core/types/OrganTypes'
 export const pollutionSourceOrgan: OrganMap = {
     label: '污染源',
     key: 'xdnmb_organ_000001',
-    describe: [{ key: ['status', 'card-count'] }, '/', 5, ' 玩家每打出5张牌，向其手牌添加2张伤口'],
+    describe: [{ key: ['status', 'card-count'] }, '/', { key: ['status', 'max-card-count'] }, ' 玩家每打出5张牌，向其手牌添加2张伤口'],
     rarity: OrganRarity.Rare,
     part: OrganPartEnum.Core,
     status: {
         'max-mass': 20,
-        'card-count': 0
+        'card-count': 0,
+        'max-card-count': 5
     },
     current: ['mass', 'card-count'],
     reaction: {
         countAndAddWound: [{
             key: 'count-and-add-wound',
             targetType: 'triggerSource',
-            mediumType: 'triggerEventMedium',
+            mediumTargetType: 'triggerEventMedium',
             effect: [{
                 key: 'countAndTrigger',
                 params: {

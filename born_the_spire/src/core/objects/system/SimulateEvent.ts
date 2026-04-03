@@ -39,7 +39,9 @@ export function simulateEffect(
     effectUnit: EffectUnit,
     source: EventParticipant,
     medium: EventParticipant,
-    target: EventParticipant | EventParticipant[]
+    target: EventParticipant | EventParticipant[],
+    info: Record<string, any> = {},
+    effectUnits: EffectUnit[] = [effectUnit]
 ): EffectUnit {
     // 深拷贝 effect，避免修改原对象
     const mockEffectUnit = cloneDeep(effectUnit)
@@ -50,9 +52,8 @@ export function simulateEffect(
         source,
         medium,
         target,
-        {},
-        [mockEffectUnit],
-        []
+        info,
+        [mockEffectUnit]
     )
 
     // 标记为模拟模式
@@ -91,7 +92,8 @@ export function simulateEvent(
     source: EventParticipant,
     medium: EventParticipant,
     target: EventParticipant | EventParticipant[],
-    effectUnits: EffectUnit[]
+    effectUnits: EffectUnit[],
+    info: Record<string, any> = {}
 ): EffectUnit[] {
     // 深拷贝所有 effectUnits
     const mockEffectUnits = cloneDeep(effectUnits)
@@ -102,9 +104,8 @@ export function simulateEvent(
         source,
         medium,
         target,
-        {},
-        mockEffectUnits,
-        []
+        info,
+        mockEffectUnits
     )
 
     // 标记为模拟模式

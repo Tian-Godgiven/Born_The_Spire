@@ -11,7 +11,7 @@
             </div>
 
             <div class="organs">
-                <Organ :organ v-for="organ in organList" :key="organ.__id"></Organ>
+                <Organ :organ v-for="organ in organList" :key="organ.__id" :disabled="isOrganDisabledCheck(organ)"></Organ>
             </div>
             <div class="bottom">
                 <div class="name">
@@ -51,8 +51,15 @@
     import MechanismDisplay from '@/ui/components/display/MechanismDisplay.vue';
     import IntentDisplay from '@/ui/components/display/IntentDisplay.vue';
     import { getStateModifier } from '@/core/objects/system/modifier/StateModifier';
+    import { isOrganDisabled } from '@/core/effects/organ/disableOrgan';
+    import type { Organ as OrganClass } from '@/core/objects/target/Organ';
 
     const props = defineProps<{target:Chara,side:'left'|"right"}>()
+
+    // 检查器官是否被禁用
+    function isOrganDisabledCheck(organ: OrganClass): boolean {
+        return isOrganDisabled(organ, props.target)
+    }
 
     // 使用 computed 确保 organs 的响应式被正确追踪
     const organList = computed(() => {

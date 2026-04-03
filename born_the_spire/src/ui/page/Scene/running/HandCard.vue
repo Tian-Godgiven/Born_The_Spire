@@ -9,12 +9,16 @@
     import type { Card } from "@/core/objects/item/Subclass/Card"
     import CardVue from '@/ui/components/object/Card.vue';
     import ChooseSource from '@/ui/components/interaction/chooseTarget/ChooseSource.vue';
-    import { computed, ref, useTemplateRef } from 'vue';
+    import { computed, shallowRef, useTemplateRef, type PropType } from 'vue';
     import { nowPlayer } from '@/core/objects/game/run';
     import { Target } from '@/core/objects/target/Target';
-    const {card} = defineProps<{card:Card}>()
+
+    const { card } = defineProps({
+        card: { type: Object as PropType<Card>, required: true }
+    })
+
     const chooseSourceRef = useTemplateRef("chooseSource")
-    const hoverTarget = ref<Target | null>(null)
+    const hoverTarget = shallowRef<Target | undefined>(undefined)
 
     const useAble = computed(()=>{
         return card.getInteraction("use")?true:false
@@ -34,13 +38,13 @@
     }
     //悬停时更新目标（用于预览）
     function handleHover(target?: Target){
-        hoverTarget.value = target || null
+        hoverTarget.value = target
     }
     //选择完成时使用卡牌效果
     function onSuccess(targets:Target[]){
         useCard(card,nowPlayer.cardPiles.handPile,nowPlayer.getSelf(),targets);
         // 清除悬停目标
-        hoverTarget.value = null
+        hoverTarget.value = undefined
     }
 </script>
 

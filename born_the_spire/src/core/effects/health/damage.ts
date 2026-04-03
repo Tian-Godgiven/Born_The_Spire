@@ -21,9 +21,20 @@ export const damageTo:EffectFunc = (event:ActionEvent,effect)=>{
 }
 
 //使得某个伤害事件的值减少
+// 用于 reaction 系统：event.target 是 damage Effect
 export const reduceDamageFor:EffectFunc = (event,effect)=>{
     const value = Number(effect.params.value)
     const target = event.target
+
+    // 调试日志
+    console.log('[reduceDamageFor] 调试信息:', {
+        eventKey: event.key,
+        targetType: Array.isArray(target) ? 'array' : target.participantType,
+        targetLabel: Array.isArray(target) ? target.map(t => t.label) : target.label,
+        effectsCount: event.effects.length,
+        effects: event.effects.map(e => ({ key: e.key, label: e.label })),
+        triggerContext: event.triggerContext
+    })
 
     // 验证 target 是 Effect 类型
     if (Array.isArray(target)) {
@@ -55,6 +66,8 @@ export const reduceDamageFor:EffectFunc = (event,effect)=>{
  *
  * params:
  * - delta: number - 变化量（正数增加，负数减少）
+ *
+ * 用于 reaction 系统：event.target 是 damage Effect
  */
 export const modifyDamageValue: EffectFunc = (event, effect) => {
     const delta = Number(effect.params.delta)
@@ -90,6 +103,8 @@ export const modifyDamageValue: EffectFunc = (event, effect) => {
  *
  * params:
  * - percent: number - 百分比（0.25 表示增加25%，-0.25 表示减少25%）
+ *
+ * 用于 reaction 系统：event.target 是 damage Effect
  */
 export const modifyDamageByPercent: EffectFunc = (event, effect) => {
     const percent = Number(effect.params.percent)

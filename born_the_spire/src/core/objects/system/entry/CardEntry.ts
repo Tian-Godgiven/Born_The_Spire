@@ -77,6 +77,21 @@ export const cardEntryDefinitions: Record<string, CardEntryDefinition> = {
             }
             const { card, player } = result
 
+            // 为 player 添加 reaction
+            if (!player.reaction) {
+                player.reaction = {}
+            }
+            player.reaction.voidExhaust = [{
+                key: "voidExhaust",
+                label: "虚无：将卡牌移入消耗堆",
+                targetType: card,
+                effect: [{
+                    key: "voidExhaust",
+                    describe: ["虚无：将卡牌移入消耗堆"],
+                    params: {}
+                }]
+            }]
+
             // 使用声明式触发器定义
             const triggerObj = createTriggerByTriggerMap(
                 player,  // source (触发器来源)
@@ -85,15 +100,7 @@ export const cardEntryDefinitions: Record<string, CardEntryDefinition> = {
                     when: "before",  // 在回合结束前，卡牌被丢弃之前
                     how: "take",     // 玩家被结束回合
                     key: "turnEnd",
-                    event: [{
-                        key: "voidExhaust",
-                        targetType: card,  // 直接传入 card 实体
-                        effect: [{
-                            key: "voidExhaust",
-                            describe: ["虚无：将卡牌移入消耗堆"],
-                            params: {}
-                        }]
-                    }]
+                    action: "voidExhaust"
                 }
             )
 
@@ -116,6 +123,21 @@ export const cardEntryDefinitions: Record<string, CardEntryDefinition> = {
             }
             const { player } = result
 
+            // 为 player 添加 reaction
+            if (!player.reaction) {
+                player.reaction = {}
+            }
+            player.reaction.moveInherentToHand = [{
+                key: "moveInherentToHand",
+                label: "固有：将固有卡牌移入手牌",
+                targetType: "triggerOwner",
+                effect: [{
+                    key: "moveInherentToHand",
+                    describe: ["固有：将固有卡牌移入手牌"],
+                    params: {}
+                }]
+            }]
+
             // 在 Player 上添加触发器，监听战斗开始
             // 使用 onlyKey 确保即使有多张固有卡牌，也只有一个触发器
             const triggerObj = createTriggerByTriggerMap(
@@ -126,15 +148,7 @@ export const cardEntryDefinitions: Record<string, CardEntryDefinition> = {
                     how: "make",
                     key: "battleStart",
                     onlyKey: "inherent_moveToHand",  // 确保只有一个触发器
-                    event: [{
-                        key: "moveInherentToHand",
-                        targetType: "triggerOwner",
-                        effect: [{
-                            key: "moveInherentToHand",
-                            describe: ["固有：将固有卡牌移入手牌"],
-                            params: {}
-                        }]
-                    }]
+                    action: "moveInherentToHand"
                 }
             )
 

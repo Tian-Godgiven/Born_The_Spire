@@ -7,11 +7,12 @@ import type { ActionEvent } from "../ActionEvent";
 import type { Effect } from "../effect/Effect";
 import { doEvent } from "../ActionEvent";
 import { nanoid } from "nanoid";
-import { isEntity } from "@/core/utils/typeGuards";
+import { isEntity, isEffect } from "@/core/utils/typeGuards";
 import { nowBattle } from "../../game/battle";
 import { randomChoice } from "@/core/hooks/random";
 import { newError } from "@/ui/hooks/global/alert";
 import { getCurrentValue } from "../Current/current";
+import { resolveTarget, resolveTargetOptional, type TargetContext, type TargetTypeString } from "@/core/types/TargetSpec";
 
 // 触发器是基于事件总线的，一系列在个体上的响应器
 // 触发器的实现原理是：在某一个时刻(trigger_key)执行对应时刻的回调函数
@@ -76,7 +77,7 @@ export class Trigger{
         if(index>=0){
             triggerArr.splice(index)
         }
-        
+
     }
     //触发触发器
     onTrigger(when:"before"|"after",
@@ -101,8 +102,8 @@ export class Trigger{
 
 /**
  * 执行反应事件（reaction events）
- * 这个函数负责解析 targetType、mediumType，以及 $triggerValue，
- * 然后调用 doEvent 创建并触发事件。
+ * 这个函数负责解析 targetType、mediumTargetType（使用统一的 resolveTarget 系统），
+ * 以及 $triggerValue，然后调用 doEvent 创建并触发事件。
  *
  * @param reactionEvents - 要执行的事件配置数组
  * @param triggerEvent - 触发该反应的原始事件
@@ -123,34 +124,16 @@ export function executeReactionEvents(params: {
     const { owner, source } = trigger
 
     for (let eventConfig of reactionEvents) {
-        const { key: eventKey, info = {}, targetType, effect: effectUnit, mediumType } = eventConfig
+        const { key: eventKey, info = {}, targetType, mediumTargetType, effect: effectUnit } = eventConfig
         // 如果 targetType 是 triggerEffect 但 triggerEffect 为 null（事件级触发），跳过
         if (targetType === "triggerEffect" && !triggerEffect) continue
-        // 获取目标
+        // 获取目标（默认不允许 null）
         const eventTarget = resolveTriggerEventTarget(targetType, triggerEvent, triggerEffect, source, owner)
 
-        // 确定事件的 medium
-        // mediumType 可以是:
-        // - "source": 使用 trigger 的 source
-        // - "target": 使用 trigger 的 owner (默认，因为 owner 是挂载 trigger 的实体)
-        // - "triggerEventMedium": 使用原始事件的 medium
-        // - "triggerEffect": 使用触发效果
-        let eventMedium: Entity
-        if (mediumType === "source") {
-            eventMedium = source
-        } else if (mediumType === "triggerEventMedium") {
-            if (!isEntity(triggerEvent.medium)) {
-                throw new Error("原始事件的 medium 不是 Entity 类型")
-            }
-            eventMedium = triggerEvent.medium
-        } else if (mediumType === "triggerEffect") {
-            if (!triggerEffect || !isEntity(triggerEffect)) {
-                throw new Error("触发效果不是 Entity 类型")
-            }
-            eventMedium = triggerEffect as any
-        } else {
-            eventMedium = owner  // 默认使用 owner（挂载 trigger 的实体）
-        }
+        // 确定事件的 medium（使用统一的 resolveTarget 系统）
+        // mediumTargetType 默认为 "owner"（挂载 trigger 的实体）
+        const mediumTarget = mediumTargetType || "owner"
+        const eventMedium = resolveTriggerEventTarget(mediumTarget, triggerEvent, triggerEffect, source, owner)
 
         // 解析 effect params 中的 $triggerValue
         const triggerValue = (triggerEffect as any)?.params?.value
@@ -166,11 +149,12 @@ export function executeReactionEvents(params: {
             : effectUnit
 
         // 使用 doEvent 创建事件，会自动添加到 eventCollector
+        // source/medium/target 都不允许 null，如果配置错误会抛错
         const newEvent = doEvent({
             key: eventKey,
             source: owner,  // 使用 owner（触发器持有者）作为 source
-            medium: eventMedium,
-            target: eventTarget,
+            medium: isEntity(eventMedium) ? eventMedium : source,  // fallback to source
+            target: eventTarget as any,  // 类型断言：resolveTarget 返回 Entity | Entity[]，需要转换为 EventParticipant
             info: info,
             effectUnits: resolvedEffects ?? []
         })
@@ -190,18 +174,37 @@ export function createTriggerByTriggerMap(source:Entity,target:Entity, item:Trig
     const {when ="before", how, key, level} = item
 
     const callback:TriggerFunc = async(triggerEvent,triggerEffect,_triggerLevel)=>{
+        // 命运之轮专属调试
+        const isWheelOfFate = source.key === "original_relic_wheel"
+        if (isWheelOfFate) {
+            console.log('[Wheel Debug] 触发器被触发:', { when, how, key, item: item.action || 'toggleMode' })
+        }
         // 检查触发条件
         if (item.condition) {
             const cond = item.condition
             if (cond.sourceStatus) {
                 const { key, value, op = "eq" } = cond.sourceStatus
                 const statusVal = source.status[key]?.value
-                if (statusVal === undefined) return
-                if (op === "eq" && statusVal !== value) return
-                if (op === "lte" && statusVal > value) return
-                if (op === "gte" && statusVal < value) return
-                if (op === "lt" && statusVal >= value) return
-                if (op === "gt" && statusVal <= value) return
+                if (isWheelOfFate) {
+                    console.log('[Wheel Debug] sourceStatus检查:', { key, statusVal, expected: value })
+                }
+                if (statusVal === undefined) {
+                    console.log('[Wheel Debug] statusVal 不存在，跳过')
+                    return
+                }
+
+                // 字符串状态只支持相等性检查
+                if (typeof value === 'string' || typeof statusVal === 'string') {
+                    if (op !== "eq") return  // 非相等操作符对字符串无意义
+                    if (statusVal !== value) return
+                } else {
+                    // 数值状态支持所有比较操作符
+                    if (op === "eq" && statusVal !== value) return
+                    if (op === "lte" && statusVal > value) return
+                    if (op === "gte" && statusVal < value) return
+                    if (op === "lt" && statusVal >= value) return
+                    if (op === "gt" && statusVal <= value) return
+                }
             }
             if (cond.ownerHealthPercent) {
                 const { value, op = "lte" } = cond.ownerHealthPercent
@@ -215,16 +218,50 @@ export function createTriggerByTriggerMap(source:Entity,target:Entity, item:Trig
                 if (op === "lt" && percent >= value) return
                 if (op === "gt" && percent <= value) return
             }
+            if (cond.turnNumber) {
+                const { mod, equals } = cond.turnNumber
+                const battle = nowBattle.value
+                if (!battle) return
+                const turnNumber = battle.turnNumber
+
+                if (equals !== undefined && turnNumber !== equals) return
+                if (mod !== undefined) {
+                    const [divisor, remainder] = mod
+                    if (turnNumber % divisor !== remainder) return
+                }
+            }
         }
 
-        // 通过 action 查找 source 上的 reaction
-        const reactionEvents = (source as any).reaction?.[item.action]
+        // 命运之轮专属调试：条件检查完成
+        if (isWheelOfFate) {
+            console.log('[Wheel Debug] 条件检查通过，准备执行 action')
+        }
+
+        // 支持旧格式：直接定义事件
+        if ((item as any).event) {
+            const eventConfigs = Array.isArray((item as any).event) ? (item as any).event : [(item as any).event]
+            executeReactionEvents({
+                reactionEvents: eventConfigs,
+                triggerEvent,
+                trigger: { owner: target, source, action: undefined },
+                triggerEffect
+            })
+            return
+        }
+
+        // 新格式：通过 action 查找 source 上的 reaction
+        const action = (item as any).action
+        if (!action) {
+            newError([`触发器配置错误：需要 action 字段`, item])
+            return
+        }
+        const reactionEvents = (source as any).reaction?.[action]
         if (!reactionEvents) {
             const sourceInfo = (source as any).label || (source as any).key || source.constructor.name
             const targetInfo = (target as any).label || (target as any).key || target.constructor.name
             newError([
                 `触发器错误:`,
-                `  action: "${item.action}"`,
+                `  action: "${action}"`,
                 `  when/how/key: ${when} ${how} ${key}`,
                 `  source: ${sourceInfo}`,
                 `  target: ${targetInfo}`,
@@ -235,12 +272,13 @@ export function createTriggerByTriggerMap(source:Entity,target:Entity, item:Trig
         executeReactionEvents({
             reactionEvents,
             triggerEvent,
-            trigger: { owner: target, source, action: item.action },
+            trigger: { owner: target, source, action },
             triggerEffect
         })
     }
-    if(item.importantKey){
-        const {importantKey,onlyKey} = item
+    const importantKey = (item as any).importantKey
+    if(importantKey){
+        const onlyKey = (item as any).onlyKey
         return createImportantTrigger({
             when,how,key,callback,level,importantKey,onlyKey
         })
@@ -258,75 +296,73 @@ export function createTrigger({when,how,key,callback,level}:TriggerObj):TriggerO
 }
 
 /**
- * 解析触发器事件的目标类型
+ * 解析触发器事件的目标类型（向后兼容包装器）
+ * 使用新的 resolveTarget 系统进行解析
  * @param targetType 目标类型配置
  * @param triggerEvent 触发该触发器的原始事件
  * @param triggerEffect 触发该触发器的效果对象（可能为 null）
  * @param triggerSource 触发器的施加来源
  * @param triggerOwner 持有触发器的对象
- * @returns 解析后的目标实体或效果
+ * @param config 配置项（可选）
+ *   - allowNull: 是否允许返回 null（默认 false，找不到对象时报错）
+ * @returns 解析后的目标实体或 null（当 allowNull 为 true 且未找到时）
  */
 export function resolveTriggerEventTarget(
     targetType: TriggerEventConfig["targetType"],
     triggerEvent: ActionEvent,
     triggerEffect: Effect | null,
     triggerSource: Entity,
-    triggerOwner: Entity
-): Entity | Entity[] | Effect {
-    switch(targetType){
-        case "eventSource"://指定的事件来源
-            if (!isEntity(triggerEvent.source)) {
-                throw new Error("事件来源不是 Entity 类型")
-            }
-            return triggerEvent.source
-        case "eventMedium"://指定的事件媒介
-            if (!isEntity(triggerEvent.medium)) {
-                throw new Error("事件媒介不是 Entity 类型")
-            }
-            return triggerEvent.medium;
-        case "eventTarget"://指定的事件对象
-            if (Array.isArray(triggerEvent.target)) {
-                // 如果是数组，检查每个元素
-                const entities = triggerEvent.target.filter(isEntity)
-                if (entities.length === 0) {
-                    throw new Error("事件目标数组中没有 Entity 类型")
-                }
-                return entities
-            } else {
-                if (!isEntity(triggerEvent.target)) {
-                    throw new Error("事件目标不是 Entity 类型")
-                }
-                return triggerEvent.target
-            }
-        case "triggerSource"://触发器的施加来源
-            return triggerSource;
-        case "owner"://持有者（别名）
-        case "triggerOwner"://持有触发器的对象
-            return triggerOwner;
-        case "triggerEffect"://触发该触发器的效果对象
-            if(!triggerEffect){
-                throw new Error("触发效果为null，无法作为目标")
-            }
-            return triggerEffect;
-        case "triggerEventMedium"://原始触发事件的 medium
-            if (!isEntity(triggerEvent.medium)) {
-                throw new Error("触发事件的 medium 不是 Entity 类型")
-            }
-            return triggerEvent.medium
-        case "randomEnemy": {//当前战斗中随机一个存活的敌人
-            const battle = nowBattle.value
-            if (!battle) throw new Error("没有进行中的战斗，无法获取随机敌人")
-            const aliveEnemies = battle.getAliveEnemies()
-            if (aliveEnemies.length === 0) throw new Error("没有存活的敌人")
-            return randomChoice(aliveEnemies, "randomEnemy")
+    triggerOwner: Entity,
+    config?: { allowNull?: boolean }
+): Entity | Entity[] | Effect | null {
+    // 处理 faction 类型，转换为统一的 targetType 字符串
+    let normalizedTargetType: TargetTypeString | Entity = targetType
+    if (typeof targetType === 'object' && targetType !== null && 'faction' in targetType) {
+        const faction = (targetType as any).faction
+        if (faction === "enemy") {
+            normalizedTargetType = "allEnemies"
+        } else if (faction === "player") {
+            normalizedTargetType = "allAllies"
+        } else if (faction === "all") {
+            normalizedTargetType = "allEntities"
+        } else {
+            throw new Error(`[resolveTriggerEventTarget] 未知的 faction: ${faction}`)
         }
-        default:
-            // 检查是否是实体（通过 participantType 而不是 instanceof）
-            if (typeof targetType === 'object' && targetType !== null && 'participantType' in targetType && targetType.participantType === 'entity') {
-                return targetType as Entity;
-            }
-            throw new Error("不被支持的目标类型:"+targetType)
     }
+
+    // 对于非字符串 targetType（如实体对象），直接返回
+    if (typeof normalizedTargetType !== 'string') {
+        return normalizedTargetType
+    }
+
+    // 构建 TargetContext，传递给 resolveTarget
+    // 注意：TargetContext 中 triggerEffect 类型是 Effect，这里需要类型断言
+    const context: TargetContext = {
+        item: triggerSource,
+        owner: triggerOwner,
+        source: triggerSource,
+        target: triggerEvent.target as Entity | Entity[] | undefined,
+        event: triggerEvent,
+        triggerEffect: triggerEffect ?? undefined,
+        triggerSource,
+        triggerOwner,
+        // 从 event.triggerContext 中获取（如果存在）
+        eventTriggerSource: triggerEvent.triggerContext?.source,
+        eventTriggerOwner: triggerEvent.triggerContext?.owner,
+        battle: nowBattle.value
+    }
+
+    // 根据 config 决定是否允许 null
+    const { allowNull } = config || {}
+    let result: Entity | Entity[] | Effect | null
+    if (allowNull) {
+        // 允许 null 的情况：使用 resolveTargetOptional
+        result = resolveTargetOptional(normalizedTargetType, context)
+    } else {
+        // 默认：不允许 null，找不到对象时会抛错
+        result = resolveTarget(normalizedTargetType, context)
+    }
+    return result
 }
 
 //遍历所有触发器单元

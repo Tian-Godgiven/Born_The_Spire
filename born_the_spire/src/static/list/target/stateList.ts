@@ -14,16 +14,19 @@ export const stateList: StateData[] = [
                     when: "before",
                     how: "make",
                     key: "damage",
-                    event: [{
+                    action: "powerBoost"
+                }],
+                reaction: {
+                    powerBoost: [{
                         key: "powerBoost",
                         label: "力量增伤",
-                        targetType: "triggerEffect",  // 目标是伤害效果本身
+                        targetType: "triggerEffect",
                         effect: [{
                             key: "modifyDamageValue",
-                            params: { delta: "$source.stack.default" }  // 增加等同于力量层数的伤害
+                            params: { delta: "$source.stack.default" }
                         }]
                     }]
-                }]
+                }
             }
         }
     },
@@ -35,24 +38,27 @@ export const stateList: StateData[] = [
         showType: "number",
         repeate: "stack",
         stackChange: [
-            { timing: "turnEnd", delta: -1 }  // after turnEnd 时层数-1
+            { timing: "turnEnd", delta: -1 }
         ],
         interaction: {
             possess: {
                 triggers: [{
-                    when: "before",  // before turnEnd 时造成伤害
-                    how: "take",     // 玩家/敌人承受回合结束事件
+                    when: "before",
+                    how: "take",
                     key: "turnEnd",
-                    event: [{
+                    action: "poisonDamage"
+                }],
+                reaction: {
+                    poisonDamage: [{
                         key: "poisonDamage",
                         label: "中毒伤害",
                         targetType: "triggerOwner",
                         effect: [{
                             key: "damage",
-                            params: { value: "$source.stack.default" }  // 伤害等于层数
+                            params: { value: "$source.stack.default" }
                         }]
                     }]
-                }]
+                }
             }
         }
     },
@@ -64,24 +70,27 @@ export const stateList: StateData[] = [
         showType: "number",
         repeate: "stack",
         stackChange: [
-            { timing: "turnEnd", delta: -1 }  // after turnEnd 时层数-1
+            { timing: "turnEnd", delta: -1 }
         ],
         interaction: {
             possess: {
                 triggers: [{
                     when: "before",
-                    how: "make",  // 造成伤害时
+                    how: "make",
                     key: "damage",
-                    event: [{
+                    action: "weakDebuff"
+                }],
+                reaction: {
+                    weakDebuff: [{
                         key: "weakDebuff",
                         label: "虚弱减伤",
-                        targetType: "triggerEffect",  // 目标是伤害效果本身
+                        targetType: "triggerEffect",
                         effect: [{
                             key: "modifyDamageByPercent",
-                            params: { percent: -0.25 }  // 减少25%伤害
+                            params: { percent: -0.25 }
                         }]
                     }]
-                }]
+                }
             }
         }
     },
@@ -93,24 +102,27 @@ export const stateList: StateData[] = [
         showType: "number",
         repeate: "stack",
         stackChange: [
-            { timing: "turnEnd", delta: -1 }  // after turnEnd 时层数-1
+            { timing: "turnEnd", delta: -1 }
         ],
         interaction: {
             possess: {
                 triggers: [{
                     when: "before",
-                    how: "take",  // 承受伤害时
+                    how: "take",
                     key: "damage",
-                    event: [{
+                    action: "vulnerableDebuff"
+                }],
+                reaction: {
+                    vulnerableDebuff: [{
                         key: "vulnerableDebuff",
                         label: "易伤增伤",
-                        targetType: "triggerEffect",  // 目标是伤害效果本身
+                        targetType: "triggerEffect",
                         effect: [{
                             key: "modifyDamageByPercent",
-                            params: { percent: 0.5 }  // 增加50%伤害
+                            params: { percent: 0.5 }
                         }]
                     }]
-                }]
+                }
             }
         }
     },
@@ -127,7 +139,10 @@ export const stateList: StateData[] = [
                     when: "after",
                     how: "take",
                     key: "turnEnd",
-                    event: [{
+                    action: "removeTempPower"
+                }],
+                reaction: {
+                    removeTempPower: [{
                         key: "removeTempPower",
                         label: "移除临时力量",
                         targetType: "triggerOwner",
@@ -136,14 +151,14 @@ export const stateList: StateData[] = [
                             params: {
                                 stateKey: "power",
                                 delta: "$source.stack.default",
-                                negate: true  // 取负数，减少力量层数
+                                negate: true
                             }
                         }, {
                             key: "removeState",
                             params: { stateKey: "tempPower" }
                         }]
                     }]
-                }]
+                }
             }
         }
     }

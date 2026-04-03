@@ -6,6 +6,8 @@ import { newLog } from "@/ui/hooks/global/log"
 import { getRelicModifier } from "@/core/objects/system/modifier/RelicModifier"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { createRelic } from "@/core/factories"
+import { doEvent } from "@/core/objects/system/ActionEvent"
+import { nowPlayer } from "@/core/objects/game/run"
 
 /**
  * 遗物奖励配置

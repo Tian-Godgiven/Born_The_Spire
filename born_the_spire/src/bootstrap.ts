@@ -4,6 +4,8 @@
  * 这个文件确保核心类在其他模块之前加载
  */
 
+export {}
+
 // 第一步：预加载核心类
 await import('@/core/preload')
 

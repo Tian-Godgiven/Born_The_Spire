@@ -11,14 +11,18 @@ import { newLog } from "@/ui/hooks/global/log"
 import { doEvent } from "../system/ActionEvent"
 import { nowPlayer } from "./run"
 import { endCharaTurn, startCharaTurn } from "@/core/effects/turn"
-import { applyStrengthTrigger, applyVulnerableTrigger, applyWeakTrigger } from "@/core/effects/state/stateTriggers"
+import type { EventParticipant } from "@/core/types/event/EventParticipant"
 
 import { prepareEnemyIntents, executeAllEnemiesTurn } from "./enemyTurn"
+import { cleanupAllDisabledOrgans } from "@/core/effects/organ/disableOrgan"
 
 
 
-export class Battle {
+export class Battle implements EventParticipant {
     public readonly __key:string = nanoid()
+    public readonly __id: string = nanoid()
+    public readonly label: string = "Battle"
+    public readonly participantType: 'battle' = 'battle'
     public isEnded: boolean = false  // 战斗是否已结束
     public nowTurn: "player" | "enemy" = "player"  // 当前回合归属
 
@@ -28,11 +32,12 @@ export class Battle {
         private enemyTeam:Chara[]
     ){}
 
-    getTeam(name:"player"|"enemy"){
+    getTeam(name:"player"|"enemy"): Chara[] {
         if(name == "player")
         return this.playerTeam
         else if(name == "enemy")
         return this.enemyTeam
+        return []
     }
 
     getSelf(){
@@ -250,15 +255,6 @@ export async function startNewBattle(playerTeam:(Player|Chara)[],enemyTeam:(Enem
         //当前玩家开始战斗（初始化状态）
         await nowPlayer.startBattle()
 
-        // 为所有敌人应用状态触发器
-        for (const enemy of enemyTeam) {
-            if (isEnemy(enemy)) {
-                applyStrengthTrigger(enemy)
-                applyVulnerableTrigger(enemy)
-                applyWeakTrigger(enemy)
-            }
-        }
-
         // 触发 battleStart 事件
         // player 是 source 和 target，所以同时触发 make 和 take
         doEvent({
@@ -294,5 +290,7 @@ export async function startNewBattle(playerTeam:(Player|Chara)[],enemyTeam:(Enem
 }
 //结束当前战斗
 export function endNowBattle(){
+    // 清理所有禁用器官状态
+    cleanupAllDisabledOrgans()
     nowBattle.value = null
 }

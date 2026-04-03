@@ -78,7 +78,6 @@ import { getLazyModule } from '@/core/utils/lazyLoader'
 import { Organ } from '@/core/objects/target/Organ'
 import { Player, type PlayerMap } from '@/core/objects/target/Player'
 import { getOrganModifier } from '@/core/objects/system/modifier/OrganModifier'
-import { getOrganByKey } from '@/static/list/target/organList'
 import { createPlayer } from '@/core/factories'
 import SeedDialog from '../SeedDialog.vue'
 import OrganMap from './components/OrganMap.vue'
@@ -183,8 +182,10 @@ async function syncOrgansToPlayer() {
         if (!currentKeys.includes(organKey)) {
             const organData = allOrganData.value.find((o: any) => o.key === organKey)
             if (organData) {
-                const organ = await getOrganByKey(organKey)
-                await organModifier.acquireOrgan(organ, previewPlayer.value, true)  // 跳过确认弹窗
+                const organ = getOrganByKey(organKey)
+                if (organ) {
+                    await organModifier.acquireOrgan(organ, previewPlayer.value, true)  // 跳过确认弹窗
+                }
             }
         }
     }

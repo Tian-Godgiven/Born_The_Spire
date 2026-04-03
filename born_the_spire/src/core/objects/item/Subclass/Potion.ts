@@ -2,6 +2,7 @@ import { Item } from "../Item";
 import type { ItemMap } from "../Item";
 import { Entity } from "../../system/Entity";
 import { getPotionModifier } from "../../system/modifier/PotionModifier";
+import type { LogUnit } from "@/ui/hooks/global/log";
 
 export type PotionMap = ItemMap & {
     targetType:"player"|"enemy"|"all",
@@ -33,9 +34,9 @@ export function getPotion(entity: Entity, source: Entity, potion: Potion) {
 /**
  * 失去药水（包装函数）
  */
-export function removePotion(entity: Entity, potion: Potion, triggerLoseEffect: boolean = false) {
+export function removePotion(entity: Entity, potion: Potion, parentLog?: LogUnit) {
     const potionModifier = getPotionModifier(entity)
-    potionModifier.losePotion(potion, triggerLoseEffect)
+    potionModifier.losePotion(potion, parentLog)
 }
 
 /**

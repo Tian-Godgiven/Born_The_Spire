@@ -2,10 +2,12 @@ import type { Entity } from "../Entity"
 import type { Target } from "../../target/Target"
 import type { StateData } from "../State"
 import type { LogUnit } from "@/ui/hooks/global/log"
+import type { TriggerEventConfig } from "@/core/types/object/trigger"
 import { newLog } from "@/ui/hooks/global/log"
 
 import { doEvent } from "../ActionEvent"
 import { resolveTriggerEventTarget } from "../trigger/Trigger"
+import { isEntity } from "@/core/utils/typeGuards"
 import { nanoid } from "nanoid"
 import _ from "lodash"
 import { State } from "../State"
@@ -182,15 +184,63 @@ export class StateModifier {
     ) {
         if (!triggersMap) return
 
+        // 获取状态的 reaction（用于 action 格式）
+        const stateReaction = state.interaction.possess?.reaction
+
         for (const triggerDef of triggersMap) {
             const when = triggerDef.when || "before"
             const how = triggerDef.how
             const key = triggerDef.key
             const level = triggerDef.level || 0
 
-            for (const eventConfig of triggerDef.event) {
-                // 深拷贝 eventConfig，避免触发器回调中修改原始数据
-                const clonedEventConfig = _.cloneDeep(eventConfig)
+            // 兼容旧格式：直接定义事件配置
+            if ("event" in triggerDef) {
+                const eventConfigs = Array.isArray(triggerDef.event) ? triggerDef.event : [triggerDef.event]
+                for (const eventConfig of eventConfigs) {
+                    // 深拷贝 eventConfig，避免触发器回调中修改原始数据
+                    const clonedEventConfig = _.cloneDeep(eventConfig)
+
+                    const triggerRemover = this.owner.appendTrigger({
+                        when,
+                        how,
+                        key,
+                        level,
+                        callback: (event, effect, _triggerLevel) => {
+                            // 解析目标
+                            const target = resolveTriggerEventTarget(
+                                clonedEventConfig.targetType,
+                                event,
+                                effect,
+                                state as any,      // triggerSource: 状态本身（State 作为触发源）
+                                this.owner  // triggerOwner: 拥有者
+                            )
+
+                            // 使用 doEvent 创建事件，确保正确触发触发器
+                            doEvent({
+                                key: clonedEventConfig.key,
+                                source: state as any,
+                                medium: state as any,
+                                target: target as any,  // 类型断言：resolveTriggerEventTarget 返回 Entity | Entity[]，需要转换为 EventParticipant
+                                info: {...clonedEventConfig.info},
+                                effectUnits: clonedEventConfig.effect || []
+                            })
+                        }
+                    })
+
+                    // 收集 remover
+                    const triggerKey = (triggerDef as any).importantKey || triggerDef.key
+                    unit.registerTriggerRemover(triggerRemover.remove, triggerKey)
+                }
+            } else if ("action" in triggerDef) {
+                // 新格式：通过 action 查找 reaction
+                const action = (triggerDef as any).action
+                if (!action) continue
+
+                const reactionEvents = stateReaction?.[action]
+                if (!reactionEvents) {
+                    console.error(`[setupStateTriggers] 状态 ${state.key} 的 action "${action}" 找不到对应的 reaction`)
+                    continue
+                }
 
                 const triggerRemover = this.owner.appendTrigger({
                     when,
@@ -198,29 +248,60 @@ export class StateModifier {
                     key,
                     level,
                     callback: (event, effect, _triggerLevel) => {
-                        // 解析目标
-                        const target = resolveTriggerEventTarget(
-                            clonedEventConfig.targetType,
-                            event,
-                            effect,
-                            state as any,      // triggerSource: 状态本身（State 作为触发源）
-                            this.owner  // triggerOwner: 拥有者
-                        )
+                        // 直接处理事件创建，确保 source 是状态本身
+                        for (let eventConfig of reactionEvents) {
+                            const { key: eventKey, info = {}, targetType, mediumTargetType, effect: effectUnit } = eventConfig as TriggerEventConfig
+                            // 如果 targetType 是 triggerEffect 但 triggerEffect 为 null（事件级触发），跳过
+                            if (targetType === "triggerEffect" && !effect) continue
+                            // 获取目标（默认不允许 null）
+                            const eventTarget = resolveTriggerEventTarget(
+                                targetType, event, effect,
+                                state as any, this.owner
+                            )
 
-                        // 使用 doEvent 创建事件，确保正确触发触发器
-                        doEvent({
-                            key: clonedEventConfig.key,
-                            source: state as any,
-                            medium: state as any,
-                            target,
-                            info: {...clonedEventConfig.info},
-                            effectUnits: clonedEventConfig.effect || []
-                        })
+                            // 确定事件的 medium（使用统一的 resolveTarget 系统）
+                            const mediumTarget = mediumTargetType || "owner"
+                            const eventMedium = resolveTriggerEventTarget(
+                                mediumTarget, event, effect,
+                                state as any, this.owner
+                            )
+
+                            // 解析 effect params 中的 $triggerValue
+                            const triggerValue = (effect as any)?.params?.value
+                            const resolvedEffects = (triggerValue !== undefined && effectUnit)
+                                ? effectUnit.map((eu: any) => ({
+                                    ...eu,
+                                    params: Object.fromEntries(
+                                        Object.entries(eu.params || {}).map(([k, v]) =>
+                                            [k, v === "$triggerValue" ? triggerValue : v]
+                                        )
+                                    )
+                                }))
+                                : effectUnit
+
+                            // 使用 doEvent 创建事件，source 设置为状态本身！
+                            const newEvent = doEvent({
+                                key: eventKey,
+                                source: state as any,  // 关键：source 是状态，这样 $source.stack 才能工作
+                                medium: isEntity(eventMedium) ? eventMedium : (state as any),
+                                target: eventTarget as any,
+                                info: info,
+                                effectUnits: resolvedEffects ?? []
+                            })
+
+                            // 保存触发器上下文
+                            newEvent.triggerContext = event.triggerContext || {
+                                source: state as any,
+                                owner: this.owner,
+                                triggerEvent: event
+                            }
+                        }
                     }
                 })
 
                 // 收集 remover
-                unit.registerTriggerRemover(triggerRemover.remove, `${triggerDef.importantKey || triggerDef.key}`)
+                const triggerKey = (triggerDef as any).importantKey || triggerDef.key
+                unit.registerTriggerRemover(triggerRemover.remove, triggerKey)
             }
         }
     }

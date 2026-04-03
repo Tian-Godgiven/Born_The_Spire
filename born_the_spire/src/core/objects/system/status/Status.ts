@@ -16,12 +16,12 @@ export class Status extends Modifier<StatusModifier>{
     public key:string//唯一键名
     public label:string//属性名称
     public options?:StatusOptions//备注：功能未完成
-    private _originalBaseValue = ref(0)//原始基础值（不受修饰器影响）
-    private _value = ref(0)//当前值
-    private _baseValue = ref(0)//基础值
-    public get originalBaseValue():number{return getRefValue(this._originalBaseValue)}
-    public get value():number{return getRefValue(this._value)}
-    public get baseValue():number{return getRefValue(this._baseValue)}
+    private _originalBaseValue = ref<number | string>(0)//原始基础值（不受修饰器影响）
+    private _value = ref<number | string>(0)//当前值
+    private _baseValue = ref<number | string>(0)//基础值
+    public get originalBaseValue():number | string{return getRefValue(this._originalBaseValue)}
+    public get value():number | string{return getRefValue(this._value)}
+    public get baseValue():number | string{return getRefValue(this._baseValue)}
     private owner:Entity
     constructor(owner:Entity,key:string,label?:string){
         super()
@@ -34,9 +34,15 @@ export class Status extends Modifier<StatusModifier>{
      * 设置原始基础值（用于卡牌升级等场景）
      * 修饰器会在此基础上继续生效
      */
-    public setOriginalBaseValue(value: number): void {
-        this._originalBaseValue.value = value
-        this.refresh()  // 重新计算
+    public setOriginalBaseValue(value: number | string): void {
+        ;(this._originalBaseValue as any).value = value
+        if (typeof value === 'string') {
+            // 字符串类型直接更新所有值
+            this._baseValue.value = value
+            this._value.value = value
+        } else {
+            this.refresh()  // 数值类型需要重新计算修饰器
+        }
     }
     //通过JSON数据添加属性修饰器，默认配置下添加的是基础修饰器
     addByJSON(source:any,options:Partial<ModifierOptions>&{modifierValue:number}){
@@ -57,12 +63,19 @@ export class Status extends Modifier<StatusModifier>{
     //刷新，重新计算当前值和基础值
     refresh(): void {
         super.refresh()
+        // 如果是字符串值，直接复制不进行计算
+        if (typeof this._originalBaseValue.value === 'string') {
+            this._baseValue.value = this._originalBaseValue.value
+            this._value.value = this._originalBaseValue.value
+            return
+        }
+        // 数值类型才进行修饰器计算
         //先刷新基础值，从原始基础值开始（而不是从0）
-        this._baseValue.value = countBaseModifier(this.owner,this.originalBaseValue,this.store)
+        this._baseValue.value = countBaseModifier(this.owner,this.originalBaseValue as number,this.store)
         //再用基础值刷新当前值，从基础值开始
-        this._value.value = countCurrentModifier(this.owner,this.baseValue,this.value,this.store)
+        this._value.value = countCurrentModifier(this.owner,this.baseValue as number,this.value as number,this.store)
     }
-    //获得响应式值
+    //返回当前值和基础值
     getRefValue(){
         return this._value
     }
@@ -106,7 +119,7 @@ function countCurrentModifier(owner:Entity,baseValue:number,_currentValue:number
 //通过实体的属性map创建属性对象
 export function createStatusFromMap(owner:Entity,key:string,mapData:StatusMap):Status{
     let status:Status
-    let value
+    let value: number | string
     if(typeof mapData == "number"){
         value = mapData
         status = new Status(owner,key)
@@ -116,7 +129,10 @@ export function createStatusFromMap(owner:Entity,key:string,mapData:StatusMap):S
         status = new Status(owner,key,mapData?.label)
     }
     //设置原始基础值（而不是添加修饰器）
-    status.setOriginalBaseValue(value)
+    // 支持数值和字符串类型
+    if (value !== undefined) {
+        status.setOriginalBaseValue(value)
+    }
 
     return status
 }
@@ -132,7 +148,7 @@ export function appendStatus(entity:Entity,status:Status){
     entity.status[key] = markRaw(status)
 }
 // 获取目标属性的值，如果目标不具备这个属性则报错，通过safe设置项在不具备属性时返回设定值
-export function getStatusValue(entity:Entity,statusKey:string,defaultValue?:number){
+export function getStatusValue(entity:Entity,statusKey:string,defaultValue?:number|string){
     const status = entity.status[statusKey]
     if(!ifHaveStatus(entity,statusKey)){
         if(defaultValue != undefined){

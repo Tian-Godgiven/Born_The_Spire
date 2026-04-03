@@ -65,31 +65,31 @@ export class RelicModifier extends ItemModifier {
      *
      * 完整流程：
      * 1. 调用基类 loseItem 清理所有副作用
-     * 2. 可选：触发 lose 交互
+     * 2. 触发 lose 交互
      */
-    loseRelic(relic: Relic, triggerLoseEffect: boolean = false, parentLog?: LogUnit) {
+    loseRelic(relic: Relic, parentLog?: LogUnit) {
         const log = parentLog || newLog([this.owner, "失去了遗物", relic])
 
         // 使用基类的通用方法处理失去逻辑
-        this.loseItem(relic, triggerLoseEffect, log)
+        this.loseItem(relic, log)
     }
 
     /**
      * 移除遗物（通过遗物对象）
      * @alias loseRelic
      */
-    removeRelic(relic: Relic, triggerLoseEffect: boolean = false, parentLog?: LogUnit): boolean {
-        this.loseRelic(relic, triggerLoseEffect, parentLog)
+    removeRelic(relic: Relic, parentLog?: LogUnit): boolean {
+        this.loseRelic(relic, parentLog)
         return true
     }
 
     /**
      * 移除遗物（通过遗物 key）
      */
-    removeRelicByKey(relicKey: string, triggerLoseEffect: boolean = false, parentLog?: LogUnit): boolean {
+    removeRelicByKey(relicKey: string, parentLog?: LogUnit): boolean {
         const relic = this.getRelicByKey(relicKey)
         if (relic) {
-            this.loseRelic(relic, triggerLoseEffect, parentLog)
+            this.loseRelic(relic, parentLog)
             return true
         }
         return false

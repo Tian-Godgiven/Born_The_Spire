@@ -1,12 +1,12 @@
-import { ref } from 'vue'
+import { shallowRef } from 'vue'
 import type { Card } from '@/core/objects/item/Subclass/Card'
 
 /**
  * 卡牌组弹窗状态
  */
-export const showCardGroupModal = ref(false)
-export const cardGroupTitle = ref('')
-export const cardGroupList = ref<Card[]>([])
+export const showCardGroupModal = shallowRef(false)
+export const cardGroupTitle = shallowRef('')
+export const cardGroupList = shallowRef<Card[]>([])
 
 let cardGroupResolver: (() => void) | null = null
 

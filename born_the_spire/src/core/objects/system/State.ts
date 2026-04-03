@@ -2,12 +2,15 @@ import type { Describe } from "@/ui/hooks/express/describe"
 import type { Target } from "../target/Target"
 import { newError } from "@/ui/hooks/global/alert"
 import type { EffectUnit } from "./effect/EffectUnit"
-import type { TriggerMap } from "@/core/types/object/trigger"
+import type { TriggerMap, ReactionMap } from "@/core/types/object/trigger"
 import type { EventParticipant } from "@/core/types/event/EventParticipant"
 import { nanoid } from "nanoid"
 import { stateList } from "@/static/list/target/stateList"
 
 // ==================== 类型定义 ====================
+
+// ReactionMap 类型定义（用于 StateInteractionData）
+type StateReactionMap = Record<string, any[]>
 
 /**
  * 状态层数对象
@@ -37,6 +40,7 @@ export type StateInteractionData = {
     // 持有状态期间的效果（通过触发器）
     possess?: {
         triggers?: TriggerMap
+        reaction?: StateReactionMap  // 反应映射（用于 action 格式的触发器）
     }
 
     // 获得状态时的一次性效果
@@ -180,7 +184,7 @@ export function getStateStack(target: Target, stateKey: string, stackKey: string
     const state = stateModifier.getState(stateKey)
 
     if (state) {
-        const stack = state.stacks.find(stack => stack.key === stackKey)
+        const stack = state.stacks.find((s: any) => s.key === stackKey)
         if (stack) {
             return stack.stack
         }
@@ -203,7 +207,7 @@ export function changeStateStack(
     const state = stateModifier.getState(stateKey)
 
     if (state) {
-        const stack = state.stacks.find(stack => stack.key === stackKey)
+        const stack = state.stacks.find((s: any) => s.key === stackKey)
         if (stack) {
             stack.stack = newValue
         }

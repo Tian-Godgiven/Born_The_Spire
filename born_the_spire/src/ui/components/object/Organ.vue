@@ -1,6 +1,6 @@
 <template>
 <div class="organ"
-    :class="{ 'temporary': organ.isTemporary, 'has-abilities': hasActiveAbilities }"
+    :class="{ 'temporary': organ.isTemporary, 'has-abilities': hasActiveAbilities, 'disabled': disabled }"
     @mouseenter="hovering = true"
     @mouseleave="hovering = false"
     @click="showDetail = true"
@@ -14,6 +14,11 @@
     <!-- 主动能力标识 -->
     <div class="ability-indicator" v-if="hasActiveAbilities">
         ⚡
+    </div>
+
+    <!-- 禁用标识 -->
+    <div class="disabled-indicator" v-if="disabled">
+        ×
     </div>
 
     {{ organ.label }}:{{ describe }}
@@ -42,9 +47,10 @@ import OrganDetail from '@/ui/components/interaction/OrganDetail.vue';
 import { handleItemRightClick } from '@/core/hooks/activeAbility';
 import { nowPlayer } from '@/core/objects/game/run';
 
-    const {organ, side} = defineProps<{
+    const {organ, side, disabled = false} = defineProps<{
         organ: Organ
         side?: 'left' | 'right'  // 可选，默认右侧
+        disabled?: boolean  // 是否被禁用
     }>()
 
     const hovering = ref(false)
@@ -59,7 +65,7 @@ import { nowPlayer } from '@/core/objects/game/run';
     })
 
     async function handleRightClick() {
-        if (!hasActiveAbilities.value) return
+        if (!hasActiveAbilities.value || disabled) return
 
         try {
             await handleItemRightClick(
@@ -121,6 +127,32 @@ import { nowPlayer } from '@/core/objects/game/run';
         font-weight: bold;
         border-radius: 0 0 4px 0;
         z-index: 1;
+    }
+
+    .disabled-indicator {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 48px;
+        color: #dc2626;
+        font-weight: bold;
+        pointer-events: none;
+        z-index: 2;
+        opacity: 0.8;
+    }
+
+    // 禁用状态的器官样式
+    &.disabled {
+        opacity: 0.5;
+        background: #fef2f2;
+        border-color: #dc2626;
+        cursor: not-allowed;
+        text-decoration: line-through;
+
+        &:hover {
+            background: #fee2e2;
+        }
     }
 
     &:hover {

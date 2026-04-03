@@ -70,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, nextTick } from 'vue'
+import { computed, ref, nextTick, type PropType, markRaw, shallowRef } from 'vue'
 import { Organ } from '@/core/objects/target/Organ'
 import { getDescribeStructured, getDescribe, type DescribeSegment } from '@/ui/hooks/express/describe'
 import { getStatusValue, ifHaveStatus } from '@/core/objects/system/status/Status'
@@ -79,12 +79,13 @@ import Card from '@/ui/components/object/Card.vue'
 import type { Card as CardType } from '@/core/objects/item/Subclass/Card'
 import { nowPlayer } from '@/core/objects/game/run'
 import { entryDefinitions } from '@/core/objects/system/Entry'
+import type { Entity } from '@/core/objects/system/Entity'
 
-const props = defineProps<{
-    organ: Organ
-    visible: boolean
-    hoverTarget?: any
-}>()
+const props = defineProps({
+    organ: { type: Object as PropType<Organ>, required: true },
+    visible: { type: Boolean, required: true },
+    hoverTarget: { type: Object as PropType<Entity | Entity[]>, required: false }
+})
 
 const emit = defineEmits<{
     close: []
@@ -239,8 +240,8 @@ function getSegmentStyle(segment: DescribeSegment): Record<string, string> | und
     return undefined
 }
 
-// 卡牌悬停显示
-const hoveredCard = ref<CardType | null>(null)
+// 卡牌悬停显示 - 使用 shallowRef 防止 Card 被深度响应式包装
+const hoveredCard = shallowRef<CardType | null>(null)
 const cardPopoverRef = ref<HTMLElement>()
 const cardPopoverStyle = ref<Record<string, string>>({})
 
@@ -251,7 +252,8 @@ async function handleSegmentHover(segment: DescribeSegment, event: MouseEvent) {
     const card = await getCardFromSegment(segment)
     if (!card) return
 
-    hoveredCard.value = card
+    // 使用 markRaw 防止 Card 对象被 ref 深度包装
+    hoveredCard.value = markRaw(card)
 
     nextTick(() => {
         updateCardPopoverPosition(event.target as HTMLElement)

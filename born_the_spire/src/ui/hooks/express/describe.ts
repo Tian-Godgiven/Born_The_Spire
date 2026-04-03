@@ -10,6 +10,7 @@ import { getCardModifier } from "@/core/objects/system/modifier/CardModifier";
 //对象的描述，存储为数据，使用时翻译为对应的字符串
 export type Describe = (
     string //字符串
+    | number //数字（会被转换为字符串）
 |{
     key:string[] //需要访问的对象属性的key，如果获取的对象是数组则会在其中寻找key属性为对应值的对象
 }|{
@@ -37,9 +38,12 @@ export function getDescribe(describe:Describe|undefined,target?:Object){
     let text = "";
     if(!describe)return text
     describe.forEach(value=>{
-        //纯字符串直接添加
+        //纯字符串或数字直接添加
         if(typeof value == "string"){
             text += value
+        }
+        else if(typeof value == "number"){
+            text += String(value)
         }
         //是一个对象
         else if(value instanceof Object){
@@ -139,10 +143,16 @@ export function getDescribeStructured(describe:Describe|undefined,target?:Object
     if(!describe) return segments
 
     describe.forEach(value=>{
-        //纯字符串
+        //纯字符串或数字
         if(typeof value == "string"){
             segments.push({
                 text: value,
+                type: 'plain'
+            })
+        }
+        else if(typeof value == "number"){
+            segments.push({
+                text: String(value),
                 type: 'plain'
             })
         }
@@ -169,7 +179,7 @@ export function getDescribeStructured(describe:Describe|undefined,target?:Object
             }
             //卡牌实例引用
             else if("@" in value){
-                const cardIndex = value["@"]
+                const cardIndex = value["@"] as number
                 let cardLabel = "[卡牌]"
 
                 // 先尝试 cards 数组，再 fallback 到 cardsByOwner.player
