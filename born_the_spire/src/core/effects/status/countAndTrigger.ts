@@ -80,7 +80,7 @@ export const countAndTrigger: EffectFunc = (event, effect) => {
     }
 
     // 增加计数器
-    const currentValue = countStatus.originalBaseValue ?? countStatus.value ?? 0
+    const currentValue = Number(countStatus.originalBaseValue ?? countStatus.value ?? 0)
     const newValue = currentValue + 1
 
     // 更新计数器
@@ -91,7 +91,7 @@ export const countAndTrigger: EffectFunc = (event, effect) => {
     }
 
     // 计算达到阈值的次数
-    const triggerCount = Math.floor((newValue - 1) / threshold)
+    const triggerCount = Math.floor(newValue / threshold)
 
     if (triggerCount > 0) {
         // 重置计数器为余数

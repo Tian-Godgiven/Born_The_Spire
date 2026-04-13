@@ -6,6 +6,7 @@ import { temporaryManager } from "@/core/objects/system/TemporaryManager"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { createCard, createOrgan } from "@/core/factories"
 import { getOrgan } from "@/core/objects/target/Organ"
+import { enterHand } from "@/core/effects/card"
 
 /**
  * 创建临时卡牌并添加到玩家手牌
@@ -33,7 +34,7 @@ export async function addTemporaryCard(
     card.setOwner(player, cardMap.entry)
 
     // 添加到手牌
-    player.cardPiles.handPile.push(card)
+    enterHand(card, player.cardPiles.handPile, player)
 
     // 注册到临时管理器
     temporaryManager.registerTemporary(card, player)

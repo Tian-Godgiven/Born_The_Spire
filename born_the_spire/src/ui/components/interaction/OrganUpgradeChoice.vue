@@ -122,7 +122,7 @@ function getUpgradeError(organ: Organ): string {
  */
 function hasMaxMass(organ: Organ): boolean {
   try {
-    return getStatusValue(organ, 'max-mass') > 0
+    return Number(getStatusValue(organ, 'max-mass')) > 0
   } catch {
     return false
   }
@@ -144,7 +144,7 @@ function getCurrentMass(organ: Organ): number {
  */
 function getMaxMass(organ: Organ): number {
   try {
-    return getStatusValue(organ, 'max-mass')
+    return Number(getStatusValue(organ, 'max-mass'))
   } catch {
     return 0
   }

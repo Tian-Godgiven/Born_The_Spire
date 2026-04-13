@@ -65,7 +65,7 @@ export const card_wasteHeatRecovery: EffectFunc = (event, effect) => {
     console.log("[card_wasteHeatRecovery] exhausting card:", card.label)
 
     // 消耗卡牌
-    cardMove(pile, card, player.cardPiles.exhaustPile)
+    cardMove(pile, card, player.cardPiles.exhaustPile, {handPile:player.cardPiles.handPile, owner:player})
     newLog([`消耗了`, card.label])
 
     // 获得额外护甲（走事件系统，可被触发器拦截）

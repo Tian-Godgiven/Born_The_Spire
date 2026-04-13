@@ -65,6 +65,35 @@ export const cardEntryDefinitions: Record<string, CardEntryDefinition> = {
         }
     },
 
+    // 能力词条
+    card_power: {
+        label: "能力",
+        describe: ["使用后，从本场战斗中移除"],
+        conflictsWith: ["card_exhaust", "card_void"],
+        onApply: (owner, ownersOwner) => {
+            const result = checkOwnerTypes(owner, ownersOwner)
+            if (!result) {
+                return []
+            }
+            const { card } = result
+
+            const originalMethod = card.getAfterUseEffect.bind(card)
+
+            card.getAfterUseEffect = (fromPile) => ({
+                key: "pay_removePower",
+                describe: ["将能力牌从战斗中移除"],
+                params: {
+                    sourcePile: fromPile,
+                    card
+                }
+            })
+
+            return [() => {
+                card.getAfterUseEffect = originalMethod
+            }]
+        }
+    },
+
     // 虚无词条
     card_void: {
         label: "虚无",

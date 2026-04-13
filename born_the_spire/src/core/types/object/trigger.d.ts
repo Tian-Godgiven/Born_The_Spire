@@ -1,7 +1,4 @@
-import { Effect } from "@/core/objects/system/effect/Effect"
-import { EffectUnit } from "@/core/objects/system/effect/EffectUnit"
-import { Entity } from "@/core/objects/system/Entity"
-import { TargetTypeString } from "@/core/types/TargetSpec"
+import type { Condition } from "../ConditionSystem"
 
 //触发器的回调函数，其总是会提供触发该触发器的事件对象
 export type TriggerFunc<
@@ -57,13 +54,13 @@ export interface TriggerEventConfig{
     sourceTargetType?: TargetTypeString  // 事件的 source 来源（可选），使用统一的 targetType 格式
     mediumTargetType?: TargetTypeString  // 事件的 medium 来源（可选），使用统一的 targetType 格式
     effect:EffectUnit[]
-    condition?: TriggerCondition  // 条件检查（可选）。满足条件时才触发
+    condition?: TriggerCondition | Condition;
 }
 
 // 反应映射：action 名称 -> 事件配置数组
 export type ReactionMap = Record<string, TriggerEventConfig[]>
 
-// 触发条件 - 通用格式
+// 触发条件 - 旧格式（向后兼容，新代码请使用 Condition 字符串格式）
 export interface TriggerCondition {
   // 检查触发器来源（item/relic/organ 自身）的 status 值（旧格式，向后兼容）
   sourceStatus?: {
@@ -97,7 +94,7 @@ export interface TriggerMapItemWithEvent {
     level?: number;
     event: TriggerEventConfig | TriggerEventConfig[];  // 直接定义事件
     info?: string;
-    condition?: TriggerCondition;
+    condition?: TriggerCondition | Condition;
 }
 
 // 新格式：使用 action + reaction（推荐）
@@ -108,7 +105,7 @@ export interface TriggerMapItemWithAction {
     level?: number;
     action: string;  // 指定响应名称（与 event 互斥）
     info?: string;
-    condition?: TriggerCondition;
+    condition?: TriggerCondition | Condition;
     triggerTarget?: {
         participantType: "entity"
         key: string  // 通过 key 指定目标，如 "player" 表示当前战斗中的玩家
@@ -130,7 +127,13 @@ export interface ImportantTriggerMapItem {
     importantKey: string;
     onlyKey?: string;
     info?: string;
-    condition?: TriggerCondition;
+    condition?: TriggerCondition | Condition;
+    triggerTarget?: {
+        participantType: "entity"
+        key: string  // 通过 key 指定目标，如 "player" 表示当前战斗中的玩家
+    }
+    timing?: "immediate" | "battleStart"
+    disableUntil?: "battleEnd"
 }
 
 export type TriggerMap = (TriggerMapItem|ImportantTriggerMapItem)[]

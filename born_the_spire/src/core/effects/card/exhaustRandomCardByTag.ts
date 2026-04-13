@@ -51,6 +51,6 @@ export const exhaustRandomCardByTag: EffectFunc = (event, effect) => {
     if (matching.length === 0) return
 
     const card = matching[randomInt(0, matching.length - 1)]
-    cardMove(pile, card, player.cardPiles.exhaustPile)
+    cardMove(pile, card, player.cardPiles.exhaustPile, {handPile:player.cardPiles.handPile, owner:player})
     newLog([`消耗了`, card.label])
 }

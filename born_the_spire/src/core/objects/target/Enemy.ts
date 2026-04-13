@@ -25,7 +25,6 @@ export class Enemy extends Chara{
     public intent?: Intent  // 当前意图（下回合要执行的行动）
     public behavior?: EnemyBehaviorConfig  // 敌人行为配置
     public exclusiveCards: string[] = []  // 敌人专属卡牌key列表
-    public disabledOrgans?: Map<string, { source: any, disabledAtTurn: number }>  // 被禁用的器官（organ.key -> 禁用信息）
     constructor(
         map:EnemyMap
     ){
@@ -94,7 +93,7 @@ export class Enemy extends Chara{
             // 如果卡牌没有 source，认为是专属卡牌，允许使用
             if (!card.source) return true
             // 检查卡牌来源是否被禁用
-            if (card.source && (card.source as any).targetType === 'organ' && isOrganDisabled(card.source as any, this)) {
+            if (card.source && (card.source as any).targetType === 'organ' && isOrganDisabled(card.source as any)) {
                 return false
             }
             return true
@@ -125,8 +124,8 @@ export class Enemy extends Chara{
      * @param cards 要执行的卡牌列表
      * @param visibility 可见性等级（默认为 exact）
      */
-    setIntent(cards: Card[], visibility: IntentVisibility = "card") {
-        this.intent = cardsToIntent(cards, this, visibility)
+    async setIntent(cards: Card[], visibility: IntentVisibility = "card") {
+        this.intent = await cardsToIntent(cards, this, visibility)
         newLog(["敌人设置意图", this.label, this.intent])
     }
 
@@ -149,7 +148,7 @@ export class Enemy extends Chara{
 
         if (selectedCards.length > 0) {
             newLog(["敌人改变意图", this.label])
-            this.setIntent(selectedCards)
+            await this.setIntent(selectedCards)
         }
     }
 
@@ -208,7 +207,7 @@ export class Enemy extends Chara{
      */
     private async playCard(card: Card, target: Player) {
         // 检查卡牌来源的器官是否被禁用
-        if (card.source && (card.source as any).targetType === 'organ' && isOrganDisabled(card.source as any, this)) {
+        if (card.source && (card.source as any).targetType === 'organ' && isOrganDisabled(card.source as any)) {
             newLog(["敌人使用卡牌被禁用", this.label, card.label])
             return
         }

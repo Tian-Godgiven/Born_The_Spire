@@ -3,6 +3,7 @@ import { Card } from "../item/Subclass/Card"
 import { Organ, removeOrgan } from "../target/Organ"
 import { Player } from "../target/Player"
 import { ActionEvent } from "./ActionEvent"
+import { leaveHand } from "@/core/effects/card"
 
 /**
  * 临时物品管理器
@@ -83,7 +84,11 @@ export class TemporaryManager {
             const pile = player.cardPiles[pileName]
             const index = pile.indexOf(card)
             if (index !== -1) {
-                pile.splice(index, 1)
+                if (pileName === 'handPile') {
+                    leaveHand(card, pile)
+                } else {
+                    pile.splice(index, 1)
+                }
                 break
             }
         }

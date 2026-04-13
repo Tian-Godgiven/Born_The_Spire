@@ -79,7 +79,7 @@ export function selectCards(
         const [min, max] = selector.costRange
         filtered = filtered.filter(card => {
             if (!ifHaveStatus(card, "cost")) return false
-            const cost = getStatusValue(card, "cost")
+            const cost = Number(getStatusValue(card, "cost"))
             return cost >= min && cost <= max
         })
     }

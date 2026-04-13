@@ -44,6 +44,6 @@ export const regenerateMass: EffectFunc = (event, effect) => {
     const maxMass = getStatusValue(organ, "max-mass")
 
     // 恢复质量（不超过最大值）
-    const newMass = Math.min(currentMass + value, maxMass)
+    const newMass = Math.min(currentMass + Number(value), Number(maxMass))
     setCurrentValue(organ, "mass", newMass)
 }

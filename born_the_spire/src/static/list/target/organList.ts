@@ -500,6 +500,39 @@ export const organList:OrganMap[] = [
                 }]
             }
         }
+    },
+    // ========== 不屈甲壳 ==========
+    {
+        label: "不屈甲壳",
+        key: "organ_resilient_shell",
+        describe: ["每累计受到10点伤害，获得1点护甲"],
+        rarity: OrganRarity.Common,
+        part: OrganPartEnum.Skin,
+        status: {
+            "max-mass": 20,
+            "damage-taken": 0
+        },
+        current: ["mass", "damage-taken"],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                effects: [{
+                    key: "accumulateAndTrigger",
+                    params: {
+                        pointKey: "damage-taken",
+                        on: { when: "after", how: "take", key: "damage" },
+                        gain: "$triggerEffect.params(value)",
+                        threshold: 10,
+                        consume: 10,
+                        targetType: "owner",
+                        effects: [{
+                            key: "gainArmor",
+                            params: { value: 1 }
+                        }]
+                    }
+                }]
+            }
+        }
     }
 ]
 

@@ -1,7 +1,9 @@
+import type { Battle } from "./battle";
 import type { Enemy } from "@/core/objects/target/Enemy"
 import type { Player } from "@/core/objects/target/Player"
 import { selectAction } from "@/core/objects/system/EnemyBehavior"
 import { newLog } from "@/ui/hooks/global/log"
+import { startCharaTurn, endCharaTurn } from "@/core/effects/turn"
 
 /**
  * 敌人回合管理
@@ -22,11 +24,13 @@ import { newLog } from "@/ui/hooks/global/log"
  * @param enemy 敌人
  * @param player 玩家
  * @param turnCount 当前回合数
+ * @param battle 战斗对象
  */
 export async function executeEnemyTurn(
     enemy: Enemy,
     player: Player,
-    turnCount: number
+    turnCount: number,
+    battle: Battle
 ) {
     newLog(["===== 敌人回合开始 =====", enemy.label])
 
@@ -53,13 +57,15 @@ export async function executeEnemyTurn(
             return
         }
 
-        enemy.setIntent(selectedCards)
+        await enemy.setIntent(selectedCards)
     }
 
     // 执行已经设置好的意图
     await enemy.executeIntent(player)
 
     newLog(["===== 敌人回合结束 =====", enemy.label])
+    // 通知敌人回合结束
+    await endCharaTurn(enemy, battle)
 }
 
 /**
@@ -68,11 +74,13 @@ export async function executeEnemyTurn(
  * @param enemies 敌人列表
  * @param player 玩家
  * @param turnCount 当前回合数
+ * @param battle 战斗对象
  */
 export async function executeAllEnemiesTurn(
     enemies: Enemy[],
     player: Player,
-    turnCount: number
+    turnCount: number,
+    battle: Battle
 ) {
     for (const enemy of enemies) {
         // 跳过已死亡的敌人
@@ -81,14 +89,14 @@ export async function executeAllEnemiesTurn(
         }
 
         // 检查是否有多次行动
-        const actionsPerTurn = enemy.status["actions-per-turn"]?.value || 1
+        const actionsPerTurn = Number(enemy.status["actions-per-turn"]?.value || 1)
 
         // 执行多次行动
         for (let i = 0; i < actionsPerTurn; i++) {
             if (i > 0) {
                 newLog([`${enemy.label} 第 ${i + 1} 次行动`])
             }
-            await executeEnemyTurn(enemy, player, turnCount)
+            await executeEnemyTurn(enemy, player, turnCount, battle)
         }
     }
 }
@@ -131,7 +139,7 @@ export async function prepareEnemyIntents(
 
         // 设置意图
         if (selectedCards.length > 0) {
-            enemy.setIntent(selectedCards)
+            await enemy.setIntent(selectedCards)
         }
     }
 }

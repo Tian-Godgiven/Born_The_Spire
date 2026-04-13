@@ -79,9 +79,6 @@ const effectParamsSchemas: Record<string, EffectParamsSchema> = {
   },
 
   // ========== 卡牌相关 ==========
-  drawCard: {
-    value: { type: "number", description: "抽牌数量" }
-  },
 
   discardCard: {
     pileName: { type: "string", default: "handPile", description: "弃牌来源牌堆" },
@@ -137,11 +134,13 @@ const effectParamsSchemas: Record<string, EffectParamsSchema> = {
   },
 
   customCardChoice: {
-    cards: { type: "array", description: "卡牌key数组" },
+    cards: { type: "array", required: false, description: "卡牌key数组" },
+    fromPile: { type: "string", required: false, description: "从哪个牌堆选择" },
     selectCount: { type: ["number", "array"], default: 1, description: "选择数量" },
     title: { type: "string", default: "选择卡牌", description: "标题" },
     description: { type: "string", required: false, description: "描述" },
-    cancelable: { type: "boolean", default: false, description: "是否可取消" }
+    cancelable: { type: "boolean", default: false, description: "是否可取消" },
+    action: { type: "string", required: false, description: "选择后的操作" }
   },
 
   // ========== 能量相关 ==========
@@ -274,8 +273,8 @@ function tryConvertType(value: any, targetType: ParamType): any {
  * 检查值的类型
  */
 function checkType(value: any, type: ParamType): boolean {
-  // 如果是以 $ 开头的字符串，这是动态值占位符，会在运行时解析，视为有效
-  if (typeof value === "string" && value.startsWith("$")) {
+  // 如果是以 $ 开头的字符串或是 random() 语法，这是动态值占位符，会在运行时解析，视为有效
+  if (typeof value === "string" && (value.startsWith("$") || value.startsWith("random("))) {
     return true
   }
 

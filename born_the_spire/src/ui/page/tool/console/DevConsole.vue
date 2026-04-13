@@ -68,7 +68,7 @@ const helpSections: Array<{ key: string, title: string, items: Array<{ cmd: stri
         key: '战斗',
         title: '战斗调试命令',
         items: [
-            { cmd: 'startBattle("enemyKey", layer?)', desc: '立即开始战斗', examples: ['startBattle("test_enemy_slime")'] },
+            { cmd: 'startBattle("enemy1", "enemy2"?, layer?)', desc: '立即开始战斗（支持多敌人）', examples: ['startBattle("test_enemy_slime")', 'startBattle("test_enemy_slime", "test_enemy_slime", 1)'] },
             { cmd: 'listEnemies()', desc: '列出所有敌人' },
             { cmd: 'dealDamage(伤害)', desc: '测试造成伤害', examples: ['dealDamage(25)'] },
             { cmd: 'gameOver()', desc: '触发游戏失败' },
@@ -96,6 +96,7 @@ const helpSections: Array<{ key: string, title: string, items: Array<{ cmd: stri
             { cmd: 'repairOrgan("key")', desc: '修复器官' },
             { cmd: 'upgradeOrgan("key")', desc: '升级器官' },
             { cmd: 'removeOrgan("key")', desc: '吞噬器官' },
+            { cmd: 'unlockAllOrgans()', desc: '解锁所有器官（图鉴）' },
         ]
     },
     {
@@ -303,7 +304,7 @@ async function executeFunction(funcName: string, args: any[]) {
             await listAllRelics()
             break
         case 'startBattle':
-            await startBattle(args[0], args[1])
+            await startBattle(...args)
             break
         case 'listEnemies':
             await listEnemies()
@@ -1275,17 +1276,28 @@ async function listAllRelics() {
     }
 }
 
-// 立即开始与指定敌人的战斗
-async function startBattle(enemyKey: string, layer?: number) {
+// 立即开始与指定敌人的战斗（支持多个敌人）
+async function startBattle(...args: any[]) {
     if (!nowGameRun) {
         addOutput('游戏未开始，请先点击"开始游戏"', 'error')
         return
     }
 
-    if (!enemyKey) {
-        addOutput('用法: startBattle("enemyKey", layer?)', 'error')
-        addOutput('例如: startBattle("test_enemy_slime", 1)', 'error')
-        addOutput('使用 listRooms("battle") 查看所有战斗房间', 'info')
+    // 解析参数：字符串为敌人key，数字为层级
+    const enemyKeys: string[] = []
+    let layer: number | undefined
+    for (const arg of args) {
+        if (typeof arg === 'string') {
+            enemyKeys.push(arg)
+        } else if (typeof arg === 'number') {
+            layer = arg
+        }
+    }
+
+    if (enemyKeys.length === 0) {
+        addOutput('用法: startBattle("enemyKey1", "enemyKey2"?, layer?)', 'error')
+        addOutput('例如: startBattle("test_enemy_slime", "test_enemy_slime", 1)', 'error')
+        addOutput('使用 listEnemies() 查看所有敌人', 'info')
         return
     }
 
@@ -1293,16 +1305,19 @@ async function startBattle(enemyKey: string, layer?: number) {
         const { BattleRoom } = await import('@/core/objects/room/BattleRoom')
         const { hasEnemy } = await import('@/static/list/target/enemyList')
 
-        // 验证敌人是否存在
-        if (!hasEnemy(enemyKey)) {
-            addOutput(`未找到敌人: ${enemyKey}`, 'error')
-            return
+        // 验证所有敌人是否存在
+        for (const key of enemyKeys) {
+            if (!hasEnemy(key)) {
+                addOutput(`未找到敌人: ${key}`, 'error')
+                return
+            }
         }
 
         // 确定层级
         const battleLayer = layer !== undefined ? layer : (nowGameRun.currentRoom?.layer || 1)
 
-        addOutput(`准备与 ${enemyKey} 战斗 (层级: ${battleLayer})`, 'info')
+        const enemyNames = enemyKeys.join(', ')
+        addOutput(`准备与 ${enemyNames} 战斗 (层级: ${battleLayer})`, 'info')
 
         // 如果当前有房间，先完成并退出
         if (nowGameRun.currentRoom) {
@@ -1315,10 +1330,10 @@ async function startBattle(enemyKey: string, layer?: number) {
             type: 'battle',
             layer: battleLayer,
             battleType: 'normal',
-            enemyConfigs: [enemyKey]
+            enemyConfigs: enemyKeys
         })
 
-        addOutput(`✓ 创建战斗房间成功`, 'result')
+        addOutput(`✓ 创建战斗房间成功 (${enemyKeys.length}个敌人)`, 'result')
 
         // 进入战斗房间
         await nowGameRun.enterRoom(battleRoom)

@@ -13,6 +13,7 @@ import type { Relic } from "@/core/objects/item/Subclass/Relic"
 import type { RelicMap } from "@/core/objects/item/Subclass/Relic"
 import type { PotionMap } from "@/core/objects/item/Subclass/Potion"
 import { createRelic } from "@/core/factories"
+import { randomFloatRange } from "@/core/hooks/random"
 import { getOrganByKey } from "@/static/list/target/organList"
 import {
     blackStoreOrganPool,
@@ -461,8 +462,8 @@ export class BlackStoreRoom extends Room {
 
         if (discount === undefined) {
             // 使用确定性随机数生成折扣
-            const { randomFloat } = require("@/core/hooks/random")
-            const discountValue = randomFloat(
+
+            const discountValue = randomFloatRange(
                 this.organDiscountRange.min,
                 this.organDiscountRange.max,
                 `organDiscount:${organ.key}`
@@ -481,8 +482,8 @@ export class BlackStoreRoom extends Room {
         let discount = this.organDiscounts.get(organ.key)
 
         if (discount === undefined) {
-            const { randomFloat } = require("@/core/hooks/random")
-            const discountValue = randomFloat(
+
+            const discountValue = randomFloatRange(
                 this.organDiscountRange.min,
                 this.organDiscountRange.max,
                 `organDiscount:${organ.key}`

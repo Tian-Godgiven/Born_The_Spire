@@ -4,31 +4,30 @@ import { reactive } from "vue"
 import { createEnemy } from "@/core/factories"
 
 export const enemyList:EnemyMap[] = [
-    // 原有的小石怪
-    {
-        label:"小石怪",
-        key:"original_enemy_00001",
-        status:{
-            "max-health":30
-        },
-        organ:[
-            "original_organ_00002",  // 石芯 - 增加生命
-            "original_organ_00003"   // 石肤 - 减伤
-        ],
-        cards:[
-            "enemy_stone_strike"  // 专属攻击：石击
-        ],
-        behavior: {
-            patterns: [],
-            fallback: {
-                action: {
-                    selector: { tags: ["attack"] },
-                    mode: "random"
-                },
-                describe: "随机攻击"
-            }
-        }
-    },
+    // // 原有的小石怪
+    // {
+    //     label:"小石怪",
+    //     key:"original_enemy_00001",
+    //     status:{
+    //         "max-health":30
+    //     },
+    //     organ:[
+    //         "original_organ_00003"   // 石肤 - 减伤
+    //     ],
+    //     cards:[
+    //         "enemy_stone_strike"  // 专属攻击：石击
+    //     ],
+    //     behavior: {
+    //         patterns: [],
+    //         fallback: {
+    //             action: {
+    //                 selector: { tags: ["attack"] },
+    //                 mode: "random"
+    //             },
+    //             describe: "随机攻击"
+    //         }
+    //     }
+    // },
 
     // 示例1：史莱姆 - 简单随机攻击
     {
@@ -235,6 +234,41 @@ export const enemyList:EnemyMap[] = [
                     mode: "random"
                 },
                 describe: "默认攻击"
+            }
+        }
+    }
+    ,
+    // 不屈小鼠 - 测试用沙包
+    {
+        label: "不屈小鼠",
+        key: "test_enemy_mouse",
+        status: {
+            "max-health": 50
+        },
+        organ: [
+            "test_organ_cards_001",   // 战斗之心 - 提供打击
+            "organ_resilient_shell"   // 不屈甲壳 - 每受10点伤害获得1护甲
+        ],
+        behavior: {
+            patterns: [
+                {
+                    priority: 5,
+                    condition: {
+                        turn: { mod: [2, 0] }
+                    },
+                    action: {
+                        selector: { tags: ["defence"] },
+                        mode: "random"
+                    },
+                    describe: "偶数回合：防御"
+                }
+            ],
+            fallback: {
+                action: {
+                    selector: { tags: ["attack"] },
+                    mode: "random"
+                },
+                describe: "默认：攻击"
             }
         }
     }

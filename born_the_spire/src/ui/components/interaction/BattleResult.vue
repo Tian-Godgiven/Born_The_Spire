@@ -85,7 +85,7 @@ const playerHealth = computed(() => {
 })
 
 const playerMaxHealth = computed(() => {
-  return Math.floor(getStatusValue(nowPlayer, 'max-health'))
+  return Math.floor(Number(getStatusValue(nowPlayer, 'max-health')))
 })
 
 function handleContinue() {

@@ -1,6 +1,6 @@
 <template>
-<ChooseSource :onSuccess :onHover="handleHover" :key="card.__id" ref="chooseSource" @click="startChoose" class="hand-card-wrapper">
-    <CardVue :class="{useAble}" :card="card" :hoverTarget="hoverTarget"/>
+<ChooseSource :onSuccess :onHover="handleHover" :key="card.__id" ref="chooseSource" @click="handleClick" class="hand-card-wrapper">
+    <CardVue :class="{useAble: useAble && !selectorActive, disabled: card.isDisabled}" :card="card" :hoverTarget="hoverTarget"/>
 </ChooseSource>
 </template>
 
@@ -12,6 +12,7 @@
     import { computed, shallowRef, useTemplateRef, type PropType } from 'vue';
     import { nowPlayer } from '@/core/objects/game/run';
     import { Target } from '@/core/objects/target/Target';
+    import { handCardSelectorActive, toggleCardSelection } from '@/ui/hooks/interaction/handCardSelector';
 
     const { card } = defineProps({
         card: { type: Object as PropType<Card>, required: true }
@@ -20,11 +21,29 @@
     const chooseSourceRef = useTemplateRef("chooseSource")
     const hoverTarget = shallowRef<Target | undefined>(undefined)
 
+    const selectorActive = handCardSelectorActive
+
     const useAble = computed(()=>{
         return card.getInteraction("use")?true:false
     })
-    //点击开始选择
+
+    // 点击处理：选择器激活时切换选中，否则正常使用卡牌
+    function handleClick() {
+        if (selectorActive.value) {
+            if ((card as any)._chooseAble) {
+                toggleCardSelection(card)
+            }
+            return
+        }
+        startChoose()
+    }
+
+    // 点击开始选择
     function startChoose(){
+        // 检查卡牌是否被禁用
+        if (card.isDisabled) {
+            return
+        }
         if(!chooseSourceRef.value)return;
         const interaction = card.getInteraction("use")
         if(!interaction){
@@ -42,6 +61,10 @@
     }
     //选择完成时使用卡牌效果
     function onSuccess(targets:Target[]){
+        // 检查卡牌是否被禁用
+        if (card.isDisabled) {
+            return
+        }
         useCard(card,nowPlayer.cardPiles.handPile,nowPlayer.getSelf(),targets);
         // 清除悬停目标
         hoverTarget.value = undefined
@@ -61,4 +84,10 @@
 .useAble{
     box-shadow: 0px 0px 8px rgb(0, 0, 0);
 }
+
+.disabled{
+    filter: grayscale(100%);
+    opacity: 0.6;
+}
+
 </style>

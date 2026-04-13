@@ -48,5 +48,6 @@ export const toggleStatus: EffectFunc = (event, effect) => {
     status.refresh()
 
     console.log(`[toggleStatus] ${statusKey}: ${currentValue} -> ${newValue}`)
+    console.log(`[toggleStatus] 切换后 status.value = ${status.value}`)  // 新增日志
   })
 }

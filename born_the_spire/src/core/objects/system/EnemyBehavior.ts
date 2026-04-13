@@ -119,30 +119,30 @@ export function evaluateCondition(
 ): boolean {
     // 检查玩家血量条件
     if (condition.playerHealth) {
-        const playerHealthPercent = (player.current.health.value / player.status["max-health"].value) * 100
+        const playerHealthPercent = (Number(player.current.health.value) / Number(player.status["max-health"].value)) * 100
 
-        if (condition.playerHealth.below !== undefined && playerHealthPercent >= condition.playerHealth.below) {
+        if (condition.playerHealth.below !== undefined && playerHealthPercent >= Number(condition.playerHealth.below)) {
             return false
         }
-        if (condition.playerHealth.above !== undefined && playerHealthPercent <= condition.playerHealth.above) {
+        if (condition.playerHealth.above !== undefined && playerHealthPercent <= Number(condition.playerHealth.above)) {
             return false
         }
-        if (condition.playerHealth.equals !== undefined && Math.abs(playerHealthPercent - condition.playerHealth.equals) > 0.01) {
+        if (condition.playerHealth.equals !== undefined && Math.abs(playerHealthPercent - Number(condition.playerHealth.equals)) > 0.01) {
             return false
         }
     }
 
     // 检查敌人血量条件
     if (condition.selfHealth) {
-        const selfHealthPercent = (enemy.current.health.value / enemy.status["max-health"].value) * 100
+        const selfHealthPercent = (Number(enemy.current.health.value) / Number(enemy.status["max-health"].value)) * 100
 
-        if (condition.selfHealth.below !== undefined && selfHealthPercent >= condition.selfHealth.below) {
+        if (condition.selfHealth.below !== undefined && selfHealthPercent >= Number(condition.selfHealth.below)) {
             return false
         }
-        if (condition.selfHealth.above !== undefined && selfHealthPercent <= condition.selfHealth.above) {
+        if (condition.selfHealth.above !== undefined && selfHealthPercent <= Number(condition.selfHealth.above)) {
             return false
         }
-        if (condition.selfHealth.equals !== undefined && Math.abs(selfHealthPercent - condition.selfHealth.equals) > 0.01) {
+        if (condition.selfHealth.equals !== undefined && Math.abs(selfHealthPercent - Number(condition.selfHealth.equals)) > 0.01) {
             return false
         }
     }

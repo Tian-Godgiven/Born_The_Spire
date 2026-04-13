@@ -61,11 +61,11 @@ export const getEnergy:EffectFunc = (event,effect)=>{
     const energy = effect.params.value as "max"|number
     //修改当前值为max属性
     if(energy == "max"){
-        value = getStatusValue(target,"max-energy",0)
+        value = Number(getStatusValue(target,"max-energy",0))
     }
     //获得指定的值+当前值
     else{
-        value = getCurrentValue(target,"energy") + energy
+        value = getCurrentValue(target,"energy") + Number(energy)
     }
     changeCurrentValue(target,"energy",value,event)
     return true

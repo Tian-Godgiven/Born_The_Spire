@@ -6,6 +6,7 @@ import type { TriggerMap, ReactionMap } from "@/core/types/object/trigger"
 import type { EventParticipant } from "@/core/types/event/EventParticipant"
 import { nanoid } from "nanoid"
 import { stateList } from "@/static/list/target/stateList"
+import { getStateModifier } from "./modifier/StateModifier"
 
 // ==================== 类型定义 ====================
 
@@ -61,6 +62,7 @@ export type StateData = {
     label: string
     key: string
     describe: Describe
+    category?: "buff" | "debuff" | "neutral"  // 状态分类（默认 "neutral"）
     showType?: "number" | "bool"      // 状态显示类型
     repeate?: "stack" | "refresh" | "none"  // 重复获得时的行为
     stacks?: Stack[] | number         // 层数对象（可简写为数字）
@@ -178,8 +180,6 @@ export async function createStateByKey(key: string, stacks: Stack[] | number): P
  * 获取目标指定状态的指定层数值
  */
 export function getStateStack(target: Target, stateKey: string, stackKey: string = "default"): number | false {
-    // 通过 StateModifier 获取状态
-    const { getStateModifier } = require("./modifier/StateModifier")
     const stateModifier = getStateModifier(target)
     const state = stateModifier.getState(stateKey)
 
@@ -201,8 +201,6 @@ export function changeStateStack(
     stateKey: string,
     stackKey: string = "default"
 ): boolean {
-    // 通过 StateModifier 获取状态
-    const { getStateModifier } = require("./modifier/StateModifier")
     const stateModifier = getStateModifier(target)
     const state = stateModifier.getState(stateKey)
 

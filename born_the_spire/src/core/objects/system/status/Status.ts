@@ -16,6 +16,13 @@ export class Status extends Modifier<StatusModifier>{
     public key:string//唯一键名
     public label:string//属性名称
     public options?:StatusOptions//备注：功能未完成
+    // 显示相关属性
+    public calc:boolean = true//是否参与自动计算
+    public hidden:boolean = false//是否隐藏
+    public display:boolean = true//是否显示为角标
+    public displayMap?:Record<string, string>//值到显示文本的映射
+    public max?:number//最大值/阈值（用于计数器显示）
+    public maxFrom?:string//从另一个 status key 读取 max 值
     private _originalBaseValue = ref<number | string>(0)//原始基础值（不受修饰器影响）
     private _value = ref<number | string>(0)//当前值
     private _baseValue = ref<number | string>(0)//基础值
@@ -57,7 +64,7 @@ export class Status extends Modifier<StatusModifier>{
             modifierValue,
             modifierFunc,
             clearable
-        },{value:this.value,baseValue:this.baseValue});
+        },{value:Number(this.value),baseValue:Number(this.baseValue)});
         return this.add(modifierObj)
     }
     //刷新，重新计算当前值和基础值
@@ -127,6 +134,13 @@ export function createStatusFromMap(owner:Entity,key:string,mapData:StatusMap):S
     else{
         value = mapData.value
         status = new Status(owner,key,mapData?.label)
+        // 保留显示相关属性
+        if(mapData.calc !== undefined) status.calc = mapData.calc
+        if(mapData.hidden !== undefined) status.hidden = mapData.hidden
+        if(mapData.display !== undefined) status.display = mapData.display
+        if(mapData.displayMap) status.displayMap = mapData.displayMap
+        if(mapData.max !== undefined) status.max = mapData.max
+        if(mapData.maxFrom) status.maxFrom = mapData.maxFrom
     }
     //设置原始基础值（而不是添加修饰器）
     // 支持数值和字符串类型

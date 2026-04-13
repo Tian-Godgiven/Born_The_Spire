@@ -5,6 +5,7 @@ export const stateList: StateData[] = [
     {
         label: "力量",
         key: "power",
+        category: "buff",
         describe: ["造成的伤害增加"],
         showType: "number",
         repeate: "stack",
@@ -23,7 +24,7 @@ export const stateList: StateData[] = [
                         targetType: "triggerEffect",
                         effect: [{
                             key: "modifyDamageValue",
-                            params: { delta: "$source.stack.default" }
+                            params: { delta: "$source.stateStack()" }
                         }]
                     }]
                 }
@@ -34,6 +35,7 @@ export const stateList: StateData[] = [
     {
         label: "中毒",
         key: "poison",
+        category: "debuff",
         describe: ["回合结束时受到伤害"],
         showType: "number",
         repeate: "stack",
@@ -55,7 +57,7 @@ export const stateList: StateData[] = [
                         targetType: "triggerOwner",
                         effect: [{
                             key: "damage",
-                            params: { value: "$source.stack.default" }
+                            params: { value: "$source.stateStack()" }
                         }]
                     }]
                 }
@@ -66,6 +68,7 @@ export const stateList: StateData[] = [
     {
         label: "虚弱",
         key: "weak",
+        category: "debuff",
         describe: ["造成的伤害减少25%"],
         showType: "number",
         repeate: "stack",
@@ -98,6 +101,7 @@ export const stateList: StateData[] = [
     {
         label: "易伤",
         key: "vulnerable",
+        category: "debuff",
         describe: ["承受的伤害增加50%"],
         showType: "number",
         repeate: "stack",
@@ -150,12 +154,71 @@ export const stateList: StateData[] = [
                             key: "changeStateStack",
                             params: {
                                 stateKey: "power",
-                                delta: "$source.stack.default",
+                                delta: "$source.stateStack()",
                                 negate: true
                             }
                         }, {
                             key: "removeState",
                             params: { stateKey: "tempPower" }
+                        }]
+                    }]
+                }
+            }
+        }
+    },
+    // 人工制品：抵消下一个负面效果
+    {
+        label: "人工制品",
+        key: "artifact",
+        category: "buff",
+        describe: ["抵消下一个负面效果"],
+        showType: "number",
+        repeate: "stack",
+        interaction: {
+            possess: {
+                triggers: [{
+                    when: "before",
+                    how: "take",
+                    key: "applyState",
+                    action: "artifactBlock"
+                }],
+                reaction: {
+                    artifactBlock: [{
+                        key: "artifactBlock",
+                        label: "人工制品抵消",
+                        targetType: "triggerEffect",
+                        effect: [{
+                            key: "artifactBlockDebuff"
+                        }]
+                    }]
+                }
+            }
+        }
+    },
+    // 凌迟：每打出一张牌，对所有敌人造成伤害
+    {
+        label: "凌迟",
+        key: "thousandCuts",
+        category: "buff",
+        describe: ["每打出一张牌，对所有敌人造成伤害"],
+        showType: "number",
+        repeate: "stack",
+        interaction: {
+            possess: {
+                triggers: [{
+                    when: "after",
+                    how: "make",
+                    key: "useCard",
+                    action: "thousandCutsDamage"
+                }],
+                reaction: {
+                    thousandCutsDamage: [{
+                        key: "thousandCutsDamage",
+                        label: "凌迟伤害",
+                        targetType: "allEnemies",
+                        effect: [{
+                            key: "damage",
+                            params: { value: "$source.stateStack()" }
                         }]
                     }]
                 }

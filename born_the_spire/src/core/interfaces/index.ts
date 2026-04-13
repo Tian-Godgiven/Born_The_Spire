@@ -44,7 +44,7 @@ export interface ITrigger {
     readonly owner: IEntity
 
     appendTrigger(triggerObj: ITriggerObj): { remove: () => void }
-    onTrigger(when: TriggerWhen, how: TriggerHow, key: string, context: ITriggerContext, triggerLevel: number): void
+    onTrigger(when: TriggerWhen, how: TriggerHow, key: string, context: ITriggerContext, triggerLevel: number): Promise<void>
 }
 
 /**
@@ -57,9 +57,9 @@ export interface IEntity extends EntityBase {
     describe: any[]
 
     appendTrigger(triggerObj: ITriggerObj): { remove: () => void }
-    makeEvent(when: TriggerWhen, triggerKey: string, event: IActionEvent, effect: IEffect | null, triggerLevel: number): void
-    viaEvent(when: TriggerWhen, triggerKey: string, event: IActionEvent, effect: IEffect | null, triggerLevel: number): void
-    takeEvent(when: TriggerWhen, triggerKey: string, event: IActionEvent, effect: IEffect | null, triggerLevel: number): void
+    makeEvent(when: TriggerWhen, triggerKey: string, event: IActionEvent, effect: IEffect | null, triggerLevel: number): Promise<void>
+    viaEvent(when: TriggerWhen, triggerKey: string, event: IActionEvent, effect: IEffect | null, triggerLevel: number): Promise<void>
+    takeEvent(when: TriggerWhen, triggerKey: string, event: IActionEvent, effect: IEffect | null, triggerLevel: number): Promise<void>
 }
 
 /**
@@ -99,8 +99,7 @@ export interface IActionEvent<
     effects: IEffect[]
     simulate: boolean
 
-    trigger(when: TriggerWhen, triggerLevel: number): void
-    announce(): void
+    trigger(when: TriggerWhen, triggerLevel: number): Promise<void>
     execute(): Promise<void>
     spawnEvent(event: IActionEvent, triggerLevel?: number): void
 }
@@ -115,6 +114,7 @@ export interface IEffect {
     participantType: 'effect'
 
     execute(): Promise<void>
+    trigger(when: TriggerWhen, triggerLevel: number): Promise<void>
 }
 
 /**

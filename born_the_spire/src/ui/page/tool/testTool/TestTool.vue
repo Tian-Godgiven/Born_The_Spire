@@ -53,8 +53,8 @@
     },{
         text:"开始/重启战斗",
         click: async () => {
-            const enemy = await getEnemyByKey("original_enemy_00001")
-            // const enemy2 = await getEnemyByKey("original_enemy_00001")
+            const enemy = await getEnemyByKey("test_enemy_mouse")
+            // const enemy2 = await getEnemyByKey("test_enemy_mouse")
             startNewBattle([nowPlayer], [enemy]
             // enemy2
             )

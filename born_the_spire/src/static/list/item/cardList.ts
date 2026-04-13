@@ -137,7 +137,7 @@ export const cardList:CardMap[] = [{
             target:{faction:"enemy"},
             effects:[{
                 key:"damage",
-                params:{value:"$random[5,10]"},
+                params:{value:"random(5,10)"},
             }]
         }
     }

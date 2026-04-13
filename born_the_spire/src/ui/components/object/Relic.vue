@@ -23,11 +23,18 @@
     </div>
 
     <!-- 其他状态角标（如命运之轮的模式） -->
-    <div class="status-badge" v-for="(status, key) in relic.status" :key="key"
-        v-if="shouldShowStatusBadge(key, status)"
-    >
-        {{ getStatusBadgeText(key, status) }}
-    </div>
+    <template v-for="(status, key) in relic.status" :key="key">
+        <div class="status-badge" v-if="shouldShowStatusBadge(key, status)">
+            {{ getStatusBadgeText(key, status) }}
+        </div>
+    </template>
+
+    <!-- 计数角标（如命运之轮的抽牌计数 2/5） -->
+    <template v-for="(status, key) in relic.status" :key="'counter-' + key">
+        <div class="counter-badge" v-if="shouldShowCounterBadge(key, status)">
+            {{ status.value }}/{{ getCounterMax(status) }}
+        </div>
+    </template>
 
     <div>{{ relic.label }}</div>
 
@@ -81,14 +88,14 @@
 
     const cooldownValue = computed(() => {
         if (!relic.status || !relic.status["cooldown"]) return null
-        return relic.status["cooldown"].value
+        return Number(relic.status["cooldown"].value)
     })
 
     const isUsedUp = computed(() => {
         if (!relic.status || !relic.status["used"]) return false
         const used = relic.status["used"].value
         const maxUse = relic.status["maxUse"]?.value
-        if (maxUse !== undefined && used >= maxUse) {
+        if (maxUse !== undefined && Number(used) >= Number(maxUse)) {
             return true
         }
         return false
@@ -113,17 +120,33 @@
             return false
         }
         if (!status) return false
+        // 明确标记不显示的状态
+        if (status.display === false || status.hidden === true) return false
+        // 有 max 的状态作为计数器显示，不走 status-badge
+        if (status.max !== undefined) return false
+        // 有 displayMap 的状态显示（如模式切换）
+        if (status.displayMap) return true
         // 非 calc 的状态显示（calc=false 表示不计算，直接显示）
-        // 如果 calc 不存在或不是 true，都显示
-        if (status.calc === false) {
-            return true
-        }
+        if (status.calc === false) return true
         // 如果不是数字类型（如字符串 "even"/"odd"），也显示
-        if (typeof status.value === 'string') {
-            return true
+        if (typeof status.value === 'string') return true
+        return false
+    }
+
+    // 判断是否应该显示计数角标
+    const shouldShowCounterBadge = (key: string, status: any) => {
+        if (!status) return false
+        if (status.hidden === true) return false
+        return status.max !== undefined || status.maxFrom !== undefined
+    }
+
+    // 获取计数器的最大值（支持静态 max 和动态 maxFrom）
+    const getCounterMax = (status: any) => {
+        if (status.max !== undefined) return status.max
+        if (status.maxFrom && relic.status[status.maxFrom]) {
+            return relic.status[status.maxFrom].value
         }
-        // 显示有自定义 label 的状态
-        return !!(status.label && status.label.value !== undefined)
+        return '?'
     }
 
     // 获取状态角标的显示文本
@@ -330,6 +353,21 @@
         padding: 1px 3px;
         font-weight: bold;
         border-radius: 0 0 0 4px;
+        z-index: 1;
+        min-width: 12px;
+        text-align: center;
+    }
+
+    .counter-badge {
+        position: absolute;
+        bottom: -2px;
+        left: -2px;
+        background-color: #2ecc71;
+        color: white;
+        font-size: 10px;
+        padding: 1px 3px;
+        font-weight: bold;
+        border-radius: 0 4px 0 0;
         z-index: 1;
         min-width: 12px;
         text-align: center;

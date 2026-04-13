@@ -23,7 +23,7 @@ export const voidExhaust: EffectFunc = (event, _effect) => {
     if (!inHand) return  // 不在手牌中，不执行
 
     // 移动到消耗堆
-    cardMove(player.cardPiles.handPile, card, player.cardPiles.exhaustPile)
+    cardMove(player.cardPiles.handPile, card, player.cardPiles.exhaustPile, {handPile:player.cardPiles.handPile, owner:player})
 }
 
 /**
@@ -48,7 +48,7 @@ export const moveInherentToHand: EffectFunc = (event, _effect) => {
 
         if (entryModifier.hasEntry("inherent")) {
             // 将固有卡牌移到手牌
-            cardMove(drawPile, card, player.cardPiles.handPile)
+            cardMove(drawPile, card, player.cardPiles.handPile, {handPile:player.cardPiles.handPile, owner:player})
         }
     }
 }

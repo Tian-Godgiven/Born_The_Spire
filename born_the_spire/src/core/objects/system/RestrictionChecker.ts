@@ -8,6 +8,8 @@ import type {
 } from "@/core/types/ActiveAbility"
 import { getStatusValue } from "@/core/objects/system/status/Status"
 import { nowGameRun } from "@/core/objects/game/run"
+import { doEvent } from "@/core/objects/system/ActionEvent"
+import type { EffectUnit } from "@/core/objects/system/effect/EffectUnit"
 
 /**
  * 限制检查器
@@ -82,15 +84,15 @@ export class RestrictionChecker {
 
         // 生命值条件
         if (conditions.healthBelow !== undefined || conditions.healthAbove !== undefined) {
-            const currentHealth = owner.current?.health?.value || 0
-            const maxHealth = getStatusValue(owner, "maxHealth")
+            const currentHealth = Number(owner.current?.health?.value || 0)
+            const maxHealth = Number(getStatusValue(owner, "maxHealth"))
             const healthPercent = maxHealth > 0 ? (currentHealth / maxHealth) * 100 : 0
 
-            if (conditions.healthBelow !== undefined && healthPercent >= conditions.healthBelow) {
+            if (conditions.healthBelow !== undefined && healthPercent >= Number(conditions.healthBelow)) {
                 return { canUse: false, reason: `需要生命值低于${conditions.healthBelow}%` }
             }
 
-            if (conditions.healthAbove !== undefined && healthPercent <= conditions.healthAbove) {
+            if (conditions.healthAbove !== undefined && healthPercent <= Number(conditions.healthAbove)) {
                 return { canUse: false, reason: `需要生命值高于${conditions.healthAbove}%` }
             }
         }
@@ -256,9 +258,10 @@ export class RestrictionChecker {
 
         // 检查材料消耗
         if (costs.material !== undefined) {
-            const currentMaterial = getStatusValue(owner, "material")
-            if (currentMaterial < costs.material) {
-                missingResources.material = costs.material - currentMaterial
+            const currentMaterial = Number(getStatusValue(owner, "material"))
+            const materialCost = Number(costs.material)
+            if (currentMaterial < materialCost) {
+                missingResources.material = materialCost - currentMaterial
                 hasMissing = true
             }
         }
@@ -305,26 +308,46 @@ export class RestrictionChecker {
     /**
      * 应用消耗
      */
-    applyCosts(restrictions: ActiveAbilityRestrictions, owner: Entity): boolean {
+    applyCosts(restrictions: ActiveAbilityRestrictions, owner: Entity, item: Entity): boolean {
         const costs = restrictions.costs
         if (!costs) return true
 
         try {
+            const effectUnits: EffectUnit[] = []
+
             // 扣除能量
-            if (costs.energy !== undefined && owner.current?.energy) {
-                owner.current.energy.value -= costs.energy
+            if (costs.energy !== undefined) {
+                effectUnits.push({
+                    key: "addCurrent",
+                    params: { currentKey: "energy", value: -costs.energy }
+                })
             }
 
-            // 扣除生命
-            if (costs.health !== undefined && owner.current?.health) {
-                owner.current.health.value -= costs.health
+            // 扣除生命（不触发 damage 触发器）
+            if (costs.health !== undefined) {
+                effectUnits.push({
+                    key: "addCurrent",
+                    params: { currentKey: "health", value: -costs.health }
+                })
             }
 
             // 扣除材料
             if (costs.material !== undefined) {
-                const currentMaterial = getStatusValue(owner, "material")
-                // 这里需要实际的材料扣除逻辑
-                // 暂时跳过，因为需要具体的材料系统实现
+                effectUnits.push({
+                    key: "addStatusBase",
+                    params: { key: "material", value: -costs.material }
+                })
+            }
+
+            // 执行消耗效果
+            if (effectUnits.length > 0) {
+                doEvent({
+                    key: "abilityCost",
+                    source: owner,
+                    medium: item,
+                    target: owner,
+                    effectUnits
+                })
             }
 
             return true

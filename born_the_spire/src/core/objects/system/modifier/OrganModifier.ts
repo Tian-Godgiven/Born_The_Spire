@@ -345,6 +345,13 @@ export class OrganModifier extends ItemModifier {
         // 设置损坏状态
         organ.isDisabled = true
 
+        // 禁用该器官提供的所有卡牌
+        const cardModifier = getCardModifier(this.owner as Chara)
+        const organCards = cardModifier.getCardsFromSource(organ)
+        for (const card of organCards) {
+            card.isDisabled = true
+        }
+
         // 移除 work 触发器
         organ.removeWorkTriggers()
 
@@ -402,13 +409,21 @@ export class OrganModifier extends ItemModifier {
 
         // 恢复质量到最大值（如果有质量系统）
         if (organ.status["max-mass"]) {
-            const maxMass = organ.status["max-mass"].value
+            const maxMassValue = organ.status["max-mass"].value
+            const maxMass = typeof maxMassValue === 'string' ? Number(maxMassValue) : maxMassValue
             setCurrentValue(organ, "mass", maxMass)
             newLog([organ, `质量完全恢复到 ${maxMass}`])
         }
 
         // 设置修复状态
         organ.isDisabled = false
+
+        // 重新启用该器官提供的所有卡牌
+        const cardModifier = getCardModifier(this.owner as Chara)
+        const organCards = cardModifier.getCardsFromSource(organ)
+        for (const card of organCards) {
+            card.isDisabled = false
+        }
 
         // 移除 broken 触发器
         organ.removeBrokenTriggers()

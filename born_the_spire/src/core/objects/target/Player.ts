@@ -95,7 +95,7 @@ export class Player extends Chara{
     }
     //获取药水,一次一瓶
     async getPotion(potionKey:string){
-        const maxNum = getStatusValue(this, "max-potion")
+        const maxNum = Number(getStatusValue(this, "max-potion"))
         const potionModifier = getPotionModifier(this)
         const nowNum = potionModifier.getPotions().length
         if(nowNum >= maxNum){
@@ -179,7 +179,7 @@ export class Player extends Chara{
     getPotionList(){
         const potionModifier = getPotionModifier(this)
         const currentPotions = potionModifier.getPotions()
-        const maxPotions = getStatusValue(this, "max-potion")
+        const maxPotions = Number(getStatusValue(this, "max-potion"))
 
         const list:(Potion|null)[] = [...currentPotions]
         while (list.length < maxPotions) {

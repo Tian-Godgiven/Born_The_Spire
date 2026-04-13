@@ -521,7 +521,7 @@ export class BattleRoom extends Room {
         // 尝试从玩家的 status 中读取药水掉落概率
         const potionChanceStatus = nowPlayer.status["potion-drop-chance"]
         if (potionChanceStatus) {
-            return potionChanceStatus.value
+            return Number(potionChanceStatus.value)
         }
 
         // 默认掉落概率：40%

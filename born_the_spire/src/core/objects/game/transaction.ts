@@ -38,13 +38,13 @@ export class Transaction{
 
     //添加事件到队列
     add(event: ActionEvent) {
-        event.transaction = this
+        event._transaction = this
         this.queue.push(event)
     }
 
     //插入事件到指定位置
     insertAt(event: ActionEvent, position: number | "top" | "bottom") {
-        event.transaction = this
+        event._transaction = this
 
         if (position === "top") {
             this.queue.unshift(event)
@@ -69,14 +69,11 @@ export class Transaction{
 
     //执行单个事件
     async executeEvent(event: ActionEvent) {
+        // 确保事件知道自己所属的事务（通过收集器执行的事件可能没有设置）
+        event._transaction = this
+
         // 1. Event before 触发器
-        const eventBeforeEvents: ActionEvent[] = []
-        setEventCollector(eventBeforeEvents)
-        event.trigger("before", 0)
-        clearEventCollector()  // 立即清除，避免影响子事件
-        for (const e of eventBeforeEvents) {
-            await this.executeEvent(e)
-        }
+        await event.trigger("before", 0)
 
         // 1.5. 执行 onExecute 回调（如果有）
         if (event.onExecute) {
@@ -86,35 +83,17 @@ export class Transaction{
         // 2. 执行每个效果
         for (let effect of event.effects) {
             // Effect before 触发器
-            const effectBeforeEvents: ActionEvent[] = []
-            setEventCollector(effectBeforeEvents)
-            effect.trigger("before", 0)
-            clearEventCollector()  // 立即清除
-            for (const e of effectBeforeEvents) {
-                await this.executeEvent(e)
-            }
+            await effect.trigger("before", 0)
 
             // 执行效果
             await effect.apply()
 
             // Effect after 触发器
-            const effectAfterEvents: ActionEvent[] = []
-            setEventCollector(effectAfterEvents)
-            effect.trigger("after", 0)
-            clearEventCollector()  // 立即清除
-            for (const e of effectAfterEvents) {
-                await this.executeEvent(e)
-            }
+            await effect.trigger("after", 0)
         }
 
         // 3. Event after 触发器
-        const eventAfterEvents: ActionEvent[] = []
-        setEventCollector(eventAfterEvents)
-        event.trigger("after", 0)
-        clearEventCollector()  // 立即清除
-        for (const e of eventAfterEvents) {
-            await this.executeEvent(e)
-        }
+        await event.trigger("after", 0)
 
         // 5. 调用 onComplete 回调（如果有）
         if (event.onComplete) {

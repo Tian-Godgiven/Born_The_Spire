@@ -7,7 +7,8 @@ import { isEntity } from "@/core/utils/typeGuards";
 import { nanoid } from "nanoid";
 import { validateEffectParams } from "@/core/effects/validateEffectParams";
 import { newError } from "@/ui/hooks/global/alert";
-import { getCurrentExecutingEvent, setCurrentExecutingEvent, handleEventEntity } from "../ActionEvent";
+import { getCurrentExecutingEvent, setCurrentExecutingEvent } from "../ActionEvent";
+import { isArray } from "lodash";
 
 // 重新导出 EffectFunc 供外部使用
 export type { EffectFunc, EffectParams }
@@ -32,6 +33,7 @@ export class Effect implements EventParticipant{
     public describe?:string[] = [];
     public actionEvent:ActionEvent;//引发这个效果的事件
     public resultStoreAs?:string
+    private _cancelled:boolean = false
     constructor({label="",key,effectFunc,params,describe=[],resultStoreAs,triggerEvent}:EffectConstructor){
         this.label = label;
         this.key = key;
@@ -76,8 +78,19 @@ export class Effect implements EventParticipant{
         }
     }
 
+    //取消效果（在 before 触发器中调用，阻止效果执行）
+    cancel(){
+        this._cancelled = true
+    }
+    //检查效果是否已取消
+    isCancelled(){
+        return this._cancelled
+    }
     //启用这个效果,效果的事件对象的部分属性允许被覆盖（常见的是target等）
     async apply(override_event?:Partial<ActionEvent>){
+        // 被取消的效果不执行
+        if(this._cancelled) return false
+
         //记录原本的事件对象
         let event = this.actionEvent
         //将 override_event 传递给 doEffectFunc，而不是修改 actionEvent
@@ -87,13 +100,6 @@ export class Effect implements EventParticipant{
             event.setEventResult(this.resultStoreAs,result)
         }
         return result
-    }
-    //宣布这个效果，触发参与事件的对象的触发器
-    announce(triggerLevel:number){
-        //触发事件before，触发级+=1
-        this.trigger("before",triggerLevel+=1)
-        //触发事件的after，触发级-=1
-        this.trigger("after",triggerLevel-=1)
     }
     //触发效果对象所在的事件的参与者的触发器
     async trigger(when:"before"|"after",triggerLevel:number){
@@ -106,7 +112,7 @@ export class Effect implements EventParticipant{
         try {
             // 只有 Entity 类型才有触发器
             if (isEntity(event.source)) {
-                event.source.makeEvent(when,this.key,event,this,triggerLevel);
+                await event.source.makeEvent(when,this.key,event,this,triggerLevel);
             }
             if (isEntity(event.medium)) {
                 // 添加调试检查
@@ -118,15 +124,15 @@ export class Effect implements EventParticipant{
                         eventKey: event.key
                     })
                 } else {
-                    event.medium.viaEvent(when,this.key,event,this,triggerLevel)
+                    await event.medium.viaEvent(when,this.key,event,this,triggerLevel)
                 }
             }
-            handleEventEntity(event.target,(e)=>{
-                // 只对 Entity 类型调用触发器
+            const targets = isArray(event.target) ? event.target : [event.target]
+            for (const e of targets) {
                 if (isEntity(e)) {
-                    e.takeEvent(when,this.key,event,this,triggerLevel)
+                    await e.takeEvent(when,this.key,event,this,triggerLevel)
                 }
-            })
+            }
         } finally {
             // 恢复之前的事件
             setCurrentExecutingEvent(previousEvent)

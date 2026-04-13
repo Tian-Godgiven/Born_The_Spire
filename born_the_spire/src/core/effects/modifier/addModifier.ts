@@ -1,5 +1,6 @@
 import { handleEventEntity, doEvent, ActionEvent } from "@/core/objects/system/ActionEvent";
 import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc";
+import type { EventParticipant } from "@/core/types/event/EventParticipant";
 import { newError } from "@/ui/hooks/global/alert";
 import { isEntity } from "@/core/utils/typeGuards";
 import { Effect } from "@/core/objects/system/effect/Effect";
@@ -188,13 +189,13 @@ export const addTriggerToTarget: EffectFunc = (event, effect) => {
                 let eventTarget: Entity | Entity[] = entity;
                 const triggerEventConfig = effect.params.triggerEvent as Record<string, any>;
 
-                // 使用 resolveTriggerEventTarget 解析目标
-                if (triggerEventConfig.targetType) {
+                // 使用 resolveTriggerEventTarget 解析目标（source 必须是 Item）
+                if (triggerEventConfig.targetType && isEntity(source) && (source as any).itemType) {
                     const resolved = resolveTriggerEventTarget(
                         triggerEventConfig.targetType,
                         triggerEvent,
                         _triggerEffect,
-                        source as Entity,
+                        source as any,
                         entity
                     );
                     // 确保 resolved 是 Entity 或 Entity[]
@@ -208,8 +209,8 @@ export const addTriggerToTarget: EffectFunc = (event, effect) => {
                 // 触发事件
                 doEvent({
                     key: triggerEventConfig.key,
-                    source,
-                    medium: source,
+                    source: source as EventParticipant,
+                    medium: source as EventParticipant,
                     target: eventTarget,
                     info: triggerEventConfig.info || {},
                     effectUnits: triggerEventConfig.effect || []

@@ -110,11 +110,11 @@ export function getIntentTypeInfo(type: IntentType): IntentTypeInfo | undefined 
  * @param visibility 可见性等级（默认为 exact）
  * @returns 意图对象
  */
-export function cardsToIntent(
+export async function cardsToIntent(
     cards: Card[],
     owner: Entity,  // 改为 Entity 类型
     visibility: IntentVisibility = "card"
-): Intent {
+): Promise<Intent> {
     if (cards.length === 0) {
         return {
             type: "unknown",
@@ -155,7 +155,7 @@ export function cardsToIntent(
                     : 0
 
                 // 临时计算：应用力量 Buff
-                const finalDamage = calculateDamageWithBuffs(baseDamage, owner)
+                const finalDamage = await calculateDamageWithBuffs(Number(baseDamage), owner)
 
                 totalDamage += finalDamage
                 attackCount++
@@ -172,9 +172,9 @@ export function cardsToIntent(
 
         for (const card of cards) {
             if (ifHaveStatus(card, "block")) {
-                const baseBlock = getStatusValue(card, "block")
+                const baseBlock = Number(getStatusValue(card, "block"))
                 // 临时计算：应用敏捷 Buff（如果有的话）
-                const finalBlock = calculateBlockWithBuffs(baseBlock, owner)
+                const finalBlock = await calculateBlockWithBuffs(baseBlock, owner)
                 totalBlock += finalBlock
             }
         }
@@ -201,13 +201,13 @@ export function cardsToIntent(
  * @param owner 卡牌持有者
  * @returns 最终伤害
  */
-function calculateDamageWithBuffs(baseDamage: number, owner: Entity): number {
+async function calculateDamageWithBuffs(baseDamage: number, owner: Entity): Promise<number> {
     // 使用事件模拟系统计算受 Buff 影响后的伤害
     // 这会触发所有相关触发器（如力量、虚弱），但不实际执行效果
 
     // 假设目标是玩家（敌人攻击玩家的场景）
     // 这里需要传入实际的目标，可能需要调整 cardsToIntent 的参数
-    const finalDamage = simulateDamage(baseDamage, owner, owner)
+    const finalDamage = await simulateDamage(baseDamage, owner, owner)
 
     return finalDamage
 }
@@ -221,9 +221,9 @@ function calculateDamageWithBuffs(baseDamage: number, owner: Entity): number {
  * @param owner 卡牌持有者
  * @returns 最终格挡
  */
-function calculateBlockWithBuffs(baseBlock: number, owner: Entity): number {
+async function calculateBlockWithBuffs(baseBlock: number, owner: Entity): Promise<number> {
     // 使用事件模拟系统计算受 Buff 影响后的格挡
-    const finalBlock = simulateBlock(baseBlock, owner, owner)
+    const finalBlock = await simulateBlock(baseBlock, owner, owner)
 
     return finalBlock
 }

@@ -69,7 +69,8 @@ export const decrementStatus: EffectFunc = (event, effect) => {
             return
         }
         // 直接设置为当前值减去 amount
-        const newValue = status.baseValue - Number(amount)
+        const baseValueNum = typeof status.baseValue === 'string' ? Number(status.baseValue) : status.baseValue
+        const newValue = baseValueNum - Number(amount)
         status.setOriginalBaseValue(newValue)
     })
 }
@@ -100,7 +101,7 @@ export const multiplyStatusBase: EffectFunc = (event, effect) => {
             return
         }
 
-        const currentBase = status.baseValue
+        const currentBase = typeof status.baseValue === 'string' ? Number(status.baseValue) : status.baseValue
         const newBase = Math.floor(currentBase * Number(multiplier))
         status.setOriginalBaseValue(newBase)
     })
@@ -148,7 +149,7 @@ export const setCurrentToMax: EffectFunc = (event, effect) => {
 
         const maxValue = e.status[String(statusKey)]?.value
         if (maxValue !== undefined && e.current[String(currentKey)]) {
-            e.current[String(currentKey)].value = maxValue
+            e.current[String(currentKey)].value = Number(maxValue)
         }
     })
 }

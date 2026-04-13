@@ -266,27 +266,14 @@ export class StateModifier {
                                 state as any, this.owner
                             )
 
-                            // 解析 effect params 中的 $triggerValue
-                            const triggerValue = (effect as any)?.params?.value
-                            const resolvedEffects = (triggerValue !== undefined && effectUnit)
-                                ? effectUnit.map((eu: any) => ({
-                                    ...eu,
-                                    params: Object.fromEntries(
-                                        Object.entries(eu.params || {}).map(([k, v]) =>
-                                            [k, v === "$triggerValue" ? triggerValue : v]
-                                        )
-                                    )
-                                }))
-                                : effectUnit
-
                             // 使用 doEvent 创建事件，source 设置为状态本身！
                             const newEvent = doEvent({
                                 key: eventKey,
-                                source: state as any,  // 关键：source 是状态，这样 $source.stack 才能工作
+                                source: state as any,  // 关键：source 是状态，这样 $source.stateStack() 才能工作
                                 medium: isEntity(eventMedium) ? eventMedium : (state as any),
                                 target: eventTarget as any,
                                 info: info,
-                                effectUnits: resolvedEffects ?? []
+                                effectUnits: effectUnit ?? []
                             })
 
                             // 保存触发器上下文
@@ -319,10 +306,10 @@ export class StateModifier {
 
             // 创建触发器
             const triggerRemover = this.owner.appendTrigger({
-                when: "after",  // 在时间事件之后执行
+                when: "before", // 在 before 阶段执行，确保业务触发器（after）看到衰减后的状态
                 how: "take",    // 承受时间事件（监听 turnStart, turnEnd 等）
                 key: timing,    // 监听的事件 key
-                level: 0,
+                level: -1,      // 低于默认优先级，允许其他 before 触发器在衰减前读取状态值
                 callback: (_event, _effect, _triggerLevel) => {
                     // 构建 effect
                     const effectUnits = []

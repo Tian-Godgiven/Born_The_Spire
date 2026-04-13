@@ -1,74 +1,152 @@
 import { nanoid } from "nanoid"
 import { Entity } from "../Entity"
 import type { Item } from "../../item/Item"
+import type { Interaction } from "../../item/Item"
 import type { Organ } from "../../target/Organ"
 import { reactive, toRaw } from "vue"
 import { newLog } from "@/ui/hooks/global/log"
 import type { LogUnit } from "@/ui/hooks/global/log"
 import { doEvent } from "../ActionEvent"
 import type { EffectUnit } from "../effect/EffectUnit"
-import { resolveTriggerEventTarget } from "../trigger/Trigger"
+import { resolveTriggerEventTarget } from "../trigger/resolveTriggerEventTarget"
 import { nowBattle } from "@/core/objects/game/battle"
 import { isEntity } from "@/core/utils/typeGuards"
+import { checkCondition as checkConditionExpr } from "@/core/types/ConditionSystem"
+import type { ConditionContext, Condition } from "@/core/types/ConditionSystem"
+import type { ActionEvent } from "../ActionEvent"
+import type { Effect } from "../effect/Effect"
+
+import type { TriggerEventConfig, TriggerMapItemWithAction, ImportantTriggerMapItem, TriggerCondition, TriggerMapItem } from "@/core/types/object/trigger"
 
 /**
- * 通用条件检查函数
- * @param entity - 要检查的实体
- * @param condition - 条件配置 { status, op, value }
- * @returns 条件是否满足
+ * 构建条件检查上下文
  */
-function checkCondition(entity: Entity, condition: any): boolean {
-  const { status, op, value } = condition
-
-  if (!status || !op || value === undefined) {
-    console.warn("[checkCondition] 条件配置不完整:", condition)
-    return false
-  }
-
-  // 获取属性值
-  let actualValue: number | undefined
-
-  // health 和 energy 特殊处理（从 current 中读取）
-  if (status === "health") {
-    actualValue = entity.current?.health?.value
-  } else if (status === "energy") {
-    actualValue = entity.current?.energy?.value
-  } else {
-    // 其他属性从 status 中读取
-    actualValue = entity.status?.[status]?.value
-  }
-
-  if (actualValue === undefined) {
-    console.warn(`[checkCondition] 实体 ${entity.label} 没有属性 ${status}`)
-    return false
-  }
-
-  // 处理百分比值（如 "50%"）
-  let compareValue: number
-  if (typeof value === "string" && value.includes("%")) {
-    // 百分比是相对于 maxHealth 的
-    const maxHealth = entity.status?.maxHealth?.value
-    if (!maxHealth || maxHealth === 0) {
-      console.warn("[checkCondition] maxHealth 为 0，无法计算百分比")
-      return false
+function buildConditionContext(
+    item: Item,
+    owner: Entity,
+    triggerEvent: ActionEvent,
+    triggerEffect: Effect | null
+): ConditionContext {
+    return {
+        item: item as any,
+        owner,
+        source: item as any,  // trigger source = 触发器所在的物品
+        target: triggerEvent?.target as any,
+        event: triggerEvent,
+        triggerSource: item as any,
+        triggerOwner: owner,
+        triggerEffect: triggerEffect ?? undefined,
+        battle: nowBattle.value
     }
-    compareValue = parseFloat(value) / 100
-    actualValue = actualValue / maxHealth
-  } else {
-    compareValue = Number(value)
-  }
+}
 
-  // 执行比较
-  switch (op) {
-    case "<": return actualValue < compareValue
-    case "<=": return actualValue <= compareValue
-    case ">": return actualValue > compareValue
-    case ">=": return actualValue >= compareValue
-    case "=": return actualValue === compareValue
-    default:
-      console.warn(`[checkCondition] 未知的操作符: ${op}`)
-      return false
-  }
+/**
+ * 检查条件是否满足（支持新字符串格式和旧对象格式）
+ */
+function evaluateCondition(
+    condition: Condition | TriggerCondition,
+    item: Item,
+    owner: Entity,
+    triggerEvent: ActionEvent,
+    triggerEffect: Effect | null
+): boolean {
+    if (!condition) return true
+
+    // 新格式：字符串/数组/ConditionGroup
+    if (typeof condition === "string" || Array.isArray(condition) ||
+        (typeof condition === "object" && ('and' in condition || 'or' in condition || 'not' in condition))) {
+        const ctx = buildConditionContext(item, owner, triggerEvent, triggerEffect)
+        return checkConditionExpr(condition as Condition, ctx)
+    }
+
+    // 旧格式兼容（deprecated）
+    return true
+}
+
+/**
+ * 执行物品的 reaction 事件（统一入口）
+ *
+ * 所有 item（器官/遗物）的 reaction 都通过这里执行，包括 possess 和 work 触发器。
+ * 在这里统一检查 item.isDisabled，以及条件检查、$triggerValue 解析等。
+ *
+ * @param item - 触发 reaction 的物品（器官/遗物）
+ * @param reactionEvents - 要执行的 reaction 事件配置
+ * @param triggerEvent - 触发该 reaction 的原始事件
+ * @param owner - 物品持有者（玩家/敌人）
+ * @param triggerEffect - 触发该 reaction 的效果对象（可能为 null）
+ * @param options - 额外选项（条件检查、disableUntil 等）
+ */
+export function executeItemReaction(params: {
+    item: Item,
+    reactionEvents: TriggerEventConfig[],
+    triggerEvent: ActionEvent,
+    owner: Entity,
+    triggerEffect: Effect | null,
+    condition?: Condition | TriggerCondition,
+    disableUntil?: string,
+    unit?: ItemModifierUnit,
+    triggerMountTarget?: Entity,
+    triggerDefKey?: string,
+}): void {
+    const { item, reactionEvents, triggerEvent, owner, triggerEffect, condition, disableUntil, unit, triggerMountTarget, triggerDefKey } = params
+
+    // 检查物品是否被禁用
+    if (item.isDisabled) return
+
+    // 条件检查（新格式字符串/数组/ConditionGroup）
+    if (condition && !evaluateCondition(condition, item, owner, triggerEvent, triggerEffect)) return
+
+    for (const eventConfig of reactionEvents) {
+        if (eventConfig.targetType === "triggerEffect" && !triggerEffect) continue
+
+        // 通用条件检查（新格式）
+        if (eventConfig.condition && !evaluateCondition(eventConfig.condition, item, owner, triggerEvent, triggerEffect)) continue
+
+        // 解析 source
+        const source = eventConfig.sourceTargetType
+            ? resolveTriggerEventTarget(eventConfig.sourceTargetType, triggerEvent, triggerEffect, item, owner, { allowNull: true })
+            : item
+
+        // 解析 medium
+        const medium = eventConfig.mediumTargetType
+            ? resolveTriggerEventTarget(eventConfig.mediumTargetType, triggerEvent, triggerEffect, item, owner, { allowNull: true })
+            : item
+
+        // 解析 target
+        const target = resolveTriggerEventTarget(eventConfig.targetType, triggerEvent, triggerEffect, item, owner, { allowNull: true })
+
+        const newEvent = doEvent({
+            key: eventConfig.key,
+            source: (source ?? item) as any,
+            medium: (medium ?? item) as any,
+            target: (target ?? item) as any,
+            info: eventConfig.info || {},
+            effectUnits: eventConfig.effect ?? []
+        })
+
+        // 设置触发器上下文
+        newEvent.triggerContext = triggerEvent.triggerContext || {
+            source: item,
+            owner: triggerMountTarget ?? owner,
+        }
+
+        // disableUntil：触发后禁用物品直到指定事件
+        if (disableUntil && !item.isDisabled && unit) {
+            item.isDisabled = true
+            if (disableUntil === "battleEnd") {
+                const restore = owner.appendTrigger({
+                    when: "after",
+                    how: "take",
+                    key: "battleEnd",
+                    callback: () => {
+                        item.isDisabled = false
+                        restore.remove()
+                    }
+                })
+                unit.registerTriggerRemover(restore.remove, `restore-${triggerDefKey || "item"}`)
+            }
+        }
+    }
 }
 
 /**
@@ -143,7 +221,7 @@ export class ItemModifierUnit {
                 remove()
             } catch (error) {
                 console.error(`[ItemModifierUnit] 清理失败:`, {
-                    item: (this.item as any).label || (this.item as any).name || 'Unknown',
+                    item: this.item.label,
                     type,
                     name,
                     error
@@ -162,9 +240,9 @@ export class ItemModifierUnit {
             byType[r.type] = (byType[r.type] || 0) + 1
         }
         return {
-            itemLabel: (this.item as any).label || (this.item as any).name || 'Unknown',
-            itemKey: (this.item as any).key || 'unknown',
-            owner: (this.owner as any).label || 'Unknown',
+            itemLabel: this.item.label,
+            itemKey: this.item.key,
+            owner: this.owner.label,
             total: this.removers.length,
             byType
         }
@@ -185,7 +263,7 @@ export class ItemModifier {
         this.owner = owner
     }
 
-    private resolvePossessTriggerMountTarget(triggerDef: any): Entity | null {
+    private resolvePossessTriggerMountTarget(triggerDef: TriggerMapItemWithAction | ImportantTriggerMapItem): Entity | null {
         // 如果 triggerDef 中显式指定了 triggerTarget，使用它
         if (triggerDef.triggerTarget?.participantType === "entity" && triggerDef.triggerTarget.key === "player") {
             const battle = nowBattle.value
@@ -205,7 +283,7 @@ export class ItemModifier {
 
     private mountPossessTrigger(
         item: Item,
-        triggerDef: any,
+        triggerDef: TriggerMapItemWithAction | ImportantTriggerMapItem,
         triggerMountTarget: Entity,
         unit: ItemModifierUnit
     ) {
@@ -222,171 +300,66 @@ export class ItemModifier {
             return
         }
 
-        for (const eventConfig of reactionEvents) {
-            const triggerRemover = triggerMountTarget.appendTrigger({
-                when,
-                how,
-                key,
-                level,
-                callback: (event, _effect, _triggerLevel) => {
-                    if (eventConfig.targetType === "triggerEffect" && !_effect) return
+        const triggerRemover = triggerMountTarget.appendTrigger({
+            when,
+            how,
+            key,
+            level,
+            callback: (event, _effect, _triggerLevel) => {
+                // 检查物品是否被禁用（器官损坏等情况）
+                if (item.isDisabled) return
 
-                    // 通用条件检查 - triggerDef.condition（旧格式兼容 + 新通用格式）
-                    if (triggerDef.condition) {
-                        // 新通用格式：checkCondition(condition)，直接传入整个 condition 对象
-                        if (triggerDef.condition.status && !checkCondition(this.owner, triggerDef.condition)) {
-                            return
-                        }
-                        // 旧格式：sourceStatus
-                        if (triggerDef.condition?.sourceStatus) {
-                            const { key, value, op = "eq" } = triggerDef.condition.sourceStatus
-                            const statusVal = item.status[key]?.value
-                            console.log('[Wheel Debug] ItemModifier 条件检查:', { key, statusVal, expected: value, item: item.label })
-                            if (statusVal === undefined) {
-                                console.log('[Wheel Debug] statusVal 不存在，跳过')
-                                return
-                            }
-                            if (op === "eq" && statusVal !== value) return
-                            if (op === "lte" && statusVal > value) return
-                            if (op === "gte" && statusVal < value) return
-                            if (op === "lt" && statusVal >= value) return
-                            if (op === "gt" && statusVal <= value) return
-                        }
-                        // 旧格式：ownerHealthPercent
-                        if (triggerDef.condition?.ownerHealthPercent) {
-                            const { value, op = "eq" } = triggerDef.condition.ownerHealthPercent
-                            const currentHealth = this.owner.current?.health?.value || 0
-                            const maxHealth = this.owner.status?.maxHealth?.value || 1
-                            const healthPercent = maxHealth > 0 ? currentHealth / maxHealth : 0
-                            if (op === "eq" && healthPercent !== value) return
-                            if (op === "lte" && healthPercent > value) return
-                            if (op === "gte" && healthPercent < value) return
-                            if (op === "lt" && healthPercent >= value) return
-                            if (op === "gt" && healthPercent <= value) return
-                        }
-                    }
+                // 执行反应事件（统一的方法，在 executeItemReaction 中检查所有条件）
+                executeItemReaction({
+                    item,
+                    reactionEvents,
+                    triggerEvent: event,
+                    owner: this.owner,
+                    triggerEffect: _effect,
+                    condition: triggerDef.condition,
+                    disableUntil,
+                    unit,
+                    triggerMountTarget,
+                    triggerDefKey: ('importantKey' in triggerDef ? triggerDef.importantKey : undefined) || triggerDef.key,
+                })
+            }
+        })
 
-                    // 通用条件检查 - eventConfig.condition（新格式）
-                    if (eventConfig.condition && !checkCondition(this.owner, eventConfig.condition)) {
-                        return
-                    }
+        unit.registerTriggerRemover(triggerRemover.remove, `${('importantKey' in triggerDef ? triggerDef.importantKey : undefined) || triggerDef.key}`)
 
-                    // 解析 source（支持 sourceTargetType，使用统一的 resolveTarget 系统）
-                    const source = eventConfig.sourceTargetType
-                        ? resolveTriggerEventTarget(
-                            eventConfig.sourceTargetType,
-                            event,
-                            _effect,
-                            item,
-                            this.owner,
-                            { allowNull: true }  // 可选，找不到返回 null
-                        )
-                        : item
-
-                    // 解析 medium（支持 mediumTargetType，使用统一的 resolveTarget 系统）
-                    const medium = eventConfig.mediumTargetType
-                        ? resolveTriggerEventTarget(
-                            eventConfig.mediumTargetType,
-                            event,
-                            _effect,
-                            item,
-                            this.owner,
-                            { allowNull: true }  // 可选，找不到返回 null
-                        )
-                        : item
-
-                    // 解析 target
-                    const target = resolveTriggerEventTarget(
-                        eventConfig.targetType,
-                        event,
-                        _effect,
-                        item,
-                        this.owner,
-                        { allowNull: true }  // 可选，找不到返回 null
-                    )
-
-                    const triggerValue = (_effect as any)?.params?.value
-                    const resolvedEffects = triggerValue !== undefined
-                        ? eventConfig.effect?.map((eu: any) => ({
-                            ...eu,
-                            params: Object.fromEntries(
-                                Object.entries(eu.params || {}).map(([k, v]) =>
-                                    [k, v === "$triggerValue" ? triggerValue : v]
-                                )
-                            )
-                        }))
-                        : eventConfig.effect
-
-                    const newEvent = doEvent({
-                        key: eventConfig.key,
-                        source: (source ?? item) as any,
-                        medium: (medium ?? item) as any,
-                        target: (target ?? item) as any,
-                        info: eventConfig.info || {},
-                        effectUnits: resolvedEffects ?? []
-                    })
-
-                    // 设置触发器上下文，让效果函数（如 countAndTrigger）可以访问 owner（持有者）
-                    newEvent.triggerContext = event.triggerContext || {
-                        source: item,              // 触发器来源（器官/遗物）
-                        owner: triggerMountTarget, // 触发器挂载目标（玩家）
-                    }
-
-                    // 触发成功后，如果配置了 disableUntil，则失效物品直到指定事件发生时恢复
-                    if (disableUntil && !item.isDisabled) {
-                        item.isDisabled = true
-                        if (disableUntil === "battleEnd") {
-                            const restore = this.owner.appendTrigger({
-                                when: "after",
-                                how: "take",
-                                key: "battleEnd",
-                                callback: () => {
-                                    item.isDisabled = false
-                                    restore.remove()
-                                }
-                            })
-                            unit.registerTriggerRemover(restore.remove, `restore-${triggerDef.importantKey || triggerDef.key}`)
-                        }
-                    }
+        // 当触发器挂载到非 owner（如 player）时，需要额外的清理机制
+        if (triggerMountTarget !== this.owner) {
+            // 1. 战斗结束清理：监听 owner 的 battleEnd 事件
+            const battleEndCleanup = this.owner.appendTrigger({
+                when: "after",
+                how: "take",
+                key: "battleEnd",
+                callback: () => {
+                    triggerRemover.remove()
+                    battleEndCleanup.remove()
+                    ownerDeathCleanup?.remove()
                 }
             })
+            unit.registerTriggerRemover(battleEndCleanup.remove, `battleEnd-cleanup-${('importantKey' in triggerDef ? triggerDef.importantKey : undefined) || triggerDef.key}`)
 
-            unit.registerTriggerRemover(triggerRemover.remove, `${triggerDef.importantKey || triggerDef.key}`)
-
-            // 当触发器挂载到非 owner（如 player）时，需要额外的清理机制
-            if (triggerMountTarget !== this.owner) {
-                // 1. 战斗结束清理：监听 owner 的 battleEnd 事件
-                const battleEndCleanup = this.owner.appendTrigger({
-                    when: "after",
-                    how: "take",
-                    key: "battleEnd",
-                    callback: () => {
-                        triggerRemover.remove()
-                        battleEndCleanup.remove()
-                        ownerDeathCleanup?.remove()
-                    }
-                })
-                unit.registerTriggerRemover(battleEndCleanup.remove, `battleEnd-cleanup-${triggerDef.importantKey || triggerDef.key}`)
-
-                // 2. 拥有者死亡清理：监听 owner 的 death 事件
-                const ownerDeathCleanup = this.owner.appendTrigger({
-                    when: "after",
-                    how: "take",
-                    key: "death",
-                    callback: () => {
-                        triggerRemover.remove()
-                        battleEndCleanup.remove()
-                        ownerDeathCleanup.remove()
-                    }
-                })
-                unit.registerTriggerRemover(ownerDeathCleanup.remove, `ownerDeath-cleanup-${triggerDef.importantKey || triggerDef.key}`)
-            }
+            // 2. 拥有者死亡清理：监听 owner 的 death 事件
+            const ownerDeathCleanup = this.owner.appendTrigger({
+                when: "after",
+                how: "take",
+                key: "death",
+                callback: () => {
+                    triggerRemover.remove()
+                    battleEndCleanup.remove()
+                    ownerDeathCleanup.remove()
+                }
+            })
+            unit.registerTriggerRemover(ownerDeathCleanup.remove, `ownerDeath-cleanup-${('importantKey' in triggerDef ? triggerDef.importantKey : undefined) || triggerDef.key}`)
         }
     }
 
     private registerBattleStartDeferredTrigger(
         item: Item | Organ,
-        triggerDef: any,
+        triggerDef: TriggerMapItemWithAction | ImportantTriggerMapItem,
         unit: ItemModifierUnit
     ) {
         const deferRemover = this.owner.appendTrigger({
@@ -402,14 +375,19 @@ export class ItemModifier {
             }
         })
 
-        unit.registerTriggerRemover(deferRemover.remove, `defer-${triggerDef.importantKey || triggerDef.key}`)
+        unit.registerTriggerRemover(deferRemover.remove, `defer-${('importantKey' in triggerDef ? triggerDef.importantKey : undefined) || triggerDef.key}`)
     }
 
     private processPossessTrigger(
         item: Item | Organ,
-        triggerDef: any,
+        triggerDef: TriggerMapItem | ImportantTriggerMapItem,
         unit: ItemModifierUnit
     ): void {
+        // 只处理新格式（有 action 属性的）
+        if (!('action' in triggerDef)) {
+            return
+        }
+
         const timing = triggerDef.timing || "immediate"
         const triggerMountTarget = this.resolvePossessTriggerMountTarget(triggerDef)
 
@@ -424,7 +402,7 @@ export class ItemModifier {
         }
 
         if (!triggerMountTarget) {
-            console.warn(`[ItemModifier] 无法解析触发器挂载目标: ${triggerDef.importantKey || triggerDef.key}`)
+            console.warn(`[ItemModifier] 无法解析触发器挂载目标: ${('importantKey' in triggerDef ? triggerDef.importantKey : undefined) || triggerDef.key}`)
             return
         }
 
@@ -476,7 +454,7 @@ export class ItemModifier {
      * @param parentLog 可选的父日志
      */
     removeByKey(itemKey: string, parentLog?: LogUnit): boolean {
-        const index = this.units.findIndex(u => (u.item as any).key === itemKey)
+        const index = this.units.findIndex(u => u.item.key === itemKey)
         if (index >= 0) {
             const unit = this.units[index]
             unit.cleanup(parentLog)
@@ -523,7 +501,7 @@ export class ItemModifier {
      */
     private processPossessInteraction(
         item: Item | Organ,
-        possessInteraction: any,
+        possessInteraction: Interaction,
         unit: ItemModifierUnit,
         _parentLog?: LogUnit
     ) {

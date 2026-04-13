@@ -1,5 +1,5 @@
 <template>
-<div class="card" ref="cardRef" :class="{ 'temporary': card.isTemporary }">
+<div class="card" ref="cardRef" :class="{ 'temporary': card.isTemporary, 'disabled': card.isDisabled }">
     <div class="cost" v-if="cost">{{ cost }}</div>
     <div class="title">{{ card.label }}</div>
     <div class="line"></div>
@@ -224,6 +224,8 @@ const showTooltip = ref(false)
 const tooltipStyle = ref<Record<string, string>>({})
 
 function handleMouseEnter() {
+    // 禁用卡牌不显示 tooltip
+    if (card.isDisabled) return
     if (allGlossaries.value.length === 0) return
     showTooltip.value = true
     nextTick(() => {
@@ -306,6 +308,13 @@ onBeforeUnmount(() => {
         border-style: dashed;
         border-color: #f59e0b;
         background-color: #fffbeb;
+    }
+
+    // 禁用卡牌样式
+    &.disabled {
+        filter: grayscale(100%);
+        opacity: 0.6;
+        cursor: not-allowed;
     }
 
     .cost{

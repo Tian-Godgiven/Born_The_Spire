@@ -13,7 +13,7 @@ import { isEntity } from "@/core/utils/typeGuards"
  * 参数：
  * - pointKey: 计数器使用的状态key（默认 "point"）
  * - on: 触发器配置 { when, how, key }
- * - gain: 每次获得的点数（可以是数字或 "$triggerValue"）
+ * - gain: 每次获得的点数（可以是数字或 "$triggerEffect.params(value)"）
  * - minGain: 最小累积值，只有当gain >= minGain时才累积（可选）
  * - threshold: 触发阈值
  * - consume: 每次触发消耗的点数（默认 1）或"all"表示清空所有点数
@@ -76,7 +76,7 @@ export const accumulateAndTrigger: EffectFunc = (event, effect) => {
             callback: (triggerEvent, triggerEffect, _triggerLevel) => {
                 // 1. 计算获得的点数
                 let gainAmount: number
-                if (gain === "$triggerValue") {
+                if (typeof gain === "string" && gain.startsWith("$triggerEffect")) {
                     gainAmount = Number((triggerEffect as any)?.params?.value ?? 0)
                 } else if (typeof gain === "number") {
                     gainAmount = gain

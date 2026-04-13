@@ -213,7 +213,7 @@ export const healOrgan: EffectFunc = async (_event, effect) => {
 
     // 获取当前质量和最大质量
     const currentMass = getCurrentValue(organ, "mass")
-    const maxMass = organ.status["max-mass"].value
+    const maxMass = Number(organ.status["max-mass"].value)
     const newMass = Math.min(maxMass, currentMass + heal)
 
     // 设置新质量

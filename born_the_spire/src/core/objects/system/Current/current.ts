@@ -68,13 +68,13 @@ export async function initCurrentFromMap<T extends Entity>(owner:Entity,mapData:
         let startValue:number
         switch(meta.startValue){
             case "max":
-                startValue = getCurrentMaxOrMin(owner,meta.maxBy??Infinity)
+                startValue = Number(getCurrentMaxOrMin(owner,meta.maxBy??Infinity))
                 break
             case "min":
-                startValue = getCurrentMaxOrMin(owner,meta.minBy??0)
+                startValue = Number(getCurrentMaxOrMin(owner,meta.minBy??0))
                 break
             default:
-                startValue = meta.startValue
+                startValue = Number(meta.startValue)
                 break
         }
         const option:CurrentOption = {...meta}
@@ -172,15 +172,15 @@ export function changeCurrentValue(target:Entity,key:string,newValue:number,even
         const minBy = current.options.minBy
         const maxBy = current.options.maxBy
         if(minBy !== undefined && minBy !== null){
-            const minValue = getCurrentMaxOrMin(target,minBy)
+            const minValue = Number(getCurrentMaxOrMin(target,minBy))
             newValue = Math.max(newValue, minValue)
         }
         if(maxBy !== undefined && maxBy !== null){
-            const maxValue = getCurrentMaxOrMin(target,maxBy)
+            const maxValue = Number(getCurrentMaxOrMin(target,maxBy))
             newValue = Math.min(newValue, maxValue)
         }
         current.value = newValue
-        return Math.abs(newValue-nowValue)
+        return Math.abs(newValue - nowValue)
     }
     return false
 }
@@ -191,9 +191,9 @@ function changeCurrentOverMax(target:Entity,current:Current,newValue:number,even
     //没有上限返回true即可
     if(!maxBy)return true
     //当前值上限和当前值
-    const maxValue = getCurrentMaxOrMin(target,maxBy)
+    const maxValue = Number(getCurrentMaxOrMin(target,maxBy))
     const nowValue = current._value.value
-    
+
     let res:boolean|number = true
     //超过了上限
     if(newValue > maxValue){
@@ -226,7 +226,7 @@ function changeCurrentOverMin(target:Entity,current:Current,newValue:number,even
     //没有下限返回true即可
     if(minBy === undefined || minBy === null)return true
     //当前值下限和当前值
-    const minValue = getCurrentMaxOrMin(target,minBy)
+    const minValue = Number(getCurrentMaxOrMin(target,minBy))
     const nowValue = current._value.value
 
 

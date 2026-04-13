@@ -163,6 +163,19 @@ export function getOrgans(participants: EventParticipant | EventParticipant[]): 
 }
 
 /**
+ * 检查对象是否为 Chara 类型（Player 或 Enemy）
+ * 使用 targetType 标识而不是 instanceof 以避免循环依赖
+ */
+export function isChara(participant: EventParticipant | EventParticipant[]): participant is Player | Enemy {
+    if (Array.isArray(participant)) {
+        return participant.every(p => isEntity(p) && ((p as any).targetType === 'player' || (p as any).targetType === 'enemy'))
+    }
+    if (!isEntity(participant)) return false
+    const targetType = (participant as any).targetType
+    return targetType === 'player' || targetType === 'enemy'
+}
+
+/**
  * 断言对象为 Player 类型，否则抛出错误
  */
 export function assertPlayer(participant: EventParticipant, context: string = ""): asserts participant is Player {

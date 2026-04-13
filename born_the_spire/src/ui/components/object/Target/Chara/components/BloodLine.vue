@@ -16,9 +16,9 @@ import { computed, useTemplateRef } from 'vue';
     const {target} = defineProps<{target:Chara}>()
     const blood = computed(()=>{
         const {now,max} = target.getHealth()
-        const percent = toNumber(((now/max)*100).toFixed(1))
+        const percent = toNumber(((Number(now)/Number(max))*100).toFixed(1))
         animate(percent)
-        return {now,max}
+        return {now: now, max: max}
     })
     //动画
     const blackRef = useTemplateRef("blackRef")
@@ -30,7 +30,7 @@ import { computed, useTemplateRef } from 'vue';
                 ease:'power1.inOut'
             })
         }
-        
+
     }
 </script>
 

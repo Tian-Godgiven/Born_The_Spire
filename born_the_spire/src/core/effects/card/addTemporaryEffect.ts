@@ -2,6 +2,7 @@ import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import type { EffectUnit } from "@/core/objects/system/effect/EffectUnit"
 import type { Card } from "@/core/objects/item/Subclass/Card"
 import type { Player } from "@/core/objects/target/Player"
+import { type Describe, getDescribe } from "@/ui/hooks/express/describe"
 import { doEvent, ActionEvent } from "@/core/objects/system/ActionEvent"
 import { isCard, isPlayer } from "@/core/utils/typeGuards"
 import { nanoid } from "nanoid"
@@ -14,7 +15,7 @@ export interface TemporaryEffectConfig {
   id: string
   key: string              // 效果唯一标识
   label: string            // 效果名称（UI显示）
-  describe: string[]       // 添加的描述（UI显示）
+  describe: Describe        // 添加的描述（支持动态值引用）
   triggerWhen: "before" | "after"
   triggerHow: "make" | "via" | "take"
   triggerKey: string       // 触发事件类型（如"useCard"）
@@ -22,6 +23,7 @@ export interface TemporaryEffectConfig {
   sourceKey: string        // 来源唯一标识（用于叠加规则）
   duration: "battle"       // 持续时间（暂时只支持战斗）
   mutuallyExclusive?: string  // 互斥组标识（同组效果只能存在一个，自动替换）
+  stackValue?: number      // 可叠加的值（用于描述动态显示和效果叠加）
 }
 
 /**
@@ -119,43 +121,41 @@ export const addTemporaryEffect: EffectFunc = (event, effectObj) => {
 
   // 绑定临时效果触发器
   if (isPlayer(event.source)) {
-    bindTemporaryEffectTrigger(card, event.source)
-  }
+    const removeTriggers = bindTemporaryEffectTrigger(card, event.source)
 
-  // 注册战斗结束时清理的副作用
-  event.collectSideEffect(() => {
-    clearTemporaryEffects(card, "battle")
-  })
+    // 注册战斗结束时清理的副作用（清除数据 + 移除触发器）
+    event.collectSideEffect(() => {
+      removeTriggers()
+      clearTemporaryEffects(card, "battle")
+    })
+  }
 }
 
 /**
  * 为卡牌绑定临时效果的触发器
+ * 触发器绑定在卡牌自身上，卡牌作为 useCard 事件的 medium（via）自然触发
+ * @returns 清理函数，调用后移除所有绑定的触发器
  */
-export function bindTemporaryEffectTrigger(card: Card, owner: Player) {
+export function bindTemporaryEffectTrigger(card: Card, owner: Player): () => void {
   if (!card._temporaryEffects || card._temporaryEffects.length === 0) {
-    return
+    return () => {}
   }
 
   // 只在当前战斗中绑定
   if (!nowBattle.value) {
     console.warn(`[bindTemporaryEffectTrigger] 没有进行中的战斗，无法绑定卡牌临时效果: ${card.label}`)
-    return
+    return () => {}
   }
 
-  // 使用 owner 的 trigger 附加功能
   const removeFunctions: (() => void)[] = []
 
   for (const tempEffect of card._temporaryEffects) {
-    // 创建触发器：当卡牌被打出时，触发临时效果
-    const { remove } = owner.trigger.appendTrigger({
+    // 触发器绑定在卡牌上：卡牌是 useCard 事件的 medium，how:"via" 自然匹配
+    const { remove } = card.trigger.appendTrigger({
       when: tempEffect.triggerWhen,
       how: tempEffect.triggerHow,
       key: tempEffect.triggerKey,
       callback: async (triggerEvent, triggerEffect, _triggerLevel) => {
-        // 检查触发事件的 target 是否是这张卡牌
-        const targets = Array.isArray(triggerEvent.target) ? triggerEvent.target : [triggerEvent.target]
-        if (!targets.includes(card)) return
-
         // 执行临时效果
         await doEvent({
           key: `temporaryEffect_${tempEffect.key}`,
@@ -166,14 +166,14 @@ export function bindTemporaryEffectTrigger(card: Card, owner: Player) {
         })
       },
     })
-
     removeFunctions.push(remove)
   }
 
-  // 注册清理函数：战斗结束时移除触发器
-  // 这里需要 getColor 所在的 effect 来注册 sideEffect
-  // 由于 bindTemporaryEffectTrigger 在 addTemporaryEffect 中被调用，
-  // 实际的 sideEffect 注册应在 addTemporaryEffect 中进行
+  return () => {
+    for (const remove of removeFunctions) {
+      remove()
+    }
+  }
 }
 
 /**
@@ -185,13 +185,19 @@ export function clearTemporaryEffects(card: Card, duration?: "battle") {
   if (!card._temporaryEffects) return
 
   if (duration) {
-    // 只清除指定持续时间的效果
     card._temporaryEffects = card._temporaryEffects.filter(
       (ef) => ef.duration !== duration
     )
   } else {
-    // 清除所有临时效果
     card._temporaryEffects = []
+  }
+
+  // 执行触发器清理函数
+  if ((card as any)._temporaryEffectCleanups) {
+    for (const cleanup of (card as any)._temporaryEffectCleanups) {
+      cleanup()
+    }
+    ;(card as any)._temporaryEffectCleanups = []
   }
 
   console.log(`[clearTemporaryEffects] 清除卡牌临时效果: ${card.label}`)
@@ -200,17 +206,17 @@ export function clearTemporaryEffects(card: Card, duration?: "battle") {
 /**
  * 获取卡牌的临时效果描述
  * @param card 卡牌对象
- * @returns 临时效果描述数组
+ * @returns 临时效果描述文本数组（每个临时效果一条）
  */
 export function getTemporaryEffectDescribe(card: Card): string[] {
   if (!card._temporaryEffects || card._temporaryEffects.length === 0) {
     return []
   }
 
-  // 累加所有临时效果的描述
   const describes: string[] = []
   for (const tempEffect of card._temporaryEffects) {
-    describes.push(...tempEffect.describe)
+    // 用 tempEffect 自身作为 target，支持 {key:["stackValue"]} 等动态引用
+    describes.push(getDescribe(tempEffect.describe, tempEffect))
   }
 
   return describes

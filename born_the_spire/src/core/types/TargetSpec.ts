@@ -8,6 +8,7 @@
 import type { Entity } from "@/core/objects/system/Entity"
 import type { ActionEvent } from "@/core/objects/system/ActionEvent"
 import type { Effect } from "@/core/objects/system/effect/Effect"
+import type { EventParticipant } from "@/core/types/event/EventParticipant"
 import type { TriggerMapItem } from "@/core/types/object/trigger"
 import { nowBattle } from "@/core/objects/game/battle"
 import { randomChoice } from "@/core/hooks/random"
@@ -25,8 +26,9 @@ export interface TargetContext {
     // 基础对象
     item?: Entity               // 物品自身（遗物/器官/卡牌）
     owner?: Entity              // 物品拥有者（玩家/敌人）
-    source?: Entity             // 事件来源（可指代不同含义）
-    target?: Entity | Entity[]  // 事件目标
+    source?: Entity | EventParticipant      // 事件来源（可指代不同含义）
+    medium?: Entity | EventParticipant      // 事件媒介（可指代不同含义）
+    target?: Entity | Entity[] | EventParticipant | EventParticipant[]  // 事件目标
 
     // 事件相关
     event?: ActionEvent         // 当前事件
@@ -58,40 +60,78 @@ export type TargetTypeString =
     | "eventSource" | "eventMedium" | "eventTarget"
     | "trigger" | "triggerSource" | "triggerOwner"
     | "eventTriggerSource" | "eventTriggerOwner"
-    | "battle" | "player" | "players"
-    | "enemy" | "enemies" | "randomEnemy" | "allEnemies" | "allAllies"
+    | "battle" | "player"
+    | "enemy" | "allEnemies" | "allAllies" | "allEntities"
     | "turnNumber"
     | "triggerEffect"  // 触发效果 (Effect 类型)
-    | string  // 允许自定义键
+    | string  // 允许自定义键（支持点语法修饰符，如 "allEnemies.random"）
+
+/**
+ * 目标类型映射 - 根据 targetType 返回不同的类型
+ */
+type TargetTypeMap = {
+    // 单个 Effect
+    "effect": Effect
+    "triggerEffect": Effect
+
+    // 单个 Entity
+    "item": Entity
+    "owner": Entity
+    "source": Entity
+    "target": Entity
+    "battle": any
+    "player": Entity
+    "enemy": Entity
+    "turnNumber": number
+
+    // Entity 数组
+    "allEnemies": Entity[]
+    "allAllies": Entity[]
+    "allEntities": Entity[]
+
+    // 事件相关
+    "eventSource": Entity
+    "eventMedium": Entity
+    "eventTarget": Entity | Entity[]
+
+    // 触发器相关
+    "trigger": TriggerMapItem
+    "triggerSource": Entity
+    "triggerOwner": Entity
+
+    // 事件触发器相关
+    "eventTriggerSource": Entity
+    "eventTriggerOwner": Entity
+}
 
 /**
  * 统一的目标解析函数
  *
  * @param targetType - 目标类型（键名）
  * @param context - 上下文对象，包含所有可能需要的引用
- * @returns 解析后的目标对象（Entity、Entity数组），找不到返回 null
+ * @returns 解析后的目标对象（类型取决于 targetType）
  * @throws Error - 如果 context 中没有该键，说明调用方式有误
  *
  * @example
  * // 基础用法
- * resolveTarget("item", { item: relic })  // → relic
- * resolveTarget("owner", { owner: player })  // → player
+ * resolveTarget("item", { item: relic })  // → relic (类型: Entity)
+ * resolveTarget("owner", { owner: player })  // → player (类型: Entity)
+ *
+ * // Effect 相关
+ * resolveTarget("effect", { effect: myEffect })  // → myEffect (类型: Effect)
+ * resolveTarget("triggerEffect", { triggerEffect: myEffect })  // → myEffect (类型: Effect)
  *
  * // 事件相关
- * resolveTarget("eventSource", { event })  // → event.source
- * resolveTarget("eventTarget", { event })  // → event.target
+ * resolveTarget("eventSource", { event })  // → event.source (类型: Entity)
+ * resolveTarget("eventTarget", { event })  // → event.target (类型: Entity | Entity[])
  *
- * // 触发器相关
- * resolveTarget("triggerSource", { triggerSource })  // → triggerSource
- * resolveTarget("triggerOwner", { triggerOwner })  // → triggerOwner
- *
- * // 嵌套获取
- * resolveTarget("eventSource", { event: { source: player } })  // → player
+ * // 数组相关
+ * resolveTarget("allEnemies", { battle })  // → enemies (类型: Entity[])
  */
 export function resolveTarget(
     targetType: TargetTypeString,
     context: TargetContext
-): Entity | Entity[] | Effect {
+): any {
     const value = getTargetValue(targetType, context)
 
     if (value === undefined) {
@@ -130,7 +170,16 @@ export function resolveTarget(
 export function getTargetValue(
     targetType: string,
     context: TargetContext
-): Entity | Entity[] | Effect | undefined | null {
+): any {
+    // 支持点语法修饰符，如 "allEnemies.random"、"allEnemies.first"
+    if (targetType.includes(".")) {
+        const dotIndex = targetType.indexOf(".")
+        const base = targetType.slice(0, dotIndex)
+        const modifier = targetType.slice(dotIndex + 1)
+        const baseValue = getTargetValue(base, context)
+        return applyModifier(baseValue, modifier, base)
+    }
+
     switch (targetType) {
         // 直接从 context 获取
         case "item": return context.item
@@ -161,21 +210,22 @@ export function getTargetValue(
             const player = context.battle.getTeam("player")?.[0]
             if (!player) throw new Error("[resolveTarget] 战斗中没有玩家")
             return player
-        case "players":
-            if (!context.battle) throw new Error("[resolveTarget] battle 不存在，无法获取 players")
-            return context.battle.getTeam("player") || []
         case "enemy":
+            // 返回事件目标中的敌人（单个），如果 target 是数组则取第一个敌人
             if (!context.battle) throw new Error("[resolveTarget] battle 不存在，无法获取 enemy")
+            const target = context.target
+            if (Array.isArray(target)) {
+                // target 是数组，找第一个敌人
+                const enemy = target.find(e => (e as any).targetType === 'enemy')
+                if (enemy) return enemy
+                throw new Error("[resolveTarget] target 中没有敌人")
+            }
+            if (target && (target as any).targetType === 'enemy') {
+                return target
+            }
+            // 默认返回第一个敌人（向后兼容）
             const enemies = context.battle.getAliveEnemies()
             return enemies[0]
-        case "enemies":
-            if (!context.battle) throw new Error("[resolveTarget] battle 不存在，无法获取 enemies")
-            return context.battle.getAliveEnemies()
-        case "randomEnemy":
-            if (!context.battle) throw new Error("[resolveTarget] battle 不存在，无法获取 randomEnemy")
-            const allEnemies = context.battle.getAliveEnemies()
-            if (allEnemies.length === 0) throw new Error("[resolveTarget] 战斗中没有可用的敌人")
-            return randomChoice(allEnemies, "randomEnemy")
         case "allEnemies":
             if (!context.battle) throw new Error("[resolveTarget] battle 不存在，无法获取 allEnemies")
             return context.battle.getAliveEnemies()
@@ -192,6 +242,54 @@ export function getTargetValue(
     }
 }
 
+// ==================== 修饰符处理函数 ====================
+
+/**
+ * 应用修饰符到目标值
+ *
+ * 支持的修饰符：
+ * - .random   从数组中随机选一个
+ * - .first    数组第一个元素
+ * - .last     数组最后一个元素
+ *
+ * @param baseValue - 基础目标值（数组或单个对象）
+ * @param modifier - 修饰符字符串
+ * @param baseName - 基础目标名（用于错误信息）
+ * @returns 修饰后的目标值
+ */
+function applyModifier(
+    baseValue: Entity | Entity[],
+    modifier: string,
+    baseName: string
+): Entity | undefined | null {
+    if (!Array.isArray(baseValue)) {
+        throw new Error(
+            `[TargetSpec] 修饰符 ".${modifier}" 只能应用于数组目标，` +
+            `"${baseName}" 不是数组: ${typeof baseValue}`
+        )
+    }
+
+    if (baseValue.length === 0) {
+        throw new Error(
+            `[TargetSpec] 无法对空数组应用修饰符 ".${modifier}": ${baseName}`
+        )
+    }
+
+    switch (modifier) {
+        case "random":
+            return randomChoice(baseValue, `${baseName}.${modifier}`)
+        case "first":
+            return baseValue[0]
+        case "last":
+            return baseValue[baseValue.length - 1]
+        default:
+            throw new Error(
+                `[TargetSpec] 未知的修饰符 ".${modifier}" for target "${baseName}". ` +
+                `支持的修饰符: .random, .first, .last`
+            )
+    }
+}
+
 // ==================== 分步解析函数 ====================
 
 /**
@@ -199,9 +297,9 @@ export function getTargetValue(
  * 如果找不到目标，返回 null（不抛错，用于可选目标）
  */
 export function resolveTargetOptional(
-    targetType: string,
+    targetType: TargetTypeString,
     context: TargetContext
-): Entity | Entity[] | Effect | null {
+): any {
     try {
         const result = resolveTarget(targetType, context)
         return result
@@ -211,15 +309,16 @@ export function resolveTargetOptional(
 }
 
 /**
- * 解析 targetType，返回多个可能的目标（用于数组场景）
+ * 解析 targetType，返回 Entity 数组（用于数组场景）
  */
 export function resolveTargetArray(
-    targetType: string,
+    targetType: TargetTypeString,
     context: TargetContext
 ): Entity[] {
-    const target = resolveTarget(targetType, context)
+    const target = resolveTarget(targetType, context) as any
     if (Array.isArray(target)) return target
-    return [target]
+    if (isEntity(target)) return [target]
+    throw new Error(`[resolveTargetArray] targetType "${targetType}" 的结果不是 Entity 或 Entity[]`)
 }
 
 // ==================== 类型保护 ====================

@@ -22,9 +22,9 @@
                     <!-- 动态渲染所有 healthBarRight 位置的机制 -->
                     <MechanismDisplay :entity="target" position="healthBarRight" />
                 </div>
-                <div class="states" v-for="state in stateList" :key="state.key">
-                    <State :state></State>
-                </div>
+            </div>
+            <div class="states" v-if="stateList.length > 0">
+                <State v-for="state in stateList" :key="state.key" :state></State>
             </div>
         </div>
         <!-- 状态详情显示 - 放在Target外面，以便正确定位 -->
@@ -58,7 +58,7 @@
 
     // 检查器官是否被禁用
     function isOrganDisabledCheck(organ: OrganClass): boolean {
-        return isOrganDisabled(organ, props.target)
+        return isOrganDisabled(organ)
     }
 
     // 使用 computed 确保 organs 的响应式被正确追踪
@@ -139,9 +139,18 @@
             align-items: center;
             justify-content: center;
         }
-        flex-shrink: 0;
-        position: relative;
+        position: absolute;
         bottom: 0;
+        left: 0;
+        right: 0;
+    }
+    .states {
+        position: absolute;
+        bottom: -26px;
+        left: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
     }
 }
 </style>

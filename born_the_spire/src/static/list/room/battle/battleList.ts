@@ -22,11 +22,11 @@ export const battleList: BattleRoomConfig[] = [
     //     enemyConfigs: ["test_enemy_slime","test_enemy_slime","test_enemy_slime"]
     // },
     {
-        key: "battle_normal_rocker",
-        name: "小石块",
-        description: "坚硬的硅基生物",
+        key: "battle_normal_mouse",
+        name: "不屈小鼠",
+        description: "越打越硬的小家伙",
         battleType: "normal",
-        enemyConfigs: ["original_enemy_00001"]
+        enemyConfigs: ["test_enemy_mouse"]
     },
     {
         key: "battle_elite_berserker",

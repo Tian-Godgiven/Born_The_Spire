@@ -39,7 +39,7 @@ export class ActionEvent<
     //是否为模拟事件（模拟事件不会实际执行效果，只触发触发器）
     public simulate:boolean = false
     //所属事务
-    public transaction?: any  // Transaction 类型，避免循环依赖
+    public _transaction?: any  // Transaction 类型，避免循环依赖
     //是否已取消（用于复活等机制）
     private _cancelled:boolean = false
     //触发器上下文（保存触发器执行时的上下文信息）
@@ -67,7 +67,7 @@ export class ActionEvent<
         }
     }
     //触发事件
-    trigger(when:"before"|"after",triggerLevel:number){
+    async trigger(when:"before"|"after",triggerLevel:number){
         this.triggerLevel = triggerLevel
 
         // 设置当前执行的事件（用于传递模拟标记）
@@ -77,7 +77,7 @@ export class ActionEvent<
         try {
             // 只有 Entity 类型才有触发器
             if (isEntity(this.source)) {
-                this.source.makeEvent(when,this.key,this,null,triggerLevel);
+                await this.source.makeEvent(when,this.key,this,null,triggerLevel);
             }
             if (isEntity(this.medium)) {
                 // 添加调试检查
@@ -89,27 +89,18 @@ export class ActionEvent<
                         eventKey: this.key
                     })
                 } else {
-                    this.medium.viaEvent(when,this.key,this,null,triggerLevel)
+                    await this.medium.viaEvent(when,this.key,this,null,triggerLevel)
                 }
             }
-            handleEventEntity(this.target,(e)=>{
+            const targets = isArray(this.target) ? this.target : [this.target]
+            for (const e of targets) {
                 if (isEntity(e)) {
-                    e.takeEvent(when,this.key,this,null,triggerLevel)
+                    await e.takeEvent(when,this.key,this,null,triggerLevel)
                 }
-            })
+            }
         } finally {
             // 恢复之前的事件
             setCurrentExecutingEvent(previousEvent)
-        }
-    }
-    //宣布这个事件将会发生，同时宣布其中的effect效果
-    announce(triggerLevel:number){
-        //触发事件before，触发级+1
-        this.trigger("before",triggerLevel+1)
-        //触发事件的after，触发级-1
-        this.trigger("after",triggerLevel-1)
-        for(let effect of this.effects){
-            effect.announce(triggerLevel)
         }
     }
     //设置事件的阶段返回结果
@@ -219,8 +210,6 @@ export function doEvent(
     // 如果当前有正在执行的事件，且该事件是模拟模式，则继承模拟标记
     if (currentExecutingEvent && currentExecutingEvent.simulate) {
         event.simulate = true
-        // 模拟模式下，不收集到事务，但返回事件对象供触发器使用
-        return event
     }
 
     const eventCollector = getEventCollector()

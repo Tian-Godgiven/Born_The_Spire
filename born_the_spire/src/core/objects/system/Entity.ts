@@ -89,16 +89,16 @@ export class Entity implements EventParticipant{
         return this.trigger.appendTrigger(triggerObj)
     }
     //对象的"造成"触发器被触发
-    makeEvent(when: "before" | "after", triggerKey: string, event: ActionEvent, effect: Effect | null, triggerLevel: number){
-        this.trigger.onTrigger(when, "make", triggerKey, {actionEvent:event, effect}, triggerLevel)
+    async makeEvent(when: "before" | "after", triggerKey: string, event: ActionEvent, effect: Effect | null, triggerLevel: number){
+        await this.trigger.onTrigger(when, "make", triggerKey, {actionEvent:event, effect}, triggerLevel)
     }
     //对象作为媒介参与了某个事件
-    viaEvent(when: "before" | "after", triggerKey: string, event: ActionEvent, effect: Effect | null, triggerLevel: number){
-        this.trigger.onTrigger(when, "via", triggerKey, {actionEvent:event, effect}, triggerLevel)
+    async viaEvent(when: "before" | "after", triggerKey: string, event: ActionEvent, effect: Effect | null, triggerLevel: number){
+        await this.trigger.onTrigger(when, "via", triggerKey, {actionEvent:event, effect}, triggerLevel)
     }
     //对象受到了某个事件
-    takeEvent(when: "before" | "after", triggerKey: string, event: ActionEvent, effect: Effect | null, triggerLevel: number){
-        this.trigger.onTrigger(when, "take", triggerKey, {actionEvent:event, effect}, triggerLevel)
+    async takeEvent(when: "before" | "after", triggerKey: string, event: ActionEvent, effect: Effect | null, triggerLevel: number){
+        await this.trigger.onTrigger(when, "take", triggerKey, {actionEvent:event, effect}, triggerLevel)
     }
 }
 

@@ -11,18 +11,17 @@ import { newLog } from "@/ui/hooks/global/log"
 import { doEvent } from "../system/ActionEvent"
 import { nowPlayer } from "./run"
 import { endCharaTurn, startCharaTurn } from "@/core/effects/turn"
-import type { EventParticipant } from "@/core/types/event/EventParticipant"
 
 import { prepareEnemyIntents, executeAllEnemiesTurn } from "./enemyTurn"
 import { cleanupAllDisabledOrgans } from "@/core/effects/organ/disableOrgan"
 
 
 
-export class Battle implements EventParticipant {
+/** Battle 用于管理战斗流程，但不作为事件参与者参与事件系统 */
+export class Battle {
     public readonly __key:string = nanoid()
     public readonly __id: string = nanoid()
     public readonly label: string = "Battle"
-    public readonly participantType: 'battle' = 'battle'
     public isEnded: boolean = false  // 战斗是否已结束
     public nowTurn: "player" | "enemy" = "player"  // 当前回合归属
 
@@ -138,7 +137,7 @@ export class Battle implements EventParticipant {
             const sortedEnemies = this.sortEnemiesByActionOrder(aliveEnemies)
 
             // 执行所有敌人的回合
-            await executeAllEnemiesTurn(sortedEnemies, player, this.turnNumber)
+            await executeAllEnemiesTurn(sortedEnemies, player, this.turnNumber, this)
 
             // 4. 检查战斗是否结束
             const afterEnemyResult = this.checkBattleEnd()
@@ -173,8 +172,8 @@ export class Battle implements EventParticipant {
      */
     private sortEnemiesByActionOrder(enemies: Enemy[]): Enemy[] {
         return [...enemies].sort((a, b) => {
-            const orderA = a.status["action-order"]?.value ?? 0
-            const orderB = b.status["action-order"]?.value ?? 0
+            const orderA = Number(a.status["action-order"]?.value ?? 0)
+            const orderB = Number(b.status["action-order"]?.value ?? 0)
             return orderA - orderB  // 数字小的先行动
         })
     }
@@ -270,7 +269,7 @@ export async function startNewBattle(playerTeam:(Player|Chara)[],enemyTeam:(Enem
             doEvent({
                 key: "battleStart",
                 source: nowPlayer,
-                medium: battle,
+                medium: nowPlayer,  // medium 改为 nowPlayer，因为 battle 不再是 EventParticipant
                 target: enemy,
                 effectUnits: []
             })

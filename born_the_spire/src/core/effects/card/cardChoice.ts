@@ -5,6 +5,7 @@ import { getCardModifier } from "@/core/objects/system/modifier/CardModifier"
 import { Card } from "@/core/objects/item/Subclass/Card"
 import { getCardByKey, cardList } from "@/static/list/item/cardList"
 import { doEvent } from "@/core/objects/system/ActionEvent"
+import { enterHand } from "."
 
 /**
  * 发现卡牌（从卡牌池中随机抽取并选择，加入手牌）
@@ -61,7 +62,7 @@ export const discoverCard: EffectFunc = async (event, effect) => {
   for (const card of selectedCards) {
     if (addToHand) {
       // 加入手牌
-      target.cardPiles.handPile.push(card)
+      enterHand(card, target.cardPiles.handPile, target)
     } else {
       // 加入卡组
       const cardModifier = getCardModifier(target)
@@ -282,6 +283,18 @@ export const customCardChoice: EffectFunc = async (event, effect) => {
         break
       case "duplicate":
         cardModifier.addCardsFromSource(target, [card.key])
+        break
+      case "discard":
+        await doEvent({
+          key: "discard",
+          source: target,
+          medium: target,
+          target: card,
+          effectUnits: [{
+            key: "discard",
+            params: { sourcePileName: "handPile" }
+          }]
+        })
         break
       case "none":
       default:

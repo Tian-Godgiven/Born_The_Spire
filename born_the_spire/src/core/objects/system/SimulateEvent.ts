@@ -35,14 +35,14 @@ import { cloneDeep } from "lodash"
  * @param target 效果目标
  * @returns 修改后的效果单元（包含触发器修改后的参数）
  */
-export function simulateEffect(
+export async function simulateEffect(
     effectUnit: EffectUnit,
     source: EventParticipant,
     medium: EventParticipant,
     target: EventParticipant | EventParticipant[],
     info: Record<string, any> = {},
     effectUnits: EffectUnit[] = [effectUnit]
-): EffectUnit {
+): Promise<EffectUnit> {
     // 深拷贝 effect，避免修改原对象
     const mockEffectUnit = cloneDeep(effectUnit)
 
@@ -63,10 +63,10 @@ export function simulateEffect(
     const mockEffect = createEffectByUnit(mockEvent, mockEffectUnit)
 
     // 触发 before 触发器（触发器可以修改 mockEffect.params）
-    simulateTriggers(mockEffect, "before", 0)
+    await simulateTriggers(mockEffect, "before", 0)
 
     // 触发 after 触发器
-    simulateTriggers(mockEffect, "after", 0)
+    await simulateTriggers(mockEffect, "after", 0)
 
     // 返回修改后的 effectUnit
     return {
@@ -87,14 +87,14 @@ export function simulateEffect(
  * @param effectUnits 效果单元列表
  * @returns 修改后的效果单元列表
  */
-export function simulateEvent(
+export async function simulateEvent(
     key: string,
     source: EventParticipant,
     medium: EventParticipant,
     target: EventParticipant | EventParticipant[],
     effectUnits: EffectUnit[],
     info: Record<string, any> = {}
-): EffectUnit[] {
+): Promise<EffectUnit[]> {
     // 深拷贝所有 effectUnits
     const mockEffectUnits = cloneDeep(effectUnits)
 
@@ -112,16 +112,16 @@ export function simulateEvent(
     mockEvent.simulate = true
 
     // 触发事件级别的 before 触发器
-    simulateEventTriggers(mockEvent, "before", 0)
+    await simulateEventTriggers(mockEvent, "before", 0)
 
     // 触发每个效果的触发器
     for (const effect of mockEvent.effects) {
-        simulateTriggers(effect, "before", 1)
-        simulateTriggers(effect, "after", -1)
+        await simulateTriggers(effect, "before", 1)
+        await simulateTriggers(effect, "after", -1)
     }
 
     // 触发事件级别的 after 触发器
-    simulateEventTriggers(mockEvent, "after", 0)
+    await simulateEventTriggers(mockEvent, "after", 0)
 
     // 返回修改后的 effectUnits
     return mockEvent.effects.map(effect => ({
@@ -136,7 +136,7 @@ export function simulateEvent(
  *
  * 触发与效果相关的触发器，但不执行效果函数
  */
-function simulateTriggers(
+async function simulateTriggers(
     effect: Effect,
     when: "before" | "after",
     triggerLevel: number
@@ -151,19 +151,19 @@ function simulateTriggers(
 
     // 触发 source 的触发器
     if (isEntity(event.source)) {
-        event.source.makeEvent(when, effect.key, event, effect, triggerLevel)
+        await event.source.makeEvent(when, effect.key, event, effect, triggerLevel)
     }
 
     // 触发 medium 的触发器
     if (isEntity(event.medium)) {
-        event.medium.viaEvent(when, effect.key, event, effect, triggerLevel)
+        await event.medium.viaEvent(when, effect.key, event, effect, triggerLevel)
     }
 
     // 触发 target 的触发器
     const targets = Array.isArray(event.target) ? event.target : [event.target]
     for (const t of targets) {
         if (isEntity(t)) {
-            t.takeEvent(when, effect.key, event, effect, triggerLevel)
+            await t.takeEvent(when, effect.key, event, effect, triggerLevel)
         }
     }
 }
@@ -173,7 +173,7 @@ function simulateTriggers(
  *
  * 触发与事件相关的触发器
  */
-function simulateEventTriggers(
+async function simulateEventTriggers(
     event: ActionEvent,
     when: "before" | "after",
     triggerLevel: number
@@ -186,19 +186,19 @@ function simulateEventTriggers(
 
     // 触发 source 的触发器
     if (isEntity(event.source)) {
-        event.source.makeEvent(when, event.key, event, null, triggerLevel)
+        await event.source.makeEvent(when, event.key, event, null, triggerLevel)
     }
 
     // 触发 medium 的触发器
     if (isEntity(event.medium)) {
-        event.medium.viaEvent(when, event.key, event, null, triggerLevel)
+        await event.medium.viaEvent(when, event.key, event, null, triggerLevel)
     }
 
     // 触发 target 的触发器
     const targets = Array.isArray(event.target) ? event.target : [event.target]
     for (const t of targets) {
         if (isEntity(t)) {
-            t.takeEvent(when, event.key, event, null, triggerLevel)
+            await t.takeEvent(when, event.key, event, null, triggerLevel)
         }
     }
 }
@@ -217,12 +217,12 @@ export function isSimulateMode(event: ActionEvent): boolean {
  *
  * 用于意图系统计算受 Buff 影响后的伤害
  */
-export function simulateDamage(
+export async function simulateDamage(
     baseDamage: number,
     source: Entity,
     target: Entity
-): number {
-    const result = simulateEffect(
+): Promise<number> {
+    const result = await simulateEffect(
         {
             key: "damage",
             params: { value: baseDamage }
@@ -240,12 +240,12 @@ export function simulateDamage(
  *
  * 用于意图系统计算受 Buff 影响后的格挡
  */
-export function simulateBlock(
+export async function simulateBlock(
     baseBlock: number,
     source: Entity,
     target: Entity
-): number {
-    const result = simulateEffect(
+): Promise<number> {
+    const result = await simulateEffect(
         {
             key: "block",
             params: { value: baseBlock }

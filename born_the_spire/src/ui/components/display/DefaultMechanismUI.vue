@@ -23,9 +23,9 @@ const mechanismValue = computed(() => {
     const location = config.data.location
 
     if (location === "current") {
-        return entity.current[storageKey.value]?.value ?? 0
+        return Number(entity.current[storageKey.value]?.value ?? 0)
     } else if (location === "status") {
-        return entity.status[storageKey.value]?.value ?? 0
+        return Number(entity.status[storageKey.value]?.value ?? 0)
     }
 
     return 0

@@ -5,12 +5,14 @@
 
 import { modLoader } from './ModLoader'
 import { xdnmbMod } from './xdnmb'
+import { slayTheSpireMod } from './slayTheSpire'
 
 /**
  * 注册所有内置 mod
  */
 function registerAllMods(): void {
     modLoader.registerMod(xdnmbMod)
+    modLoader.registerMod(slayTheSpireMod)
 }
 
 /**

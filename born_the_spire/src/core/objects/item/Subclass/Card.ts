@@ -11,6 +11,7 @@ import { getStatusValue } from "@/core/objects/system/status/Status";
 import { getCardModifier } from "@/core/objects/system/modifier/CardModifier";
 import { getEntryModifier } from "@/core/objects/system/modifier/EntryModifier";
 import type { TemporaryEffectConfig } from "@/core/effects/card/addTemporaryEffect";
+import { createTriggerByTriggerMap } from "@/core/objects/system/trigger/Trigger";
 
 export type CardMap = ItemMap & {
     status:{
@@ -50,6 +51,7 @@ export class Card extends Item{
     public isTemporary: boolean = false  // 是否为临时卡牌
     public temporaryRemoveOn?: "battleEnd" | "turnEnd" | "floorEnd"  // 临时卡牌的移除时机
     public _temporaryEffects?: TemporaryEffectConfig[]  // 临时效果列表
+    private _inHandCleanups: (() => void)[] = []  // inHand 交互的清理函数
 
     constructor(map:CardMap){
         super(map)
@@ -84,6 +86,69 @@ export class Card extends Item{
                 }
             }
         }
+    }
+
+    /**
+     * 挂载 inHand 交互（卡牌进入手牌时调用）
+     * 处理 triggers、effects、modifiers，与 possess 交互行为一致
+     */
+    mountInHand(owner: Entity) {
+        const inHandInteraction = this.getInteraction("inHand")
+        if (!inHandInteraction) return
+        if (this._inHandCleanups.length > 0) return  // 已挂载
+
+        // 1. 处理 triggers
+        if (inHandInteraction.triggers) {
+            for (const triggerDef of inHandInteraction.triggers) {
+                const triggerObj = createTriggerByTriggerMap(this, owner, triggerDef)
+                const { remove } = owner.trigger.appendTrigger(triggerObj)
+                this._inHandCleanups.push(remove)
+            }
+        }
+
+        // 2. 处理 modifiers
+        if (inHandInteraction.modifiers) {
+            for (const modifierDef of inHandInteraction.modifiers) {
+                const status = owner.status[modifierDef.statusKey]
+                if (!status) continue
+                const remover = status.addByJSON(this, {
+                    targetLayer: modifierDef.targetLayer || "current",
+                    modifierType: modifierDef.modifierType || "additive",
+                    applyMode: modifierDef.applyMode || "absolute",
+                    modifierValue: modifierDef.modifierValue || 0,
+                    clearable: modifierDef.clearable,
+                    modifierFunc: modifierDef.modifierFunc
+                })
+                this._inHandCleanups.push(remover)
+            }
+        }
+
+        // 3. 处理 effects
+        if (inHandInteraction.effects && inHandInteraction.effects.length > 0) {
+            doEvent({
+                key: "inHandCard",
+                source: this,
+                medium: this,
+                target: owner,
+                effectUnits: inHandInteraction.effects,
+                onComplete: (event) => {
+                    const sideEffects = event.getSideEffects()
+                    for (const remover of sideEffects) {
+                        this._inHandCleanups.push(remover)
+                    }
+                }
+            })
+        }
+    }
+
+    /**
+     * 卸载 inHand 交互（卡牌离开手牌时调用）
+     */
+    unmountInHand() {
+        for (const remove of this._inHandCleanups) {
+            remove()
+        }
+        this._inHandCleanups = []
     }
 
     /**

@@ -4,8 +4,9 @@ import { doEvent, handleEventEntity } from "@/core/objects/system/ActionEvent";
 import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc";
 import type { CardPiles } from "@/core/objects/target/Player";
 import { Player } from "@/core/objects/target/Player";
-import { cardMove } from ".";
+import { cardMove, leaveHand } from ".";
 import { isCard } from "@/core/utils/typeGuards";
+import type { Entity } from "@/core/objects/system/Entity";
 
 //从指定牌堆丢弃指定的卡牌到弃牌堆
 export const discardCard:EffectFunc = (event,effect)=>{
@@ -16,11 +17,12 @@ export const discardCard:EffectFunc = (event,effect)=>{
     const pileName = effect.params.sourcePileName as keyof CardPiles
     const pile = effect.params.sourcePile as Card[]
     const sourcePile = pile??medium.cardPiles[pileName]
+    const handContext = {handPile:medium.cardPiles.handPile, owner:medium as Entity}
     //丢弃的目标是 event.target（卡牌或卡牌数组）
     handleEventEntity(target,(card)=>{
         if (isCard(card)) {
             //移动到弃牌堆
-            cardMove(sourcePile,card,medium.cardPiles.discardPile)
+            cardMove(sourcePile,card,medium.cardPiles.discardPile,handContext)
         }
     })
 }
@@ -34,11 +36,12 @@ export const pay_discardCard:EffectFunc = (event,effect)=>{
     const pileName = effect.params.sourcePileName as keyof CardPiles
     const pile = effect.params.sourcePile as Card[]
     const sourcePile = pile??source.cardPiles[pileName]
+    const handContext = {handPile:source.cardPiles.handPile, owner:source as Entity}
     //丢弃的目标是 event.target（卡牌或卡牌数组）
     handleEventEntity(target,(card)=>{
         if (isCard(card)) {
             //移动到弃牌堆
-            cardMove(sourcePile,card,source.cardPiles.discardPile)
+            cardMove(sourcePile,card,source.cardPiles.discardPile,handContext)
         }
     })
 }
@@ -66,10 +69,32 @@ export const pay_exhaustCard:EffectFunc = (event,effect)=>{
         if (!isCard(cardEntity)) return;
         const card = cardEntity as Card;
         //移动到消耗堆
-        cardMove(sourcePile,card,source.cardPiles.exhaustPile)
+        cardMove(sourcePile,card,source.cardPiles.exhaustPile,{handPile:source.cardPiles.handPile, owner:source as Entity})
     })
 }
 
+
+/**
+ * 能力牌使用后：从牌堆中移除，不放入任何堆
+ * 不走 cardMove（没有目标牌堆），直接用 leaveHand 处理手牌情况
+ */
+export const pay_removePower:EffectFunc = (event,effect)=>{
+    const {source, target} = event
+    if(source instanceof Player == false) return;
+    const pile = effect.params.sourcePile as Card[]
+    const pileName = effect.params.sourcePileName as keyof CardPiles
+    const sourcePile = pile ?? source.cardPiles[pileName]
+    handleEventEntity(target,(cardEntity)=>{
+        if (!isCard(cardEntity)) return
+        const card = cardEntity as Card
+        if (sourcePile === source.cardPiles.handPile) {
+            leaveHand(card, sourcePile)
+        } else {
+            const index = sourcePile.findIndex(c => c.__id === card.__id)
+            if (index >= 0) sourcePile.splice(index, 1)
+        }
+    })
+}
 
 //丢弃目标的所有卡牌
 export const discardAllCard:EffectFunc = async(event,effect)=>{

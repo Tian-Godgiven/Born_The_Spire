@@ -5,6 +5,7 @@ import { getStatusValue } from "../status/Status";
 import { getCurrentValue } from "../Current/current";
 import { newError } from "@/ui/hooks/global/alert";
 import { getContextRandom } from "@/core/hooks/random";
+import { resolveReference, resolveReferenceObject } from "@/core/utils/ReferenceResolver";
 
 //效果参数
 export type EffectParams = {
@@ -13,124 +14,37 @@ export type EffectParams = {
         |string
         |number
         |Record<string,any>
-        |`$r.${string}` //表示从event._result中取string的值作为该paramKey的值
-        |`$${string}.${string}.${string}` //表示从事件参与者获取值，如 $source.stack.default
-        |`$random[${string}]` //表示随机值，如 $random[1,9] 或 $random[1.5,3.5]
+        |`$eventResult(${string})`
+        |`$triggerEffect.params(${string})`
+        |`$${string}.${string}(${string})`
+        |`random(${string},${string})`
 }
 
 /**
  * 解析效果参数
  *
- * 支持的语法：
- * - $r.xxx: 从事件结果获取
- * - $triggerValue: 使用触发事件的值（仅在触发器上下文中有效）
- * - $source.stack.xxx: 从 source 状态获取层数
- * - $medium.stack.xxx: 从 medium 状态获取层数
- * - $target.stack.xxx: 从 target 状态获取层数
- * - $source.status.xxx: 从 source 获取属性值
- * - $target.current.xxx: 从 target 获取当前值
- * - $random[min,max]: 生成随机数（整数或浮点数）
+ * 语法：
+ * - $eventResult(key): 从事件结果获取
+ * - $triggerEffect.params(key): 触发效果参数（延迟解析）
+ * - $source.status(health): 从 source 获取属性值
+ * - $target.current(energy): 从 target 获取当前值
+ * - $source.stateStack(key): 从 source 获取状态层数（key 可选，默认 default）
+ * - random(min,max): 生成随机数（不带 $）
  */
-export function resolveEffectParams(param: EffectParams[string], event: ActionEvent, _effect: Effect) {
-    if (typeof param !== "string" || !param.startsWith("$")) {
-        return param
+export function resolveEffectParams(param: EffectParams[string], event: ActionEvent, effect: Effect) {
+    // 构建解析上下文
+    const context = {
+        source: event.source,
+        medium: event.medium,
+        target: event.target,
+        event,
+        triggerEffect: effect,
+        lazyResolve: true,  // 效果构造时，$triggerEffect.params() 延迟解析
+        battle: (window as any).nowBattle?.value
     }
 
-    // 旧语法：$r.xxx（从事件结果获取）
-    if (param.startsWith("$r.")) {
-        const key = param.substring(3)
-        return event.getEventResult(key)
-    }
-
-    // 特殊 token：$triggerValue（在触发器上下文中由效果函数自己处理）
-    if (param === "$triggerValue") {
-        return param  // 原样返回，让效果函数在运行时处理
-    }
-
-    // 随机值语法：$random[min,max]
-    if (param.startsWith("$random[") && param.endsWith("]")) {
-        const rangeStr = param.substring(8, param.length - 1) // 提取 "min,max"
-        const parts = rangeStr.split(",")
-
-        if (parts.length !== 2) {
-            newError([`随机值解析失败：格式错误 "${param}"，应为 $random[min,max]`])
-            return undefined
-        }
-
-        const min = Number(parts[0].trim())
-        const max = Number(parts[1].trim())
-
-        if (isNaN(min) || isNaN(max)) {
-            newError([`随机值解析失败：无效的数值 "${param}"`])
-            return undefined
-        }
-
-        if (min > max) {
-            newError([`随机值解析失败：最小值不能大于最大值 "${param}"`])
-            return undefined
-        }
-
-        // 判断是整数还是浮点数（如果 min 和 max 都是整数，则生成整数随机值）
-        const isInteger = Number.isInteger(min) && Number.isInteger(max)
-
-        // 使用确定性随机数生成器
-        const rng = getContextRandom("effectParam")
-
-        if (isInteger) {
-            // 生成整数随机值 [min, max]
-            return rng.nextInt(min, max)
-        } else {
-            // 生成浮点数随机值 [min, max)
-            return min + rng.next() * (max - min)
-        }
-    }
-
-    // 新语法：$participant.type.key
-    const parts = param.substring(1).split(".")
-    if (parts.length !== 3) {
-        newError([`参数解析失败：无法解析 "${param}"，格式应为 $participant.type.key`])
-        return undefined
-    }
-
-    const [participantStr, typeStr, key] = parts
-
-    // 获取参与者对象
-    let participant: any
-    if (participantStr === "source") {
-        participant = event.source
-    } else if (participantStr === "medium") {
-        participant = event.medium
-    } else if (participantStr === "target") {
-        participant = event.target
-    } else {
-        newError([`参数解析失败：未知的参与者 "${participantStr}"，可选值为 source/medium/target`])
-        return undefined
-    }
-
-    // 根据类型获取值
-    if (typeStr === "stack") {
-        // 获取状态层数
-        if (isState(participant)) {
-            const stack = participant.stacks.find(s => s.key === key)
-            if (!stack) {
-                newError([`参数解析失败：状态`, participant, `中找不到层数 "${key}"`])
-                return undefined
-            }
-            return stack.stack
-        } else {
-            newError([`参数解析失败：${participantStr} (`, participant, `) 不是 State 对象，无法获取 stack`])
-            return undefined
-        }
-    } else if (typeStr === "status") {
-        // 获取属性值
-        return getStatusValue(participant, key)
-    } else if (typeStr === "current") {
-        // 获取当前值
-        return getCurrentValue(participant, key, 0)
-    } else {
-        newError([`参数解析失败：未知的类型 "${typeStr}"，可选值为 stack/status/current`])
-        return undefined
-    }
+    // 使用 ReferenceResolver 处理所有解析
+    return resolveReference(param, context)
 }
 
 export type EffectFunc<R=any> = (
@@ -177,6 +91,28 @@ export async function doEffectFunc(effect: Effect, override_event?:Partial<Actio
     const effectFunc = effect.effectFunc;
     //计算效果此时的参数应用值
     countEffectValue(effect);
+
+    // 重新解析延迟参数（如 $triggerEffect.params）
+    const context = {
+        source: event.source,
+        medium: event.medium,
+        target: event.target,
+        event,
+        triggerEffect: effect,
+        lazyResolve: false,  // 现在真正解析
+        battle: (window as any).nowBattle?.value
+    }
+
+    // 重新解析所有可能是延迟引用的参数
+    for (const key in effect.params) {
+        const param = effect.params[key]
+        if (typeof param === "string" && (param.startsWith("$triggerEffect") || param === "$triggerValue")) {
+            const resolved = resolveReference(param, context)
+            if (resolved !== undefined) {
+                effect.params[key] = resolved
+            }
+        }
+    }
 
     // 如果有覆盖属性，临时修改 actionEvent
     const originalTarget = event.target

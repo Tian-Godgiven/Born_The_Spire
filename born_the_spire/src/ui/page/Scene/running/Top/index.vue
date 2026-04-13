@@ -112,7 +112,7 @@
         if (!nowPlayer || !nowPlayer.status) {
             return []
         }
-        const maxNum = getStatusValue(nowPlayer, "max-potion")
+        const maxNum = Number(getStatusValue(nowPlayer, "max-potion"))
         const potionModifier = getPotionModifier(nowPlayer)
         const list: (Potion | null)[] = [...potionModifier.potions.value]
         while (list.length < maxNum) {

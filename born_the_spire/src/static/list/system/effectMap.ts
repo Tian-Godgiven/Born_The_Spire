@@ -4,10 +4,10 @@ import { healTo } from "@/core/effects/health/heal"
 import type { EffectUnit } from "@/core/objects/system/effect/EffectUnit"
 import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import { ActionEvent, handleEventEntity } from "@/core/objects/system/ActionEvent"
-import { drawFromDrawPile } from "@/core/effects/card/drawCard"
+import { drawCard, drawFromDrawPile } from "@/core/effects/card/drawCard"
 import { costEnergy, emptyEnergy, getEnergy, pay_costEnergy } from "@/core/effects/energy"
 import { newError } from "@/ui/hooks/global/alert"
-import { discardCard, pay_discardCard, pay_exhaustCard, discardAllCard } from "@/core/effects/card/discard"
+import { discardCard, pay_discardCard, pay_exhaustCard, pay_removePower, discardAllCard } from "@/core/effects/card/discard"
 import { voidExhaust, moveInherentToHand } from "@/core/effects/card/entryEffects"
 import { fragileBreak, regenerateMass } from "@/core/effects/organ/organEntryEffects"
 import { applyState, removeState, changeStateStack } from "@/core/effects/state/stateControl"
@@ -38,8 +38,11 @@ import { card_wasteHeatRecovery } from "@/core/effects/card/cardSpecificEffects"
 import { addCardToHand } from "@/core/effects/card/addCardToHand"
 import { countAndTrigger } from "@/core/effects/status/countAndTrigger"
 import { toggleStatus } from "@/core/effects/status/toggleStatus"
-import { disableRandomOrgans, disableRandomOrgansForTarget, cleanupAllDisabledOrgans, isOrganDisabled } from "@/core/effects/organ/disableOrgan"
+import { disableOrgan, disableRandomOrgans, cleanupAllDisabledOrgans, isOrganDisabled } from "@/core/effects/organ/disableOrgan"
 import { giveTemporaryEffectToRandomCards } from "@/core/effects/card/giveTemporaryEffectToRandomCards"
+import { repeatEffects } from "@/core/effects/composite/repeatEffects"
+import { chooseHandCardDiscard } from "@/core/effects/card/chooseHandCard"
+import { artifactBlockDebuff } from "@/core/effects/state/artifactBlock"
 
 type EffectData = {
     label?:string,
@@ -160,7 +163,11 @@ export const effectMap:EffectData[] = [
         return Number(effect.params.value)
     }
 },{
-    label:"从牌堆中抽牌",
+    label:"抽牌",
+    key:"drawCard",
+    effect:drawCard
+},{
+    label:"从抽牌堆中抽牌",
     key:"drawFromDrawPile",
     effect:drawFromDrawPile
 },{
@@ -191,6 +198,10 @@ export const effectMap:EffectData[] = [
     label:"消耗卡牌",
     key:"pay_exhaust",
     effect:pay_exhaustCard
+},{
+    label:"能力牌移除",
+    key:"pay_removePower",
+    effect:pay_removePower
 },{
     label:"弃掉所有卡牌",
     key:"discardAllCard",
@@ -443,6 +454,10 @@ export const effectMap:EffectData[] = [
     key:"addTemporaryEffect",
     effect:addTemporaryEffect
 },{
+    label:"禁用器官",
+    key:"disableOrgan",
+    effect:disableOrgan
+},{
     label:"随机禁用器官",
     key:"disableRandomOrgans",
     effect:disableRandomOrgans
@@ -450,5 +465,17 @@ export const effectMap:EffectData[] = [
     label:"给随机卡牌添加临时效果",
     key:"giveTemporaryEffectToRandomCards",
     effect:giveTemporaryEffectToRandomCards
+},{
+    label:"重复执行效果",
+    key:"repeatEffects",
+    effect:repeatEffects
+},{
+    label:"从手牌选择卡牌丢弃",
+    key:"chooseHandCardDiscard",
+    effect:chooseHandCardDiscard
+},{
+    label:"人工制品抵消负面效果",
+    key:"artifactBlockDebuff",
+    effect:artifactBlockDebuff
 }]
 

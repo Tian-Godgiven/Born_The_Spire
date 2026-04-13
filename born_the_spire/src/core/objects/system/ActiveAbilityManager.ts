@@ -200,7 +200,7 @@ export class ActiveAbilityManager {
     ): Promise<boolean> {
         // 应用消耗
         if (ability.restrictions) {
-            const costApplied = this.restrictionChecker.applyCosts(ability.restrictions, owner)
+            const costApplied = this.restrictionChecker.applyCosts(ability.restrictions, owner, item)
             if (!costApplied) {
                 newError(["应用消耗失败"])
                 return false
@@ -266,7 +266,7 @@ export class ActiveAbilityManager {
 
         // 应用消耗
         if (ability.restrictions) {
-            const costApplied = this.restrictionChecker.applyCosts(ability.restrictions, owner)
+            const costApplied = this.restrictionChecker.applyCosts(ability.restrictions, owner, item)
             if (!costApplied) {
                 newError(["应用消耗失败"])
                 return false
@@ -315,7 +315,7 @@ export class ActiveAbilityManager {
 
         // 应用消耗（只在激活时消耗）
         if (newState && ability.restrictions) {
-            const costApplied = this.restrictionChecker.applyCosts(ability.restrictions, owner)
+            const costApplied = this.restrictionChecker.applyCosts(ability.restrictions, owner, item)
             if (!costApplied) {
                 newError(["应用消耗失败"])
                 return false
@@ -365,7 +365,7 @@ export class ActiveAbilityManager {
     ): Promise<boolean> {
         // 应用消耗
         if (ability.restrictions) {
-            const costApplied = this.restrictionChecker.applyCosts(ability.restrictions, owner)
+            const costApplied = this.restrictionChecker.applyCosts(ability.restrictions, owner, item)
             if (!costApplied) {
                 newError(["应用消耗失败"])
                 return false

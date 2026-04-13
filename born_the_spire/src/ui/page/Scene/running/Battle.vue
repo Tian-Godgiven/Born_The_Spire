@@ -24,7 +24,7 @@
         @click="showCardPile('draw')">
         抽排堆：{{ drawNum }}
     </div>
-    <HandPile></HandPile>
+    <HandPile :class="{ 'hand-elevated': handCardSelectorActive }"></HandPile>
     <div class="discardPile center"
         @click="showCardPile('discard')">
         弃牌堆: {{ pileNum.discard }}
@@ -33,6 +33,9 @@
         @click="showCardPile('exhaust')">
         消耗堆: {{ pileNum.exhaust }}
     </div>
+
+    <!-- 手牌选择器 -->
+    <HandCardSelector />
 
     <!-- 奖励页面 -->
     <RewardPage />
@@ -50,6 +53,8 @@
     import AllFactions from '@/ui/components/object/Target/AllFactions.vue';
     import TurnDisplay from '@/ui/components/display/TurnDisplay.vue';
     import RewardPage from '@/ui/components/interaction/RewardPage.vue';
+    import HandCardSelector from '@/ui/components/interaction/HandCardSelector.vue';
+    import { handCardSelectorActive } from '@/ui/hooks/interaction/handCardSelector';
 
     // 防止重复完成房间
     const hasCompleted = ref(false)
@@ -86,7 +91,7 @@
     })
     //是否为玩家回合
     const isPlayerTurn = computed(() => {
-        return nowBattle.value?.nowTurn === "player"
+        return nowBattle.value?.nowTurn === "player" && !handCardSelectorActive.value
     })
     //牌堆数量
     const drawNum = computed(()=>{
@@ -155,6 +160,9 @@
         background: #999;
         color: #666;
     }
+}
+.hand-elevated {
+    z-index: 60 !important;
 }
 .handPile{
     z-index: 10;
