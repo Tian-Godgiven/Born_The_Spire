@@ -1,7 +1,7 @@
 import type { StateData } from "@/core/objects/system/State"
 
 export const stateList: StateData[] = [
-    // 力量：造成伤害时，伤害增加
+    // 力量：造成伤害时，伤害增加（允许负数，负数时减少伤害）
     {
         label: "力量",
         key: "power",
@@ -9,6 +9,7 @@ export const stateList: StateData[] = [
         describe: ["造成的伤害增加"],
         showType: "number",
         repeate: "stack",
+        allowNegative: true,
         interaction: {
             possess: {
                 triggers: [{
@@ -137,6 +138,7 @@ export const stateList: StateData[] = [
         describe: ["回合结束时失去等量力量"],
         showType: "number",
         repeate: "stack",
+        allowNegative: true,
         interaction: {
             possess: {
                 triggers: [{

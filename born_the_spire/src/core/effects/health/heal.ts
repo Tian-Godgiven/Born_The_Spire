@@ -20,37 +20,3 @@ export const healTo:EffectFunc = (event:ActionEvent,effect)=>{
     return true
 }
 
-/**
- * 增加最大生命值
- *
- * params:
- * - value: 增加的数值
- */
-export const gainMaxHealth: EffectFunc = (event, effect) => {
-    const value = Number(effect.params.value)
-    const { target } = event
-
-    handleEventEntity(target, (t) => {
-        if (!isEntity(t)) {
-            newError(["增加最大生命效果只能作用于实体对象，当前目标类型:", t.participantType])
-            return
-        }
-
-        // 使用 Status 对象的 addByJSON 方法增加最大生命
-        const maxHealthStatus = t.status["maxHealth"]
-        if (maxHealthStatus) {
-            maxHealthStatus.addByJSON(event.source, {
-                targetLayer: "base",
-                modifierType: "additive",
-                applyMode: "absolute",
-                modifierValue: value
-            })
-        }
-
-        // 同时回复等量生命
-        const oldValue = getCurrentValue(t, "health", 0)
-        changeCurrentValue(t, "health", oldValue + value, event)
-    })
-
-    return true
-}

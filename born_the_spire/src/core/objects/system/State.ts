@@ -66,6 +66,7 @@ export type StateData = {
     showType?: "number" | "bool"      // 状态显示类型
     repeate?: "stack" | "refresh" | "none"  // 重复获得时的行为
     stacks?: Stack[] | number         // 层数对象（可简写为数字）
+    allowNegative?: boolean           // 允许层数为负数时仍然存在（默认 false）
     checkExist?: (getter: Target, state: State) => boolean  // 检查状态是否还存在
     stackChange?: StackChangeRule[]   // 层数自动变化规则
     interaction?: StateInteractionData  // 状态交互
@@ -95,6 +96,7 @@ export class State implements EventParticipant {
     public showType: "number" | "bool" = "number"
     public stacks: Stack[]  // 层数对象数组
     public repeate: "stack" | "refresh" | "none" = "stack"
+    public allowNegative: boolean = false
     public checkExist: (getter: Target, state: State) => boolean
     public stackChange?: StackChangeRule[]  // 层数自动变化规则
     public interaction: StateInteractionData
@@ -108,6 +110,7 @@ export class State implements EventParticipant {
         this.describe = map.describe
         this.showType = map.showType ?? "number"
         this.repeate = map.repeate ?? "stack"
+        this.allowNegative = map.allowNegative ?? false
         this.checkExist = map.checkExist ?? defaultCheckExist
         this.stackChange = map.stackChange
         this.interaction = map.interaction ?? {}
@@ -144,14 +147,13 @@ export class State implements EventParticipant {
 // ==================== 工具函数 ====================
 
 /**
- * 默认的存在性检查：default 层数 > 0
+ * 默认的存在性检查：default 层数 !== 0（allowNegative 时）或 > 0
  */
-const defaultCheckExist = (getter: Target, state: State): boolean => {
-    const stack = getStateStack(getter, state.key, "default")
-    if (stack && stack > 0) {
-        return true
-    }
-    return false
+const defaultCheckExist = (_getter: Target, state: State): boolean => {
+    const stack = state.stacks.find(s => s.key === "default")
+    if (!stack) return false
+    if (state.allowNegative) return stack.stack !== 0
+    return stack.stack > 0
 }
 
 /**

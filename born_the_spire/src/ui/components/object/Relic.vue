@@ -7,32 +7,21 @@
     @click="handleClick"
     @contextmenu.prevent="handleRightClick">
 
-    <!-- 主动能力标识 -->
-    <div class="ability-indicator" v-if="hasActiveAbilities">
+    <!-- 自动角标：主动能力标识 -->
+    <div class="badge top-left auto-ability" v-if="hasActiveAbilities">
         ⚡
     </div>
 
-    <!-- 冷却角标 -->
-    <div class="cooldown-badge" v-if="cooldownValue !== null">
-        {{ cooldownValue > 0 ? cooldownValue : '✓' }}
-    </div>
-
-    <!-- 点数角标 -->
-    <div class="point-badge" v-if="pointValue !== null">
-        {{ pointValue }}
-    </div>
-
-    <!-- 其他状态角标（如命运之轮的模式） -->
-    <template v-for="(status, key) in relic.status" :key="key">
-        <div class="status-badge" v-if="shouldShowStatusBadge(key, status)">
-            {{ getStatusBadgeText(key, status) }}
-        </div>
-    </template>
-
-    <!-- 计数角标（如命运之轮的抽牌计数 2/5） -->
-    <template v-for="(status, key) in relic.status" :key="'counter-' + key">
-        <div class="counter-badge" v-if="shouldShowCounterBadge(key, status)">
-            {{ status.value }}/{{ getCounterMax(status) }}
+    <!-- 统一角标渲染 -->
+    <template v-for="(group, position) in badgesByPosition" :key="position">
+        <div class="badge-group" :class="position">
+            <div
+                v-for="(badge, index) in group"
+                :key="index"
+                class="badge"
+                :style="badge.style">
+                {{ badge.text }}
+            </div>
         </div>
     </template>
 
@@ -69,11 +58,14 @@
 
 <script setup lang='ts'>
     import { Relic } from '@/core/objects/item/Subclass/Relic';
-    import { computed, ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
+    import { computed, ref, nextTick } from 'vue';
     import { handleItemRightClick } from '@/core/hooks/activeAbility';
     import { nowPlayer } from '@/core/objects/game/run';
     import { getDescribe } from '@/ui/hooks/express/describe';
     import { showRelicList } from '@/ui/interaction/relicList';
+    import { resolveBadges } from '@/core/utils/badgeResolver';
+    import { nowBattle } from '@/core/objects/game/battle';
+    import type { BadgeRenderData, BadgePosition } from '@/core/types/BadgeConfig';
 
     const {relic} = defineProps<{relic:Relic}>()
 
@@ -86,11 +78,6 @@
         return relic.activeAbilities && relic.activeAbilities.length > 0
     })
 
-    const cooldownValue = computed(() => {
-        if (!relic.status || !relic.status["cooldown"]) return null
-        return Number(relic.status["cooldown"].value)
-    })
-
     const isUsedUp = computed(() => {
         if (!relic.status || !relic.status["used"]) return false
         const used = relic.status["used"].value
@@ -101,67 +88,24 @@
         return false
     })
 
-    const pointValue = computed(() => {
-        // 已用完的遗物不显示计数器
-        if (isUsedUp.value) return null
-        if (!relic.status || !relic.status["point"]) return null
-        const point = relic.status["point"].value
-        const maxPoint = relic.status["maxPoint"]?.value
-        if (maxPoint !== undefined) {
-            return `${point}/${maxPoint}`
-        }
-        return point
+    // 统一角标计算
+    const resolvedBadges = computed(() => {
+        const badges = relic.badges
+        if (!badges || badges.length === 0) return []
+        return resolveBadges(relic, nowPlayer, badges, { battle: nowBattle.value })
     })
 
-    // 判断是否应该显示某个状态的角标
-    const shouldShowStatusBadge = (key: string, status: any) => {
-        // skip special keys
-        if (key === 'cooldown' || key === 'used' || key === 'point' || key === 'maxPoint' || key === 'maxUse') {
-            return false
+    // 按位置分组（同位置的角标在一行内依次显示）
+    const badgesByPosition = computed(() => {
+        const groups: Partial<Record<BadgePosition, BadgeRenderData[]>> = {}
+        for (const badge of resolvedBadges.value) {
+            if (!groups[badge.position]) {
+                groups[badge.position] = []
+            }
+            groups[badge.position]!.push(badge)
         }
-        if (!status) return false
-        // 明确标记不显示的状态
-        if (status.display === false || status.hidden === true) return false
-        // 有 max 的状态作为计数器显示，不走 status-badge
-        if (status.max !== undefined) return false
-        // 有 displayMap 的状态显示（如模式切换）
-        if (status.displayMap) return true
-        // 非 calc 的状态显示（calc=false 表示不计算，直接显示）
-        if (status.calc === false) return true
-        // 如果不是数字类型（如字符串 "even"/"odd"），也显示
-        if (typeof status.value === 'string') return true
-        return false
-    }
-
-    // 判断是否应该显示计数角标
-    const shouldShowCounterBadge = (key: string, status: any) => {
-        if (!status) return false
-        if (status.hidden === true) return false
-        return status.max !== undefined || status.maxFrom !== undefined
-    }
-
-    // 获取计数器的最大值（支持静态 max 和动态 maxFrom）
-    const getCounterMax = (status: any) => {
-        if (status.max !== undefined) return status.max
-        if (status.maxFrom && relic.status[status.maxFrom]) {
-            return relic.status[status.maxFrom].value
-        }
-        return '?'
-    }
-
-    // 获取状态角标的显示文本
-    const getStatusBadgeText = (key: string, status: any) => {
-        if (!status) return ''
-        // 如果有 displayMap，优先使用
-        if (status.displayMap && status.value in status.displayMap) {
-            return status.displayMap[status.value]
-        }
-        // 如果有自定义 label，显示 label；否则直接显示值
-        if (status.label && status.label.value !== undefined) {
-            return status.label.value
-        }
-        return status.value
-    }
+        return groups
+    })
 
     const rarityText = computed(() => {
         const rarityMap = {
@@ -300,7 +244,8 @@
         }
     }
 
-    .ability-indicator {
+    // 自动角标：主动能力标识
+    .badge.auto-ability {
         position: absolute;
         top: -2px;
         left: -2px;
@@ -313,64 +258,52 @@
         z-index: 1;
     }
 
-    .cooldown-badge {
+    // 角标组（同位置多个角标在一行内排列）
+    .badge-group {
         position: absolute;
-        bottom: -2px;
-        right: -2px;
-        background-color: #666;
-        color: white;
-        font-size: 10px;
-        padding: 1px 3px;
-        font-weight: bold;
-        border-radius: 4px 0 0 0;
+        display: flex;
+        gap: 1px;
         z-index: 1;
-        min-width: 12px;
-        text-align: center;
-    }
 
-    .point-badge {
-        position: absolute;
-        bottom: -2px;
-        left: -2px;
-        background-color: #e67e22;
-        color: white;
-        font-size: 10px;
-        padding: 1px 3px;
-        font-weight: bold;
-        border-radius: 0 4px 0 0;
-        z-index: 1;
-        min-width: 12px;
-        text-align: center;
-    }
+        &.top-left {
+            top: -2px;
+            left: -2px;
 
-    .status-badge {
-        position: absolute;
-        top: -2px;
-        right: -2px;
-        background-color: #9b59b6;
-        color: white;
-        font-size: 10px;
-        padding: 1px 3px;
-        font-weight: bold;
-        border-radius: 0 0 0 4px;
-        z-index: 1;
-        min-width: 12px;
-        text-align: center;
-    }
+            .badge:first-child { border-radius: 0 0 4px 0; }
+            .badge:last-child { border-radius: 0 0 4px 0; }
+        }
 
-    .counter-badge {
-        position: absolute;
-        bottom: -2px;
-        left: -2px;
-        background-color: #2ecc71;
-        color: white;
-        font-size: 10px;
-        padding: 1px 3px;
-        font-weight: bold;
-        border-radius: 0 4px 0 0;
-        z-index: 1;
-        min-width: 12px;
-        text-align: center;
+        &.top-right {
+            top: -2px;
+            right: -2px;
+
+            .badge:first-child { border-radius: 0 0 0 4px; }
+            .badge:last-child { border-radius: 0 0 0 4px; }
+        }
+
+        &.bottom-left {
+            bottom: -2px;
+            left: -2px;
+
+            .badge:first-child { border-radius: 0 4px 0 0; }
+            .badge:last-child { border-radius: 0 4px 0 0; }
+        }
+
+        &.bottom-right {
+            bottom: -2px;
+            right: -2px;
+
+            .badge:first-child { border-radius: 4px 0 0 0; }
+            .badge:last-child { border-radius: 4px 0 0 0; }
+        }
+
+        .badge {
+            font-size: 10px;
+            padding: 1px 3px;
+            font-weight: bold;
+            min-width: 12px;
+            text-align: center;
+        }
     }
 
     &.is-disabled {

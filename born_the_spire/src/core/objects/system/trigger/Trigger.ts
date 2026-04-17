@@ -8,7 +8,6 @@ import { doEvent } from "../ActionEvent";
 import { nanoid } from "nanoid";
 import type { Item } from "../../item/Item";
 import { newError } from "@/ui/hooks/global/alert";
-import { setEventCollector, clearEventCollector } from "../../game/transaction";
 import { getCurrentTransaction } from "../../game/transaction";
 
 export { resolveTriggerEventTarget } from "./resolveTriggerEventTarget";
@@ -93,29 +92,17 @@ export class Trigger{
         const sortedTriggers = [...trigger].sort((a, b) => (b.level ?? 0) - (a.level ?? 0))
 
         // 依次触发所有trigger unit
-        // 关键设计：每个callback执行后立即await执行其收集的事件，再执行下一个callback
+        // 关键设计：每个callback执行后立即await执行其收集的子事件，再执行下一个callback
         // 这样可以保证：前一个trigger的effect真正执行完毕后，后一个trigger的condition检查才能看到最新状态
-        // 使用 actionEvent._transaction 而非 getCurrentTransaction()，因为后者在事务执行时会返回 null
         const tx = (actionEvent as any)._transaction ?? getCurrentTransaction()
-        for(let tmp of sortedTriggers){
-            const collector: ActionEvent[] = []
-            setEventCollector(collector)
-            await tmp.callback(actionEvent,effect,triggerLevel)
-            clearEventCollector()
-            if (collector.length > 0) {
-                if (!tx) {
-                    console.error("[Trigger] 事务引用丢失，触发器收集的事件无法执行", {
-                        triggerKey,
-                        when,
-                        how,
-                        eventCount: collector.length,
-                        eventKeys: collector.map(e => e.key)
-                    })
-                    continue
-                }
-                for (const e of collector) {
-                    await tx.executeEvent(e)
-                }
+        for (const tmp of sortedTriggers) {
+            if (tx) {
+                await tx.runWithCollector(async () => {
+                    await tmp.callback(actionEvent, effect, triggerLevel)
+                })
+            } else {
+                // 兜底：没有事务上下文时直接执行回调（理论上不应发生）
+                await tmp.callback(actionEvent, effect, triggerLevel)
             }
         }
     }

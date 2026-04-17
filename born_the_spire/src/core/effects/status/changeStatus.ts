@@ -3,6 +3,7 @@ import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc";
 import { changeStatusValue } from "@/core/objects/system/status/Status";
 import { newError } from "@/ui/hooks/global/alert";
 import { isEntity } from "@/core/utils/typeGuards";
+import { registerTimingCallback } from "@/core/hooks/timing";
 
 //增加属性基础值
 export const addStatusBase:EffectFunc = (event,effect)=>{
@@ -26,7 +27,32 @@ export const addStatusBase:EffectFunc = (event,effect)=>{
         // 收集副作用
         event.collectSideEffect(remover)
     })
+}
 
+//增加属性当前值（支持 removeTiming 自动卸载）
+export const addStatusCurrent:EffectFunc = (event,effect)=>{
+    const {source,medium,target} = event;
+    let {value=0,statusKey} = effect.params
+    const removeTiming = effect.params.removeTiming as string | undefined
+    if(!statusKey){
+        newError(["效果缺少目标属性的key"])
+    }
+    statusKey = String(statusKey)
+    value = Number(value)
+    handleEventEntity(target,(e)=>{
+        if (!isEntity(e)) return;
+        const remover = changeStatusValue(e,statusKey,{source,medium},{
+            "target":"current",
+            "type":"additive",
+            "value":value
+        })
+        event.collectSideEffect(remover)
+
+        // 如果指定了卸载时机，通过统一时机系统注册清理
+        if (removeTiming) {
+            registerTimingCallback(removeTiming, remover)
+        }
+    })
 }
 
 //直接设置属性基础值

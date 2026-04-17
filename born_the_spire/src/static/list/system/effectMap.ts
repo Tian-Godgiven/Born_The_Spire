@@ -11,7 +11,7 @@ import { discardCard, pay_discardCard, pay_exhaustCard, pay_removePower, discard
 import { voidExhaust, moveInherentToHand } from "@/core/effects/card/entryEffects"
 import { fragileBreak, regenerateMass } from "@/core/effects/organ/organEntryEffects"
 import { applyState, removeState, changeStateStack } from "@/core/effects/state/stateControl"
-import { addStatusBase, multiplyStatusBase, setCurrentToMax, setBaseStatus, decrementStatus, resetCooldown } from "@/core/effects/status/changeStatus"
+import { addStatusBase, addStatusCurrent, multiplyStatusBase, setCurrentToMax, setBaseStatus, decrementStatus, resetCooldown } from "@/core/effects/status/changeStatus"
 import { addCurrent, addStatusBaseCurrentValue } from "@/core/effects/current/changeCurrent"
 import { gainReserve, spendReserve } from "@/core/effects/reserve/reserve"
 import { killTarget, reviveTarget } from "@/core/effects/life/lifeControl"
@@ -20,7 +20,6 @@ import { removeOrganEffect } from "@/core/effects/organ/organRemoveEffect"
 import { upgradeCardEffect } from "@/core/effects/card/cardUpgradeEffect"
 import { removeCardEffect } from "@/core/effects/card/cardRemoveEffect"
 import { gainCard, gainPotion, gainRelic, gainOrgan } from "@/core/effects/item/gainItem"
-import { gainMaxHealth } from "@/core/effects/health/heal"
 import { isEntity } from "@/core/utils/typeGuards"
 import { discoverCard, chooseRandomCard, chooseCardUpgrade, chooseCardRemove, chooseCardDuplicate, customCardChoice } from "@/core/effects/card/cardChoice"
 import { cancelEvent, cancelCurrentEvent } from "@/core/effects/event/cancelEvent"
@@ -42,13 +41,18 @@ import { disableOrgan, disableRandomOrgans, cleanupAllDisabledOrgans, isOrganDis
 import { giveTemporaryEffectToRandomCards } from "@/core/effects/card/giveTemporaryEffectToRandomCards"
 import { repeatEffects } from "@/core/effects/composite/repeatEffects"
 import { chooseHandCardDiscard } from "@/core/effects/card/chooseHandCard"
+import { retrieveCardsToHand } from "@/core/effects/card/retrieveCards"
 import { artifactBlockDebuff } from "@/core/effects/state/artifactBlock"
+import { previewValue, previewModifyValue, previewModifyByPercent } from "@/core/utils/effectPreview"
+import { loseHealthTo } from "@/core/effects/health/loseHealth"
+import type { EffectParamsSchema } from "@/core/effects/validateEffectParams"
 
 type EffectData = {
     label?:string,
     key:string,
     effect:EffectFunc,//告知其对应的效果函数
-    preview?:(event: any, effect: any) => number | null  // 预览函数（可选）
+    preview?:(event: any, effect: any) => number | null,  // 预览函数（可选）
+    paramsSchema?: EffectParamsSchema  // 参数校验 schema（可选，声明后会在 Effect 构造时严格校验）
 }
 
 export function getFromEffectMap(unit:EffectUnit){
@@ -67,10 +71,7 @@ export const effectMap:EffectData[] = [
     label:"造成伤害",
     key:"damage",
     effect:damageTo,
-    preview:(event, effect) => {
-        // 预览时只返回伤害值，不真正扣血
-        return Number(effect.params.value)
-    }
+    preview: previewValue
 },
 //减少伤害值
 {
@@ -83,37 +84,14 @@ export const effectMap:EffectData[] = [
     label:"修改伤害值",
     key:"modifyDamageValue",
     effect:modifyDamageValue,
-    preview:(event, effect) => {
-        // 预览时应用修改到目标效果的 params.value
-        const delta = Number(effect.params.delta)
-        const targetEffect = event.effects[0]
-        if (targetEffect && targetEffect.key === "damage") {
-            const oldValue = Number(targetEffect.params.value)
-            const newValue = Math.max(0, oldValue + delta)
-            targetEffect.params.value = newValue
-            return newValue
-        }
-        return null
-    }
+    preview: previewModifyValue("damage")
 },
 //按百分比修改伤害值
 {
     label:"按百分比修改伤害值",
     key:"modifyDamageByPercent",
     effect:modifyDamageByPercent,
-    preview:(event, effect) => {
-        // 预览时应用百分比修改
-        const percent = Number(effect.params.percent)
-        const targetEffect = event.effects[0]
-        if (targetEffect && targetEffect.key === "damage") {
-            const oldValue = Number(targetEffect.params.value)
-            const delta = Math.round(oldValue * percent)
-            const newValue = Math.max(0, oldValue + delta)
-            targetEffect.params.value = newValue
-            return newValue
-        }
-        return null
-    }
+    preview: previewModifyByPercent("damage")
 },
 //收到伤害时，减少受到的伤害
 {
@@ -159,9 +137,7 @@ export const effectMap:EffectData[] = [
     effect:(event,effect)=>{
         healTo(event,effect)
     },
-    preview:(event, effect) => {
-        return Number(effect.params.value)
-    }
+    preview: previewValue
 },{
     label:"抽牌",
     key:"drawCard",
@@ -210,6 +186,10 @@ export const effectMap:EffectData[] = [
     label:"基础属性改变：加减",
     key:"addStatusBase",
     effect:addStatusBase
+},{
+    label:"当前属性改变：加减",
+    key:"addStatusCurrent",
+    effect:addStatusCurrent
 },{
     label:"基础属性直接设置",
     key:"setBaseStatus",
@@ -318,9 +298,7 @@ export const effectMap:EffectData[] = [
     label:"获得护甲",
     key:"gainArmor",
     effect:gainArmor,
-    preview:(event, effect) => {
-        return Number(effect.params.value)
-    }
+    preview: previewValue
 },{
     label:"第一回合额外抽牌",
     key:"addFirstTurnDraw",
@@ -349,10 +327,6 @@ export const effectMap:EffectData[] = [
     label:"移除器官",
     key:"removeOrgan",
     effect:removeOrganEffect
-},{
-    label:"增加最大生命",
-    key:"gainMaxHealth",
-    effect:gainMaxHealth
 },{
     label:"对器官造成质量伤害",
     key:"damageOrgan",
@@ -477,5 +451,14 @@ export const effectMap:EffectData[] = [
     label:"人工制品抵消负面效果",
     key:"artifactBlockDebuff",
     effect:artifactBlockDebuff
+},{
+    label:"从牌堆取回卡牌到手牌",
+    key:"retrieveCardsToHand",
+    effect:retrieveCardsToHand
+},{
+    label:"直接失去生命（绕过伤害）",
+    key:"loseHealth",
+    effect:loseHealthTo,
+    preview: previewValue
 }]
 

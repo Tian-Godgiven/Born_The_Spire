@@ -41,6 +41,55 @@ export const panaceaCard: CardMap = {
     }
 }
 
+/**
+ * 尖啸：所有敌人失去力量一回合，消耗
+ */
+export const piercingWailCard: CardMap = {
+    label: "尖啸",
+    tags: ["skill"],
+    entry: ["card_exhaust"],
+    status: {
+        cost: 1,
+        stacks: 6
+    },
+    describe: [
+        "所有敌人失去", { key: ["status", "stacks"] }, "点力量（一回合）。消耗。"
+    ],
+    key: "sts_card_piercing_wail",
+    interaction: {
+        use: {
+            target: { faction: "enemy", number: "all" },
+            effects: [{
+                key: "applyState",
+                params: { stateKey: "power", stacks: -6 }
+            }, {
+                key: "applyState",
+                params: { stateKey: "tempPower", stacks: -6 }
+            }]
+        }
+    },
+    upgradeConfig: {
+        maxLevel: 1,
+        levelConfigs: {
+            1: {
+                status: { stacks: 8 },
+                interaction: {
+                    use: {
+                        target: { faction: "enemy", number: "all" },
+                        effects: [{
+                            key: "applyState",
+                            params: { stateKey: "power", stacks: -8 }
+                        }, {
+                            key: "applyState",
+                            params: { stateKey: "tempPower", stacks: -8 }
+                        }]
+                    }
+                }
+            }
+        }
+    }
+}
+
 export const preparedCard: CardMap = {
     label: "准备",
     tags: ["skill"],

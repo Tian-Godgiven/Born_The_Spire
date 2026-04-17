@@ -430,6 +430,28 @@ export const cardList:CardMap[] = [{
             }]
         }
     }
+},
+// ========== 器官系列：弱化之刃 ==========
+{
+    label:"侵蚀",
+    tags:["skill"],
+    status:{
+        stacks:2,
+        cost:1
+    },
+    describe:[
+        "对目标施加",{key:["status","stacks"]},"层虚弱"
+    ],
+    key:"organ_card_erode",
+    interaction:{
+        use:{
+            target:{faction:"enemy"},
+            effects:[{
+                key:"applyState",
+                params:{stateKey:"weak", stacks:2}
+            }]
+        }
+    }
 }]
 
 export async function getCardByKey(key:string){

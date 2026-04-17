@@ -63,14 +63,14 @@ const currentRoom = computed(() => {
     return null
 })
 
-// 事件标题
+// 事件标题（随幕切换更新）
 const eventTitle = computed(() => {
-    return currentRoom.value?.eventConfig.title || ''
+    return currentRoom.value?.currentTitle || ''
 })
 
-// 事件描述
+// 事件描述（随幕切换更新）
 const eventDescription = computed(() => {
-    return currentRoom.value?.eventConfig.description || ''
+    return currentRoom.value?.currentDescription || ''
 })
 
 // 选项列表

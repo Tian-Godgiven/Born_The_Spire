@@ -505,9 +505,12 @@ export const organList:OrganMap[] = [
     {
         label: "不屈甲壳",
         key: "organ_resilient_shell",
-        describe: ["每累计受到10点伤害，获得1点护甲"],
+        describe: ["每累计受到10点伤害，获得1点护甲（", {key: ["status", "damage-taken"]}, "/10）"],
         rarity: OrganRarity.Common,
         part: OrganPartEnum.Skin,
+        badges: [
+            { type: "counter", status: "damage-taken", maxValue: 10 }
+        ],
         status: {
             "max-mass": 20,
             "damage-taken": 0
@@ -534,6 +537,43 @@ export const organList:OrganMap[] = [
             }
         }
     }
+,
+// ========== 器官系列：弱化之刃 ==========
+{
+    label:"腐蚀腺",
+    key:"organ_series_weaken_002",
+    describe:["提供1张",{"@": 0},"到牌组","对拥有虚弱的敌人造成伤害时，额外造成等同于虚弱层数的伤害"],
+    rarity: OrganRarity.Uncommon,
+    part: OrganPartEnum.Gland,
+    status: {
+        "max-mass": 30
+    },
+    current: ["mass"],
+    cards:["organ_card_erode"],
+    interaction:{
+        possess:{
+            target:{"key":"self"},
+            effects:[],
+            triggers:[{
+                when:"before",
+                how:"make",
+                key:"damage",
+                action:"bonusDamageVsWeak"
+            }]
+        }
+    },
+    reaction:{
+        bonusDamageVsWeak:[{
+            key:"bonusDamageVsWeak",
+            label:"腐蚀腺：虚弱增伤",
+            targetType:"triggerEffect",
+            effect:[{
+                key:"modifyDamageValue",
+                params:{ delta:"$triggerEffect.target.stateStack(weak)" }
+            }]
+        }]
+    }
+}
 ]
 
 //通过key来获取器官对象

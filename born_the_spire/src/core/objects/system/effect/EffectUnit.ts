@@ -11,6 +11,7 @@ export interface EffectUnit{
     params:EffectParams,//效果需要使用的参数
     describe?:string[]//解释型描述，并不会直接显示
     resultStoreAs?:string//该效果的返回值会存放在事件的_results的指定key下面
+    target?:string//独立目标（如 "allCardsByKey(xxx)"），设置后该效果会作为独立子事件执行
 }
 
 //通过effectUnit创建effect对象
@@ -34,7 +35,7 @@ export function createEffectByUnit(event:ActionEvent,unit:EffectUnit):Effect{
     }
 
     //构建effect对象
-    const {key,params,describe,resultStoreAs} = unit
+    const {key,params,describe,resultStoreAs,target} = unit
 
     // 使用 JSON 深拷贝
     let clonedParams: EffectParams
@@ -55,5 +56,9 @@ export function createEffectByUnit(event:ActionEvent,unit:EffectUnit):Effect{
         triggerEvent:event,
         resultStoreAs
     })
+    // 传递独立目标规格
+    if (target) {
+        effectObj.targetSpec = target
+    }
     return effectObj
 }

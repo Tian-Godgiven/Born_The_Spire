@@ -1,450 +1,213 @@
 import { newError } from "@/ui/hooks/global/alert"
+import { needsReferenceResolution } from "@/core/utils/ReferenceResolver"
+import { getLazyModule } from "@/core/utils/lazyLoader"
 
 /**
- * 效果参数验证系统
+ * 效果参数验证系统（可选）
  *
- * 用于在运行时验证 EffectUnit 的 params 是否符合预期
- * 提供清晰的错误信息，帮助开发者和mod作者正确使用效果系统
+ * 职责：当效果在 effectMap 里声明了 paramsSchema 时，对 params 做严格的类型/必填校验。
+ * 不做类型转换、不注入默认值（默认值由效果函数自己处理）。
+ *
+ * 设计原则：
+ *   - 可选：没声明 schema 的效果完全跳过，不发 warning
+ *   - 严格：有 schema 就严格查，错了只报错，不擅自转型
+ *   - 轻量：只覆盖真正能抓到 mod 作者错误的类型
+ *   - 统一：$xxx / random() 引用豁免走 ReferenceResolver.needsResolution
  */
 
-// 参数类型定义
-type ParamType = "string" | "number" | "boolean" | "array" | "object" | "any"
+// ==================== 类型定义 ====================
 
-// 参数定义
-interface ParamDef {
-  type: ParamType | ParamType[]  // 允许的类型（可以是多个）
-  required?: boolean              // 是否必需（默认true）
-  default?: any                   // 默认值（如果提供，则required自动为false）
-  description?: string            // 参数说明
-  validate?: (value: any) => boolean  // 自定义验证函数
-}
+/**
+ * 参数类型
+ *
+ * 基础类型：string / number / boolean / array / object / any
+ * 内容 key 类型：检查字符串是否存在于对应注册表
+ */
+export type ParamType =
+    | "string"
+    | "number"
+    | "boolean"
+    | "array"
+    | "object"
+    | "any"
+    | "cardKey"
+    | "organKey"
+    | "relicKey"
+    | "potionKey"
+    | "enemyKey"
+    | "eventKey"
 
-// 效果参数schema定义
-interface EffectParamsSchema {
-  [paramName: string]: ParamDef
-}
-
-// 所有效果的参数schema
-const effectParamsSchemas: Record<string, EffectParamsSchema> = {
-  // ========== 伤害相关 ==========
-  damage: {
-    value: { type: "number", description: "伤害值" }
-  },
-
-  modifyDamageValue: {
-    delta: { type: "number", description: "伤害修改量（正数增加，负数减少）" }
-  },
-
-  modifyDamageByPercent: {
-    percent: { type: "number", description: "伤害修改百分比（1.0 = 100%）" }
-  },
-
-  // ========== 治疗相关 ==========
-  heal: {
-    value: { type: "number", description: "治疗值" }
-  },
-
-  // ========== 状态相关 ==========
-  applyState: {
-    stateKey: { type: "string", description: "状态key" },
-    stacks: { type: ["number", "array"], description: "层数（数字或Stack数组）" }
-  },
-
-  removeState: {
-    stateKey: { type: "string", description: "状态key" },
-    triggerRemoveEffect: { type: "boolean", default: false, description: "是否触发移除效果" }
-  },
-
-  changeStateStack: {
-    stateKey: { type: "string", description: "状态key" },
-    stackKey: { type: "string", default: "default", description: "层数key" },
-    delta: { type: "number", description: "层数变化量" }
-  },
-
-  // ========== 属性相关 ==========
-  addStatusBaseValue: {
-    statusKey: { type: "string", description: "属性key" },
-    value: { type: "number", description: "基础值变化量" }
-  },
-
-  addStatusCurrentValue: {
-    statusKey: { type: "string", description: "属性key" },
-    value: { type: "number", description: "当前值变化量" }
-  },
-
-  addStatusBaseCurrentValue: {
-    statusKey: { type: "string", description: "属性key（base层）" },
-    currentKey: { type: "string", description: "当前值key" },
-    value: { type: "number", description: "变化量" }
-  },
-
-  // ========== 卡牌相关 ==========
-
-  discardCard: {
-    pileName: { type: "string", default: "handPile", description: "弃牌来源牌堆" },
-    count: { type: "number", default: 1, description: "弃牌数量" }
-  },
-
-  discardAllCard: {
-    pileName: { type: "string", default: "handPile", description: "弃牌来源牌堆" }
-  },
-
-  exhaustCard: {
-    pileName: { type: "string", default: "handPile", description: "消耗来源牌堆" },
-    count: { type: "number", default: 1, description: "消耗数量" }
-  },
-
-  exhaustRandomCardByTag: {
-    pile: { type: "string", default: "discardPile", description: "来源牌堆" },
-    hasTag: { type: "string", default: "status", description: "要消耗的卡牌标签" },
-    targetType: { type: "string", default: "self", description: "目标类型" }
-  },
-
-  checkPileHasTag: {
-    pile: { type: "string", default: "discardPile", description: "要检查的牌堆" },
-    hasTag: { type: "string", default: "status", description: "要检查的卡牌标签" },
-    targetType: { type: "string", default: "self", description: "目标类型" }
-  },
-
-  discoverCard: {
-    count: { type: "number", default: 3, description: "展示卡牌数量" },
-    selectCount: { type: ["number", "array"], default: 1, description: "选择数量（数字或[min,max]）" },
-    tags: { type: "array", default: [], description: "筛选标签" },
-    allowDuplicate: { type: "boolean", default: false, description: "是否允许重复" }
-  },
-
-  chooseRandomCard: {
-    count: { type: "number", description: "展示卡牌数量" },
-    selectCount: { type: ["number", "array"], default: 1, description: "选择数量" },
-    title: { type: "string", default: "选择卡牌", description: "标题" },
-    description: { type: "string", required: false, description: "描述" },
-    allowDuplicate: { type: "boolean", default: false, description: "是否允许重复" }
-  },
-
-  chooseCardUpgrade: {
-    count: { type: "number", default: 1, description: "可升级卡牌数量" }
-  },
-
-  chooseCardRemove: {
-    count: { type: "number", default: 1, description: "可移除卡牌数量" }
-  },
-
-  chooseCardDuplicate: {
-    count: { type: "number", default: 1, description: "可复制卡牌数量" }
-  },
-
-  customCardChoice: {
-    cards: { type: "array", required: false, description: "卡牌key数组" },
-    fromPile: { type: "string", required: false, description: "从哪个牌堆选择" },
-    selectCount: { type: ["number", "array"], default: 1, description: "选择数量" },
-    title: { type: "string", default: "选择卡牌", description: "标题" },
-    description: { type: "string", required: false, description: "描述" },
-    cancelable: { type: "boolean", default: false, description: "是否可取消" },
-    action: { type: "string", required: false, description: "选择后的操作" }
-  },
-
-  // ========== 能量相关 ==========
-  gainEnergy: {
-    value: { type: "number", description: "获得能量值" }
-  },
-
-  payEnergy: {
-    value: { type: "number", description: "消耗能量值" }
-  },
-
-  // ========== 回合相关 ==========
-  turnStart: {},
-  turnEnd: {},
-
-  // ========== 生命相关 ==========
-  killTarget: {
-    info: { type: "object", required: false, description: "死亡信息" }
-  },
-
-  reviveTarget: {
-    healthPercent: { type: "number", default: 1.0, description: "复活时生命百分比" }
-  },
-
-  // ========== 事件相关 ==========
-  cancelEvent: {
-    targetEvent: { type: "any", required: false, description: "要取消的目标事件（通过 info 传递）" }
-  },
-
-  cancelCurrentEvent: {},
-
-  // ========== 器官相关 ==========
-  replaceOrgan: {
-    oldOrganKey: { type: "string", description: "旧器官key" },
-    newOrganKey: { type: "string", description: "新器官key" }
-  },
-
-  // ========== 修饰器相关 ==========
-  addStatusModifier: {
-    statusKey: { type: "string", description: "属性key" },
-    targetLayer: { type: "string", default: "current", description: "目标层（base/current）" },
-    modifierType: { type: "string", default: "additive", description: "修饰器类型" },
-    applyMode: { type: "string", default: "absolute", description: "应用模式" },
-    modifierValue: { type: "number", required: false, description: "修饰器值" },
-    modifierFunc: { type: "any", required: false, description: "修饰器函数" },
-    clearable: { type: "boolean", default: true, description: "是否可清除" }
-  },
-
-  addTriggerToTarget: {
-    triggerConfig: { type: "object", description: "触发器配置" }
-  },
-
-  // ========== 计数类遗物 ==========
-  accumulateAndTrigger: {
-    pointKey: { type: "string", default: "point", description: "计数器使用的状态key" },
-    on: { type: "object", required: true, description: "触发器配置 { when, how, key }" },
-    gain: { type: "any", required: true, description: "每次获得的点数（数字或 \"$triggerValue\"）" },
-    minGain: { type: "number", required: false, description: "最小累积值（只有gain >= minGain才累计）" },
-    threshold: { type: "number", default: 10, description: "触发阈值" },
-    consume: { type: ["number", "string"], default: 1, description: "每次触发消耗的点数，或 \"all\" 表示清空所有点数" },
-    repeat: { type: "boolean", default: true, description: "是否循环触发直到点数不足" },
-    maxRepeat: { type: "number", default: Infinity, description: "每次事件最多触发的次数" },
-    maxTriggerPerBattle: { type: "number", required: false, description: "每场战斗最多触发次数" },
-    usedKey: { type: "string", required: false, description: "记录已触发次数的状态key（配合maxTriggerPerBattle使用）" },
-    targetType: { type: "string", default: "owner", description: "效果目标类型" },
-    effects: { type: "array", required: true, description: "要触发的效果数组" }
-  }
+/**
+ * 参数定义
+ */
+export interface ParamDef {
+    type: ParamType | ParamType[]     // 允许的类型（单个或联合）
+    required?: boolean                  // 是否必填（默认 true）
+    options?: readonly (string | number)[]  // 枚举值（如 ["handPile", "discardPile"]）
+    description?: string                // 可选：文档用
 }
 
 /**
- * 尝试将值转换为目标类型
- * 如果转换失败或结果不合理（如 NaN），返回原值
+ * 效果参数 schema
  */
-function tryConvertType(value: any, targetType: ParamType): any {
-  // 如果已经是目标类型，直接返回
-  if (checkType(value, targetType)) {
-    return value
-  }
+export interface EffectParamsSchema {
+    [paramName: string]: ParamDef
+}
 
-  // 如果是以 $ 开头的字符串，这是动态值占位符，会在运行时解析，跳过验证
-  if (typeof value === "string" && value.startsWith("$")) {
-    return value
-  }
+// ==================== 类型检查 ====================
 
-  switch (targetType) {
-    case "number":
-      // 如果是对象类型，尝试提取数值
-      if (typeof value === "object" && value !== null) {
-        // 可能是 { fromStatus: "xxx" } 这种动态值，不转换
-        if ("fromStatus" in value || "fromState" in value) {
-          return value
+const contentKeyModules: Record<string, string> = {
+    cardKey: "cardList",
+    organKey: "organList",
+    relicKey: "relicList",
+    potionKey: "potionList",
+    enemyKey: "enemyList",
+    eventKey: "eventList",
+}
+
+/**
+ * 检查字符串是否存在于指定注册表
+ */
+function checkContentKey(value: any, moduleKey: string): { valid: boolean; suggestion?: string } {
+    if (typeof value !== "string") return { valid: false }
+
+    let list: any[]
+    try {
+        list = getLazyModule<any[]>(moduleKey)
+    } catch {
+        // 注册表未加载时放行（例如测试环境或启动早期）
+        return { valid: true }
+    }
+
+    if (!Array.isArray(list)) return { valid: true }
+
+    const exists = list.some(item => item?.key === value)
+    if (exists) return { valid: true }
+
+    // 找相近 key 作为提示
+    const suggestion = list
+        .map(item => item?.key)
+        .filter((k: any) => typeof k === "string")
+        .find((k: string) => k.includes(value) || value.includes(k))
+
+    return { valid: false, suggestion }
+}
+
+/**
+ * 检查单一类型
+ * 返回 { valid, suggestion? }，suggestion 仅在内容 key 类型未命中时提供
+ */
+function checkType(value: any, type: ParamType): { valid: boolean; suggestion?: string } {
+    // $xxx / random(...) 引用直接豁免
+    if (typeof value === "string" && needsReferenceResolution(value)) {
+        return { valid: true }
+    }
+
+    switch (type) {
+        case "string":
+            return { valid: typeof value === "string" }
+        case "number":
+            return { valid: typeof value === "number" && !isNaN(value) }
+        case "boolean":
+            return { valid: typeof value === "boolean" }
+        case "array":
+            return { valid: Array.isArray(value) }
+        case "object":
+            return { valid: typeof value === "object" && value !== null && !Array.isArray(value) }
+        case "any":
+            return { valid: true }
+        default: {
+            const moduleKey = contentKeyModules[type]
+            if (moduleKey) {
+                return checkContentKey(value, moduleKey)
+            }
+            return { valid: false }
         }
-        // 尝试提取 value 字段
-        if ("value" in value) {
-          const num = Number(value.value)
-          return isNaN(num) ? value : num
-        }
-      }
-
-      // 尝试转换为数字
-      const num = Number(value)
-      // 如果转换结果是 NaN，返回原值（让后续验证报错）
-      return isNaN(num) ? value : num
-
-    case "string":
-      // 尝试转换为字符串
-      if (value === null || value === undefined) {
-        return value
-      }
-      return String(value)
-
-    case "boolean":
-      // 尝试转换为布尔值
-      if (typeof value === "string") {
-        if (value.toLowerCase() === "true") return true
-        if (value.toLowerCase() === "false") return false
-      }
-      if (typeof value === "number") {
-        return value !== 0
-      }
-      return value
-
-    default:
-      // 其他类型不尝试转换
-      return value
-  }
+    }
 }
 
-/**
- * 检查值的类型
- */
-function checkType(value: any, type: ParamType): boolean {
-  // 如果是以 $ 开头的字符串或是 random() 语法，这是动态值占位符，会在运行时解析，视为有效
-  if (typeof value === "string" && (value.startsWith("$") || value.startsWith("random("))) {
-    return true
-  }
-
-  switch (type) {
-    case "string":
-      return typeof value === "string"
-    case "number":
-      return typeof value === "number" && !isNaN(value)
-    case "boolean":
-      return typeof value === "boolean"
-    case "array":
-      return Array.isArray(value)
-    case "object":
-      return typeof value === "object" && value !== null && !Array.isArray(value)
-    case "any":
-      return true
-    default:
-      return false
-  }
-}
-
-/**
- * 验证单个参数
- */
-function validateParam(
-  paramName: string,
-  paramValue: any,
-  paramDef: ParamDef,
-  effectKey: string
-): { valid: boolean; value?: any; error?: string } {
-  // 检查必需参数
-  const isRequired = paramDef.required !== undefined ? paramDef.required : (paramDef.default === undefined)
-
-  if (paramValue === undefined || paramValue === null) {
-    if (isRequired) {
-      return {
-        valid: false,
-        error: `效果 "${effectKey}" 缺少必需参数 "${paramName}"`
-      }
-    }
-    return { valid: true, value: paramValue }  // 可选参数，未提供，使用默认值
-  }
-
-  // 尝试类型转换
-  const allowedTypes = Array.isArray(paramDef.type) ? paramDef.type : [paramDef.type]
-  let convertedValue = paramValue
-  let typeMatch = allowedTypes.some(type => checkType(paramValue, type))
-
-  // 如果类型不匹配，尝试转换
-  if (!typeMatch) {
-    for (const type of allowedTypes) {
-      convertedValue = tryConvertType(paramValue, type)
-      if (checkType(convertedValue, type)) {
-        typeMatch = true
-        break
-      }
-    }
-  }
-
-  if (!typeMatch) {
-    const expectedTypes = allowedTypes.join(" 或 ")
-    const actualType = Array.isArray(paramValue) ? "array" : typeof paramValue
-    const valueInfo = convertedValue !== paramValue
-      ? `原值: ${JSON.stringify(paramValue)}, 转换后: ${JSON.stringify(convertedValue)}`
-      : `值: ${JSON.stringify(paramValue)}`
-    return {
-      valid: false,
-      error: `效果 "${effectKey}" 的参数 "${paramName}" 类型错误：期望 ${expectedTypes}，实际 ${actualType}，且无法转换（${valueInfo}）`
-    }
-  }
-
-  // 自定义验证
-  if (paramDef.validate && !paramDef.validate(convertedValue)) {
-    return {
-      valid: false,
-      error: `效果 "${effectKey}" 的参数 "${paramName}" 验证失败`
-    }
-  }
-
-  return { valid: true, value: convertedValue }
-}
+// ==================== 主入口 ====================
 
 /**
  * 验证效果参数
  *
- * @param effectKey 效果key
- * @param params 参数对象
- * @returns 验证结果和规范化后的参数
+ * @param effectKey 效果 key（用于错误信息）
+ * @param params   参数对象
+ * @param schema   参数 schema（可选，未提供则跳过）
+ * @returns 是否通过；失败时 errors 非空
  */
 export function validateEffectParams(
-  effectKey: string,
-  params: Record<string, any> = {}
-): { valid: boolean; params: Record<string, any>; errors: string[] } {
-  const schema = effectParamsSchemas[effectKey]
+    effectKey: string,
+    params: Record<string, any> = {},
+    schema?: EffectParamsSchema
+): { valid: boolean; errors: string[] } {
+    if (!schema) return { valid: true, errors: [] }
 
-  // 如果没有定义schema，跳过验证（允许未定义的效果）
-  if (!schema) {
-    console.warn(`[validateEffectParams] 效果 "${effectKey}" 没有定义参数schema，跳过验证`)
-    return { valid: true, params, errors: [] }
-  }
+    const errors: string[] = []
 
-  const errors: string[] = []
-  const normalizedParams: Record<string, any> = {}
+    // 校验每个声明的参数
+    for (const [paramName, paramDef] of Object.entries(schema)) {
+        const paramValue = params[paramName]
+        const isRequired = paramDef.required !== false
 
-  // 验证每个定义的参数
-  for (const [paramName, paramDef] of Object.entries(schema)) {
-    const paramValue = params[paramName]
-    const result = validateParam(paramName, paramValue, paramDef, effectKey)
+        // 缺失处理
+        if (paramValue === undefined || paramValue === null) {
+            if (isRequired) {
+                errors.push(`效果 "${effectKey}" 缺少必需参数 "${paramName}"`)
+            }
+            continue
+        }
 
+        // 类型检查（支持联合）
+        const allowedTypes = Array.isArray(paramDef.type) ? paramDef.type : [paramDef.type]
+        let matched = false
+        let lastSuggestion: string | undefined
+
+        for (const type of allowedTypes) {
+            const result = checkType(paramValue, type)
+            if (result.valid) {
+                matched = true
+                break
+            }
+            if (result.suggestion) lastSuggestion = result.suggestion
+        }
+
+        if (!matched) {
+            const expected = allowedTypes.join(" 或 ")
+            const actual = Array.isArray(paramValue) ? "array" : typeof paramValue
+            let msg = `效果 "${effectKey}" 的参数 "${paramName}" 类型错误：期望 ${expected}，实际 ${actual}，值: ${JSON.stringify(paramValue)}`
+            if (lastSuggestion) msg += `（你是否想写 "${lastSuggestion}"？）`
+            errors.push(msg)
+            continue
+        }
+
+        // 枚举值检查
+        if (paramDef.options && paramDef.options.length > 0) {
+            // $ 引用豁免
+            if (typeof paramValue === "string" && needsReferenceResolution(paramValue)) continue
+
+            if (!paramDef.options.includes(paramValue)) {
+                errors.push(
+                    `效果 "${effectKey}" 的参数 "${paramName}" 值不合法：期望 ${paramDef.options.map(o => JSON.stringify(o)).join(" | ")}，实际 ${JSON.stringify(paramValue)}`
+                )
+            }
+        }
+    }
+
+    return { valid: errors.length === 0, errors }
+}
+
+/**
+ * 验证并在失败时通过 newError 显示错误信息（不抛异常，避免卡死游戏）
+ */
+export function validateEffectParamsAndReport(
+    effectKey: string,
+    params: Record<string, any> = {},
+    schema?: EffectParamsSchema
+): boolean {
+    const result = validateEffectParams(effectKey, params, schema)
     if (!result.valid) {
-      errors.push(result.error!)
-    } else {
-      // 使用转换后的值、提供的值或默认值
-      normalizedParams[paramName] = result.value !== undefined && result.value !== null
-        ? result.value
-        : paramDef.default
+        newError([`效果参数验证失败:`, ...result.errors])
     }
-  }
-
-  // 检查是否有未定义的参数（警告，不报错）
-  for (const paramName of Object.keys(params)) {
-    if (!(paramName in schema)) {
-      console.warn(`[validateEffectParams] 效果 "${effectKey}" 收到未定义的参数 "${paramName}"`)
-    }
-  }
-
-  return {
-    valid: errors.length === 0,
-    params: normalizedParams,
-    errors
-  }
-}
-
-/**
- * 验证效果参数（抛出错误版本）
- *
- * 如果验证失败，会通过 newError 显示错误信息
- *
- * @param effectKey 效果key
- * @param params 参数对象
- * @returns 规范化后的参数
- */
-export function validateEffectParamsOrThrow(
-  effectKey: string,
-  params: Record<string, any> = {}
-): Record<string, any> {
-  const result = validateEffectParams(effectKey, params)
-
-  if (!result.valid) {
-    const errorMessage = [
-      `效果参数验证失败：`,
-      ...result.errors
-    ]
-    newError(errorMessage)
-    throw new Error(result.errors.join("\n"))
-  }
-
-  return result.params
-}
-
-/**
- * 获取效果的参数schema（用于文档生成）
- */
-export function getEffectParamsSchema(effectKey: string): EffectParamsSchema | undefined {
-  return effectParamsSchemas[effectKey]
-}
-
-/**
- * 获取所有效果的参数schema（用于文档生成）
- */
-export function getAllEffectParamsSchemas(): Record<string, EffectParamsSchema> {
-  return { ...effectParamsSchemas }
+    return result.valid
 }

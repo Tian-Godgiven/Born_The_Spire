@@ -63,6 +63,15 @@ export class GameRun{
      * 进入一个房间
      */
     async enterRoom(room: Room) {
+        // 如果有正在进行的房间，先退出
+        if (this.currentRoom && this.currentRoom.state === "active") {
+            try {
+                await this.currentRoom.exit()
+            } catch (e) {
+                console.warn("[GameRun] 退出旧房间时出错:", e)
+            }
+        }
+
         this.currentRoom = room
         room.state = "active"
 

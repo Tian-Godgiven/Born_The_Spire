@@ -12,6 +12,7 @@
  *   hasOrgan(key)   → 是否拥有某个器官
  *   hasRelic(key)   → 是否拥有某个遗物
  *   hasCard(key)    → 手牌中是否有某张牌
+ *   pileCount(pile) → 牌堆卡牌数量（hand/draw/discard/exhaust）
  */
 
 import type { Entity } from "@/core/objects/system/Entity"
@@ -79,6 +80,7 @@ const builtinAccessors = new Map<string, AccessorFunction>([
     ["hasCard",     (arg, entity) => hasCard(arg, entity)],
     ["state",       (arg, entity) => state(arg, entity)],
     ["stateStack",  (arg, entity) => stateStack(arg, entity)],
+    ["pileCount",   (arg, entity) => pileCount(arg, entity)],
 ])
 
 // ==================== 内置访问器实现 ====================
@@ -169,6 +171,23 @@ function hasCard(key: string, entity: Entity): boolean {
     const handPile = (entity as any).cardPiles?.handPile
     if (!handPile) return false
     return handPile.some((c: any) => c.key === key)
+}
+
+const pileNameMap: Record<string, string> = {
+    hand: "handPile",
+    draw: "drawPile",
+    discard: "discardPile",
+    exhaust: "exhaustPile"
+}
+
+function pileCount(pileName: string, entity: Entity): number {
+    const mapped = pileNameMap[pileName]
+    if (!mapped) {
+        throw new Error(`[EntityAccessor] 未知的牌堆名: "${pileName}"，支持: hand, draw, discard, exhaust`)
+    }
+    const pile = (entity as any).cardPiles?.[mapped]
+    if (!pile) return 0
+    return pile.length
 }
 
 // ==================== 自定义访问器注册 ====================

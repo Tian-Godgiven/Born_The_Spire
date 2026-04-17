@@ -5,8 +5,8 @@ import type { EventParticipant } from "@/core/types/event/EventParticipant";
 import { doEffectFunc, resolveEffectParams } from "./EffectFunc";
 import { isEntity } from "@/core/utils/typeGuards";
 import { nanoid } from "nanoid";
-import { validateEffectParams } from "@/core/effects/validateEffectParams";
-import { newError } from "@/ui/hooks/global/alert";
+import { validateEffectParamsAndReport } from "@/core/effects/validateEffectParams";
+import { getLazyModule } from "@/core/utils/lazyLoader";
 import { getCurrentExecutingEvent, setCurrentExecutingEvent } from "../ActionEvent";
 import { isArray } from "lodash";
 
@@ -33,6 +33,7 @@ export class Effect implements EventParticipant{
     public describe?:string[] = [];
     public actionEvent:ActionEvent;//引发这个效果的事件
     public resultStoreAs?:string
+    public targetSpec?:string//独立目标规格，设置后该效果作为子事件执行
     private _cancelled:boolean = false
     constructor({label="",key,effectFunc,params,describe=[],resultStoreAs,triggerEvent}:EffectConstructor){
         this.label = label;
@@ -46,19 +47,15 @@ export class Effect implements EventParticipant{
         // 立即解析参数中的 $ 语法
         this.resolveParams()
 
-        // 解析后再次验证参数（确保动态值解析后的类型正确）
-        const validationResult = validateEffectParams(key, this.params)
-        if (!validationResult.valid) {
-            console.error(`[Effect] 效果参数解析后验证失败:`, validationResult.errors)
-            newError([
-                `效果 "${key}" 参数解析后验证失败:`,
-                ...validationResult.errors
-            ])
-            // 使用验证后的参数（可能包含默认值）
-            this.params = validationResult.params
-        } else {
-            // 使用验证后的规范化参数
-            this.params = validationResult.params
+        // 可选：若效果在 effectMap 里声明了 paramsSchema 则执行校验
+        try {
+            const effectMap = getLazyModule<any[]>("effectMap")
+            const def = effectMap?.find?.((e: any) => e.key === key)
+            if (def?.paramsSchema) {
+                validateEffectParamsAndReport(key, this.params, def.paramsSchema)
+            }
+        } catch {
+            // effectMap 未加载（启动早期/测试环境）时跳过
         }
     }
 

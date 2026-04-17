@@ -3,6 +3,7 @@
  */
 
 import type { RelicMap } from '@/core/objects/item/Subclass/Relic'
+import type { BadgeConfig } from '@/core/types/BadgeConfig'
 
 export const bloodPrismRelic: RelicMap = {
     label: '血偿棱镜',
@@ -38,6 +39,10 @@ export const wheelOfFateRelic: RelicMap = {
     ],
     key: "xdnmb_relic_000002",
     rarity: "rare",
+    badges: [
+        { type: "state", status: "mode" },
+        { type: "counter", status: "drawCount", maxStatus: "drawThreshold" }
+    ],
     status: {
         "mode": {
             label: "模式",
@@ -73,13 +78,13 @@ export const wheelOfFateRelic: RelicMap = {
                 when: "after",
                 how: "make",
                 key: "drawCard",
-                condition: "source.status(mode) == even",
+                condition: "$source.status(mode) == even",
                 action: "countDrawAndGiveEffect"
             }, {
                 when: "after",
                 how: "make",
                 key: "turnStart",
-                condition: "source.status(mode) == odd",
+                condition: "$source.status(mode) == odd",
                 action: "disableOrgans"
             }]
         }

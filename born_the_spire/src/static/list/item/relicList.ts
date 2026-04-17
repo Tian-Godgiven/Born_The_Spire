@@ -1,6 +1,7 @@
 import type { RelicMap } from "@/core/objects/item/Subclass/Relic";
 import { Relic } from "@/core/objects/item/Subclass/Relic";
 import { createRelic } from "@/core/factories";
+import type { BadgeConfig } from "@/core/types/BadgeConfig";
 
 export const relicList: RelicMap[] = [
     // 被动遗物 - 只有 possess
@@ -312,6 +313,9 @@ export const relicList: RelicMap[] = [
             "cooldown": 3,
             "maxCooldown": 3
         },
+        badges: [
+            { type: "cooldown", status: "cooldown" }
+        ],
         interaction: {
             possess: {
                 target: { key: "owner" },
@@ -329,7 +333,7 @@ export const relicList: RelicMap[] = [
                         when: "after",
                         how: "make",
                         key: "turnStart",
-                        condition: "source.status(cooldown) <= 0",
+                        condition: "$source.status(cooldown) <= 0",
                         action: "damageAndReset"
                     }
                 ]
@@ -373,6 +377,9 @@ export const relicList: RelicMap[] = [
             "point": 0,
             "maxPoint": 10
         },
+        badges: [
+            { type: "counter", status: "point", maxStatus: "maxPoint" }
+        ],
         interaction: {
             possess: {
                 target: { key: "owner" },
@@ -400,6 +407,9 @@ export const relicList: RelicMap[] = [
             "point": 0,
             "maxPoint": 5
         },
+        badges: [
+            { type: "counter", status: "point", maxStatus: "maxPoint" }
+        ],
         interaction: {
             possess: {
                 target: { key: "owner" },
@@ -430,6 +440,9 @@ export const relicList: RelicMap[] = [
             "minDamage": 10,
             "healAmount": 8
         },
+        badges: [
+            { type: "counter", status: "used", maxStatus: "maxUse" }
+        ],
         interaction: {
             possess: {
                 target: { key: "owner" },
@@ -521,7 +534,7 @@ export const relicList: RelicMap[] = [
                     when: "after",
                     how: "make",
                     key: "turnStart",
-                    condition: "owner.current(health) <= 50%",
+                    condition: "$owner.current(health) <= 50%",
                     action: "gainPower2"
                 }]
             }

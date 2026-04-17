@@ -11,6 +11,7 @@ import type { Describe } from "@/ui/hooks/express/describe";
 import type { EffectUnit } from "../system/effect/EffectUnit";
 import type { Component } from "vue";
 import type { ActiveAbility } from "@/core/types/ActiveAbility";
+import type { BadgeConfig } from "@/core/types/BadgeConfig";
 import { nowBattle } from "../game/battle";
 import { isEntity } from "@/core/utils/typeGuards";
 
@@ -70,6 +71,8 @@ export type OrganMap = ItemMap&TargetMap&{
 
     // 主动能力配置
     activeAbilities?: ActiveAbility[]
+    // 角标配置
+    badges?: BadgeConfig[]
 }
 
 
@@ -97,6 +100,7 @@ export class Organ extends Entity{
     public readonly upgradeConfig?: OrganUpgradeConfig  // 升级配置（可选）
     public readonly tags: string[]         // 标签列表
     public activeAbilities?: ActiveAbility[]  // 主动能力列表
+    public badges?: BadgeConfig[]  // 角标配置
 
     public reaction?: ReactionMap  // 响应配置
 
@@ -121,6 +125,7 @@ export class Organ extends Entity{
         this.upgradeConfig = map.upgrade  // 升级配置
         this.tags = map.tags || []  // 初始化标签列表
         this.activeAbilities = map.activeAbilities  // 初始化主动能力列表
+        this.badges = map.badges  // 初始化角标配置
 
         const interaction:Interaction[] = []
         for(let key in map.interaction){

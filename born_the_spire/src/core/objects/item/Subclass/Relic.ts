@@ -4,6 +4,7 @@ import { Entity } from "../../system/Entity";
 import { getRelicModifier } from "../../system/modifier/RelicModifier";
 import type { LogUnit } from "@/ui/hooks/global/log";
 import type { ActiveAbility } from "@/core/types/ActiveAbility";
+import type { BadgeConfig } from "@/core/types/BadgeConfig";
 
 export type RelicMap = ItemMap & {
     // 遗物稀有度（3级系统）
@@ -12,6 +13,8 @@ export type RelicMap = ItemMap & {
     // type?: "normal" | "boss" | "event" | "shop"
     // 主动能力配置
     activeAbilities?: ActiveAbility[]
+    // 角标配置
+    badges?: BadgeConfig[]
 }
 
 /**
@@ -24,11 +27,13 @@ export class Relic extends Item {
     public readonly itemType = 'relic' as const  // 类型标识
     public rarity?: "common" | "uncommon" | "rare"  // 遗物稀有度
     public activeAbilities?: ActiveAbility[]  // 主动能力列表
+    public badges?: BadgeConfig[]  // 角标配置
 
     constructor(map: RelicMap) {
         super(map)
         this.rarity = map.rarity
         this.activeAbilities = map.activeAbilities
+        this.badges = map.badges
     }
 }
 

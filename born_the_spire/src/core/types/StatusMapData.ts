@@ -16,4 +16,3 @@ export type StatusMap = {
     max?: number               // 最大值/阈值（用于计数器显示，如 "2/3"）
     maxFrom?: string           // 从另一个 status key 读取 max 值（动态引用）
 } | number  // 简写形式：直接写数字表示默认值
-

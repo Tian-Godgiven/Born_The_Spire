@@ -8,6 +8,7 @@ import type { CardMap } from '@/core/objects/item/Subclass/Card'
 import type { OrganMap } from '@/core/objects/target/Organ'
 import type { EnemyMap } from '@/core/objects/target/Enemy'
 import type { EffectFunc } from '@/core/objects/system/effect/EffectFunc'
+import type { EventMap } from '@/core/types/EventMapData'
 import { getLazyModule } from '@/core/utils/lazyLoader'
 
 export type EffectData = {
@@ -60,6 +61,22 @@ export function registerEffect(effect: EffectData): void {
     const effectMap = getLazyModule<EffectData[]>('effectMap')
     effectMap.push(effect)
     console.log(`[Mod] 注册效果: ${effect.key} - ${effect.label}`)
+}
+
+/**
+ * 注册事件到游戏
+ */
+export function registerEvent(event: EventMap): void {
+    const eventList = getLazyModule<EventMap[]>('eventList')
+    eventList.push(event)
+    console.log(`[Mod] 注册事件: ${event.key} - ${event.title}`)
+}
+
+/**
+ * 批量注册事件
+ */
+export function registerEvents(events: EventMap[]): void {
+    events.forEach(event => registerEvent(event))
 }
 
 /**

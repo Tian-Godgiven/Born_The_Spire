@@ -36,7 +36,7 @@ export const exerciseAction: PoolActionHandler = async (player, _context) => {
     medium: player,
     target: player,
     effectUnits: [{
-      key: "gainMaxHealth",
+      key: "addMaxHealthAndHeal",
       params: { value: healthGain }
     }]
   })

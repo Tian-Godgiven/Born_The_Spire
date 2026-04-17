@@ -173,6 +173,61 @@ export function previewCardEffects(
     return result
 }
 
+// ==================== 预览函数工厂 ====================
+// 供 effectMap 中的效果声明式地接入预览系统
+// 使用方式见文件顶部注释
+
+/**
+ * 值类效果的预览函数
+ * 适用于：damage, heal, gainArmor 等——触发器会改 params.value，这里只负责读出
+ *
+ * 用法: { key: "damage", effect: damageTo, preview: previewValue }
+ */
+export const previewValue = (_event: any, effect: any): number => {
+    return Number(effect.params.value) || 0
+}
+
+/**
+ * 修改器效果的预览函数工厂（按增量）
+ * 适用于：modifyDamageValue 等——把增量加到目标效果的 params.value 上
+ *
+ * @param targetEffectKey 要修改的目标效果 key（如 "damage"）
+ * 用法: { key: "modifyDamageValue", effect: ..., preview: previewModifyValue("damage") }
+ */
+export const previewModifyValue = (targetEffectKey: string) =>
+    (event: any, effect: any): number | null => {
+        const delta = Number(effect.params.delta)
+        const targetEffect = event.effects[0]
+        if (targetEffect && targetEffect.key === targetEffectKey) {
+            const oldValue = Number(targetEffect.params.value)
+            const newValue = Math.max(0, oldValue + delta)
+            targetEffect.params.value = newValue
+            return newValue
+        }
+        return null
+    }
+
+/**
+ * 修改器效果的预览函数工厂（按百分比）
+ * 适用于：modifyDamageByPercent 等
+ *
+ * @param targetEffectKey 要修改的目标效果 key
+ * 用法: { key: "modifyDamageByPercent", effect: ..., preview: previewModifyByPercent("damage") }
+ */
+export const previewModifyByPercent = (targetEffectKey: string) =>
+    (event: any, effect: any): number | null => {
+        const percent = Number(effect.params.percent)
+        const targetEffect = event.effects[0]
+        if (targetEffect && targetEffect.key === targetEffectKey) {
+            const oldValue = Number(targetEffect.params.value)
+            const delta = Math.round(oldValue * percent)
+            const newValue = Math.max(0, oldValue + delta)
+            targetEffect.params.value = newValue
+            return newValue
+        }
+        return null
+    }
+
 /**
  * 预览单个效果的值
  * 便捷方法，用于只关心某个效果的情况

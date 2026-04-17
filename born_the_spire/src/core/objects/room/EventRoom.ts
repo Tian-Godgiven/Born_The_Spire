@@ -40,6 +40,10 @@ export class EventRoom extends Room {
     private _currentSceneKey: string | null = null  // 当前幕的 key
     private sceneData: Record<string, any> = {}     // 幕间共享数据
 
+    // 当前显示的标题和描述（响应式，随幕切换更新）
+    public currentTitle: string = ""
+    public currentDescription: string = ""
+
     constructor(config: EventRoomConfig) {
         super(config)
 
@@ -63,12 +67,15 @@ export class EventRoom extends Room {
 
         if (this.isMultiScene) {
             // 多幕事件：从第一幕开始
-            this._currentSceneKey = this.eventConfig.scenes![0].key
-            void this._currentSceneKey  // 抑制未使用警告 - 保留用于未来实现
             const firstScene = this.eventConfig.scenes![0]
+            this._currentSceneKey = firstScene.key
+            this.currentTitle = firstScene.title
+            this.currentDescription = firstScene.description
             this.choiceGroup = this.createChoiceGroupForScene(firstScene)
         } else {
-            // 单幕事件：使用现有逻辑
+            // 单幕事件
+            this.currentTitle = this.eventConfig.title
+            this.currentDescription = this.eventConfig.description
             const choices = this.createChoicesFromOptions(
                 this.eventConfig.options!,
                 this.eventConfig.mutuallyExclusiveGroups
@@ -176,6 +183,8 @@ export class EventRoom extends Room {
         }
 
         this._currentSceneKey = sceneKey
+        this.currentTitle = scene.title
+        this.currentDescription = scene.description
         newLog([`===== ${scene.title} =====`])
         if (scene.description) {
             newLog([scene.description])
@@ -279,8 +288,9 @@ export class EventRoom extends Room {
                     this.goToScene(option.nextScene)
                 }, 500)
             } else {
-                // 没有下一幕：这是最后一幕，完成事件
-                await this.complete()
+                // 没有下一幕：最后一幕，直接离开
+                newLog(["===== 事件结束 ====="])
+                await completeAndGoNext()
             }
         }
     }

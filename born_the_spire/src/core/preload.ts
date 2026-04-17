@@ -27,7 +27,6 @@ await import('@/core/objects/system/Entity')
 // ==================== 第 6 层：修饰器系统 ====================
 await import('@/core/objects/system/modifier/Modifier')
 await import('@/core/objects/system/status/StatusModifier')
-await import('@/core/objects/system/modifier/ContentModifier')
 await import('@/core/objects/system/modifier/StateModifier')
 
 

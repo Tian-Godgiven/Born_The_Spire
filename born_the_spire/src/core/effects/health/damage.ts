@@ -135,3 +135,4 @@ export const modifyDamageByPercent: EffectFunc = (event, effect) => {
 
     return true
 }
+

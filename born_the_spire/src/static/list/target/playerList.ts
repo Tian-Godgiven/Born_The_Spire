@@ -66,16 +66,13 @@ export const playerList:Record<string,PlayerMap> = {
         ],
         card:[
                 "original_card_00001",
-                "original_card_00001",
-
-                "original_card_00014",
-                "original_card_00014",
                 "original_card_00014",
 
-                "sts_card_thousand_cuts",
-                "sts_card_prepared",
-                "sts_card_panacea",
-                "sts_card_doubt",
+                "sts_card_claw",
+                "sts_card_claw",
+                "sts_card_all_for_one",
+                "sts_card_dagger_spray",
+                "sts_card_piercing_wail",
             ],
         relic:[
             "original_relic_00001",  // 回血石 - 战斗结束时回复生命

@@ -197,7 +197,7 @@ export function ensureStatusExists(entity:Entity, statusKey:string, initialValue
     }
 }
 //为目标的属性值添加新的修饰器，返回移除函数
-export function changeStatusValue(entity:Entity,statusKey:string,source:any,{value,type="additive",target="base",modifierFunc}:{value:number,type?:ModifierType,target?:TargetLayer,modifierFunc?:ModifierFunc}):()=>void{
+export function changeStatusValue(entity:Entity,statusKey:string,source:any,{value,type="additive",target="base",clearable,modifierFunc}:{value:number,type?:ModifierType,target?:TargetLayer,clearable?:boolean,modifierFunc?:ModifierFunc}):()=>void{
     //找到属性
     if(ifHaveStatus(entity,statusKey)){
         const status = entity.status[statusKey]
@@ -208,17 +208,17 @@ export function changeStatusValue(entity:Entity,statusKey:string,source:any,{val
                 "applyMode":"absolute",
                 "modifierType":type,
                 "targetLayer":target,
-                "clearable": false,  // base 层修改是永久的
+                "clearable": clearable ?? false,  // base 层默认永久
                 modifierFunc
             })
         }
         else if(target == "current"){
             return status.addByJSON(source,{
                 "modifierValue":value,
-                "applyMode":"snapshot",
+                "applyMode": type === "additive" ? "absolute" : "snapshot",
                 "modifierType":type,
                 "targetLayer":target,
-                "clearable": true,  // current 层修改是临时的
+                "clearable": clearable ?? true,  // current 层默认临时
                 modifierFunc
             })
         }

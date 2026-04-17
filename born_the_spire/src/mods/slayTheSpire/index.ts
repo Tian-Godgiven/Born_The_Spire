@@ -4,8 +4,10 @@
 
 import type { Mod } from '../ModLoader'
 import { slayTheSpireModConfig } from './mod'
-import { registerCard } from '../index'
+import { registerCard, registerEvent, registerRelic } from '../index'
 import { slayTheSpireCards } from './cards'
+import { slayTheSpireEvents } from './events'
+import { slayTheSpireRelics } from './relics'
 
 export const slayTheSpireMod: Mod = {
     config: slayTheSpireModConfig,
@@ -18,6 +20,16 @@ export const slayTheSpireMod: Mod = {
             registerCard(card)
         }
 
-        console.log(`[Mod:SlayTheSpire] 加载完成 (${slayTheSpireCards.length} 张卡牌)`)
+        // 注册遗物
+        for (const relic of slayTheSpireRelics) {
+            registerRelic(relic)
+        }
+
+        // 注册事件
+        for (const event of slayTheSpireEvents) {
+            registerEvent(event)
+        }
+
+        console.log(`[Mod:SlayTheSpire] 加载完成 (${slayTheSpireCards.length} 张卡牌, ${slayTheSpireRelics.length} 个遗物, ${slayTheSpireEvents.length} 个事件)`)
     }
 }

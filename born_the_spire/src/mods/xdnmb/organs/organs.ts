@@ -11,6 +11,9 @@ export const pollutionSourceOrgan: OrganMap = {
     describe: [{ key: ['status', 'card-count'] }, '/', { key: ['status', 'max-card-count'] }, ' 玩家每打出5张牌，向其手牌添加2张伤口'],
     rarity: OrganRarity.Rare,
     part: OrganPartEnum.Core,
+    badges: [
+        { type: 'counter', status: 'card-count', maxStatus: 'max-card-count' }
+    ],
     status: {
         'max-mass': 20,
         'card-count': 0,
@@ -77,7 +80,7 @@ export const venomspineOrgan: OrganMap = {
                 when: 'before',
                 how: 'take',
                 key: 'damage',
-                condition: 'eventSource.hasState(vulnerable)',
+                condition: '$eventSource.hasState(vulnerable)',
                 action: 'reduceVulnDamage'
             }]
         }

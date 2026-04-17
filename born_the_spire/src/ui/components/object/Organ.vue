@@ -6,13 +6,13 @@
     @click="showDetail = true"
     @contextmenu.prevent="handleRightClick">
 
-    <!-- 临时标识 -->
-    <div class="temporary-indicator" v-if="organ.isTemporary">
+    <!-- 自动角标：临时标识 -->
+    <div class="badge top-right auto-temporary" v-if="organ.isTemporary">
         临时
     </div>
 
-    <!-- 主动能力标识 -->
-    <div class="ability-indicator" v-if="hasActiveAbilities">
+    <!-- 自动角标：主动能力标识 -->
+    <div class="badge top-left auto-ability" v-if="hasActiveAbilities">
         ⚡
     </div>
 
@@ -20,6 +20,19 @@
     <div class="disabled-indicator" v-if="disabled">
         ×
     </div>
+
+    <!-- 统一角标渲染 -->
+    <template v-for="(group, position) in badgesByPosition" :key="position">
+        <div class="badge-group" :class="position">
+            <div
+                v-for="(badge, index) in group"
+                :key="index"
+                class="badge"
+                :style="badge.style">
+                {{ badge.text }}
+            </div>
+        </div>
+    </template>
 
     {{ organ.label }}:{{ describe }}
 
@@ -46,6 +59,9 @@ import EntryDisplay from '@/ui/components/display/EntryDisplay.vue';
 import OrganDetail from '@/ui/components/interaction/OrganDetail.vue';
 import { handleItemRightClick } from '@/core/hooks/activeAbility';
 import { nowPlayer } from '@/core/objects/game/run';
+import { resolveBadges } from '@/core/utils/badgeResolver';
+import { nowBattle } from '@/core/objects/game/battle';
+import type { BadgeRenderData, BadgePosition } from '@/core/types/BadgeConfig';
 
     const {organ, side, disabled = false} = defineProps<{
         organ: Organ
@@ -62,6 +78,25 @@ import { nowPlayer } from '@/core/objects/game/run';
 
     const hasActiveAbilities = computed(() => {
         return organ.activeAbilities && organ.activeAbilities.length > 0
+    })
+
+    // 统一角标计算
+    const resolvedBadges = computed(() => {
+        const badges = organ.badges
+        if (!badges || badges.length === 0) return []
+        return resolveBadges(organ, nowPlayer, badges, { battle: nowBattle.value })
+    })
+
+    // 按位置分组
+    const badgesByPosition = computed(() => {
+        const groups: Partial<Record<BadgePosition, BadgeRenderData[]>> = {}
+        for (const badge of resolvedBadges.value) {
+            if (!groups[badge.position]) {
+                groups[badge.position] = []
+            }
+            groups[badge.position]!.push(badge)
+        }
+        return groups
     })
 
     async function handleRightClick() {
@@ -99,11 +134,11 @@ import { nowPlayer } from '@/core/objects/game/run';
 
         &:hover {
             border-color: #1d4ed8;
-            box-shadow: 0 0 0 1px #3b82f6;
         }
     }
 
-    .temporary-indicator {
+    // 自动角标：临时
+    .badge.auto-temporary {
         position: absolute;
         top: -2px;
         right: -2px;
@@ -116,7 +151,8 @@ import { nowPlayer } from '@/core/objects/game/run';
         z-index: 1;
     }
 
-    .ability-indicator {
+    // 自动角标：主动能力
+    .badge.auto-ability {
         position: absolute;
         top: -2px;
         left: -2px;
@@ -127,6 +163,50 @@ import { nowPlayer } from '@/core/objects/game/run';
         font-weight: bold;
         border-radius: 0 0 4px 0;
         z-index: 1;
+    }
+
+    // 角标组
+    .badge-group {
+        position: absolute;
+        display: flex;
+        gap: 1px;
+        z-index: 1;
+
+        &.top-left {
+            top: -2px;
+            left: -2px;
+
+            .badge { border-radius: 0 0 4px 0; }
+        }
+
+        &.top-right {
+            top: -2px;
+            right: -2px;
+
+            .badge { border-radius: 0 0 0 4px; }
+        }
+
+        &.bottom-left {
+            bottom: -2px;
+            left: -2px;
+
+            .badge { border-radius: 0 4px 0 0; }
+        }
+
+        &.bottom-right {
+            bottom: -2px;
+            right: -2px;
+
+            .badge { border-radius: 4px 0 0 0; }
+        }
+
+        .badge {
+            font-size: 10px;
+            padding: 1px 3px;
+            font-weight: bold;
+            min-width: 12px;
+            text-align: center;
+        }
     }
 
     .disabled-indicator {

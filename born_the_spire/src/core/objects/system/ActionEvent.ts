@@ -10,7 +10,6 @@ import { isArray } from "lodash";
 import { newError } from "@/ui/hooks/global/alert";
 import { isEntity } from "@/core/utils/typeGuards";
 import {
-    getEventCollector,
     getCurrentTransaction,
     beginTransaction,
     endTransaction
@@ -212,17 +211,14 @@ export function doEvent(
         event.simulate = true
     }
 
-    const eventCollector = getEventCollector()
-    const currentTransaction = getCurrentTransaction()
+    // 优先从当前执行事件的 _transaction 拿事务（不依赖全局变量，异步安全）
+    // 兜底使用 nowTransaction（供 beginTransaction/endTransaction 构建期使用）
+    const currentTransaction =
+        (currentExecutingEvent as any)?._transaction ?? getCurrentTransaction()
 
-
-    if (eventCollector) {
-        // before/after 触发器中：加到收集器（立即执行）
-        eventCollector.push(event)
-    } else if (currentTransaction) {
-        // 效果函数中：插入到指定位置
-        const pos = options?.position ?? "top"
-        currentTransaction.insertAt(event, pos)
+    if (currentTransaction) {
+        // 当前在事务上下文里（效果函数 / 触发器回调），统一交给事务自己决定塞主队列还是收集器
+        currentTransaction.enqueue(event, options?.position ?? "top")
     } else {
         // 没有当前事务，创建新事务并通过队列执行
         const tx = beginTransaction()

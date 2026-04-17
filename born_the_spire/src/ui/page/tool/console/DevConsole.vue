@@ -65,6 +65,14 @@ const helpSections: Array<{ key: string, title: string, items: Array<{ cmd: stri
         ]
     },
     {
+        key: '事件',
+        title: '事件调试命令',
+        items: [
+            { cmd: 'listEvents()', desc: '列出所有事件' },
+            { cmd: 'enterEvent("key")', desc: '进入指定事件', examples: ['enterEvent("sts_event_big_fish")'] },
+        ]
+    },
+    {
         key: '战斗',
         title: '战斗调试命令',
         items: [
@@ -97,6 +105,15 @@ const helpSections: Array<{ key: string, title: string, items: Array<{ cmd: stri
             { cmd: 'upgradeOrgan("key")', desc: '升级器官' },
             { cmd: 'removeOrgan("key")', desc: '吞噬器官' },
             { cmd: 'unlockAllOrgans()', desc: '解锁所有器官（图鉴）' },
+        ]
+    },
+    {
+        key: '卡牌',
+        title: '卡牌命令',
+        items: [
+            { cmd: 'listCards()', desc: '列出所有可用卡牌' },
+            { cmd: 'listCards("关键词")', desc: '搜索卡牌', examples: ['listCards("悔恨")'] },
+            { cmd: 'addCard("key")', desc: '添加卡牌到卡组', examples: ['addCard("sts_card_regret")'] },
         ]
     },
     {
@@ -234,6 +251,12 @@ async function executeFunction(funcName: string, args: any[]) {
         case 'unlockAllRooms':
             unlockAllRooms()
             break
+        case 'listCards':
+            await listCards(args[0])
+            break
+        case 'addCard':
+            await addCardToDeck(args[0])
+            break
         case 'addTempCard':
             await addTemporaryCard(args[0], args[1] || 'battleEnd')
             break
@@ -309,6 +332,12 @@ async function executeFunction(funcName: string, args: any[]) {
         case 'listEnemies':
             await listEnemies()
             break
+        case 'listEvents':
+            listEvents()
+            break
+        case 'enterEvent':
+            await enterEvent(args[0])
+            break
         case 'help':
             showHelp()
             break
@@ -371,6 +400,52 @@ function listRooms(type?: string) {
     addOutput('使用 enterRoom("房间key") 进入房间', 'info')
 }
 
+// 列出所有事件
+function listEvents() {
+    const allRooms = roomRegistry.getAllRoomConfigs()
+    const events = allRooms.filter(r => r.type === 'event')
+
+    if (events.length === 0) {
+        addOutput('没有可用的事件', 'info')
+        return
+    }
+
+    addOutput(`找到 ${events.length} 个事件:`, 'info')
+    events.forEach(event => {
+        addOutput(`  ${event.key} - ${event.name || '(无名称)'}`, 'result', `enterEvent("${event.key}")`)
+    })
+    addOutput('', 'info')
+    addOutput('点击事件或使用 enterEvent("key") 进入事件', 'info')
+}
+
+// 进入指定事件
+async function enterEvent(eventKey: string) {
+    if (!eventKey) {
+        addOutput('用法: enterEvent("事件key")', 'error')
+        addOutput('使用 listEvents() 查看所有事件', 'info')
+        return
+    }
+
+    if (!nowGameRun) {
+        addOutput('游戏未开始，请先点击"开始游戏"', 'error')
+        return
+    }
+
+    const room = roomRegistry.createRoom(eventKey, nowGameRun.layer || 1)
+    if (!room) {
+        addOutput(`创建事件房间失败: ${eventKey}`, 'error')
+        addOutput('使用 listEvents() 查看所有可用事件', 'info')
+        return
+    }
+
+    await nowGameRun.enterRoom(room)
+    addOutput(`✓ 成功进入事件: ${eventKey}`, 'result')
+
+    if (router.currentRoute.value.path !== '/running') {
+        router.replace('/running')
+    }
+}
+
 // 触发游戏失败
 async function triggerGameOver() {
     addOutput('触发游戏失败...', 'info')
@@ -410,6 +485,54 @@ function unlockAllRooms() {
     addOutput(`✓ 已解锁 ${unlockedCount} 个房间`, 'result')
     addOutput('✓ 已启用开发模式（可自由移动到任何房间）', 'result')
     addOutput('现在可以在地图上点击任何房间进入', 'info')
+}
+
+// 列出所有可用卡牌
+async function listCards(keyword?: string) {
+    try {
+        const { cardList } = await import('@/static/list/item/cardList')
+        let cards = cardList
+        if (keyword) {
+            cards = cards.filter((c: any) => c.label?.includes(keyword) || c.key?.includes(keyword))
+        }
+        if (cards.length === 0) {
+            addOutput(keyword ? `没有找到匹配 "${keyword}" 的卡牌` : '没有可用的卡牌', 'info')
+            return
+        }
+        addOutput(`共 ${cards.length} 张卡牌:`, 'info')
+        for (const card of cards) {
+            addOutput(`  ${card.label} - ${card.key}`, 'result', `addCard("${card.key}")`)
+        }
+    } catch (error: any) {
+        addOutput(`列出卡牌失败: ${error.message}`, 'error')
+    }
+}
+
+// 添加卡牌到卡组
+async function addCardToDeck(cardKey: string) {
+    if (!nowGameRun) {
+        addOutput('游戏未开始', 'error')
+        return
+    }
+    if (!cardKey) {
+        addOutput('用法: addCard("cardKey")', 'error')
+        addOutput('例如: addCard("sts_card_regret")', 'info')
+        addOutput('使用 listCards() 查看所有可用卡牌', 'info')
+        return
+    }
+    try {
+        const { getCardModifier } = await import('@/core/objects/system/modifier/CardModifier')
+        const player = nowPlayer
+        const cardModifier = getCardModifier(player)
+        const cards = await cardModifier.addCardsFromSource(player, [cardKey])
+        if (cards.length > 0) {
+            addOutput(`✓ 已添加 ${cards[0].label} 到卡组`, 'result')
+        } else {
+            addOutput(`添加失败：未找到卡牌 ${cardKey}`, 'error')
+        }
+    } catch (error: any) {
+        addOutput(`添加卡牌失败: ${error.message}`, 'error')
+    }
 }
 
 // 添加临时卡牌

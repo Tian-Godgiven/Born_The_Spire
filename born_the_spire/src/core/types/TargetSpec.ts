@@ -64,6 +64,7 @@ export type TargetTypeString =
     | "enemy" | "allEnemies" | "allAllies" | "allEntities"
     | "turnNumber"
     | "triggerEffect"  // 触发效果 (Effect 类型)
+    | `allCardsByKey(${string})`  // 从所有牌堆中查找指定 key 的卡牌
     | string  // 允许自定义键（支持点语法修饰符，如 "allEnemies.random"）
 
 /**
@@ -178,6 +179,23 @@ export function getTargetValue(
         const modifier = targetType.slice(dotIndex + 1)
         const baseValue = getTargetValue(base, context)
         return applyModifier(baseValue, modifier, base)
+    }
+
+    // 卡牌查询：allCardsByKey(cardKey) — 从所有牌堆中查找匹配的卡牌
+    const cardQueryMatch = targetType.match(/^allCardsByKey\(([^)]+)\)$/)
+    if (cardQueryMatch) {
+        const cardKey = cardQueryMatch[1]
+        if (!context.battle) throw new Error("[resolveTarget] battle 不存在，无法查询卡牌")
+        const player = context.battle.getTeam("player")?.[0]
+        const piles = (player as any)?.cardPiles
+        if (!piles) return undefined
+        const cards: Entity[] = []
+        for (const pileName of ["handPile", "drawPile", "discardPile", "exhaustPile"]) {
+            for (const card of (piles[pileName] || [])) {
+                if ((card as any).key === cardKey) cards.push(card)
+            }
+        }
+        return cards
     }
 
     switch (targetType) {

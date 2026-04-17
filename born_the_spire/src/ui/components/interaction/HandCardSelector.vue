@@ -160,7 +160,7 @@ const canConfirmSelection = canConfirm
     font-weight: bold;
 
     &:hover {
-        background: rgba(0, 0, 0, 0.05);
+        background: #e0e0e0;
     }
 }
 
