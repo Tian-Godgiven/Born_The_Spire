@@ -21,7 +21,7 @@ export const floorList: FloorConfig[] = [
             elitePlusBattles: ["battle_elite_plus_berserker"],
             bossBattles: [],       // 添加Boss战斗
             events: [],            // 事件池（不包含苏生事件）
-            blackStores: [],       // 添加黑市房间
+            blackStores: ["blackStore_default"],
             pools: ["pool_default"],
             treasures: ["treasure_default"]
         },
@@ -49,7 +49,7 @@ export const floorList: FloorConfig[] = [
             elitePlusBattles: ["battle_elite_plus_berserker"],
             bossBattles: [],
             events: [],
-            blackStores: [],
+            blackStores: ["blackStore_default"],
             pools: ["pool_default"],
             treasures: ["treasure_default"]
         },
@@ -72,7 +72,7 @@ export const floorList: FloorConfig[] = [
             elitePlusBattles: ["battle_elite_plus_berserker"],
             bossBattles: [],
             events: [],
-            blackStores: [],
+            blackStores: ["blackStore_default"],
             pools: ["pool_default"],
             treasures: ["treasure_default"]
         },
@@ -95,7 +95,7 @@ export const floorList: FloorConfig[] = [
             elitePlusBattles: ["battle_elite_plus_berserker"],
             bossBattles: [],
             events: [],
-            blackStores: [],
+            blackStores: ["blackStore_default"],
             pools: ["pool_default"],
             treasures: ["treasure_default"]
         },

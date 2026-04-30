@@ -76,7 +76,8 @@ await Promise.all([
     import('@/core/objects/room/PoolRoom'),
     import('@/core/objects/room/TreasureRoom'),
     import('@/core/objects/room/RoomSelectRoom'),
-    import('@/core/objects/room/FloorSelectRoom')
+    import('@/core/objects/room/FloorSelectRoom'),
+    import('@/core/objects/room/BlackStoreRoom')
 ])
 
 // ==================== 完成 ====================

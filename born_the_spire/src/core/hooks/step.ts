@@ -8,6 +8,7 @@ import { EventRoom } from "@/core/objects/room/EventRoom";
 import { PoolRoom } from "@/core/objects/room/PoolRoom";
 import { TreasureRoom } from "@/core/objects/room/TreasureRoom";
 import { RoomSelectRoom } from "@/core/objects/room/RoomSelectRoom";
+import { BlackStoreRoom } from "@/core/objects/room/BlackStoreRoom";
 
 /**
  * 显示地图UI的回调（由UI层设置）
@@ -83,9 +84,9 @@ export async function goToRoomType(roomType: RoomType, config?: any){
         case "treasure":
             room = new TreasureRoom({ type: "treasure", layer, ...config })
             break
-        // case "blackStore":
-        //     room = new BlackStoreRoom({ type: "blackStore", layer, ...config })
-        //     break
+        case "blackStore":
+            room = new BlackStoreRoom({ type: "blackStore", layer, ...config })
+            break
         case "roomSelect":
             room = new RoomSelectRoom({ type: "roomSelect", layer, roomCount: 3, ...config })
             break

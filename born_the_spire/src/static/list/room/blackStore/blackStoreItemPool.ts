@@ -6,6 +6,7 @@
 import type { OrganMap } from "@/core/objects/target/Organ"
 import type { RelicMap } from "@/core/objects/item/Subclass/Relic"
 import type { PotionMap } from "@/core/objects/item/Subclass/Potion"
+import type { CardMap } from "@/core/objects/item/Subclass/Card"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { getContextRandom } from "@/core/hooks/random"
 
@@ -78,6 +79,14 @@ export const blackStorePotionPool: ItemPoolConfig<PotionMap> = {
         uncommon: 50,
         rare: 20
     }
+}
+
+/**
+ * 黑市卡牌池（独立池，需要手动添加卡牌）
+ */
+export const blackStoreCardPool: ItemPoolConfig<CardMap> = {
+    items: [],
+    weights: []
 }
 
 /**
@@ -212,6 +221,25 @@ export function addRelicToBlackStorePool(relic: RelicMap, weight: number = 1): v
 export function addPotionToBlackStorePool(potion: PotionMap, weight: number = 1): void {
     blackStorePotionPool.items.push(potion)
     blackStorePotionPool.weights?.push(weight)
+}
+
+/**
+ * 添加卡牌到黑市卡牌池
+ */
+export function addCardToBlackStorePool(card: CardMap, weight: number = 1): void {
+    blackStoreCardPool.items.push(card)
+    blackStoreCardPool.weights?.push(weight)
+}
+
+/**
+ * 批量添加卡牌到黑市卡牌池
+ */
+export function addCardsToBlackStorePool(cards: CardMap[], weight: number | number[] = 1): void {
+    cards.forEach((card, index) => {
+        const w = Array.isArray(weight) ? (weight[index] ?? 1) : weight
+        blackStoreCardPool.items.push(card)
+        blackStoreCardPool.weights?.push(w)
+    })
 }
 
 /**

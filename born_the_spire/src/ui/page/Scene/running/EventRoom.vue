@@ -1,50 +1,59 @@
 <template>
 <div class="event-room">
-    <div class="event-content">
-        <!-- 事件标题 -->
-        <div class="event-header">
-            <h1 class="event-title">{{ eventTitle }}</h1>
-        </div>
+    <!-- 战斗阶段：渲染 BattleView -->
+    <template v-if="currentPhase === 'battle'">
+        <BattleView @battle-end="onBattleEnd" />
+        <RewardPage />
+    </template>
 
-        <!-- 事件描述 -->
-        <div class="event-description">
-            <p>{{ eventDescription }}</p>
-        </div>
+    <!-- 事件阶段：渲染事件UI -->
+    <template v-else>
+        <div class="event-content">
+            <!-- 事件标题 -->
+            <div class="event-header">
+                <h1 class="event-title">{{ eventTitle }}</h1>
+            </div>
 
-        <!-- 自定义事件组件（如果有） -->
-        <div v-if="customComponent" class="event-custom">
-            <component :is="customComponent" />
-        </div>
+            <!-- 事件描述 -->
+            <div class="event-description">
+                <p>{{ eventDescription }}</p>
+            </div>
 
-        <!-- 事件选项列表（独特的展示方式） -->
-        <div class="event-options">
-            <div
-                v-for="choice in choices"
-                :key="choice.__key"
-                class="event-option"
-                :class="{
-                    'option-available': choice.isAvailable(),
-                    'option-disabled': !choice.isAvailable()
-                }"
-                @click="handleOptionClick(choice)"
-            >
-                <!-- 自定义组件渲染 -->
-                <component
-                    v-if="choice.component"
-                    :is="choice.component"
-                    :choice="choice"
-                />
+            <!-- 自定义事件组件（如果有） -->
+            <div v-if="customComponent" class="event-custom">
+                <component :is="customComponent" />
+            </div>
 
-                <!-- 默认渲染 -->
-                <div v-else class="option-content">
-                    <div class="option-title">{{ choice.title }}</div>
-                    <div v-if="choice.description" class="option-description">
-                        {{ choice.description }}
+            <!-- 事件选项列表（独特的展示方式） -->
+            <div class="event-options">
+                <div
+                    v-for="choice in choices"
+                    :key="choice.__key"
+                    class="event-option"
+                    :class="{
+                        'option-available': choice.isAvailable(),
+                        'option-disabled': !choice.isAvailable()
+                    }"
+                    @click="handleOptionClick(choice)"
+                >
+                    <!-- 自定义组件渲染 -->
+                    <component
+                        v-if="choice.component"
+                        :is="choice.component"
+                        :choice="choice"
+                    />
+
+                    <!-- 默认渲染 -->
+                    <div v-else class="option-content">
+                        <div class="option-title">{{ choice.title }}</div>
+                        <div v-if="choice.description" class="option-description">
+                            {{ choice.description }}
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </template>
 </div>
 </template>
 
@@ -53,6 +62,8 @@ import { computed } from 'vue'
 import { nowGameRun } from '@/core/objects/game/run'
 import { EventRoom } from '@/core/objects/room/EventRoom'
 import type { Choice } from '@/core/objects/system/Choice'
+import BattleView from './BattleView.vue'
+import RewardPage from '@/ui/components/interaction/RewardPage.vue'
 
 // 获取当前房间
 const currentRoom = computed(() => {
@@ -61,6 +72,11 @@ const currentRoom = computed(() => {
         return room
     }
     return null
+})
+
+// 当前阶段
+const currentPhase = computed(() => {
+    return currentRoom.value?.currentPhase || 'event'
 })
 
 // 事件标题（随幕切换更新）
@@ -98,6 +114,11 @@ async function handleOptionClick(choice: Choice) {
     } catch (error) {
         console.error('[EventRoom] 选择失败:', error)
     }
+}
+
+// 处理战斗结束
+async function onBattleEnd(result: 'player_win' | 'player_lose') {
+    await currentRoom.value?.handleBattleEnd(result)
 }
 </script>
 

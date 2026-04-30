@@ -21,10 +21,7 @@
         </div>
     </div>
 
-    <!-- 离开按钮 - 悬浮在右侧 -->
-    <button class="leave-button" @click="leavePool">
-        离开
-    </button>
+    <LeaveButton @leave="leavePool" />
 </div>
 </template>
 
@@ -33,7 +30,8 @@ import { computed } from 'vue'
 import { nowGameRun } from '@/core/objects/game/run'
 import { PoolRoom } from '@/core/objects/room/PoolRoom'
 import ChoiceContainer from '@/ui/components/system/ChoiceContainer.vue'
-import { goToNextStep } from '@/core/hooks/step'
+import LeaveButton from '@/ui/components/global/LeaveButton.vue'
+import { completeAndGoNext } from '@/core/hooks/step'
 
 // 获取当前房间
 const currentRoom = computed(() => {
@@ -54,21 +52,14 @@ const choiceGroup = computed(() => {
     return currentRoom.value?.getChoiceGroup()
 })
 
-// 水池完成回调
+// 水池完成回调（选择行动后自动触发）
 async function onPoolCompleted() {
-    // 水池完成后的处理由 PoolRoom 内部处理
-    // UI 只需要响应完成事件
+    await completeAndGoNext()
 }
 
-// 离开水池
+// 离开水池（不选择任何行动直接离开）
 async function leavePool() {
-    const room = currentRoom.value
-    if (room) {
-        // 完成当前房间
-        await nowGameRun.completeCurrentRoom()
-        // 前往下一层
-        await goToNextStep()
-    }
+    await completeAndGoNext()
 }
 </script>
 
@@ -116,25 +107,4 @@ async function leavePool() {
     line-height: 1.6;
 }
 
-.leave-button {
-    position: fixed;
-    right: 15%;
-    top: 75%;
-    transform: translateY(-50%);
-    padding: 1rem 2rem;
-    font-size: 1.2rem;
-    font-weight: bold;
-    background: white;
-    border: 2px solid black;
-    cursor: pointer;
-    transition: background 0.2s;
-
-    &:hover {
-        background: rgba(0, 0, 0, 0.05);
-    }
-
-    &:active {
-        background: rgba(0, 0, 0, 0.1);
-    }
-}
 </style>

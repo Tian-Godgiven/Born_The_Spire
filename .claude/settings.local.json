@@ -53,7 +53,9 @@
       "Bash(grep:*)",
       "Bash(git -C D:/tian/Born_The_Spire/.claude/worktrees/agent-abed514f status --short)",
       "Bash(git:*)",
-      "Bash(npx vue-tsc:*)"
+      "Bash(npx vue-tsc:*)",
+      "Bash(grep -rn \"damageOrgan\\\\|healOrgan\" src/core/effects/organ/)",
+      "Bash(grep -rn \"damageOrgan\\\\|healOrgan\" src/static/list/system/effectMap.ts)"
     ]
   }
 }

@@ -6,6 +6,29 @@ import type { Component } from "vue"
 import type { RoomAvailableCondition } from "@/static/registry/roomRegistry"
 
 /**
+ * 战斗场景奖励配置
+ */
+export interface BattleRewardConfig {
+    gold?: number
+    cardPool?: string[]
+    cardChoices?: number
+    cardPick?: number
+    relics?: { rarity: string }[]
+    potions?: { rarity: string }[]
+}
+
+/**
+ * 战斗场景配置
+ */
+export interface BattleSceneConfig {
+    enemies: string[]
+    rewards?: BattleRewardConfig
+    afterEffects?: Array<{ key: string; params?: any }>
+    onWin?: string
+    onLose?: string | "gameOver"
+}
+
+/**
  * 事件选项配置
  */
 export interface EventOptionMap {
@@ -33,6 +56,13 @@ export interface EventSceneMap {
     key: string                     // 幕的唯一标识
     title: string                   // 幕标题
     description: string             // 幕描述
+
+    // 场景类型："text"（默认）为文本选择，"battle" 为嵌入战斗
+    type?: "text" | "battle"
+
+    // 战斗场景配置（type 为 "battle" 时使用）
+    battle?: BattleSceneConfig
+
     options: EventOptionMap[]       // 幕的选项列表
     mutuallyExclusiveGroups?: string[][]  // 互斥组（幕级别）
 }

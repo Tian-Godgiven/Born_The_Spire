@@ -1,6 +1,6 @@
 /**
  * 水池房间
- * 玩家可以在这里休息和提升
+ * 提供饮用（消耗物质回复生命）和洗涤（消耗物质升级器官）两种选择
  */
 
 import { Room } from "./Room"
@@ -11,43 +11,46 @@ import { newLog } from "@/ui/hooks/global/log"
 import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
 import { showComponent } from "@/core/hooks/componentManager"
+import { doEvent } from "@/core/objects/system/ActionEvent"
+import { getCurrentValue } from "@/core/objects/system/Current/current"
 import { gainMark, hasMark } from "@/core/hooks/mark"
-import { poolActionRegistry } from "@/static/registry/poolActionRegistry"
 
 /**
  * 水池房间配置
  */
 export interface PoolRoomConfig extends RoomConfig {
     type: "pool"
-    absorbAmount?: number       // 汲取物质数量（默认根据层级计算）
-    allowBloodMark?: boolean    // 是否允许染血（默认 true）
+    drinkRate?: number          // 饮用兑换率：X物质 = 1生命（默认 1）
+    cleanseMaterialCost?: number // 洗涤物质消耗（默认根据器官计算）
+    cleanseMaxHpCost?: number   // 洗涤额外最大生命消耗（非首次，默认 5）
 }
+
+/** 饮用默认兑换率：1物质 = 1生命 */
+const DEFAULT_DRINK_RATE = 1
+/** 洗涤非首次额外扣除最大生命 */
+const DEFAULT_CLEANSE_MAX_HP_COST = 5
 
 /**
  * 水池房间类
- * 提供汲取、升级、染血三种选择
+ * 提供饮用和洗涤两种选择
  */
 export class PoolRoom extends Room {
-    public readonly absorbAmount: number
-    public readonly allowBloodMark: boolean
+    public readonly drinkRate: number
+    public readonly cleanseMaxHpCost: number
     public readonly choiceGroup: ChoiceGroup
-    private hasBloodMark: boolean = false  // 全局是否已染血
-    private bloodMarkChoice?: Choice  // 保存染血选项的引用
+    /** 本水池是否已使用过洗涤（首次免费） */
+    private hasCleansed: boolean = false
 
     constructor(config: PoolRoomConfig) {
         super(config)
 
-        // 计算汲取物质数量（根据层级）
-        this.absorbAmount = config.absorbAmount ?? this.calculateAbsorbAmount(config.layer)
-        this.allowBloodMark = config.allowBloodMark ?? true
-
-        // 从玩家状态检查是否已染血
-        this.hasBloodMark = hasMark(nowPlayer, "mark_blood")
+        this.drinkRate = config.drinkRate ?? DEFAULT_DRINK_RATE
+        this.cleanseMaxHpCost = config.cleanseMaxHpCost ?? DEFAULT_CLEANSE_MAX_HP_COST
 
         // 创建选项
         const choices = this.createChoices()
 
-        // 创建选项组
+        // 创建选项组（单选）
         this.choiceGroup = new ChoiceGroup({
             title: "水池",
             description: "选择一个行为",
@@ -66,70 +69,38 @@ export class PoolRoom extends Room {
     private createChoices(): Choice[] {
         const choices: Choice[] = []
 
-        // 选项1：汲取
+        // 获取玩家当前物质
+        const reserveModifier = getReserveModifier(nowPlayer)
+        const currentMaterial = reserveModifier.getReserve("material")
+
+        // 计算饮用可回复的生命值
+        const healAmount = Math.floor(currentMaterial / this.drinkRate)
+        const currentHealth = getCurrentValue(nowPlayer, "health")
+        const maxHealth = nowPlayer.status["max-health"]?.value ?? 0
+        const missingHealth = maxHealth - currentHealth
+        const actualHeal = Math.min(healAmount, missingHealth)
+
+        // 选项1：饮用
         choices.push(new Choice({
-            title: "汲取",
-            description: `吸收水池中的物质，获得 ${this.absorbAmount} 物质`,
+            title: "饮用",
+            description: currentMaterial > 0
+                ? `消耗物质，回复生命（当前物质: ${currentMaterial}，可回复: ${actualHeal}）`
+                : "没有物质可以消耗",
             icon: "💧",
             onSelect: async () => {
-                await this.onAbsorb()
+                await this.onDrink()
             }
         }))
 
-        // 选项2：升级
+        // 选项2：洗涤
         choices.push(new Choice({
-            title: "升级",
-            description: "消耗物质提升器官等级（可重复）",
-            icon: "⬆️",
+            title: "洗涤",
+            description: "消耗物质升级器官（首次免额外代价）",
+            icon: "✨",
             onSelect: async () => {
-                await this.onUpgrade()
+                await this.onCleanse()
             }
         }))
-
-        // 选项3：染血（如果允许且未染血）
-        if (this.allowBloodMark && !this.hasBloodMark) {
-            const bloodMarkChoice = new Choice({
-                title: "染血",
-                description: "获得红色印记（全局只能进行1次）",
-                icon: "🩸",
-                onSelect: async () => {
-                    await this.onBloodMark()
-                }
-            })
-            choices.push(bloodMarkChoice)
-            // 保存引用，以便后续移除
-            this.bloodMarkChoice = bloodMarkChoice
-        }
-
-        // 添加扩展行动（从注册表获取）
-        const extendedActions = poolActionRegistry.getAvailableActions(nowPlayer, {
-            layer: this.layer,
-            absorbAmount: this.absorbAmount
-        })
-
-        for (const action of extendedActions) {
-            choices.push(new Choice({
-                title: action.title,
-                description: action.description,
-                icon: action.icon,
-                onSelect: async () => {
-                    const success = await poolActionRegistry.executeAction(
-                        action.key,
-                        nowPlayer,
-                        {
-                            layer: this.layer,
-                            absorbAmount: this.absorbAmount
-                        }
-                    )
-
-                    // 如果行动可重复且执行成功，递归调用
-                    if (success && action.repeatable) {
-                        // 重新显示选项（类似升级的逻辑）
-                        // 这里需要触发 UI 刷新，暂时不实现递归
-                    }
-                }
-            }))
-        }
 
         return choices
     }
@@ -144,12 +115,10 @@ export class PoolRoom extends Room {
     }
 
     /**
-     * 处理水池房间
-     * 等待玩家选择
+     * 处理水池房间（UI 驱动）
      */
     async process(): Promise<void> {
         // 水池房间的处理由 UI 驱动
-        // 玩家通过 UI 选择行为
     }
 
     /**
@@ -168,23 +137,56 @@ export class PoolRoom extends Room {
     }
 
     /**
-     * 汲取行为
+     * 饮用：消耗物质，回复生命
      */
-    private async onAbsorb(): Promise<void> {
-        newLog([`汲取了 ${this.absorbAmount} 物质`])
-
-        // 给玩家添加物质
+    private async onDrink(): Promise<void> {
         const reserveModifier = getReserveModifier(nowPlayer)
-        reserveModifier.gainReserve("material", this.absorbAmount, nowPlayer)
+        const currentMaterial = reserveModifier.getReserve("material")
+
+        if (currentMaterial <= 0) {
+            newLog(["没有物质可以消耗"])
+            return
+        }
+
+        // 计算可回复量
+        const healAmount = Math.floor(currentMaterial / this.drinkRate)
+        const currentHealth = getCurrentValue(nowPlayer, "health")
+        const maxHealth = nowPlayer.status["max-health"]?.value ?? 0
+        const missingHealth = maxHealth - currentHealth
+
+        if (missingHealth <= 0) {
+            newLog(["生命值已满，无需饮用"])
+            return
+        }
+
+        // 实际回复量 = min(可回复量, 缺失生命)
+        const actualHeal = Math.min(healAmount, missingHealth)
+        // 实际消耗物质 = 实际回复量 * 兑换率
+        const materialCost = actualHeal * this.drinkRate
+
+        // 消耗物质
+        reserveModifier.spendReserve("material", materialCost)
+
+        // 回复生命
+        await doEvent({
+            key: "heal",
+            source: nowPlayer,
+            medium: nowPlayer,
+            target: nowPlayer,
+            effectUnits: [{
+                key: "heal",
+                params: { value: actualHeal }
+            }]
+        })
+
+        newLog([`饮用水池，消耗 ${materialCost} 物质，回复 ${actualHeal} 生命`])
     }
 
     /**
-     * 升级行为
+     * 洗涤：消耗物质升级器官
+     * 每个水池首次免费（不扣最大生命），之后每次额外扣最大生命
      */
-    private async onUpgrade(): Promise<void> {
-        newLog(["打开器官升级界面..."])
-
-        // 获取玩家的器官列表
+    private async onCleanse(): Promise<void> {
         const organModifier = getOrganModifier(nowPlayer)
         const organs = organModifier.getOrgans()
 
@@ -205,45 +207,39 @@ export class PoolRoom extends Room {
             })
 
             if (selectedOrgan) {
-                // 升级选中的器官
+                // 非首次洗涤，额外扣除最大生命
+                if (this.hasCleansed) {
+                    const maxHpCost = this.cleanseMaxHpCost
+                    newLog([`非首次洗涤，额外消耗 ${maxHpCost} 最大生命`])
+
+                    await doEvent({
+                        key: "cleanseCost",
+                        source: nowPlayer,
+                        medium: nowPlayer,
+                        target: nowPlayer,
+                        effectUnits: [{
+                            key: "addStatusBaseCurrentValue",
+                            params: {
+                                value: -maxHpCost,
+                                statusKey: "max-health",
+                                currentKey: "health"
+                            }
+                        }]
+                    })
+                }
+
+                // 升级器官（内部会消耗物质或生命值）
                 const success = await organModifier.upgradeOrgan(selectedOrgan)
 
                 if (success) {
+                    this.hasCleansed = true
                     newLog([`${selectedOrgan.label} 升级成功！`])
-                    // 升级成功后，可以继续升级（递归调用）
-                    // 这样玩家可以在同一个水池多次升级
-                    await this.onUpgrade()
                 }
             }
         } catch (error) {
-            // 用户取消或出错
-            newLog(["取消升级"])
+            // 用户取消
+            newLog(["取消洗涤"])
         }
-    }
-
-    /**
-     * 染血行为
-     */
-    private async onBloodMark(): Promise<void> {
-        // 使用新的印记系统
-        gainMark(nowPlayer, "mark_blood")
-        this.hasBloodMark = true
-
-        // 从当前选项组中移除染血选项
-        if (this.bloodMarkChoice) {
-            const index = this.choiceGroup.choices.indexOf(this.bloodMarkChoice)
-            if (index !== -1) {
-                this.choiceGroup.choices.splice(index, 1)
-            }
-        }
-    }
-
-    /**
-     * 计算汲取物质数量（根据层级）
-     */
-    private calculateAbsorbAmount(layer: number): number {
-        // 基础物质 + 层级加成
-        return 50 + layer * 10
     }
 
     /**
@@ -251,6 +247,23 @@ export class PoolRoom extends Room {
      */
     getChoiceGroup(): ChoiceGroup {
         return this.choiceGroup
+    }
+
+    // ==================== 染血系统（暂未启用） ====================
+
+    /**
+     * 染血行为
+     * 目前保留代码，暂不作为水池选项
+     * 后续接入时在 createChoices 中添加选项即可
+     */
+    async onBloodMark(): Promise<void> {
+        if (hasMark(nowPlayer, "mark_blood")) {
+            newLog(["已经染血，无法再次染血"])
+            return
+        }
+
+        gainMark(nowPlayer, "mark_blood")
+        newLog(["获得了红色印记"])
     }
 
     getDisplayName(): string {

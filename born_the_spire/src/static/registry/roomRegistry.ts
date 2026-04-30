@@ -12,6 +12,7 @@ import { initPoolRooms } from './rooms/initPoolRooms'
 import { initRoomSelectRooms } from './rooms/initRoomSelectRooms'
 import { initTreasureRooms } from './rooms/initTreasureRooms'
 import { initFloorSelectRooms } from './rooms/initFloorSelectRooms'
+import { initBlackStoreRooms } from './rooms/initBlackStoreRooms'
 
 /**
  * 房间组件类型
@@ -251,7 +252,7 @@ export async function initAllRooms(): Promise<void> {
     await initBattleRooms()
     await initEventRooms()
     await initPoolRooms()
-    // await initBlackStoreRooms()
+    await initBlackStoreRooms()
     await initRoomSelectRooms()
     await initTreasureRooms()
     await initFloorSelectRooms()

@@ -7,22 +7,25 @@
     @click="handleClick"
     @contextmenu.prevent="handleRightClick">
 
-    <!-- 自动角标：主动能力标识 -->
-    <div class="badge top-left auto-ability" v-if="hasActiveAbilities">
-        ⚡
-    </div>
-
-    <!-- 统一角标渲染 -->
-    <template v-for="(group, position) in badgesByPosition" :key="position">
-        <div class="badge-group" :class="position">
-            <div
-                v-for="(badge, index) in group"
-                :key="index"
-                class="badge"
-                :style="badge.style">
-                {{ badge.text }}
-            </div>
+    <!-- 角标（预览模式隐藏） -->
+    <template v-if="!preview">
+        <!-- 自动角标：主动能力标识 -->
+        <div class="badge top-left auto-ability" v-if="hasActiveAbilities">
+            ⚡
         </div>
+
+        <!-- 统一角标渲染 -->
+        <template v-for="(group, position) in badgesByPosition" :key="position">
+            <div class="badge-group" :class="position">
+                <div
+                    v-for="(badge, index) in group"
+                    :key="index"
+                    class="badge"
+                    :style="badge.style">
+                    {{ badge.text }}
+                </div>
+            </div>
+        </template>
     </template>
 
     <div>{{ relic.label }}</div>
@@ -67,7 +70,12 @@
     import { nowBattle } from '@/core/objects/game/battle';
     import type { BadgeRenderData, BadgePosition } from '@/core/types/BadgeConfig';
 
-    const {relic} = defineProps<{relic:Relic}>()
+    const props = defineProps<{
+        relic: Relic,
+        preview?: boolean  // 预览模式：隐藏角标，禁用点击/右键
+    }>()
+
+    const { relic } = props
 
     const relicRef = ref<HTMLElement>()
     const tooltipRef = ref<HTMLElement>()
@@ -173,10 +181,12 @@
     }
 
     function handleClick() {
+        if (props.preview) return
         showRelicList(relic)
     }
 
     async function handleRightClick() {
+        if (props.preview) return
         if (!hasActiveAbilities.value) return
 
         try {

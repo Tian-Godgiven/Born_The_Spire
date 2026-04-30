@@ -4,8 +4,10 @@
 
 import { bigFishEvent } from './bigFish'
 import { goldenIdolEvent } from './goldenIdol'
+import { colosseumEvent } from './colosseum'
 
 export const slayTheSpireEvents = [
     bigFishEvent,
-    goldenIdolEvent
+    goldenIdolEvent,
+    colosseumEvent
 ]

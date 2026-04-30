@@ -154,7 +154,7 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, markRaw, shallowRef } from 'vue'
-import { currentRewards, showRewardUI, confirmRewards } from '@/ui/hooks/interaction/rewardDisplay'
+import { currentRewards, showRewardUI, confirmRewards, navigateOnProceed } from '@/ui/hooks/interaction/rewardDisplay'
 import { organRewardActionRegistry } from '@/static/registry/organRewardActionRegistry'
 import { nowPlayer } from '@/core/objects/game/run'
 import { getDescribe, getDescribeStructured, type DescribeSegment } from '@/ui/hooks/express/describe'
@@ -333,9 +333,11 @@ async function handleProceed() {
   // 关闭奖励界面
   confirmRewards()
 
-  // 完成当前房间并前往下一步（显示地图）
-  const { completeAndGoNext } = await import('@/core/hooks/step')
-  await completeAndGoNext()
+  // 仅在需要自动导航时前往下一步
+  if (navigateOnProceed.value) {
+    const { completeAndGoNext } = await import('@/core/hooks/step')
+    await completeAndGoNext()
+  }
 }
 </script>
 

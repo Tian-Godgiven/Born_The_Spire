@@ -12,13 +12,15 @@ import type { Organ } from "@/core/objects/target/Organ"
 import type { Relic } from "@/core/objects/item/Subclass/Relic"
 import type { RelicMap } from "@/core/objects/item/Subclass/Relic"
 import type { PotionMap } from "@/core/objects/item/Subclass/Potion"
-import { createRelic } from "@/core/factories"
+import type { CardMap } from "@/core/objects/item/Subclass/Card"
+import { createRelic, createOrgan, createPotion, createCard } from "@/core/factories"
 import { randomFloatRange } from "@/core/hooks/random"
 import { getOrganByKey } from "@/static/list/target/organList"
 import {
     blackStoreOrganPool,
     blackStoreRelicPool,
     blackStorePotionPool,
+    blackStoreCardPool,
     selectRandomItemsFromPool,
 } from "@/static/list/room/blackStore/blackStoreItemPool"
 import type { RarityWeights } from "@/static/list/room/blackStore/blackStoreItemPool"
@@ -33,7 +35,7 @@ import { doEvent } from "@/core/objects/system/ActionEvent"
 /**
  * 商品类型
  */
-export type StoreItemType = "organ" | "relic" | "potion"
+export type StoreItemType = "organ" | "relic" | "potion" | "card"
 
 /**
  * 商品接口
@@ -44,7 +46,7 @@ export interface StoreItem {
     name: string                    // 商品名称
     description?: string            // 商品描述
     price: number                   // 价格（金钱）
-    data: OrganMap | RelicMap | PotionMap  // 商品数据
+    data: OrganMap | RelicMap | PotionMap | CardMap  // 商品数据
     isPurchased: boolean            // 是否已购买
     rarity?: string                 // 稀有度
 }
@@ -68,6 +70,7 @@ export interface BlackStoreRoomConfig extends RoomConfig {
     organCount?: number             // 器官数量（默认 5）
     relicCount?: number             // 遗物数量（默认 3）
     potionCount?: number            // 药水数量（默认 3）
+    cardCount?: number              // 卡牌数量（默认取卡牌池全部，池为空则不显示）
     allowSellOrgan?: boolean        // 是否允许出售器官（默认 true）
     allowSellHealth?: boolean       // 是否允许出售生命值（默认 true）
 
@@ -104,6 +107,10 @@ export interface BlackStoreRoomConfig extends RoomConfig {
             whitelist?: string[]    // 药水白名单
             blacklist?: string[]    // 药水黑名单
         }
+        card?: {
+            whitelist?: string[]    // 卡牌白名单
+            blacklist?: string[]    // 卡牌黑名单
+        }
     }
 }
 
@@ -115,6 +122,7 @@ export class BlackStoreRoom extends Room {
     public readonly organCount: number
     public readonly relicCount: number
     public readonly potionCount: number
+    public readonly cardCount: number
     public readonly allowSellOrgan: boolean
     public readonly allowSellHealth: boolean
 
@@ -136,12 +144,16 @@ export class BlackStoreRoom extends Room {
     // 本房间已出现的遗物（用于 room scope）
     private roomAppearedRelics: Set<string> = new Set()
 
+    // 展示用实例缓存（商品ID -> 实例）
+    private previewInstances: Map<string, any> = new Map()
+
     constructor(config: BlackStoreRoomConfig) {
         super(config)
 
         this.organCount = config.organCount ?? 5
         this.relicCount = config.relicCount ?? 3
         this.potionCount = config.potionCount ?? 3
+        this.cardCount = config.cardCount ?? blackStoreCardPool.items.length
         this.allowSellOrgan = config.allowSellOrgan ?? true
         this.allowSellHealth = config.allowSellHealth ?? true
 
@@ -217,6 +229,22 @@ export class BlackStoreRoom extends Room {
                 rarity: undefined  // PotionMap 暂无 rarity 属性
             })
         })
+
+        // 生成卡牌商品（从独立卡牌池）
+        if (this.cardCount > 0 && blackStoreCardPool.items.length > 0) {
+            const cards = this.selectRandomCards(this.cardCount)
+            cards.forEach((card, index) => {
+                this.storeItems.push({
+                    id: `card_${index}`,
+                    type: "card",
+                    name: card.label,
+                    description: card.describe ? this.formatDescribe(card.describe) : undefined,
+                    price: this.calculateCardPrice(card),
+                    data: card,
+                    isPurchased: false
+                })
+            })
+        }
     }
 
     /**
@@ -290,6 +318,23 @@ export class BlackStoreRoom extends Room {
     }
 
     /**
+     * 从黑市卡牌池中随机选择卡牌
+     */
+    private selectRandomCards(count: number): CardMap[] {
+        return selectRandomItemsFromPool(
+            blackStoreCardPool,
+            count,
+            false,
+            "blackStore:card",
+            {
+                whitelist: this.filters?.card?.whitelist,
+                blacklist: this.filters?.card?.blacklist,
+                uniqueConfig: undefined
+            }
+        )
+    }
+
+    /**
      * 计算器官价格
      * 基于稀有度和等级
      */
@@ -315,10 +360,60 @@ export class BlackStoreRoom extends Room {
     }
 
     /**
+     * 计算卡牌价格
+     */
+    private calculateCardPrice(card: CardMap): number {
+        // 基础价格 100，根据费用调整
+        const cost = card.status?.cost ?? 1
+        return 50 + cost * 50
+    }
+
+    /**
+     * 为所有商品预创建展示用实例
+     */
+    async createPreviewInstances(): Promise<void> {
+        for (const item of this.storeItems) {
+            try {
+                let instance: any = null
+                switch (item.type) {
+                    case "organ":
+                        instance = await createOrgan(item.data)
+                        break
+                    case "relic":
+                        instance = await createRelic(item.data)
+                        break
+                    case "potion":
+                        instance = await createPotion(item.data)
+                        break
+                    case "card":
+                        instance = await createCard(item.data)
+                        break
+                }
+                if (instance) {
+                    this.previewInstances.set(item.id, instance)
+                }
+            } catch (e) {
+                console.warn(`[BlackStore] 创建展示实例失败: ${item.name}`, e)
+            }
+        }
+    }
+
+    /**
+     * 获取商品的展示用实例
+     */
+    getPreviewInstance(itemId: string): any | null {
+        return this.previewInstances.get(itemId) ?? null
+    }
+
+    /**
      * 进入黑市房间
      */
     async enter(): Promise<void> {
         this.state = "active"
+
+        // 预创建展示实例
+        await this.createPreviewInstances()
+
         newLog(["===== 进入黑市 ====="])
         newLog(["一个进行着可疑交易的窝点..."])
         newLog([`商品列表：${this.storeItems.length} 件商品`])
@@ -345,7 +440,8 @@ export class BlackStoreRoom extends Room {
      * 离开黑市房间
      */
     async exit(): Promise<void> {
-        // 清理状态
+        // 清理展示实例
+        this.previewInstances.clear()
     }
 
     /**
@@ -408,6 +504,14 @@ export class BlackStoreRoom extends Room {
                 if (!potion) throw new Error(`未找到药水: ${potionData.key}`)
                 nowPlayer.getPotion(potionData.key)
                 newLog([`获得药水: ${item.name}`])
+                break
+            }
+            case "card": {
+                const cardData = item.data as CardMap
+                const { getCardModifier } = await import("@/core/objects/system/modifier/CardModifier")
+                const cardModifier = getCardModifier(nowPlayer)
+                cardModifier.addCardsFromSource([cardData.key], nowPlayer)
+                newLog([`获得卡牌: ${item.name}`])
                 break
             }
         }

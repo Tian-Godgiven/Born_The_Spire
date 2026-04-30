@@ -141,6 +141,20 @@ const helpSections: Array<{ key: string, title: string, items: Array<{ cmd: stri
         ]
     },
     {
+        key: '黑市',
+        title: '黑市相关命令',
+        items: [
+            { cmd: 'enterBlackStore(layer?)', desc: '进入黑市', examples: ['enterBlackStore()', 'enterBlackStore(3)'] },
+        ]
+    },
+    {
+        key: '水池',
+        title: '水池相关命令',
+        items: [
+            { cmd: 'enterPool(layer?)', desc: '进入水池', examples: ['enterPool()', 'enterPool(3)'] },
+        ]
+    },
+    {
         key: '控制台',
         title: '控制台命令',
         items: [
@@ -338,6 +352,12 @@ async function executeFunction(funcName: string, args: any[]) {
         case 'enterEvent':
             await enterEvent(args[0])
             break
+        case 'enterBlackStore':
+            await enterBlackStore(args[0])
+            break
+        case 'enterPool':
+            await enterPool(args[0])
+            break
         case 'help':
             showHelp()
             break
@@ -440,6 +460,54 @@ async function enterEvent(eventKey: string) {
 
     await nowGameRun.enterRoom(room)
     addOutput(`✓ 成功进入事件: ${eventKey}`, 'result')
+
+    if (router.currentRoute.value.path !== '/running') {
+        router.replace('/running')
+    }
+}
+
+// 进入黑市
+async function enterBlackStore(layer?: number) {
+    if (!nowGameRun) {
+        addOutput('游戏未开始，请先点击"开始游戏"', 'error')
+        return
+    }
+
+    const actualLayer = layer ?? nowGameRun.towerLevel ?? 1
+    addOutput(`进入黑市，层级: ${actualLayer}`, 'info')
+
+    const room = roomRegistry.createRoom("blackStore_default", actualLayer)
+    if (!room) {
+        addOutput('创建黑市房间失败，请确认黑市房间已注册', 'error')
+        return
+    }
+
+    await nowGameRun.enterRoom(room)
+    addOutput('✓ 成功进入黑市', 'result')
+
+    if (router.currentRoute.value.path !== '/running') {
+        router.replace('/running')
+    }
+}
+
+// 进入水池
+async function enterPool(layer?: number) {
+    if (!nowGameRun) {
+        addOutput('游戏未开始，请先点击"开始游戏"', 'error')
+        return
+    }
+
+    const actualLayer = layer ?? nowGameRun.towerLevel ?? 1
+    addOutput(`进入水池，层级: ${actualLayer}`, 'info')
+
+    const room = roomRegistry.createRoom("pool_default", actualLayer)
+    if (!room) {
+        addOutput('创建水池房间失败，请确认水池房间已注册', 'error')
+        return
+    }
+
+    await nowGameRun.enterRoom(room)
+    addOutput('✓ 成功进入水池', 'result')
 
     if (router.currentRoute.value.path !== '/running') {
         router.replace('/running')

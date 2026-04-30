@@ -21,21 +21,28 @@ export const rewardDescription = ref<string>("")
 // 奖励完成的 Promise resolver
 let rewardResolver: (() => void) | null = null
 
+// 领取奖励后是否自动导航到下一步
+export const navigateOnProceed = ref(true)
+
 /**
  * 显示奖励并等待玩家领取
  * @param rewards 奖励列表
  * @param title 奖励标题（可选）
  * @param description 奖励描述（可选）
+ * @param options 额外选项
+ * @param options.navigate 领取后是否自动导航（默认 true）
  * @returns Promise，当所有奖励领取完成后 resolve
  */
 export function showRewards(
     rewards: Reward[],
     title?: string,
-    description?: string
+    description?: string,
+    options?: { navigate?: boolean }
 ): Promise<void> {
     currentRewards.value = rewards
     rewardTitle.value = title || "获得奖励"
     rewardDescription.value = description || ""
+    navigateOnProceed.value = options?.navigate ?? true
     showRewardUI.value = true
 
     return new Promise<void>((resolve) => {

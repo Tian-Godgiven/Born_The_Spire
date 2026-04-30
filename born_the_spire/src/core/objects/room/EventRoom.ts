@@ -1,17 +1,25 @@
 /**
  * 事件房间（重构版）
  * 支持从配置列表加载事件，支持原子效果和复杂交互
+ * 支持嵌入战斗场景
  */
 
 import { Room } from "./Room"
 import type { RoomConfig } from "./Room"
 import { Choice, ChoiceGroup } from "../system/Choice"
-import type { EventMap, EventSceneMap } from "@/core/types/EventMapData"
+import type { EventMap, EventSceneMap, BattleSceneConfig, BattleRewardConfig } from "@/core/types/EventMapData"
 import { executeEventEffects } from "@/static/list/room/event/eventEffectMap"
 import { newLog } from "@/ui/hooks/global/log"
 import type { Component } from "vue"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { completeAndGoNext } from "@/core/hooks/step"
+import { startNewBattle, nowPlayerTeam, endNowBattle } from "../game/battle"
+import type { Enemy } from "../target/Enemy"
+import type { EnemyMap } from "../target/Enemy"
+import { createEnemy } from "@/core/factories"
+import { rewardRegistry } from "@/static/registry/rewardRegistry"
+import { nowPlayer } from "../game/run"
+import { showBattleDefeat } from "@/ui/hooks/interaction/battleDefeat"
 
 /**
  * 事件房间配置
@@ -29,6 +37,7 @@ export interface EventRoomConfig extends RoomConfig {
  * 事件房间类
  * 提供多个选项供玩家选择，支持简单效果和复杂交互
  * 支持单幕事件和多幕事件
+ * 支持嵌入战斗场景
  */
 export class EventRoom extends Room {
     public readonly eventConfig: EventMap
@@ -43,6 +52,11 @@ export class EventRoom extends Room {
     // 当前显示的标题和描述（响应式，随幕切换更新）
     public currentTitle: string = ""
     public currentDescription: string = ""
+
+    // 战斗阶段相关
+    public currentPhase: "event" | "battle" = "event"
+    private battleEnemies: Enemy[] = []
+    private currentBattleConfig: BattleSceneConfig | null = null
 
     constructor(config: EventRoomConfig) {
         super(config)
@@ -190,12 +204,206 @@ export class EventRoom extends Room {
             newLog([scene.description])
         }
 
+        // 如果是战斗场景，启动战斗
+        if (scene.type === "battle" && scene.battle) {
+            this.startBattleScene(scene.battle)
+            return
+        }
+
+        // 文本场景：更新选项
+        this.currentPhase = "event"
+
         // 清理当前选项
         this.choiceGroup.choices.splice(0, this.choiceGroup.choices.length)
 
         // 创建新幕的选项
         const newChoices = this.createChoicesFromOptions(scene.options, scene.mutuallyExclusiveGroups)
         newChoices.forEach(choice => this.choiceGroup.choices.push(choice))
+    }
+
+    /**
+     * 启动战斗场景
+     */
+    private async startBattleScene(battleConfig: BattleSceneConfig): Promise<void> {
+        this.currentBattleConfig = battleConfig
+        this.currentPhase = "battle"
+
+        newLog(["===== 战斗开始 ====="])
+
+        // 加载敌人配置
+        const enemyList = getLazyModule<EnemyMap[]>('enemyList')
+        const enemyConfigs = battleConfig.enemies.map(key => {
+            const config = enemyList.find((e: EnemyMap) => e.key === key)
+            if (!config) {
+                console.warn(`[EventRoom] 未找到敌人配置: ${key}`)
+            }
+            return config
+        }).filter((c): c is EnemyMap => c !== undefined)
+
+        // 创建敌人实例
+        this.battleEnemies = await Promise.all(
+            enemyConfigs.map(config => createEnemy(config))
+        )
+
+        newLog([`生成敌人: ${this.battleEnemies.map(e => e.label).join(", ")}`])
+
+        // 启动战斗
+        if (nowPlayerTeam.length === 0) {
+            console.error("[EventRoom] 没有玩家队伍")
+            return
+        }
+
+        await startNewBattle(nowPlayerTeam, this.battleEnemies)
+    }
+
+    /**
+     * 处理战斗结束（由 UI 层调用）
+     */
+    async handleBattleEnd(result: "player_win" | "player_lose"): Promise<void> {
+        const battleConfig = this.currentBattleConfig
+        if (!battleConfig) return
+
+        if (result === "player_win") {
+            newLog(["===== 战斗胜利 ====="])
+
+            // 显示奖励（如果配置了）
+            if (battleConfig.rewards) {
+                await this.showBattleRewards(battleConfig.rewards)
+            }
+
+            // 清理战斗状态
+            await this.cleanupBattle()
+
+            // 执行战斗后效果
+            if (battleConfig.afterEffects && battleConfig.afterEffects.length > 0) {
+                await executeEventEffects(battleConfig.afterEffects)
+            }
+
+            // 跳转到下一场景
+            if (battleConfig.onWin) {
+                this.goToScene(battleConfig.onWin)
+            } else {
+                // 没有下一幕，事件结束
+                newLog(["===== 事件结束 ====="])
+                await completeAndGoNext()
+            }
+        } else {
+            newLog(["===== 战斗失败 ====="])
+
+            // 清理战斗状态
+            await this.cleanupBattle()
+
+            if (battleConfig.onLose && battleConfig.onLose !== "gameOver") {
+                // 跳转到失败场景
+                this.goToScene(battleConfig.onLose)
+            } else {
+                // 游戏结束
+                showBattleDefeat()
+            }
+        }
+    }
+
+    /**
+     * 显示战斗奖励
+     */
+    private async showBattleRewards(rewardConfig: BattleRewardConfig): Promise<void> {
+        const rewards = []
+
+        // 金币奖励
+        if (rewardConfig.gold) {
+            const goldReward = rewardRegistry.createReward({
+                type: "material",
+                amount: rewardConfig.gold
+            } as any)
+            if (goldReward) rewards.push(goldReward)
+        }
+
+        // 遗物奖励
+        if (rewardConfig.relics && rewardConfig.relics.length > 0) {
+            const relicList = getLazyModule<any[]>('relicList')
+            for (const relicConfig of rewardConfig.relics) {
+                const filtered = relicList.filter((r: any) => r.rarity === relicConfig.rarity)
+                if (filtered.length > 0) {
+                    const randomRelic = filtered[Math.floor(Math.random() * filtered.length)]
+                    const relicReward = rewardRegistry.createReward({
+                        type: "relicSelect",
+                        title: "选择遗物",
+                        customData: {
+                            relicOptions: [randomRelic],
+                            selectCount: 1
+                        }
+                    })
+                    if (relicReward) rewards.push(relicReward)
+                }
+            }
+        }
+
+        // 药水奖励
+        if (rewardConfig.potions && rewardConfig.potions.length > 0) {
+            const potionList = getLazyModule<any[]>('potionList')
+            for (const potionConfig of rewardConfig.potions) {
+                const filtered = potionList.filter((p: any) => p.rarity === potionConfig.rarity)
+                if (filtered.length > 0) {
+                    const randomPotion = filtered[Math.floor(Math.random() * filtered.length)]
+                    const potionReward = rewardRegistry.createReward({
+                        type: "potion",
+                        potionConfig: randomPotion
+                    })
+                    if (potionReward) rewards.push(potionReward)
+                }
+            }
+        }
+
+        // 卡牌奖励（从指定卡池中选择）
+        if (rewardConfig.cardPool && rewardConfig.cardPool.length > 0) {
+            const cardList = getLazyModule<any[]>('cardList')
+            const choices = rewardConfig.cardChoices ?? 3
+            const poolCards = rewardConfig.cardPool
+                .map(key => cardList.find((c: any) => c.key === key))
+                .filter((c): c is any => c !== undefined)
+
+            if (poolCards.length > 0) {
+                const shuffled = [...poolCards].sort(() => Math.random() - 0.5)
+                const selected = shuffled.slice(0, choices)
+                // 使用 relicSelect 类型的模式展示卡牌选择（后续可扩展专用类型）
+                const cardReward = rewardRegistry.createReward({
+                    type: "relicSelect",
+                    title: "选择卡牌",
+                    customData: {
+                        relicOptions: selected.map((c: any) => ({
+                            key: c.key,
+                            label: c.label,
+                            description: c.describe?.join?.("") || ""
+                        })),
+                        selectCount: rewardConfig.cardPick ?? 1
+                    }
+                })
+                if (cardReward) rewards.push(cardReward)
+            }
+        }
+
+        if (rewards.length > 0) {
+            const { showRewards } = await import("@/ui/hooks/interaction/rewardDisplay")
+            await showRewards(rewards, "战斗胜利", "选择你的奖励", { navigate: false })
+        }
+    }
+
+    /**
+     * 清理战斗状态
+     */
+    private async cleanupBattle(): Promise<void> {
+        // 清理 targetManager
+        const { targetManager } = await import("@/ui/interaction/target/targetManager")
+        this.battleEnemies.forEach(enemy => {
+            targetManager.removeTarget(enemy)
+        })
+
+        // 清理全局战斗状态
+        endNowBattle()
+
+        // 清理本地状态
+        this.battleEnemies = []
+        this.currentBattleConfig = null
     }
 
     /**
@@ -214,6 +422,14 @@ export class EventRoom extends Room {
         newLog([this.eventConfig.title])
         if (this.eventConfig.description) {
             newLog([this.eventConfig.description])
+        }
+
+        // 如果第一幕是战斗场景，直接启动战斗
+        if (this.isMultiScene) {
+            const firstScene = this.eventConfig.scenes![0]
+            if (firstScene.type === "battle" && firstScene.battle) {
+                this.startBattleScene(firstScene.battle)
+            }
         }
     }
 
@@ -253,7 +469,10 @@ export class EventRoom extends Room {
      * 离开事件房间
      */
     async exit(): Promise<void> {
-        // 清理状态
+        // 确保战斗状态被清理
+        if (this.currentPhase === "battle") {
+            await this.cleanupBattle()
+        }
     }
 
     /**

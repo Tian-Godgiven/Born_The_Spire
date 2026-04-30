@@ -5,7 +5,9 @@
 import type { Mod } from '../ModLoader'
 import { slayTheSpireModConfig } from './mod'
 import { registerCard, registerEvent, registerRelic } from '../index'
+import { addCardToBlackStorePool } from '@/static/list/room/blackStore/blackStoreItemPool'
 import { slayTheSpireCards } from './cards'
+import { panaceaCard } from './cards/skill'
 import { slayTheSpireEvents } from './events'
 import { slayTheSpireRelics } from './relics'
 
@@ -29,6 +31,9 @@ export const slayTheSpireMod: Mod = {
         for (const event of slayTheSpireEvents) {
             registerEvent(event)
         }
+
+        // 添加卡牌到黑市卡牌池
+        addCardToBlackStorePool(panaceaCard)
 
         console.log(`[Mod:SlayTheSpire] 加载完成 (${slayTheSpireCards.length} 张卡牌, ${slayTheSpireRelics.length} 个遗物, ${slayTheSpireEvents.length} 个事件)`)
     }

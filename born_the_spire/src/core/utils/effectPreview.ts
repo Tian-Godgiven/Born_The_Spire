@@ -6,7 +6,7 @@
 import type { Card } from "@/core/objects/item/Subclass/Card"
 import type { Entity } from "@/core/objects/system/Entity"
 import type { EffectUnit } from "@/core/objects/system/effect/EffectUnit"
-import { effectMap } from "@/static/list/system/effectMap"
+import { getLazyModule } from "@/core/utils/lazyLoader"
 
 /**
  * 预览结果
@@ -67,6 +67,7 @@ function createMockEvent(
  * 调用效果的 preview 方法（如果有）
  */
 function executeEffectPreview(effectKey: string, effect: EffectUnit, event: MockEvent): number | null {
+    const effectMap = getLazyModule<any[]>('effectMap')
     const effectDef = effectMap.find((e: any) => e.key === effectKey)
     if (!effectDef) {
         console.warn(`[EffectPreview] 未找到效果定义: ${effectKey}`)
