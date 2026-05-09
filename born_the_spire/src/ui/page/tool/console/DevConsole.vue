@@ -136,7 +136,9 @@ const helpSections: Array<{ key: string, title: string, items: Array<{ cmd: stri
         key: '调试',
         title: '调试工具命令',
         items: [
-            { cmd: 'listTriggers("target")', desc: '列出触发器' },
+            { cmd: 'listTriggers()', desc: '列出玩家触发器' },
+            { cmd: 'listTriggers("enemy")', desc: '列出敌人触发器' },
+            { cmd: 'listTriggers({how:"take"})', desc: '按条件过滤 (when/how/key/source)' },
             { cmd: 'removeTrigger("target", "id")', desc: '移除触发器' },
         ]
     },
@@ -219,23 +221,71 @@ async function executeCommand() {
     }
 }
 
+/**
+ * 解析命令参数字符串，支持字符串、数字和对象字面量
+ * 例如: '"hello", 42, {how:"take", key:"damage"}'
+ */
+function parseCommandArgs(argsStr: string): any[] {
+    if (!argsStr.trim()) return []
+
+    const args: any[] = []
+    let i = 0
+    const str = argsStr.trim()
+
+    while (i < str.length) {
+        // 跳过空白和逗号
+        while (i < str.length && (str[i] === ' ' || str[i] === ',')) i++
+        if (i >= str.length) break
+
+        if (str[i] === '{') {
+            // 对象字面量：找到匹配的 }
+            const start = i
+            let depth = 1
+            i++
+            while (i < str.length && depth > 0) {
+                if (str[i] === '{') depth++
+                else if (str[i] === '}') depth--
+                i++
+            }
+            const objStr = str.slice(start, i)
+            try {
+                // 把 JS 对象字面量转成合法 JSON：给无引号的 key 加引号
+                const jsonStr = objStr.replace(/(\w+)\s*:/g, '"$1":')
+                args.push(JSON.parse(jsonStr))
+            } catch {
+                args.push(objStr)
+            }
+        } else if (str[i] === '"' || str[i] === "'") {
+            // 字符串
+            const quote = str[i]
+            i++
+            const start = i
+            while (i < str.length && str[i] !== quote) i++
+            args.push(str.slice(start, i))
+            i++ // 跳过结尾引号
+        } else {
+            // 数字或裸字符串
+            const start = i
+            while (i < str.length && str[i] !== ',' && str[i] !== ' ') i++
+            const token = str.slice(start, i).trim()
+            const num = Number(token)
+            args.push(isNaN(num) ? token : num)
+        }
+    }
+
+    return args
+}
+
 // 解析并执行命令
 async function parseAndExecute(command: string) {
-    // 简单的命令解析
-    const match = command.match(/^(\w+)\s*\(([^)]*)\)$/)
+    // 简单的命令解析：支持 funcName(...args) 格式
+    const parenIndex = command.indexOf('(')
+    const isFunc = parenIndex > 0 && command.endsWith(')')
 
-    if (match) {
-        const [, funcName, argsStr] = match
-        const args = argsStr ? argsStr.split(',').map(s => {
-            s = s.trim()
-            // 移除引号
-            if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
-                return s.slice(1, -1)
-            }
-            // 尝试解析为数字
-            const num = Number(s)
-            return isNaN(num) ? s : num
-        }) : []
+    if (isFunc) {
+        const funcName = command.slice(0, parenIndex).trim()
+        const argsStr = command.slice(parenIndex + 1, -1)
+        const args = parseCommandArgs(argsStr)
 
         await executeFunction(funcName, args)
     } else if (command === 'help' || command.startsWith('help --')) {
@@ -314,7 +364,7 @@ async function executeFunction(funcName: string, args: any[]) {
             await testOrganFlow()
             break
         case 'listTriggers':
-            await listTriggers(args[0])
+            await listTriggers(args[0], args[1])
             break
         case 'removeTrigger':
             await removeTrigger(args[0], args[1])
@@ -1160,53 +1210,61 @@ async function testOrganFlow() {
 // ========== 触发器调试命令 ==========
 
 // 列出实体的触发器
-async function listTriggers(targetType?: string) {
+// listTriggers()                              - 玩家所有触发器
+// listTriggers("enemy")                       - 敌人所有触发器
+// listTriggers({ when: "before" })            - 过滤 before 触发器
+// listTriggers({ how: "take", key: "damage" })- 组合过滤
+// listTriggers({ source: "回血石" })           - 按来源过滤
+// listTriggers("enemy", { key: "damage" })    - 敌人的 damage 触发器
+async function listTriggers(firstArg?: string | Record<string, string>, secondArg?: Record<string, string>) {
     if (!nowGameRun) {
         addOutput('游戏未开始，请先点击"开始游戏"', 'error')
         return
     }
 
+    // 解析参数：区分 targetType 和 filter
+    let targetType: string = 'player'
+    let filter: Record<string, string> | undefined
+
+    if (typeof firstArg === 'string') {
+        targetType = firstArg
+        filter = secondArg
+    } else if (typeof firstArg === 'object' && firstArg !== null) {
+        filter = firstArg
+    }
+
     try {
         const { getEntityTriggers, formatTriggerReport } = await import('@/core/hooks/triggerDebug')
 
-        let entity: any
+        const outputReport = (entity: any) => {
+            const report = getEntityTriggers(entity)
+            const lines = formatTriggerReport(report, filter)
+            for (const line of lines) {
+                addOutput(line, 'result')
+            }
+        }
+
         switch (targetType) {
             case 'enemy':
-            case 'e':
-                // 列出所有敌人的触发器
+            case 'e': {
                 const { nowBattle } = await import('@/core/objects/game/battle')
                 const enemies = nowBattle?.value?.getTeam("enemy") ?? []
                 if (enemies.length === 0) {
                     addOutput('当前没有敌人', 'error')
                     return
                 }
-                addOutput(`=== 战场上 ${enemies.length} 个敌人的触发器 ===`, 'info')
-                addOutput('', 'info')
                 for (const enemy of enemies) {
-                    const report = getEntityTriggers(enemy)
-                    const lines = formatTriggerReport(report)
-                    for (const line of lines) {
-                        addOutput(line, 'result')
-                    }
+                    outputReport(enemy)
                     addOutput('', 'info')
                 }
                 return
+            }
             case 'player':
             case 'p':
             default:
-                entity = nowPlayer
+                outputReport(nowPlayer)
                 break
         }
-
-        const report = getEntityTriggers(entity)
-        const lines = formatTriggerReport(report)
-        for (const line of lines) {
-            addOutput(line, 'result')
-        }
-
-        addOutput('', 'info')
-        addOutput('使用 removeTrigger("target", "id") 移除特定触发器', 'info')
-        addOutput('  target: player 或 enemy', 'info')
 
     } catch (error: any) {
         addOutput(`列出触发器失败: ${error.message}`, 'error')

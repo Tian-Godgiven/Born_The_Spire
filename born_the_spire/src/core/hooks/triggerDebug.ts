@@ -115,35 +115,69 @@ function findImportantTriggerInfo(trigger: Trigger, id: string): { importantKey?
 }
 
 /**
- * 格式化触发器报告为可读文本
+ * 触发器过滤条件
  */
-export function formatTriggerReport(report: EntityTriggerReport): string[] {
+export interface TriggerFilter {
+    when?: "before" | "after"
+    how?: "take" | "make" | "via"
+    key?: string
+    source?: string
+}
+
+/**
+ * 过滤触发器列表
+ */
+function filterTriggers(triggers: TriggerDebugInfo[], filter: TriggerFilter): TriggerDebugInfo[] {
+    return triggers.filter(t => {
+        if (filter.when && t.when !== filter.when) return false
+        if (filter.how && t.how !== filter.how) return false
+        if (filter.key && t.key !== filter.key) return false
+        if (filter.source && (!t.source || !t.source.includes(filter.source))) return false
+        return true
+    })
+}
+
+/**
+ * 格式化触发器报告为可读文本
+ *
+ * 按 when → how 分组，组内按 level 降序排列
+ * 支持过滤条件
+ */
+export function formatTriggerReport(report: EntityTriggerReport, filter?: TriggerFilter): string[] {
     const lines: string[] = []
 
-    lines.push(`=== ${report.entityLabel} 的触发器 ===`)
-    if (report.entityKey) {
-        lines.push(`Key: ${report.entityKey}`)
+    let triggers = report.triggers
+    if (filter) {
+        triggers = filterTriggers(triggers, filter)
     }
-    lines.push(`总计: ${report.totalTriggers} 个触发器`)
-    lines.push(`  - 默认触发器: ${report.defaultTriggers}`)
-    lines.push(`  - 关键触发器: ${report.importantTriggers}`)
+
+    lines.push(`=== ${report.entityLabel} 的触发器 (${triggers.length}) ===`)
     lines.push('')
 
-    if (report.triggers.length === 0) {
-        lines.push('无触发器')
+    if (triggers.length === 0) {
+        lines.push('无匹配的触发器')
         return lines
     }
 
-    // 按 when/how/key 分组
-    const grouped = groupTriggers(report.triggers)
+    // 按 when → how 分组，组内按 level 降序
+    const grouped = groupTriggers(triggers)
 
-    for (const [whenHow, triggers] of Object.entries(grouped)) {
-        lines.push(`[${whenHow}]`)
-        for (const t of triggers) {
-            const sourceStr = t.source ? ` <- ${t.source}` : ''
-            const importantStr = t.importantKey ? ` [${t.importantKey}]` : ''
-            const levelStr = t.level > 0 ? ` (Lv.${t.level})` : ''
-            lines.push(`  ${t.key}${levelStr}${importantStr}${sourceStr}`)
+    for (const [groupKey, groupTriggers] of grouped) {
+        const [when, how] = groupKey.split('_')
+        lines.push(`── ${when} ─ ${how} ──`)
+
+        for (const t of groupTriggers) {
+            const sourceStr = t.source ? ` | 来源: ${t.source}` : ''
+            const levelStr = ` | level: ${t.level}`
+            lines.push(`[${t.when}][${t.how}] ${t.key}${sourceStr}${levelStr}`)
+
+            // 额外属性换行缩进展示
+            if (t.importantKey) {
+                lines.push(`        --importantKey: ${t.importantKey}`)
+            }
+            if (t.onlyKey) {
+                lines.push(`        --onlyKey: ${t.onlyKey}`)
+            }
         }
         lines.push('')
     }
@@ -152,10 +186,15 @@ export function formatTriggerReport(report: EntityTriggerReport): string[] {
 }
 
 /**
- * 按 when/how 分组触发器
+ * 按 when → how 分组触发器，组内按 level 降序
+ * 返回有序的 [groupKey, triggers][] 数组
  */
-function groupTriggers(triggers: TriggerDebugInfo[]): Record<string, TriggerDebugInfo[]> {
+function groupTriggers(triggers: TriggerDebugInfo[]): [string, TriggerDebugInfo[]][] {
     const grouped: Record<string, TriggerDebugInfo[]> = {}
+
+    // when 和 how 的固定顺序
+    const whenOrder = ["before", "after"]
+    const howOrder = ["make", "via", "take"]
 
     for (const t of triggers) {
         const key = `${t.when}_${t.how}`
@@ -165,12 +204,26 @@ function groupTriggers(triggers: TriggerDebugInfo[]): Record<string, TriggerDebu
         grouped[key].push(t)
     }
 
-    // 对每个组内按 key 排序
+    // 组内按 level 降序（高优先级在前），同 level 按 key 排序
     for (const key of Object.keys(grouped)) {
-        grouped[key].sort((a, b) => a.key.localeCompare(b.key))
+        grouped[key].sort((a, b) => {
+            if (b.level !== a.level) return b.level - a.level
+            return a.key.localeCompare(b.key)
+        })
     }
 
-    return grouped
+    // 按 when → how 固定顺序排列
+    const result: [string, TriggerDebugInfo[]][] = []
+    for (const when of whenOrder) {
+        for (const how of howOrder) {
+            const key = `${when}_${how}`
+            if (grouped[key]) {
+                result.push([key, grouped[key]])
+            }
+        }
+    }
+
+    return result
 }
 
 /**

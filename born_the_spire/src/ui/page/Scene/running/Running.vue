@@ -37,6 +37,7 @@ import { computed, ref, onMounted } from 'vue'
 import Top from "./Top/index.vue"
 import ConnectLine from "@/ui/components/interaction/chooseTarget/ConnectLine.vue"
 import LogPane from "@/ui/page/tool/logPane/LogPane.vue"
+import TestTool from "@/ui/page/tool/testTool/TestTool.vue"
 import MapOverlay from "./MapOverlay.vue"
 import CardGroupModal from '@/ui/components/interaction/CardGroupModal.vue'
 import { nowGameRun } from '@/core/objects/game/run'

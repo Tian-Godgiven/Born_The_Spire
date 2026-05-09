@@ -748,6 +748,11 @@ export class FloorManager {
                 .getRoomConfigsByType("blackStore")
                 .map(c => c.key)
         }
+        if (fullConfig.roomPools.treasures && fullConfig.roomPools.treasures.length === 0) {
+            fullConfig.roomPools.treasures = roomRegistry
+                .getRoomConfigsByType("treasure")
+                .map(c => c.key)
+        }
 
         // 生成地图
         const generator = new MapGenerator(fullConfig)
