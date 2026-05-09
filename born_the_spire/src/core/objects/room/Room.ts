@@ -4,7 +4,7 @@ import { reactive } from "vue"
 /**
  * 房间类型
  */
-export type RoomType = "init" | "battle" | "event" | "pool" | "blackStore" | "roomSelect" | "floorSelect" | "eliteBattle" | "elitePlusBattle" | "treasure"
+export type RoomType = "init" | "battle" | "event" | "pool" | "blackStore" | "roomSelect" | "floorSelect" | "eliteBattle" | "elitePlusBattle" | "treasure" | "defeat" | "victory"
 
 /**
  * 房间状态
@@ -111,7 +111,9 @@ export abstract class Room {
             "floorSelect": "层级选择",
             "eliteBattle": "精英战斗",
             "elitePlusBattle": "精英+战斗",
-            "treasure": "宝箱"
+            "treasure": "宝箱",
+            "defeat": "失败",
+            "victory": "通关"
         }
 
         return typeNameMap[this.type] || "未知房间"
@@ -131,7 +133,9 @@ export abstract class Room {
             "floorSelect": "↕",
             "eliteBattle": "👑",
             "elitePlusBattle": "👑👑",
-            "treasure": "📦"
+            "treasure": "📦",
+            "defeat": "💀",
+            "victory": "🏆"
         }
 
         return iconMap[this.type] || "?"

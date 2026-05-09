@@ -13,6 +13,8 @@ import EventRoom from '@/ui/page/Scene/running/EventRoom.vue'
 import PoolRoom from '@/ui/page/Scene/running/PoolRoom.vue'
 import BlackStoreRoom from '@/ui/page/Scene/running/BlackStoreRoom.vue'
 import RoomSelectRoom from '@/ui/page/Scene/running/RoomSelectRoom.vue'
+import DefeatRoom from '@/ui/page/Scene/running/DefeatRoom.vue'
+import VictoryRoom from '@/ui/page/Scene/running/VictoryRoom.vue'
 
 /**
  * 房间组件映射表
@@ -31,6 +33,8 @@ function initBuiltInRoomComponents() {
     roomComponentMap.set('pool', PoolRoom)
     roomComponentMap.set('blackStore', BlackStoreRoom)
     roomComponentMap.set('roomSelect', RoomSelectRoom)
+    roomComponentMap.set('defeat', DefeatRoom)
+    roomComponentMap.set('victory', VictoryRoom)
 }
 
 // 自动初始化

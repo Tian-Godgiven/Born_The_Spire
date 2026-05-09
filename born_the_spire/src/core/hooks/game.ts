@@ -7,20 +7,49 @@ import { newError } from "@/ui/hooks/global/alert"
 import { newLog } from "@/ui/hooks/global/log"
 import { RoomSelectRoom } from "@/core/objects/room/RoomSelectRoom"
 import { roomRegistry } from "@/static/registry/roomRegistry"
+import { DefeatRoom } from "@/core/objects/room/DefeatRoom"
+import { VictoryRoom } from "@/core/objects/room/VictoryRoom"
+
+/**
+ * 进入失败房间
+ *
+ * 创建并进入 DefeatRoom，展示失败页面
+ * @param defeatedBy 击败玩家的来源（敌人名称、事件名称等）
+ */
+export async function enterDefeatRoom(defeatedBy?: string) {
+    const defeatRoom = new DefeatRoom({
+        layer: nowGameRun.towerLevel,
+        defeatedBy
+    })
+
+    await nowGameRun.enterRoom(defeatRoom)
+    await defeatRoom.process()
+}
+
+/**
+ * 进入通关房间
+ */
+export async function enterVictoryRoom() {
+    const victoryRoom = new VictoryRoom({
+        layer: nowGameRun.towerLevel
+    })
+
+    await nowGameRun.enterRoom(victoryRoom)
+    await victoryRoom.process()
+}
 
 /**
  * 触发游戏失败
  *
  * 手动触发游戏失败流程，会：
  * 1. 杀死玩家
- * 2. 触发 battleEnd 事件（如果在战斗中）
- * 3. 显示失败 UI
+ * 2. 进入失败房间
  *
  * 用途：
  * - 控制台测试
  * - 特殊事件导致的游戏失败
  */
-export async function gameOver() {
+export async function gameOver(defeatedBy?: string) {
     if (!nowPlayer) {
         newError(["游戏未开始，无法触发游戏失败"])
         return
@@ -40,6 +69,9 @@ export async function gameOver() {
             params: { reason: "游戏失败" }
         }]
     })
+
+    // 进入失败房间
+    await enterDefeatRoom(defeatedBy)
 }
 
 /**
@@ -111,6 +143,19 @@ export async function retryCurrentRoom() {
         newError(["重试房间失败", String(error)])
         console.error("[retryCurrentRoom] 错误:", error)
     }
+}
+
+/**
+ * 重新开始一局新游戏
+ *
+ * 使用上一局的进阶等级开始新游戏
+ */
+export async function restartRun() {
+    newLog(["重新开始游戏"])
+
+    const ascensionLevel = nowGameRun.towerFire
+    const { startNewRun } = await import("@/core/objects/game/run")
+    await startNewRun(undefined, ascensionLevel)
 }
 
 /**

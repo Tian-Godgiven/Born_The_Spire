@@ -28,6 +28,13 @@ import { calculateBlackStorePrice } from "@/static/list/target/organQuality"
 import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
+import {
+    relicPriceByRarity, relicDefaultPrice,
+    potionDefaultPrice,
+    cardPriceConfig,
+    organDiscountRange,
+    healthSellConfig
+} from "@/static/config/blackStoreBalance"
 import { getRelicModifier } from "@/core/objects/system/modifier/RelicModifier"
 import { getCurrentValue } from "@/core/objects/system/Current/current"
 import { doEvent } from "@/core/objects/system/ActionEvent"
@@ -162,8 +169,8 @@ export class BlackStoreRoom extends Room {
 
         // 器官折扣范围配置
         this.organDiscountRange = {
-            min: config.organDiscountRange?.min ?? 0.5,
-            max: config.organDiscountRange?.max ?? 0.7
+            min: config.organDiscountRange?.min ?? organDiscountRange.min,
+            max: config.organDiscountRange?.max ?? organDiscountRange.max
         }
 
         // 遗物不重复配置
@@ -211,7 +218,7 @@ export class BlackStoreRoom extends Room {
                 price: this.calculateRelicPrice(relic),
                 data: relic,
                 isPurchased: false,
-                rarity: undefined  // RelicMap 暂无 rarity 属性
+                rarity: relic.rarity
             })
         })
 
@@ -346,26 +353,23 @@ export class BlackStoreRoom extends Room {
     /**
      * 计算遗物价格
      */
-    private calculateRelicPrice(_relic: RelicMap): number {
-        // 根据遗物稀有度计算
-        return 200
+    private calculateRelicPrice(relic: RelicMap): number {
+        return relicPriceByRarity[relic.rarity ?? "common"] ?? relicDefaultPrice
     }
 
     /**
      * 计算药水价格
      */
     private calculatePotionPrice(_potion: PotionMap): number {
-        // 药水价格相对便宜
-        return 75
+        return potionDefaultPrice
     }
 
     /**
      * 计算卡牌价格
      */
     private calculateCardPrice(card: CardMap): number {
-        // 基础价格 100，根据费用调整
         const cost = card.status?.cost ?? 1
-        return 50 + cost * 50
+        return cardPriceConfig.base + cost * cardPriceConfig.costMultiplier
     }
 
     /**
@@ -673,11 +677,8 @@ export class BlackStoreRoom extends Room {
      * 计算生命值售价（贬值机制）
      */
     private calculateHealthSellPrice(amount: number): number {
-        // 基础价格：1生命 = 5金钱
-        const basePrice = amount * 5
-
-        // 贬值系数：每次售出后降低 20%
-        const depreciationRate = Math.pow(0.8, this.healthSoldCount)
+        const basePrice = amount * healthSellConfig.pricePerHp
+        const depreciationRate = Math.pow(healthSellConfig.depreciationFactor, this.healthSoldCount)
 
         return Math.floor(basePrice * depreciationRate)
     }

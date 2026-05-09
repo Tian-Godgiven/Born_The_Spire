@@ -129,9 +129,10 @@ export class BattleRoom extends Room {
             await this.handleVictoryRewards()
         } else if (battleResult === "player_lose") {
             newLog([`===== ${this.getDisplayName()}失败 =====`])
-            // 显示战斗失败弹窗
-            const { showBattleDefeat } = await import("@/ui/hooks/interaction/battleDefeat")
-            showBattleDefeat()
+            // 进入失败房间
+            const { enterDefeatRoom } = await import("@/core/hooks/game")
+            const enemyNames = this.enemies.map(e => e.label).join("、")
+            await enterDefeatRoom(enemyNames)
         }
     }
 
@@ -550,7 +551,9 @@ export class BattleRoom extends Room {
             // 标记当前持有器官的精通等级
             processVictoryMastery(nowPlayer)
 
-            // 显示通关界面
+            // 进入通关房间
+            const { enterVictoryRoom } = await import("@/core/hooks/game")
+            await enterVictoryRoom()
             return
         }
 

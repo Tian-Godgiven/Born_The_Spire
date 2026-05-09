@@ -46,6 +46,9 @@ export function selectRelicsWithFilter(config: RelicFilterConfig): RelicMap[] {
         )
     }
 
+    // 4. 过滤商店限定遗物（storeOnly 的遗物不在非商店场景出现）
+    availableRelics = availableRelics.filter(relic => !relic.storeOnly)
+
     // 4. 如果没有可用遗物，返回空数组
     if (availableRelics.length === 0) {
         console.warn("[RelicFilter] 没有可用的遗物")
@@ -125,9 +128,12 @@ export function selectRelicsWithFilter(config: RelicFilterConfig): RelicMap[] {
  * @param rarity 稀有度
  * @returns 遗物配置数组
  */
-export function getRelicsByRarity(rarity: "common" | "uncommon" | "rare"): RelicMap[] {
+export function getRelicsByRarity(rarity: "common" | "uncommon" | "rare", includeStoreOnly: boolean = false): RelicMap[] {
     const relicList = getLazyModule<RelicMap[]>('relicList')
-    return relicList.filter(relic => (relic.rarity || "common") === rarity)
+    return relicList.filter(relic =>
+        (relic.rarity || "common") === rarity &&
+        (includeStoreOnly || !relic.storeOnly)
+    )
 }
 
 /**

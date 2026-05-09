@@ -21,9 +21,6 @@
     <!-- 地图覆盖层 -->
     <MapOverlay ref="mapOverlay" />
 
-    <!-- 战斗失败弹窗 -->
-    <BattleDefeatModal />
-
     <!-- 回到地图按钮 -->
     <button
         v-if="showBackToMapButton"
@@ -41,7 +38,6 @@ import Top from "./Top/index.vue"
 import ConnectLine from "@/ui/components/interaction/chooseTarget/ConnectLine.vue"
 import LogPane from "@/ui/page/tool/logPane/LogPane.vue"
 import MapOverlay from "./MapOverlay.vue"
-import BattleDefeatModal from '@/ui/components/interaction/BattleDefeatModal.vue'
 import CardGroupModal from '@/ui/components/interaction/CardGroupModal.vue'
 import { nowGameRun } from '@/core/objects/game/run'
 import { getRoomComponent } from '@/ui/registry/roomComponentRegistry'

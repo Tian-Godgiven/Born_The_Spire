@@ -150,8 +150,10 @@ export function initBlackStoreItemPools(): void {
     // 加载遗物（使用懒加载）
     const relicList = getLazyModule<RelicMap[]>('relicList')
     blackStoreRelicPool.items = [...relicList]
-    // 遗物暂无稀有度系统，使用默认权重
-    blackStoreRelicPool.weights = relicList.map(() => 1)
+    // 根据稀有度设置权重
+    blackStoreRelicPool.weights = relicList.map(relic =>
+        getRarityWeight(relic.rarity as Rarity, blackStoreRelicPool.rarityWeights)
+    )
 
     // 加载药水（使用懒加载）
     const potionList = getLazyModule<PotionMap[]>('potionList')
