@@ -215,7 +215,9 @@ function getNodeIcon(node: MapNode): string {
     blackStore: '🛒',
     roomSelect: '🚪',
     floorSelect: '🗺️',
-    treasure: '💎'
+    treasure: '💎',
+    defeat: '💀',
+    victory: '🏆'
   }
   return iconMap[node.roomType] || '❓'
 }
@@ -232,7 +234,9 @@ function getNodeDisplayName(node: MapNode): string {
     blackStore: '商店',
     roomSelect: '房间选择',
     floorSelect: '层级选择',
-    treasure: '宝箱'
+    treasure: '宝箱',
+    defeat: '失败',
+    victory: '通关'
   }
   return nameMap[node.roomType] || '未知'
 }

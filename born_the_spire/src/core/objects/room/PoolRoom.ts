@@ -76,7 +76,7 @@ export class PoolRoom extends Room {
         // 计算饮用可回复的生命值
         const healAmount = Math.floor(currentMaterial / this.drinkRate)
         const currentHealth = getCurrentValue(nowPlayer, "health")
-        const maxHealth = nowPlayer.status["max-health"]?.value ?? 0
+        const maxHealth = (nowPlayer.status["max-health"]?.value ?? 0) as number
         const missingHealth = maxHealth - currentHealth
         const actualHeal = Math.min(healAmount, missingHealth)
 
@@ -151,7 +151,7 @@ export class PoolRoom extends Room {
         // 计算可回复量
         const healAmount = Math.floor(currentMaterial / this.drinkRate)
         const currentHealth = getCurrentValue(nowPlayer, "health")
-        const maxHealth = nowPlayer.status["max-health"]?.value ?? 0
+        const maxHealth = (nowPlayer.status["max-health"]?.value ?? 0) as number
         const missingHealth = maxHealth - currentHealth
 
         if (missingHealth <= 0) {

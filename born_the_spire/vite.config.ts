@@ -9,6 +9,9 @@ const host = process.env.TAURI_DEV_HOST;
 export default defineConfig(async () => ({
   base: process.env.GITHUB_ACTIONS ? '/Born_The_Spire/' : '/',
   plugins: [vue(),vueDevTools(),],
+  build: {
+    target: 'esnext',
+  },
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //

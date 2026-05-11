@@ -514,7 +514,7 @@ export class BlackStoreRoom extends Room {
                 const cardData = item.data as CardMap
                 const { getCardModifier } = await import("@/core/objects/system/modifier/CardModifier")
                 const cardModifier = getCardModifier(nowPlayer)
-                cardModifier.addCardsFromSource([cardData.key], nowPlayer)
+                cardModifier.addCardsFromSource(nowPlayer, [cardData.key])
                 newLog([`获得卡牌: ${item.name}`])
                 break
             }

@@ -7,6 +7,8 @@ import type { ActiveAbility } from "@/core/types/ActiveAbility";
 import type { BadgeConfig } from "@/core/types/BadgeConfig";
 
 export type RelicMap = ItemMap & {
+    // 标签（用于分类，如 mod 来源标识）
+    tags?: string[]
     // 遗物稀有度（3级系统）
     rarity?: "common" | "uncommon" | "rare"
     // 是否为商店限定遗物（仅在黑市出现，不会在普通奖励中掉落）

@@ -501,7 +501,7 @@ async function enterEvent(eventKey: string) {
         return
     }
 
-    const room = roomRegistry.createRoom(eventKey, nowGameRun.layer || 1)
+    const room = roomRegistry.createRoom(eventKey, nowGameRun.towerLevel || 1)
     if (!room) {
         addOutput(`创建事件房间失败: ${eventKey}`, 'error')
         addOutput('使用 listEvents() 查看所有可用事件', 'info')

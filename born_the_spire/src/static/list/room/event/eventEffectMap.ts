@@ -71,7 +71,7 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
      */
     "healHealth": async (params: { amount?: number, percent?: number, divisor?: number }) => {
         let healValue = params.amount ?? 0
-        const maxHealth = nowPlayer.status["max-health"]?.value ?? 0
+        const maxHealth = (nowPlayer.status["max-health"]?.value ?? 0) as number
         if (params.divisor) {
             healValue = Math.floor(maxHealth / params.divisor)
         } else if (params.percent) {
@@ -110,7 +110,7 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
      * 按百分比失去生命（基于最大生命值）
      */
     "loseHealthPercent": async (params: { percent: number }) => {
-        const maxHealth = nowPlayer.status["max-health"]?.value ?? 0
+        const maxHealth = (nowPlayer.status["max-health"]?.value ?? 0) as number
         const loseValue = Math.floor(maxHealth * params.percent / 100)
         if (loseValue <= 0) return
         await doEvent({
@@ -129,7 +129,7 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
      * 按百分比失去最大生命（永久减少）
      */
     "loseMaxHealthPercent": async (params: { percent: number }) => {
-        const maxHealth = nowPlayer.status["max-health"]?.value ?? 0
+        const maxHealth = (nowPlayer.status["max-health"]?.value ?? 0) as number
         const loseValue = Math.floor(maxHealth * params.percent / 100)
         if (loseValue <= 0) return
         await doEvent({

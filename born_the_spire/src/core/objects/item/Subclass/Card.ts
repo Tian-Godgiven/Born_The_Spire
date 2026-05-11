@@ -28,6 +28,7 @@ export type CardMap = ItemMap & {
                 status?: Record<string, number>  // 该等级的属性值
                 entries?: string[]  // 该等级的词条列表
                 describe?: any[]  // 该等级的描述（可选）
+                interaction?: Record<string, any>  // 该等级的交互覆盖
             }
         }
     }
