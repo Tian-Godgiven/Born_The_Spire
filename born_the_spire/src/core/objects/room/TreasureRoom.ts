@@ -13,6 +13,7 @@ import { selectRelicsWithFilter } from "@/core/utils/relicFilter"
 import type { RelicFilterConfig } from "@/core/utils/relicFilter"
 import { gainMark } from "@/core/hooks/mark"
 import { nowPlayer } from "@/core/objects/game/run"
+import { doEvent } from "@/core/objects/system/ActionEvent"
 import { GoldReward } from "@/core/objects/reward/GoldReward"
 import { RelicSelectReward } from "@/core/objects/reward/RelicSelectReward"
 
@@ -98,12 +99,27 @@ export class TreasureRoom extends Room {
     async complete(): Promise<void> {
         this.state = "completed"
 
-        // 生成奖励
-        const rewards = await this.generateRewards()
+        // 触发 openChest 事件，触发器可在 before 阶段修改 info.ifGetReward
+        const chestInfo = { ifGetReward: true }
+        doEvent({
+            key: "openChest",
+            source: nowPlayer,
+            medium: nowPlayer,
+            target: nowPlayer,
+            effectUnits: [],
+            info: chestInfo
+        })
 
-        // 显示奖励（UI相关，保留动态import）
-        const { showRewards } = await import("@/ui/hooks/interaction/rewardDisplay")
-        await showRewards(rewards, "宝箱奖励", "你获得了以下奖励")
+        if (chestInfo.ifGetReward) {
+            // 生成奖励
+            const rewards = await this.generateRewards()
+
+            // 显示奖励（UI相关，保留动态import）
+            const { showRewards } = await import("@/ui/hooks/interaction/rewardDisplay")
+            await showRewards(rewards, "宝箱奖励", "你获得了以下奖励")
+        } else {
+            newLog(["宝箱是空的……"])
+        }
 
         // 发放印记
         gainMark(nowPlayer, this.markKey)

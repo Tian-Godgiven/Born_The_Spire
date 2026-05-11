@@ -3,7 +3,13 @@
  */
 
 import { goldenIdolRelic } from './goldenIdol'
+import { clericFaceRelic, serpentHeadRelic, cultistMaskRelic, gremlinFaceRelic, nlothFaceRelic } from './faceTraderMasks'
 
 export const slayTheSpireRelics = [
-    goldenIdolRelic
+    goldenIdolRelic,
+    clericFaceRelic,
+    serpentHeadRelic,
+    cultistMaskRelic,
+    gremlinFaceRelic,
+    nlothFaceRelic
 ]

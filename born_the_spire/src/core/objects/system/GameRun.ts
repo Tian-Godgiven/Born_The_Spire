@@ -7,6 +7,8 @@ import { markRaw } from "vue"
 import type { TriggerMap } from "@/core/types/object/trigger"
 import { Entity } from "./Entity"
 import { applyTriggerMap } from "../system/trigger/Trigger"
+import { doEvent } from "./ActionEvent"
+import { nowPlayer } from "../game/run"
 
 /**
  * 玩家状态快照
@@ -86,6 +88,18 @@ export class GameRun{
         await this.savePlayerSnapshot()
 
         await room.enter()
+
+        // 触发 roomEnter 事件，携带房间类型信息
+        if (nowPlayer) {
+            doEvent({
+                key: "roomEnter",
+                source: nowPlayer,
+                medium: nowPlayer,
+                target: nowPlayer,
+                effectUnits: [],
+                info: { roomType: room.type, roomKey: room.roomKey }
+            })
+        }
     }
 
     /**

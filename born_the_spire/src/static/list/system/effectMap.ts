@@ -45,6 +45,7 @@ import { retrieveCardsToHand } from "@/core/effects/card/retrieveCards"
 import { artifactBlockDebuff } from "@/core/effects/state/artifactBlock"
 import { previewValue, previewModifyValue, previewModifyByPercent } from "@/core/utils/effectPreview"
 import { loseHealthTo } from "@/core/effects/health/loseHealth"
+import { emptyChest } from "@/core/effects/chest/emptyChest"
 import type { EffectParamsSchema } from "@/core/effects/validateEffectParams"
 
 type EffectData = {
@@ -460,5 +461,9 @@ export const effectMap:EffectData[] = [
     key:"loseHealth",
     effect:loseHealthTo,
     preview: previewValue
+},{
+    label:"清空宝箱奖励",
+    key:"emptyChest",
+    effect:emptyChest
 }]
 

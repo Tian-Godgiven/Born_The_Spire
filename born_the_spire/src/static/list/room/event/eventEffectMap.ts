@@ -412,6 +412,39 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
     },
 
     /**
+     * 从指定遗物池中随机获得一个遗物
+     * @param pool 遗物key数组，按权重组分组 [{ keys: string[], weight: number }]
+     */
+    "gainRelicFromPool": async (params: { pool: { keys: string[], weight: number }[] }) => {
+        // 按权重选择组
+        const totalWeight = params.pool.reduce((sum, g) => sum + g.weight, 0)
+        let roll = Math.random() * totalWeight
+        let selectedGroup = params.pool[0]
+        for (const group of params.pool) {
+            roll -= group.weight
+            if (roll <= 0) {
+                selectedGroup = group
+                break
+            }
+        }
+        // 从组内随机选一个
+        const selected = randomChoices(selectedGroup.keys, 1, "gainRelicFromPool")
+        const relicKey = selected[0]
+        if (relicKey) {
+            await doEvent({
+                key: "gainRelic",
+                source: nowPlayer,
+                medium: nowPlayer,
+                target: nowPlayer,
+                effectUnits: [{
+                    key: "gainRelic",
+                    params: { relicKey }
+                }]
+            })
+        }
+    },
+
+    /**
      * 无事发生
      */
     "nothing": async () => {

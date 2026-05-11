@@ -11,6 +11,7 @@
  *   $triggerEffect.params(key)             → 获取触发效果的参数（延迟解析）
  *   $triggerEffect.target.accessor(args)   → 获取触发效果的事件目标的属性
  *   $participant.accessor(args)            → 从参与者获取属性值
+ *   $event.info(key)                       → 获取触发事件的 info 字段值
  *   $scene                                 → 当前场景类型（combat/pool/event/...）
  *   $battle.turn                           → 当前战斗回合数
  *   $collection.any.accessor(args)         → 集合中任意一个满足条件
@@ -52,7 +53,7 @@ export interface ReferenceContext extends TargetContext {
  * 解析后的引用（内部使用）
  */
 interface ParsedReference {
-    type: "eventResult" | "triggerEffect" | "triggerEffectTarget" | "participant" | "unknown"
+    type: "eventResult" | "eventInfo" | "triggerEffect" | "triggerEffectTarget" | "participant" | "unknown"
     participant?: string
     accessor?: string
     args?: string[]
@@ -130,6 +131,8 @@ export class ReferenceResolver {
         switch (parsed.type) {
             case "eventResult":
                 return this.resolveEventResult(parsed, context)
+            case "eventInfo":
+                return this.resolveEventInfo(parsed, context)
             case "triggerEffect":
                 return this.resolveTriggerEffect(parsed, context)
             case "triggerEffectTarget":
@@ -147,6 +150,12 @@ export class ReferenceResolver {
         const eventResultMatch = ref.match(/^\$eventResult\(([^)]*)\)$/)
         if (eventResultMatch) {
             return { type: "eventResult", args: [eventResultMatch[1]], raw: ref }
+        }
+
+        // $event.info(key)
+        const eventInfoMatch = ref.match(/^\$event\.info\(([^)]*)\)$/)
+        if (eventInfoMatch) {
+            return { type: "eventInfo", args: [eventInfoMatch[1]], raw: ref }
         }
 
         // $triggerEffect.params(key)
@@ -192,6 +201,15 @@ export class ReferenceResolver {
             return undefined
         }
         return context.event?.getEventResult(key)
+    }
+
+    private resolveEventInfo(parsed: ParsedReference, context: ReferenceContext): any {
+        const key = parsed.args?.[0]
+        if (!key) {
+            newError([`$event.info 需要一个参数: ${parsed.raw}`])
+            return undefined
+        }
+        return context.event?.info?.[key]
     }
 
     private resolveTriggerEffect(parsed: ParsedReference, context: ReferenceContext): any {
