@@ -90,6 +90,48 @@ export const piercingWailCard: CardMap = {
     }
 }
 
+/**
+ * 双发：下一张攻击牌打出两次（升级后为下2张）
+ */
+export const doubleTapCard: CardMap = {
+    label: "双发",
+    tags: ["skill"],
+    status: {
+        cost: 1,
+        stacks: 1
+    },
+    describe: [
+        "在这个回合，你打出的下", { key: ["status", "stacks"] }, "张攻击牌会打出两次。"
+    ],
+    key: "sts_card_double_tap",
+    interaction: {
+        use: {
+            target: { faction: "player", key: "self" },
+            effects: [{
+                key: "applyState",
+                params: { stateKey: "doubleTap", stacks: 1 }
+            }]
+        }
+    },
+    upgradeConfig: {
+        maxLevel: 1,
+        levelConfigs: {
+            1: {
+                status: { stacks: 2 },
+                interaction: {
+                    use: {
+                        target: { faction: "player", key: "self" },
+                        effects: [{
+                            key: "applyState",
+                            params: { stateKey: "doubleTap", stacks: 2 }
+                        }]
+                    }
+                }
+            }
+        }
+    }
+}
+
 export const preparedCard: CardMap = {
     label: "准备",
     tags: ["skill"],

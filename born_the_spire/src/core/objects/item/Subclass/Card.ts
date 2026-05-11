@@ -215,22 +215,28 @@ export async function useCard(card:Card,fromPile:Card[],source:Player,targets:Ta
     }
 
     // 支付成功，触发 useCard 事件（用于触发器）
+    // info.repeat 默认为1，触发器可在 before 阶段修改（如双发效果改为2）
+    const useCardInfo = { repeat: 1 }
     doEvent({
         key: "useCard",
         source,
         medium: card,
         target: targets,
+        info: useCardInfo,
         effectUnits: []  // 没有直接效果，只用于触发器
     })
 
-    // 执行卡牌效果
-    doEvent({
-        key: "cardEffect",
-        source,
-        medium: card,
-        target: targets,
-        effectUnits: cardEffects
-    })
+    // 根据 repeat 次数执行卡牌效果
+    const repeat = useCardInfo.repeat || 1
+    for (let i = 0; i < repeat; i++) {
+        doEvent({
+            key: "cardEffect",
+            source,
+            medium: card,
+            target: targets,
+            effectUnits: cardEffects
+        })
+    }
 
     // 使用后处理（弃牌/消耗等）
     const afterUseEffect = card.getAfterUseEffect(fromPile)

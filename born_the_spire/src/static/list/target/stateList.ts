@@ -197,6 +197,39 @@ export const stateList: StateData[] = [
             }
         }
     },
+    // 双发：下一张攻击牌打出两次
+    {
+        label: "双发",
+        key: "doubleTap",
+        category: "buff",
+        describe: ["下一张攻击牌打出两次"],
+        showType: "number",
+        repeate: "stack",
+        stackChange: [
+            { timing: "turnEnd", delta: "all" }
+        ],
+        interaction: {
+            possess: {
+                triggers: [{
+                    when: "before",
+                    how: "make",
+                    key: "useCard",
+                    action: "doubleTapRepeat"
+                }],
+                reaction: {
+                    doubleTapRepeat: [{
+                        key: "doubleTapRepeat",
+                        label: "双发",
+                        targetType: "triggerEffect",
+                        effect: [{
+                            key: "modifyRepeat",
+                            params: { requiredTag: "attack", addRepeat: 1, consumeStateKey: "doubleTap" }
+                        }]
+                    }]
+                }
+            }
+        }
+    },
     // 凌迟：每打出一张牌，对所有敌人造成伤害
     {
         label: "凌迟",

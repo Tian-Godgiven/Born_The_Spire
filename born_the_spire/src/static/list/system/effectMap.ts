@@ -46,6 +46,7 @@ import { artifactBlockDebuff } from "@/core/effects/state/artifactBlock"
 import { previewValue, previewModifyValue, previewModifyByPercent } from "@/core/utils/effectPreview"
 import { loseHealthTo } from "@/core/effects/health/loseHealth"
 import { emptyChest } from "@/core/effects/chest/emptyChest"
+import { modifyRepeat } from "@/core/effects/card/repeatCard"
 import type { EffectParamsSchema } from "@/core/effects/validateEffectParams"
 
 type EffectData = {
@@ -465,5 +466,9 @@ export const effectMap:EffectData[] = [
     label:"清空宝箱奖励",
     key:"emptyChest",
     effect:emptyChest
+},{
+    label:"修改卡牌重复打出次数",
+    key:"modifyRepeat",
+    effect:modifyRepeat
 }]
 
