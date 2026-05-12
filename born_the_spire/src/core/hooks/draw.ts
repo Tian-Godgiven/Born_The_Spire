@@ -45,7 +45,7 @@ function toArray(value?: string | string[]): string[] {
 /**
  * 获取物品列表
  */
-function getItemList(type: DrawItemType, customList?: ItemMap[]): ItemMap[] {
+export function getItemList(type: DrawItemType, customList?: ItemMap[]): ItemMap[] {
     if (type === "custom") {
         return customList ?? []
     }
@@ -65,7 +65,7 @@ function getItemPool(item: ItemMap): string[] {
 /**
  * 按条件过滤物品列表
  */
-function filterItems(items: ItemMap[], config: DrawConfig): ItemMap[] {
+export function filterItems(items: ItemMap[], config: DrawConfig): ItemMap[] {
     let filtered = items
 
     // 按 pool 过滤（未指定时默认筛选 "common"）
@@ -175,4 +175,25 @@ export function drawItems(
     }
 
     return result
+}
+
+/**
+ * 获取筛选后的物品列表（不抽取，只过滤）
+ *
+ * @param type - 物品类型
+ * @param config - 筛选配置
+ * @param customList - 自定义列表
+ * @returns 筛选后的物品数组
+ *
+ * @example
+ * // 获取所有通用池卡牌的 key 列表
+ * const keys = getFilteredItems("card", {}).map(c => c.key)
+ */
+export function getFilteredItems(
+    type: DrawItemType,
+    config: DrawConfig = {},
+    customList?: ItemMap[]
+): ItemMap[] {
+    const items = getItemList(type, customList)
+    return filterItems(items, config)
 }

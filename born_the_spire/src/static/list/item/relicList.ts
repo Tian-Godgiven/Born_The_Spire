@@ -10,6 +10,7 @@ export const relicList: RelicMap[] = [
         describe: ["战斗结束时", "回复", { key: ["status", "heal"] }, "生命"],
         key: "original_relic_00001",
         rarity: "common",
+        pool: ["common"],
         status: {
             "heal": 5
         },
@@ -42,6 +43,7 @@ export const relicList: RelicMap[] = [
         describe: ["使用时", "对所有敌人造成", { key: ["status", "damage"] }, "伤害"],
         key: "original_relic_00002",
         rarity: "uncommon",
+        pool: ["common"],
         status: {
             "damage": 10
         },
@@ -67,6 +69,7 @@ export const relicList: RelicMap[] = [
         describe: ["可以激活、充能或粉碎"],
         key: "original_relic_00003",
         rarity: "rare",
+        pool: ["common"],
         status: {
             "energy": 1,
             "draw": 2,
@@ -103,6 +106,7 @@ export const relicList: RelicMap[] = [
         describe: ["战斗奖励中，器官选择时可以选择献祭，回复生命值"],
         key: "original_relic_sacrifice",
         rarity: "uncommon",
+        pool: ["common"],
         interaction: {
             possess: {
                 target: { key: "owner" },
@@ -130,6 +134,7 @@ export const relicList: RelicMap[] = [
         describe: ["每回合多抽", { key: ["status", "extra-draw"] }, "张牌"],
         key: "original_relic_00004",
         rarity: "common",
+        pool: ["common"],
         status: {
             "extra-draw": 2
         },
@@ -153,6 +158,7 @@ export const relicList: RelicMap[] = [
         describe: ["第一回合", "额外抽", { key: ["status", "first-turn-draw"] }, "张牌"],
         key: "original_relic_00005",
         rarity: "common",
+        pool: ["common"],
         status: {
             "first-turn-draw": 2
         },
@@ -185,6 +191,7 @@ export const relicList: RelicMap[] = [
         describe: ["水池中可以选择锻炼，消耗物质增加最大生命"],
         key: "original_relic_exercise",
         rarity: "uncommon",
+        pool: ["common"],
         interaction: {
             possess: {
                 target: { key: "owner" },
@@ -211,6 +218,7 @@ export const relicList: RelicMap[] = [
         describe: ["战斗中右键使用：对指定敌人造成10点伤害", "3回合冷却（跨战斗）"],
         key: "original_relic_pistol",
         rarity: "uncommon",
+        pool: ["common"],
         activeAbilities: [{
             key: "shoot",
             label: "射击",
@@ -240,6 +248,7 @@ export const relicList: RelicMap[] = [
         describe: ["获得时", "最大生命+5"],
         key: "original_relic_00006",
         rarity: "common",
+        pool: ["common"],
         interaction: {
             possess: {
                 target: { key: "owner" },
@@ -255,6 +264,7 @@ export const relicList: RelicMap[] = [
         describe: ["战斗开始时", "获得力量1层"],
         key: "original_relic_vajra",
         rarity: "uncommon",
+        pool: ["common"],
         interaction: {
             possess: {
                 target: { key: "owner" },
@@ -282,6 +292,7 @@ export const relicList: RelicMap[] = [
         describe: ["每次打出卡牌时", "对随机一个敌人造成5点伤害"],
         key: "original_relic_thorns_glove",
         rarity: "common",
+        pool: ["common"],
         interaction: {
             possess: {
                 target: { key: "owner" },
@@ -309,6 +320,7 @@ export const relicList: RelicMap[] = [
         describe: ["每3回合，回合开始时", "对随机敌人造成8点伤害"],
         key: "original_relic_metronome",
         rarity: "uncommon",
+        pool: ["common"],
         status: {
             "cooldown": 3,
             "maxCooldown": 3
@@ -373,6 +385,7 @@ export const relicList: RelicMap[] = [
         describe: ["每累积", { key: ["status", "point"] }, "/", { key: ["status", "maxPoint"] }, "点伤害", "回复1生命"],
         key: "original_relic_vampiric_badge",
         rarity: "uncommon",
+        pool: ["common"],
         status: {
             "point": 0,
             "maxPoint": 10
@@ -403,6 +416,7 @@ export const relicList: RelicMap[] = [
         describe: ["每打出", { key: ["status", "maxPoint"] }, "张牌", "抽1张牌"],
         key: "original_relic_scholar_note",
         rarity: "common",
+        pool: ["common"],
         status: {
             "point": 0,
             "maxPoint": 5
@@ -433,6 +447,7 @@ export const relicList: RelicMap[] = [
         describe: ["每场战斗一次", "受到超过", { key: ["status", "minDamage"] }, "点伤害时", "回复", { key: ["status", "healAmount"] }, "生命"],
         key: "original_relic_overload_battery",
         rarity: "uncommon",
+        pool: ["common"],
         status: {
             "point": 0,
             "used": 0,
@@ -471,6 +486,7 @@ export const relicList: RelicMap[] = [
         describe: ["战斗开始时", "获得3层力量"],
         key: "original_relic_pre_battle_ritual",
         rarity: "uncommon",
+        pool: ["common"],
         interaction: {
             possess: {
                 target: { key: "owner" },
@@ -500,6 +516,7 @@ export const relicList: RelicMap[] = [
         describe: ["每次受到伤害", "获得1层力量"],
         key: "original_relic_rage_crystal",
         rarity: "uncommon",
+        pool: ["common"],
         interaction: {
             possess: {
                 target: { key: "owner" },
@@ -527,6 +544,7 @@ export const relicList: RelicMap[] = [
         describe: ["每回合开始，当生命低于50%时", "获得2层力量"],
         key: "original_relic_low_health_banner",
         rarity: "rare",
+        pool: ["common"],
         interaction: {
             possess: {
                 target: { key: "owner" },
@@ -556,6 +574,7 @@ export const relicList: RelicMap[] = [
         describe: ["每回合开始", "获得3层临时力量"],
         key: "original_relic_hot_belt",
         rarity: "rare",
+        pool: ["common"],
         interaction: {
             possess: {
                 target: { key: "owner" },

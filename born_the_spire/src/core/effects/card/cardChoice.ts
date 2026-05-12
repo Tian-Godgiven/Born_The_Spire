@@ -3,7 +3,8 @@ import { Player } from "@/core/objects/target/Player"
 import { chooseFromRandomCards, chooseCardsToUpgrade, chooseCardsToRemove, chooseCardToDuplicate, showCardChoice } from "@/ui/hooks/interaction/cardChoice"
 import { getCardModifier } from "@/core/objects/system/modifier/CardModifier"
 import { Card } from "@/core/objects/item/Subclass/Card"
-import { getCardByKey, cardList } from "@/static/list/item/cardList"
+import { getCardByKey } from "@/static/list/item/cardList"
+import { getFilteredItems } from "@/core/hooks/draw"
 import { doEvent } from "@/core/objects/system/ActionEvent"
 import { enterHand } from "."
 
@@ -13,7 +14,8 @@ import { enterHand } from "."
  * @params {
  *   count?: number       - 随机抽取数量（默认3）
  *   selectCount?: number - 可选择数量（默认1）
- *   tags?: string[]      - 筛选标签（如 ["attack"]）
+ *   tags?: string|string[] - 筛选标签（如 ["attack"]）
+ *   pool?: string|string[] - 筛选池（如 "common"，默认 "common"）
  *   allowDuplicate?: boolean - 是否允许重复（默认false）
  *   addToHand?: boolean  - 是否加入手牌（默认true，false则加入卡组）
  * }
@@ -30,23 +32,18 @@ export const discoverCard: EffectFunc = async (event, effect) => {
   const {
     count = 3,
     selectCount = 1,
-    tags = [],
+    tags,
+    pool,
     allowDuplicate = false,
     addToHand = true
   } = effect.params
 
-
-  // 获取所有符合条件的卡牌key
-  let availableCardKeys = cardList.map(card => card.key)
-
-  // 按标签筛选
-  const tagsArray = Array.isArray(tags) ? tags : []
-  if (tagsArray.length > 0) {
-    availableCardKeys = availableCardKeys.filter(key => {
-      const cardData = cardList.find(c => c.key === key)
-      return cardData?.tags?.some((tag: string) => tagsArray.includes(tag)) ?? false
-    })
-  }
+  // 使用 drawItem 筛选系统获取候选卡牌
+  const availableCards = getFilteredItems("card", {
+    pool: pool as string | string[] | undefined,
+    tags: tags as string | string[] | undefined,
+  })
+  const availableCardKeys = availableCards.map(card => card.key)
 
   // 随机选择卡牌
   const selectedCards = await chooseFromRandomCards(

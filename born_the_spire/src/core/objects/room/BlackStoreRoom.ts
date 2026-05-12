@@ -16,12 +16,6 @@ import type { CardMap } from "@/core/objects/item/Subclass/Card"
 import { createRelic, createOrgan, createPotion, createCard } from "@/core/factories"
 import { randomFloatRange, randomWeightedChoice } from "@/core/hooks/random"
 import { getOrganByKey } from "@/static/list/target/organList"
-import {
-    blackStoreOrganPool,
-    blackStorePotionPool,
-    blackStoreCardPool,
-    selectRandomItemsFromPool,
-} from "@/static/list/room/blackStore/blackStoreItemPool"
 import type { RarityWeights } from "@/static/list/room/blackStore/blackStoreItemPool"
 import { calculateBlackStorePrice } from "@/static/list/target/organQuality"
 import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
@@ -36,7 +30,7 @@ import {
     defaultRelicSlots,
 } from "@/static/config/blackStoreBalance"
 import type { RelicSlotConfig } from "@/static/config/blackStoreBalance"
-import { drawItem } from "@/core/hooks/draw"
+import { drawItem, drawItems } from "@/core/hooks/draw"
 import type { DrawConfig } from "@/core/hooks/draw"
 import { getRelicModifier } from "@/core/objects/system/modifier/RelicModifier"
 import { getCurrentValue } from "@/core/objects/system/Current/current"
@@ -152,7 +146,7 @@ export class BlackStoreRoom extends Room {
         this.organCount = config.organCount ?? 5
         this.relicSlots = config.relicSlots ?? defaultRelicSlots
         this.potionCount = config.potionCount ?? 3
-        this.cardCount = config.cardCount ?? blackStoreCardPool.items.length
+        this.cardCount = config.cardCount ?? 999  // 默认取商店池中所有卡牌
         this.allowSellOrgan = config.allowSellOrgan ?? true
         this.allowSellHealth = config.allowSellHealth ?? true
 
@@ -179,7 +173,10 @@ export class BlackStoreRoom extends Room {
         this.storeItems = []
 
         // 生成器官商品
-        const organs = this.selectRandomOrgans(this.organCount)
+        const organs = drawItems("organ", this.organCount, {
+            rarityWeights: this.rarityWeights?.organ as Record<string, number> | undefined,
+            context: "blackStore:organ"
+        }) as OrganMap[]
         organs.forEach((organ, index) => {
             this.storeItems.push({
                 id: `organ_${index}`,
@@ -209,7 +206,10 @@ export class BlackStoreRoom extends Room {
         })
 
         // 生成药水商品
-        const potions = this.selectRandomPotions(this.potionCount)
+        const potions = drawItems("potion", this.potionCount, {
+            rarityWeights: this.rarityWeights?.potion as Record<string, number> | undefined,
+            context: "blackStore:potion"
+        }) as PotionMap[]
         potions.forEach((potion, index) => {
             this.storeItems.push({
                 id: `potion_${index}`,
@@ -223,9 +223,12 @@ export class BlackStoreRoom extends Room {
             })
         })
 
-        // 生成卡牌商品（从独立卡牌池）
-        if (this.cardCount > 0 && blackStoreCardPool.items.length > 0) {
-            const cards = this.selectRandomCards(this.cardCount)
+        // 生成卡牌商品（从商店卡牌池）
+        const cards = drawItems("card", this.cardCount, {
+            pool: "shop",
+            context: "blackStore:card"
+        }) as CardMap[]
+        if (cards.length > 0) {
             cards.forEach((card, index) => {
                 this.storeItems.push({
                     id: `card_${index}`,
@@ -251,24 +254,6 @@ export class BlackStoreRoom extends Room {
             }).join('')
         }
         return String(describe)
-    }
-
-    /**
-     * 从黑市器官池中随机选择器官
-     */
-    private selectRandomOrgans(count: number): OrganMap[] {
-        return selectRandomItemsFromPool(
-            blackStoreOrganPool,
-            count,
-            false,
-            "blackStore:organ",
-            {
-                rarityWeights: this.rarityWeights?.organ,
-                whitelist: this.filters?.organ?.whitelist,
-                blacklist: this.filters?.organ?.blacklist,
-                uniqueConfig: undefined // 器官不需要不重复配置
-            }
-        )
     }
 
     /**
@@ -306,41 +291,6 @@ export class BlackStoreRoom extends Room {
         }
 
         return result
-    }
-
-    /**
-     * 随机选择药水
-     */
-    private selectRandomPotions(count: number): PotionMap[] {
-        return selectRandomItemsFromPool(
-            blackStorePotionPool,
-            count,
-            false,
-            "blackStore:potion",
-            {
-                rarityWeights: this.rarityWeights?.potion,
-                whitelist: this.filters?.potion?.whitelist,
-                blacklist: this.filters?.potion?.blacklist,
-                uniqueConfig: undefined // 药水不需要不重复配置
-            }
-        )
-    }
-
-    /**
-     * 从黑市卡牌池中随机选择卡牌
-     */
-    private selectRandomCards(count: number): CardMap[] {
-        return selectRandomItemsFromPool(
-            blackStoreCardPool,
-            count,
-            false,
-            "blackStore:card",
-            {
-                whitelist: this.filters?.card?.whitelist,
-                blacklist: this.filters?.card?.blacklist,
-                uniqueConfig: undefined
-            }
-        )
     }
 
     /**
