@@ -602,9 +602,24 @@ export const relicList: RelicMap[] = [
         }
     },
 ]
+/**
+ * ○环 — 当遗物池耗尽时的垫底遗物
+ * 没有任何效果，可以重复获得
+ * 不在常规遗物池中，仅由 drawItem fallback 返回
+ */
+export const fallbackRelic: RelicMap = {
+    label: "○环",
+    describe: ["一个圆环。没有任何效果。", "你已经拿到了所有的遗物。"],
+    key: "original_relic_fallback_circlet",
+    rarity: "common",
+    pool: ["fallback"],  // 独立池，不会被 common/shop 等常规池抽到
+    interaction: {}
+}
+
 export async function getRelicByKey(relicKey: string) {
-    // 获取数据
+    // 先找常规遗物，再找 fallback
     const map = relicList.find(item => item.key == relicKey)
+        ?? (relicKey === fallbackRelic.key ? fallbackRelic : undefined)
     if (!map) {
         throw new Error(`不存在的遗物key: ${relicKey}`)
     }

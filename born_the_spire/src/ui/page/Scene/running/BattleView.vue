@@ -17,8 +17,6 @@
         结束回合
     </div>
 
-    <TurnDisplay />
-
     <div class="drawPile center"
         @click="showCardPile('draw')">
         抽排堆：{{ drawNum }}
@@ -46,7 +44,6 @@
     import HandPile from './HandPile.vue';
     import Faction from '@/ui/components/object/Target/Faction.vue';
     import AllFactions from '@/ui/components/object/Target/AllFactions.vue';
-    import TurnDisplay from '@/ui/components/display/TurnDisplay.vue';
     import HandCardSelector from '@/ui/components/interaction/HandCardSelector.vue';
     import { handCardSelectorActive } from '@/ui/hooks/interaction/handCardSelector';
 

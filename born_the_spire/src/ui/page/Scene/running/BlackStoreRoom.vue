@@ -259,6 +259,7 @@ import type { StoreItem } from '@/core/objects/room/BlackStoreRoom'
 import { getReserveModifier } from '@/core/objects/system/modifier/ReserveModifier'
 import type { Organ } from '@/core/objects/target/Organ'
 import { newLog } from '@/ui/hooks/global/log'
+import { showDisplayMessage } from '@/ui/hooks/global/displayMessage'
 import { getCurrentValue } from '@/core/objects/system/Current/current'
 import { getStatusValue } from '@/core/objects/system/status/Status'
 import { goToNextStep } from '@/core/hooks/step'
@@ -430,6 +431,16 @@ function canAfford(item: StoreItem): boolean {
     return reserveModifier.getReserve('gold') >= item.price && !item.isPurchased
 }
 
+// 黑市老板的嘲讽语录（买不起时随机选一条）
+const cantAffordLines = [
+    '滚。',
+    '？',
+    '别。碰。',
+    '啊！？',
+    '(厌恶的咋舌声)',
+    '命，换，钱。',
+]
+
 async function handlePurchase(item: StoreItem) {
     if (!currentRoom.value) return
     if (item.isPurchased) {
@@ -437,7 +448,8 @@ async function handlePurchase(item: StoreItem) {
         return
     }
     if (!canAfford(item)) {
-        newLog(['金钱不足'])
+        const line = cantAffordLines[Math.floor(Math.random() * cantAffordLines.length)]
+        showDisplayMessage(`"${line}"`, 2000)
         return
     }
     await currentRoom.value.purchaseItem(item.id)

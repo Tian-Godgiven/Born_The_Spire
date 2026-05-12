@@ -12,11 +12,13 @@
         <!-- 卡牌组弹窗 -->
         <CardGroupModal />
     </div>
-    <!-- 测试工具 -->
+    <!-- 工具栏 -->
     <div class="tool">
-        <TestTool></TestTool>
         <LogPane></LogPane>
     </div>
+
+    <!-- 全局消息提示 -->
+    <GlobalMessage />
 
     <!-- 地图覆盖层 -->
     <MapOverlay ref="mapOverlay" />
@@ -37,9 +39,9 @@ import { computed, ref, onMounted } from 'vue'
 import Top from "./Top/index.vue"
 import ConnectLine from "@/ui/components/interaction/chooseTarget/ConnectLine.vue"
 import LogPane from "@/ui/page/tool/logPane/LogPane.vue"
-import TestTool from "@/ui/page/tool/testTool/TestTool.vue"
 import MapOverlay from "./MapOverlay.vue"
 import CardGroupModal from '@/ui/components/interaction/CardGroupModal.vue'
+import GlobalMessage from '@/ui/components/display/GlobalMessage.vue'
 import { nowGameRun } from '@/core/objects/game/run'
 import { getRoomComponent } from '@/ui/registry/roomComponentRegistry'
 import { setShowMapCallback } from '@/core/hooks/step'

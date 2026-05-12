@@ -6,6 +6,7 @@
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { randomWeightedChoice, randomChoice } from "@/core/hooks/random"
 import type { ItemMap } from "@/core/objects/item/Item"
+import { fallbackRelic } from "@/static/list/item/relicList"
 
 /**
  * 物品类型
@@ -130,7 +131,11 @@ export function drawItem(
     const items = getItemList(type, customList)
     const filtered = filterItems(items, config)
 
-    if (filtered.length === 0) return null
+    if (filtered.length === 0) {
+        // 遗物池耗尽时返回垫底遗物"○环"
+        if (type === "relic") return fallbackRelic
+        return null
+    }
 
     // 如果有稀有度权重，按权重抽
     if (config.rarityWeights) {
