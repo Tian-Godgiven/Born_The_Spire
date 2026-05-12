@@ -11,8 +11,6 @@ export type RelicMap = ItemMap & {
     tags?: string[]
     // 遗物稀有度（3级系统）
     rarity?: "common" | "uncommon" | "rare"
-    // 是否为商店限定遗物（仅在黑市出现，不会在普通奖励中掉落）
-    storeOnly?: boolean
     // 主动能力配置
     activeAbilities?: ActiveAbility[]
     // 角标配置
@@ -28,14 +26,12 @@ export type RelicMap = ItemMap & {
 export class Relic extends Item {
     public readonly itemType = 'relic' as const  // 类型标识
     public rarity?: "common" | "uncommon" | "rare"  // 遗物稀有度
-    public storeOnly?: boolean  // 是否为商店限定
     public activeAbilities?: ActiveAbility[]  // 主动能力列表
     public badges?: BadgeConfig[]  // 角标配置
 
     constructor(map: RelicMap) {
         super(map)
         this.rarity = map.rarity
-        this.storeOnly = map.storeOnly
         this.activeAbilities = map.activeAbilities
         this.badges = map.badges
     }

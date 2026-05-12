@@ -148,10 +148,15 @@ export function initBlackStoreItemPools(): void {
     )
 
     // 加载遗物（使用懒加载）
+    // 黑市包含通用遗物和商店限定遗物，排除其他限定遗物（如boss）
     const relicList = getLazyModule<RelicMap[]>('relicList')
-    blackStoreRelicPool.items = [...relicList]
+    const shopRelics = relicList.filter(relic => {
+        const pool = relic.pool && relic.pool.length > 0 ? relic.pool : ["common"]
+        return pool.includes("common") || pool.includes("shop")
+    })
+    blackStoreRelicPool.items = [...shopRelics]
     // 根据稀有度设置权重
-    blackStoreRelicPool.weights = relicList.map(relic =>
+    blackStoreRelicPool.weights = shopRelics.map(relic =>
         getRarityWeight(relic.rarity as Rarity, blackStoreRelicPool.rarityWeights)
     )
 
@@ -160,6 +165,12 @@ export function initBlackStoreItemPools(): void {
     blackStorePotionPool.items = [...potionList]
     // 药水暂无稀有度系统，使用默认权重
     blackStorePotionPool.weights = potionList.map(() => 1)
+
+    // 加载商店限定卡牌（使用懒加载）
+    const cardList = getLazyModule<CardMap[]>('cardList')
+    const shopCards = cardList.filter(card => card.pool?.includes("shop"))
+    blackStoreCardPool.items = [...shopCards]
+    blackStoreCardPool.weights = shopCards.map(() => 1)
 
 }
 

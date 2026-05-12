@@ -45,3 +45,33 @@ export const healthSellConfig = {
     pricePerHp: 5,              // 每点生命值的基础价格
     depreciationFactor: 0.8     // 每次出售后的贬值系数（0.8 = 降低 20%）
 }
+
+/**
+ * 遗物栏位配置类型
+ *
+ * 每个栏位描述一次抽取规则：
+ *   固定规则：直接指定 pool / rarity 等条件
+ *   概率规则：通过 chances 数组按权重随机选择一条规则
+ */
+export type RelicSlotConfig = DrawConfig | {
+    chances: { weight: number, drawConfig: DrawConfig }[]
+}
+
+/**
+ * 默认遗物栏位配置
+ * 栏位1：必定商店遗物
+ * 栏位2：必定罕见以上的通用遗物
+ * 栏位3：30%商店遗物，70%通用遗物随机稀有度
+ */
+import type { DrawConfig } from "@/core/hooks/draw"
+
+export const defaultRelicSlots: RelicSlotConfig[] = [
+    { pool: "shop" },
+    { pool: "common", rarity: ["uncommon", "rare"] },
+    {
+        chances: [
+            { weight: 30, drawConfig: { pool: "shop" } },
+            { weight: 70, drawConfig: { pool: "common" } },
+        ]
+    },
+]

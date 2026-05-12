@@ -14,11 +14,10 @@ import type { RelicMap } from "@/core/objects/item/Subclass/Relic"
 import type { PotionMap } from "@/core/objects/item/Subclass/Potion"
 import type { CardMap } from "@/core/objects/item/Subclass/Card"
 import { createRelic, createOrgan, createPotion, createCard } from "@/core/factories"
-import { randomFloatRange } from "@/core/hooks/random"
+import { randomFloatRange, randomWeightedChoice } from "@/core/hooks/random"
 import { getOrganByKey } from "@/static/list/target/organList"
 import {
     blackStoreOrganPool,
-    blackStoreRelicPool,
     blackStorePotionPool,
     blackStoreCardPool,
     selectRandomItemsFromPool,
@@ -33,8 +32,12 @@ import {
     potionDefaultPrice,
     cardPriceConfig,
     organDiscountRange,
-    healthSellConfig
+    healthSellConfig,
+    defaultRelicSlots,
 } from "@/static/config/blackStoreBalance"
+import type { RelicSlotConfig } from "@/static/config/blackStoreBalance"
+import { drawItem } from "@/core/hooks/draw"
+import type { DrawConfig } from "@/core/hooks/draw"
 import { getRelicModifier } from "@/core/objects/system/modifier/RelicModifier"
 import { getCurrentValue } from "@/core/objects/system/Current/current"
 import { doEvent } from "@/core/objects/system/ActionEvent"
@@ -75,7 +78,7 @@ export interface SellableOrgan {
 export interface BlackStoreRoomConfig extends RoomConfig {
     type: "blackStore"
     organCount?: number             // 器官数量（默认 5）
-    relicCount?: number             // 遗物数量（默认 3）
+    relicSlots?: RelicSlotConfig[]  // 遗物栏位配置（默认使用 defaultRelicSlots）
     potionCount?: number            // 药水数量（默认 3）
     cardCount?: number              // 卡牌数量（默认取卡牌池全部，池为空则不显示）
     allowSellOrgan?: boolean        // 是否允许出售器官（默认 true）
@@ -84,7 +87,6 @@ export interface BlackStoreRoomConfig extends RoomConfig {
     // 稀有度权重配置
     rarityWeights?: {
         organ?: RarityWeights       // 器官稀有度权重
-        relic?: RarityWeights       // 遗物稀有度权重
         potion?: RarityWeights      // 药水稀有度权重
     }
 
@@ -92,12 +94,6 @@ export interface BlackStoreRoomConfig extends RoomConfig {
     organDiscountRange?: {
         min?: number                // 最小折扣（默认 0.5，即 50%）
         max?: number                // 最大折扣（默认 0.7，即 70%）
-    }
-
-    // 遗物不重复配置
-    relicUnique?: {
-        enabled?: boolean           // 是否启用遗物不重复（默认 true）
-        scope?: "global" | "room"   // 不重复范围：global=全局，room=单个房间（默认 global）
     }
 
     // 黑白名单配置
@@ -127,7 +123,7 @@ export interface BlackStoreRoomConfig extends RoomConfig {
  */
 export class BlackStoreRoom extends Room {
     public readonly organCount: number
-    public readonly relicCount: number
+    public readonly relicSlots: RelicSlotConfig[]
     public readonly potionCount: number
     public readonly cardCount: number
     public readonly allowSellOrgan: boolean
@@ -136,7 +132,6 @@ export class BlackStoreRoom extends Room {
     // 配置
     private readonly rarityWeights: BlackStoreRoomConfig["rarityWeights"]
     private readonly organDiscountRange: { min: number, max: number }
-    private readonly relicUniqueConfig: { enabled: boolean, scope: "global" | "room" }
     private readonly filters: BlackStoreRoomConfig["filters"]
 
     // 商品列表
@@ -148,9 +143,6 @@ export class BlackStoreRoom extends Room {
     // 器官折扣缓存（器官ID -> 折扣）
     private organDiscounts: Map<string, number> = new Map()
 
-    // 本房间已出现的遗物（用于 room scope）
-    private roomAppearedRelics: Set<string> = new Set()
-
     // 展示用实例缓存（商品ID -> 实例）
     private previewInstances: Map<string, any> = new Map()
 
@@ -158,7 +150,7 @@ export class BlackStoreRoom extends Room {
         super(config)
 
         this.organCount = config.organCount ?? 5
-        this.relicCount = config.relicCount ?? 3
+        this.relicSlots = config.relicSlots ?? defaultRelicSlots
         this.potionCount = config.potionCount ?? 3
         this.cardCount = config.cardCount ?? blackStoreCardPool.items.length
         this.allowSellOrgan = config.allowSellOrgan ?? true
@@ -171,12 +163,6 @@ export class BlackStoreRoom extends Room {
         this.organDiscountRange = {
             min: config.organDiscountRange?.min ?? organDiscountRange.min,
             max: config.organDiscountRange?.max ?? organDiscountRange.max
-        }
-
-        // 遗物不重复配置
-        this.relicUniqueConfig = {
-            enabled: config.relicUnique?.enabled ?? true,
-            scope: config.relicUnique?.scope ?? "global"
         }
 
         // 黑白名单配置
@@ -207,8 +193,8 @@ export class BlackStoreRoom extends Room {
             })
         })
 
-        // 生成遗物商品
-        const relics = this.selectRandomRelics(this.relicCount)
+        // 生成遗物商品（按栏位配置逐个抽取）
+        const relics = this.generateRelicsBySlots()
         relics.forEach((relic, index) => {
             this.storeItems.push({
                 id: `relic_${index}`,
@@ -286,24 +272,40 @@ export class BlackStoreRoom extends Room {
     }
 
     /**
-     * 随机选择遗物
+     * 按栏位配置生成遗物
      */
-    private selectRandomRelics(count: number): RelicMap[] {
-        return selectRandomItemsFromPool(
-            blackStoreRelicPool,
-            count,
-            false,
-            "blackStore:relic",
-            {
-                rarityWeights: this.rarityWeights?.relic,
-                whitelist: this.filters?.relic?.whitelist,
-                blacklist: this.filters?.relic?.blacklist,
-                uniqueConfig: this.relicUniqueConfig.enabled ? {
-                    scope: this.relicUniqueConfig.scope,
-                    roomAppearedSet: this.roomAppearedRelics
-                } : undefined
+    private generateRelicsBySlots(): RelicMap[] {
+        const result: RelicMap[] = []
+        const exclude: string[] = []
+
+        for (let i = 0; i < this.relicSlots.length; i++) {
+            const slot = this.relicSlots[i]
+
+            // 解析栏位配置：概率规则或固定规则
+            let config: DrawConfig
+            if ("chances" in slot) {
+                // 按权重随机选择一条规则
+                const weights = slot.chances.map(c => c.weight)
+                const configs = slot.chances.map(c => c.drawConfig)
+                config = randomWeightedChoice(configs, weights, `blackStore:relicSlot:${i}:chance`)
+            } else {
+                config = slot
             }
-        )
+
+            // 抽取遗物
+            const relic = drawItem("relic", {
+                ...config,
+                exclude,
+                context: `blackStore:relicSlot:${i}`,
+            }) as RelicMap | null
+
+            if (relic) {
+                result.push(relic)
+                exclude.push(relic.key)
+            }
+        }
+
+        return result
     }
 
     /**

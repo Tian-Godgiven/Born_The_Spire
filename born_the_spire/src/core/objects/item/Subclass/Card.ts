@@ -19,7 +19,6 @@ export type CardMap = ItemMap & {
     }
     entry?:string[],
     tags?:string[],  // 卡牌标签（用于分类和筛选）
-    storeOnly?: boolean,  // 商店限定卡牌（不会在非商店场景出现）
 
     // 升级配置
     upgradeConfig?: {

@@ -28,6 +28,7 @@ export type ItemMap = EntityMap & {
     label:string,
     describe?:Describe,
     key:string,
+    pool?: string[],  // 物品所属的抽选池（如 ["shop"]、["boss"]），默认为通用池
     interaction:Record<string, InteractionData | InteractionData[]>
     reaction?: ReactionMap  // 响应配置：action -> 事件配置数组
 }
