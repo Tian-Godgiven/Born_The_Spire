@@ -13,6 +13,7 @@ export const playerList:Record<string,PlayerMap> = {
             "max-energy":3,//最大能量
             "max-potion":3,//最大药水数量
             "draw-per-turn":5,//每回合抽牌数
+            "shopDiscount":1,//商店折扣系数（1=原价，0.5=半价）
         },
         current:["health","energy","isAlive"],
         //默认触发器：回合开始时抽牌（数量由 draw-per-turn 属性决定）

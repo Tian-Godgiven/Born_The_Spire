@@ -34,6 +34,7 @@ import { drawItem, drawItems } from "@/core/hooks/draw"
 import type { DrawConfig } from "@/core/hooks/draw"
 import { getRelicModifier } from "@/core/objects/system/modifier/RelicModifier"
 import { getCurrentValue } from "@/core/objects/system/Current/current"
+import { getStatusValue } from "@/core/objects/system/status/Status"
 import { doEvent } from "@/core/objects/system/ActionEvent"
 
 /**
@@ -164,6 +165,9 @@ export class BlackStoreRoom extends Room {
 
         // 生成商品列表
         this.generateStoreItems()
+
+        // 应用商店折扣（来自玩家 shopDiscount 属性）
+        this.applyShopDiscount()
     }
 
     /**
@@ -291,6 +295,19 @@ export class BlackStoreRoom extends Room {
         }
 
         return result
+    }
+
+    /**
+     * 应用商店折扣
+     * 读取玩家 shopDiscount 属性（初始值1，会员卡等通过乘法修饰器降低）
+     */
+    private applyShopDiscount(): void {
+        const multiplier = Number(getStatusValue(nowPlayer, "shopDiscount", 1))
+        if (multiplier >= 1) return
+
+        for (const item of this.storeItems) {
+            item.price = Math.max(1, Math.floor(item.price * multiplier))
+        }
     }
 
     /**

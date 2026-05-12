@@ -47,6 +47,8 @@ import { previewValue, previewModifyValue, previewModifyByPercent } from "@/core
 import { loseHealthTo } from "@/core/effects/health/loseHealth"
 import { emptyChest } from "@/core/effects/chest/emptyChest"
 import { modifyRepeat } from "@/core/effects/card/repeatCard"
+import { shuffleDiscardIntoDraw } from "@/core/effects/card/shuffleDiscardIntoDraw"
+import { addRandomCardsToPile } from "@/core/effects/card/addRandomCardsToPile"
 import type { EffectParamsSchema } from "@/core/effects/validateEffectParams"
 
 type EffectData = {
@@ -470,5 +472,13 @@ export const effectMap:EffectData[] = [
     label:"修改卡牌重复打出次数",
     key:"modifyRepeat",
     effect:modifyRepeat
+},{
+    label:"将弃牌堆洗入抽牌堆",
+    key:"shuffleDiscardIntoDraw",
+    effect:shuffleDiscardIntoDraw
+},{
+    label:"向牌堆添加随机卡牌",
+    key:"addRandomCardsToPile",
+    effect:addRandomCardsToPile
 }]
 

@@ -601,6 +601,31 @@ export const relicList: RelicMap[] = [
             ]
         }
     },
+    // 商店遗物 - 会员卡
+    {
+        label: "会员卡",
+        describe: ["所有商品打折", {key: ["status", "discount"]}, "%！"],
+        key: "original_relic_membership_card",
+        rarity: "rare",
+        pool: ["shop"],
+        status: {
+            "discount": 50
+        },
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                effects: [{
+                    key: "addStatusModifier",
+                    params: {
+                        statusKey: "shopDiscount",
+                        modifierValue: 0.5,
+                        targetLayer: "base",
+                        modifierType: "multiplicative"
+                    }
+                }]
+            }
+        }
+    },
 ]
 /**
  * ○环 — 当遗物池耗尽时的垫底遗物

@@ -4,7 +4,7 @@
 
 import { allForOneCard, clawCard, daggerSprayCard } from './attack'
 import { thousandCutsCard } from './power'
-import { doubleTapCard, piercingWailCard, preparedCard, panaceaCard } from './skill'
+import { doubleTapCard, piercingWailCard, preparedCard, panaceaCard, blindCard, chrysalisCard, deepBreathCard } from './skill'
 import { doubtCard, injuryCard, regretCard } from './curse'
 
 export const slayTheSpireCards = [
@@ -16,6 +16,9 @@ export const slayTheSpireCards = [
     thousandCutsCard,
     preparedCard,
     panaceaCard,
+    blindCard,
+    chrysalisCard,
+    deepBreathCard,
     doubtCard,
     injuryCard,
     regretCard
