@@ -12,26 +12,35 @@
 import { Chara } from '@/core/objects/target/Target';
 import gsap from 'gsap';
 import { toNumber } from 'lodash';
-import { computed, useTemplateRef } from 'vue';
+import { computed, useTemplateRef, watch, onMounted } from 'vue';
     const {target} = defineProps<{target:Chara}>()
+
+    const blackRef = useTemplateRef("blackRef")
+
     const blood = computed(()=>{
         const {now,max} = target.getHealth()
-        const percent = toNumber(((Number(now)/Number(max))*100).toFixed(1))
-        animate(percent)
-        return {now: now, max: max}
+        return {now, max}
     })
-    //动画
-    const blackRef = useTemplateRef("blackRef")
-    function animate(percent:number){
-        if(blackRef.value){
-            gsap.to(blackRef.value,{
-                width:(percent+"%"),
-                duration:0.8,
-                ease:'power1.inOut'
-            })
-        }
 
-    }
+    const percent = computed(()=>{
+        return toNumber(((Number(blood.value.now)/Number(blood.value.max))*100).toFixed(1))
+    })
+
+    onMounted(() => {
+        // 挂载时直接设置宽度，不播动画
+        if (blackRef.value) {
+            gsap.set(blackRef.value, { width: percent.value + "%" })
+        }
+    })
+
+    watch(percent, (val) => {
+        if (!blackRef.value) return
+        gsap.to(blackRef.value, {
+            width: val + "%",
+            duration: 0.8,
+            ease: 'power1.inOut'
+        })
+    })
 </script>
 
 <style scoped lang='scss'>
