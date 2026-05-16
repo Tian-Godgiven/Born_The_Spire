@@ -1,12 +1,12 @@
 <template>
-<div class="chara-wrapper">
-    <Target :target 
+<CharaAnimator ref="animator" :target="target" class="chara-wrapper">
+    <Target :target
             @mouseenter="showStateDisplay = true"
             @mouseleave="showStateDisplay = false"
             >
         <div class="chara-content">
-            <!-- 意图显示（仅敌人） -->
-            <div v-if="isEnemy && enemyIntent" class="intent-display">
+            <!-- 意图显示（仅敌人，死亡后隐藏） -->
+            <div v-if="isEnemy && enemyIntent && !isDeadOrDying" class="intent-display">
                 <IntentDisplay :intent="enemyIntent" />
             </div>
 
@@ -23,29 +23,28 @@
                     <MechanismDisplay :entity="target" position="healthBarRight" />
                 </div>
             </div>
-            <div class="states" v-if="stateList.length > 0">
+            <div class="states" v-if="stateList.length > 0 && !isDeadOrDying">
                 <State v-for="state in stateList" :key="state.key" :state></State>
             </div>
         </div>
         <!-- 状态详情显示 - 放在Target外面，以便正确定位 -->
         <StateDisplay
-            v-if="showStateDisplay"
+            v-if="showStateDisplay && !isDeadOrDying"
             :target="target"
             :side="side=='left'?'right':'left'"
         />
     </Target>
-
-
-</div>
+</CharaAnimator>
 </template>
 
 <script setup lang='ts'>
     import { Chara } from '@/core/objects/target/Target';
     import { Enemy } from '@/core/objects/target/Enemy';
-    import { watch, computed, ref } from 'vue';
+    import { computed, ref } from 'vue';
     import Organ from '@/ui/components/object/Organ.vue';
     import Target from "@/ui/components/interaction/chooseTarget/Target.vue";
     import BloodLine from '@/ui/components/object/Target/Chara/components/BloodLine.vue';
+    import CharaAnimator from '@/ui/components/object/Target/Chara/components/CharaAnimator.vue';
     import State from '@/ui/components/object/State.vue';
     import StateDisplay from '@/ui/components/display/StateDisplay.vue';
     import MechanismDisplay from '@/ui/components/display/MechanismDisplay.vue';
@@ -55,6 +54,10 @@
     import type { Organ as OrganClass } from '@/core/objects/target/Organ';
 
     const props = defineProps<{target:Chara,side:'left'|"right"}>()
+
+    // 通过 ref 访问 CharaAnimator 暴露的动画状态
+    const animator = ref<InstanceType<typeof CharaAnimator>>()
+    const isDeadOrDying = computed(() => animator.value?.isDying || animator.value?.isDead)
 
     // 检查器官是否被禁用
     function isOrganDisabledCheck(organ: OrganClass): boolean {

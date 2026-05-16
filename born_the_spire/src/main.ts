@@ -79,6 +79,11 @@ Promise.all([
             initAllPoolActions()
         })
 
+        // 注册预设动画
+        import('@/ui/animation').then(({ registerPresetAnimations }) => {
+            registerPresetAnimations()
+        })
+
         createApp(App)
             .use(router)
             .mount("#app");
