@@ -184,10 +184,17 @@ async function createCardFromKey(cardKey: string): Promise<CardType | null> {
 const describeSegments = computed(() => {
     const segments = getDescribeStructured(props.organ.describe, props.organ)
 
-    // 更新卡牌片段的显示文本（同步处理，只显示占位符）
+    // 更新卡牌片段的显示文本
     return segments.map(segment => {
         if (segment.type === 'card' && segment.cardRef) {
-            // 对于 instance 类型，尝试同步查找
+            // 如果 describe.ts 已经成功解析出卡牌名称，直接用括号包裹
+            if (segment.text && segment.text !== '[卡牌]') {
+                return {
+                    ...segment,
+                    text: `【${segment.text}】`
+                }
+            }
+            // 对于 instance 类型（字符串ID），尝试从牌堆中同步查找
             if (segment.cardRefType === 'instance' && typeof segment.cardRef === 'string') {
                 const card = findCardById(segment.cardRef)
                 if (card) {
@@ -197,7 +204,7 @@ const describeSegments = computed(() => {
                     }
                 }
             }
-            // 对于 key 类型，显示占位符（实际卡牌在 hover 时异步加载）
+            // 兜底：显示占位符
             return {
                 ...segment,
                 text: `【卡牌】`

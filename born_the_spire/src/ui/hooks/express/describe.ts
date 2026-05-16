@@ -179,41 +179,58 @@ export function getDescribeStructured(describe:Describe|undefined,target?:Object
             }
             //卡牌实例引用
             else if("@" in value){
-                const cardIndex = value["@"] as number
+                const cardIndexOrId = value["@"]
                 let cardLabel = "[卡牌]"
 
-                // 先尝试 cards 数组，再 fallback 到 cardsByOwner.player
-                let cardKey: string | undefined
-                const targetCards = (target as any)?.cards
-                if (targetCards && Array.isArray(targetCards)) {
-                    cardKey = targetCards[cardIndex]
-                }
-                if (!cardKey) {
-                    const cardsByOwner = (target as any)?.cardsByOwner
-                    if (cardsByOwner?.player) {
-                        const playerCards = Array.isArray(cardsByOwner.player) ? cardsByOwner.player : [cardsByOwner.player]
-                        cardKey = playerCards[cardIndex]
+                if (typeof cardIndexOrId === 'number') {
+                    // 数字索引：从 cards 数组查找 cardKey，再查 cardList 获取 label
+                    let cardKey: string | undefined
+                    const targetCards = (target as any)?.cards
+                    if (targetCards && Array.isArray(targetCards)) {
+                        cardKey = targetCards[cardIndexOrId]
                     }
-                }
-                if (cardKey && typeof cardKey === 'string') {
-                    try {
-                        const cardList = getLazyModule<any[]>('cardList')
-                        const cardConfig = cardList.find((c: any) => c.key === cardKey)
-                        if (cardConfig) {
-                            cardLabel = cardConfig.label
+                    if (!cardKey) {
+                        const cardsByOwner = (target as any)?.cardsByOwner
+                        if (cardsByOwner?.player) {
+                            const playerCards = Array.isArray(cardsByOwner.player) ? cardsByOwner.player : [cardsByOwner.player]
+                            cardKey = playerCards[cardIndexOrId]
                         }
-                    } catch {
-                        // cardList 尚未加载
                     }
+                    if (cardKey && typeof cardKey === 'string') {
+                        try {
+                            const cardList = getLazyModule<any[]>('cardList')
+                            const cardConfig = cardList.find((c: any) => c.key === cardKey)
+                            if (cardConfig) cardLabel = cardConfig.label
+                        } catch { /* cardList 尚未加载 */ }
+                    }
+                    segments.push({
+                        text: cardLabel,
+                        type: 'card' as const,
+                        cardRef: cardIndexOrId,
+                        cardRefType: 'instance' as const
+                    })
+                } else if (typeof cardIndexOrId === 'string') {
+                    // 字符串 ID：实例化后的卡牌引用，从器官的卡牌修饰器中查找
+                    try {
+                        if (target && 'targetType' in (target as any) && (target as any).targetType === 'organ') {
+                            const organ = target as any
+                            if (organ.owner) {
+                                const cardModifier = getCardModifier(organ.owner)
+                                const cardsFromOrgan = cardModifier.getCardsFromSource(organ)
+                                const cardInstance = cardsFromOrgan.find((c: any) => c.__id === cardIndexOrId)
+                                if (cardInstance) {
+                                    cardLabel = cardInstance.label || cardInstance.key || "[卡牌]"
+                                }
+                            }
+                        }
+                    } catch { /* 查找失败 */ }
+                    segments.push({
+                        text: cardLabel,
+                        type: 'card' as const,
+                        cardRef: cardIndexOrId,
+                        cardRefType: 'instance' as const
+                    })
                 }
-
-                const segment = {
-                    text: cardLabel,
-                    type: 'card' as const,
-                    cardRef: cardIndex,
-                    cardRefType: 'instance' as const
-                }
-                segments.push(segment)
             }
             //卡牌key预览
             else if("#" in value){
