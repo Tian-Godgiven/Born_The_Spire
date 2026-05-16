@@ -4,6 +4,7 @@ import { ItemModifier } from "./ItemModifier"
 import { newLog } from "@/ui/hooks/global/log"
 import type { LogUnit } from "@/ui/hooks/global/log"
 import { computed, toRaw } from "vue"
+import { getStatusValue } from "../status/Status"
 
 /**
  * 药水管理器
@@ -25,11 +26,16 @@ export class PotionModifier extends ItemModifier {
      * 1. 调用基类 acquireItem 处理 possess 和 get 交互
      * 2. 药水没有额外的特殊逻辑
      */
-    acquirePotion(potion: Potion, source: Entity, parentLog?: LogUnit) {
-        const log = parentLog || newLog([this.owner, "获得了药水", potion])
+    acquirePotion(potion: Potion, source: Entity, parentLog?: LogUnit): boolean {
+        const maxNum = Number(getStatusValue(this.owner, "max-potion"))
+        if (maxNum > 0 && this.units.length >= maxNum) {
+            newLog([this.owner, "药水栏位已满，无法获得", potion])
+            return false
+        }
 
-        // 使用基类的通用方法处理获得逻辑
+        const log = parentLog || newLog([this.owner, "获得了药水", potion])
         this.acquireItem(potion, source, log)
+        return true
     }
 
     /**

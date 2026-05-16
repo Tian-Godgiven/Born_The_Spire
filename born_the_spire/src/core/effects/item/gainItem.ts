@@ -87,8 +87,6 @@ export const gainPotion: EffectFunc = async (event, effect) => {
 
     const potionModifier = getPotionModifier(target)
     potionModifier.acquirePotion(potion, target)
-
-    newLog([target, "获得了药水", potion.label])
 }
 
 /**

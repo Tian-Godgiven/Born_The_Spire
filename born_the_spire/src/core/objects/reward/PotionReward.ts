@@ -56,11 +56,14 @@ export class PotionReward extends Reward {
             return
         }
 
-        this.potion = await createPotion(this.potionConfig)
-        newLog([`获得药水: ${this.potion.label}`])
-
         const potionModifier = getPotionModifier(nowPlayer)
-        potionModifier.acquirePotion(this.potion, nowPlayer)
+        this.potion = await createPotion(this.potionConfig)
+
+        const success = potionModifier.acquirePotion(this.potion, nowPlayer)
+        if (!success) {
+            this.potion = null
+            return
+        }
 
         this.markAsClaimed()
     }
