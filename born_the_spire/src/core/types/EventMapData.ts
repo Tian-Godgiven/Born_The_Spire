@@ -4,6 +4,7 @@
 
 import type { Component } from "vue"
 import type { RoomAvailableCondition } from "@/static/registry/roomRegistry"
+import type { Condition } from "./ConditionSystem"
 
 /**
  * 战斗场景奖励配置
@@ -42,9 +43,13 @@ export interface EventOptionMap {
     }>
     component?: Component | string  // 复杂交互组件（转盘、配对等）
     customCallback?: (sceneData?: any) => void | Promise<void>  // 自定义回调（多幕事件可访问 sceneData）
+    rewards?: Array<{ type: string; [key: string]: any }>  // 奖励配置列表（弹出奖励选择弹窗）
 
-    // 多幕事件专用配置
-    condition?: (sceneData: any) => boolean  // 条件显示（返回 false 则不显示此选项）
+    // 是否可用（不满足时选项置灰，仍然显示）
+    ifAble?: Condition
+
+    // 是否显示（返回 false 则不显示此选项，多幕事件基于 sceneData）
+    ifShow?: (sceneData: any) => boolean
     nextScene?: string              // 选择后跳转到的幕 key
     saveData?: (sceneData: any) => void | Promise<void>  // 保存数据到 sceneData
 }

@@ -22,16 +22,32 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
      * 获得物质
      */
     "gainMaterial": async (params: { amount: number }) => {
-        newLog([`获得 ${params.amount} 物质`])
-        // nowPlayer.addMaterial(params.amount)
+        await doEvent({
+            key: "gainReserve",
+            source: nowPlayer,
+            medium: nowPlayer,
+            target: nowPlayer,
+            effectUnits: [{
+                key: "gainReserve",
+                params: { reserveKey: "material", amount: params.amount }
+            }]
+        })
     },
 
     /**
      * 失去物质
      */
     "loseMaterial": async (params: { amount: number }) => {
-        newLog([`失去 ${params.amount} 物质`])
-        // nowPlayer.spendMaterial(params.amount)
+        await doEvent({
+            key: "spendReserve",
+            source: nowPlayer,
+            medium: nowPlayer,
+            target: nowPlayer,
+            effectUnits: [{
+                key: "spendReserve",
+                params: { reserveKey: "material", amount: params.amount }
+            }]
+        })
     },
 
     /**

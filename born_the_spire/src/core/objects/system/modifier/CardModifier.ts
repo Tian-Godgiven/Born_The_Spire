@@ -169,6 +169,20 @@ export class CardModifier {
     }
 
     /**
+     * 从牌组中移除单张卡牌（按 key 匹配）
+     */
+    removeCard(card: Card): boolean {
+        for (const [, cards] of this.cardsFromSources) {
+            const index = cards.findIndex(c => c.key === card.key)
+            if (index >= 0) {
+                cards.splice(index, 1)
+                return true
+            }
+        }
+        return false
+    }
+
+    /**
      * 获取指定来源提供的卡牌列表
      */
     getCardsFromSource(source: Entity): Card[] {

@@ -93,7 +93,6 @@ export async function initContainer() {
     container.register("createPlayer", () => factories.createPlayer)
     container.register("createEnemy", () => factories.createEnemy)
     container.register("createOrgan", () => factories.createOrgan)
-    container.register("createActionEvent", () => factories.createActionEvent)
 
     // 注册单例服务
     const { modifierManager } = await import("./managers/ModifierManager")

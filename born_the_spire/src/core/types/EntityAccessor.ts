@@ -17,6 +17,7 @@
 
 import type { Entity } from "@/core/objects/system/Entity"
 import { getStateModifier } from "@/core/objects/system/modifier/StateModifier"
+import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
 
 export type AccessorResult = number | string | boolean
 
@@ -81,6 +82,7 @@ const builtinAccessors = new Map<string, AccessorFunction>([
     ["state",       (arg, entity) => state(arg, entity)],
     ["stateStack",  (arg, entity) => stateStack(arg, entity)],
     ["pileCount",   (arg, entity) => pileCount(arg, entity)],
+    ["reserve",     (arg, entity) => reserve(arg, entity)],
 ])
 
 // ==================== 内置访问器实现 ====================
@@ -171,6 +173,10 @@ function hasCard(key: string, entity: Entity): boolean {
     const handPile = (entity as any).cardPiles?.handPile
     if (!handPile) return false
     return handPile.some((c: any) => c.key === key)
+}
+
+function reserve(key: string, entity: Entity): number {
+    return getReserveModifier(entity).getReserve(key)
 }
 
 const pileNameMap: Record<string, string> = {

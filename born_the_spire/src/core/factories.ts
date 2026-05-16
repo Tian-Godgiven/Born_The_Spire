@@ -26,7 +26,6 @@ import type { Relic as RelicType } from "./objects/item/Subclass/Relic"
 import type { Player as PlayerType } from "./objects/target/Player"
 import type { Enemy as EnemyType } from "./objects/target/Enemy"
 import type { Organ as OrganType } from "./objects/target/Organ"
-import type { ActionEvent as ActionEventType } from "./objects/system/ActionEvent"
 
 // ========== Entity 工厂 ==========
 
@@ -98,22 +97,6 @@ export async function createOrgan(map: any): Promise<OrganType> {
     return organ
 }
 
-// ========== ActionEvent 工厂 ==========
-
-/**
- * 创建 ActionEvent 实例
- */
-export async function createActionEvent(
-    key: string,
-    source: EntityType,
-    medium: EntityType,
-    target: EntityType | EntityType[],
-    info: Record<string, any>,
-    effectUnits: EffectUnit[]
-): Promise<ActionEventType> {
-    return new ActionEvent(key, source, medium, target, info, effectUnits)
-}
-
 // ========== Effect 工厂 ==========
 
 import type { Effect as EffectType } from "./objects/system/effect/Effect"
@@ -171,20 +154,3 @@ export function createEffectByUnit(
     return effectObj
 }
 
-// ========== 同步工厂（用于已加载的模块） ==========
-
-/**
- * 同步创建 ActionEvent（用于 ActionEvent.ts 内部）
- * 需要确保模块已加载
- */
-export function createActionEventSync(
-    ActionEventClass: any,
-    key: string,
-    source: Entity,
-    medium: Entity,
-    target: Entity | Entity[],
-    info: Record<string, any>,
-    effectUnits: EffectUnit[]
-): ActionEvent {
-    return new ActionEventClass(key, source, medium, target, info, effectUnits)
-}

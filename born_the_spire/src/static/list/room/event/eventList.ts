@@ -21,6 +21,7 @@ export const eventList: EventMap[] = [
                 title: "购买神秘药水（花费 50 金钱）",
                 description: "获得一瓶随机药水",
                 icon: "🧪",
+                ifAble: "$owner.reserve(gold) >= 50",
                 effects: [
                     { key: "loseGold", params: { amount: 50 } },
                     { key: "gainRandomPotion", params: { count: 1 } }
@@ -30,6 +31,7 @@ export const eventList: EventMap[] = [
                 title: "购买神秘遗物（花费 100 金钱）",
                 description: "获得一个随机遗物",
                 icon: "💎",
+                ifAble: "$owner.reserve(gold) >= 100",
                 effects: [
                     { key: "loseGold", params: { amount: 100 } },
                     { key: "gainRandomRelic", params: { count: 1 } }
@@ -55,21 +57,22 @@ export const eventList: EventMap[] = [
         options: [
             {
                 title: "打开宝箱",
-                description: "获得随机奖励",
+                description: "获得物质",
                 icon: "🔓",
-                effects: [
-                    { key: "gainMaterial", params: { amount: 100 } },
-                    { key: "gainRandomCard", params: { count: 1 } }
+                rewards: [
+                    { type: "material", amount: 100 }
                 ]
             },
             {
                 title: "小心打开（失去 10 生命）",
-                description: "更安全地打开，但需要付出代价",
+                description: "获得更多物质和随机遗物",
                 icon: "⚠️",
                 effects: [
-                    { key: "loseHealth", params: { amount: 10 } },
-                    { key: "gainMaterial", params: { amount: 150 } },
-                    { key: "gainRandomRelic", params: { count: 1 } }
+                    { key: "loseHealth", params: { amount: 10 } }
+                ],
+                rewards: [
+                    { type: "material", amount: 150 },
+                    { type: "relicSelect", draw: { count: 3 }, selectCount: 1 }
                 ]
             },
             {
@@ -108,8 +111,7 @@ export const eventList: EventMap[] = [
                 description: "净化你的牌组",
                 icon: "✨",
                 effects: [
-                    // 需要打开卡牌选择界面
-                    { key: "healHealth", params: { amount: 20 } }
+                    { key: "removeCard", params: { count: 1, minCount: 0 } }
                 ]
             },
             {
@@ -175,7 +177,7 @@ export const eventList: EventMap[] = [
                         title: "是卡牌",
                         description: "诚实地承认丢入的是卡牌",
                         icon: "🃏",
-                        condition: (data) => data.itemType === 'card',
+                        ifShow: (data) => data.itemType === 'card',
                         nextScene: "scene3_honest",
                         saveData: (data) => { data.honest = true }
                     },
@@ -184,7 +186,7 @@ export const eventList: EventMap[] = [
                         title: "是器官",
                         description: "说谎称丢入的是器官",
                         icon: "🫀",
-                        condition: (data) => data.itemType === 'card',
+                        ifShow: (data) => data.itemType === 'card',
                         nextScene: "scene3_lie",
                         saveData: (data) => { data.honest = false }
                     },
@@ -193,7 +195,7 @@ export const eventList: EventMap[] = [
                         title: "是器官",
                         description: "诚实地承认丢入的是器官",
                         icon: "🫀",
-                        condition: (data) => data.itemType === 'organ',
+                        ifShow: (data) => data.itemType === 'organ',
                         nextScene: "scene3_honest",
                         saveData: (data) => { data.honest = true }
                     },
@@ -202,7 +204,7 @@ export const eventList: EventMap[] = [
                         title: "是卡牌",
                         description: "说谎称丢入的是卡牌",
                         icon: "🃏",
-                        condition: (data) => data.itemType === 'organ',
+                        ifShow: (data) => data.itemType === 'organ',
                         nextScene: "scene3_lie",
                         saveData: (data) => { data.honest = false }
                     }

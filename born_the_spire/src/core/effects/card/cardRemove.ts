@@ -10,13 +10,8 @@ import { getCardModifier } from "@/core/objects/system/modifier/CardModifier"
  * @returns 是否成功移除
  */
 export function removeCardFromDeck(player: Player, card: Card): boolean {
-    // 通过 CardModifier 访问卡组
     const cardModifier = getCardModifier(player)
-    const cards = cardModifier.getAllCards()
-
-    const cardIndex = cards.indexOf(card)
-    if (cardIndex >= 0) {
-        cards.splice(cardIndex, 1)
+    if (cardModifier.removeCard(card)) {
         newLog([player, "移除了卡牌", card])
         return true
     }

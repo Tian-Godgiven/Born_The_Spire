@@ -20,6 +20,9 @@ import { createEnemy } from "@/core/factories"
 import { rewardRegistry } from "@/static/registry/rewardRegistry"
 import { nowPlayer } from "../game/run"
 import { showBattleDefeat } from "@/ui/hooks/interaction/battleDefeat"
+import { checkCondition } from "@/core/types/ConditionSystem"
+import { drawItems } from "@/core/hooks/draw"
+import type { DrawItemType } from "@/core/hooks/draw"
 
 /**
  * 事件房间配置
@@ -148,9 +151,9 @@ export class EventRoom extends Room {
     ): Choice[] {
         return options
             .filter(option => {
-                // 如果有条件函数，检查是否满足条件
-                if (option.condition) {
-                    return option.condition(this.sceneData)
+                // ifShow：不满足则不显示
+                if (option.ifShow) {
+                    return option.ifShow(this.sceneData)
                 }
                 return true
             })
@@ -166,7 +169,7 @@ export class EventRoom extends Room {
                     }
                 }
 
-                return new Choice({
+                const choice = new Choice({
                     key: option.key,
                     title: option.title,
                     description: option.description,
@@ -178,6 +181,16 @@ export class EventRoom extends Room {
                         await this.onOptionSelected(option)
                     }
                 })
+
+                // ifAble：不满足时置灰
+                if (option.ifAble) {
+                    const context = { owner: nowPlayer, item: nowPlayer } as any
+                    if (!checkCondition(option.ifAble, context)) {
+                        choice.disable()
+                    }
+                }
+
+                return choice
             })
     }
 
@@ -491,15 +504,37 @@ export class EventRoom extends Room {
             await executeEventEffects(option.effects)
         }
 
-        // 3. 执行自定义回调
+        // 3. 弹出奖励选择弹窗
+        if (option.rewards && option.rewards.length > 0) {
+            const resolvedConfigs = option.rewards.map((config: any) => {
+                // 如果有 draw 配置，用 drawItems 抽取候选列表
+                if (config.draw) {
+                    const drawn = drawItems(
+                        config.type.replace("Select", "") as DrawItemType,
+                        config.draw.count ?? 3,
+                        config.draw
+                    )
+                    const optionsKey = config.type.replace("Select", "") + "Options"
+                    return { ...config, [optionsKey]: drawn, draw: undefined }
+                }
+                return config
+            })
+            const rewards = rewardRegistry.createRewards(resolvedConfigs)
+            if (rewards.length > 0) {
+                const { showRewards } = await import("@/ui/hooks/interaction/rewardDisplay")
+                await showRewards(rewards, this.currentTitle, undefined, { navigate: false })
+            }
+        }
+
+        // 4. 执行自定义回调
         if (option.customCallback) {
             await option.customCallback(this.sceneData)
         }
 
-        // 4. 如果有复杂交互组件，由 UI 层处理
+        // 6. 如果有复杂交互组件，由 UI 层处理
         // 组件会通过 choice.component 传递给 ChoiceContainer
 
-        // 5. 处理幕切换（多幕事件）
+        // 7. 处理幕切换（多幕事件）
         if (this.isMultiScene) {
             if (option.nextScene) {
                 // 有下一幕：延迟跳转
