@@ -55,9 +55,26 @@ class StateModifierUnit {
 export class StateModifier {
     public owner: Target
     private units: StateModifierUnit[] = reactive([])  // 响应式，用于触发 UI 更新
+    // 状态变化回调列表（添加/移除/层数变化时调用）
+    private _onStateChangedCallbacks: Array<(stateKey: string) => void> = []
 
     constructor(owner: Target) {
         this.owner = owner
+    }
+
+    /** 注册状态变化监听，返回取消函数 */
+    onStateChanged(callback: (stateKey: string) => void): () => void {
+        this._onStateChangedCallbacks.push(callback)
+        return () => {
+            const index = this._onStateChangedCallbacks.indexOf(callback)
+            if (index !== -1) this._onStateChangedCallbacks.splice(index, 1)
+        }
+    }
+
+    private emitStateChanged(stateKey: string) {
+        for (const cb of this._onStateChangedCallbacks) {
+            cb(stateKey)
+        }
     }
 
     // 响应式的状态列表（用于 UI 显示）
@@ -120,6 +137,7 @@ export class StateModifier {
             this.setupStackChangeTriggers(state, unit)
         }
 
+        this.emitStateChanged(stateData.key)
         return state
     }
 
@@ -206,6 +224,9 @@ export class StateModifier {
                         key,
                         level,
                         callback: (event, effect, _triggerLevel) => {
+                            // 防御性检查：状态已被移除则跳过
+                            if (!this.getState(state.key)) return
+
                             // 解析目标
                             const target = resolveTriggerEventTarget(
                                 clonedEventConfig.targetType,
@@ -248,6 +269,9 @@ export class StateModifier {
                     key,
                     level,
                     callback: (event, effect, _triggerLevel) => {
+                        // 防御性检查：状态已被移除则跳过
+                        if (!this.getState(state.key)) return
+
                         // 直接处理事件创建，确保 source 是状态本身
                         for (let eventConfig of reactionEvents) {
                             const { key: eventKey, info = {}, targetType, mediumTargetType, effect: effectUnit } = eventConfig as TriggerEventConfig
@@ -391,6 +415,7 @@ export class StateModifier {
             }
         }
 
+        this.emitStateChanged(stateKey)
         return true
     }
 
@@ -413,11 +438,12 @@ export class StateModifier {
 
         // 检查状态是否还应该存在
         if (!state.checkExist(this.owner, state)) {
-            // 自动移除
+            // 自动移除（removeState 内部会调 onStateChanged）
             this.removeState(stateKey, true)
             return false
         }
 
+        this.emitStateChanged(stateKey)
         return true
     }
 
@@ -450,10 +476,8 @@ export class StateModifier {
 export function initStateModifier(target: Target): StateModifier {
     const modifier = new StateModifier(target)
 
-    // 注册到全局 ModifierManager
-    import("@/core/managers/ModifierManager").then(({ modifierManager }) => {
-        modifierManager.registerStateModifier(target, modifier)
-    })
+    // 同步注册到全局 ModifierManager
+    modifierManager.registerStateModifier(target, modifier)
 
     return modifier
 }

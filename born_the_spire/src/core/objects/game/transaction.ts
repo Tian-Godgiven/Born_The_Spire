@@ -17,6 +17,8 @@ export class Transaction{
     public logUnit?: LogUnit
     //是否为模拟事务（模拟事务不会实际执行效果，只触发触发器）
     public simulate:boolean = false
+    //事务是否已完成处理（已完成的事务不再接收新事件）
+    public completed:boolean = false
 
     constructor(){
         this.logUnit = newLog({
@@ -86,6 +88,7 @@ export class Transaction{
             const event = this.queue.shift()!
             await this.executeEvent(event)
         }
+        this.completed = true
     }
 
     //执行单个事件

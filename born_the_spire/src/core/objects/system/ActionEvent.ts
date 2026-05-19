@@ -213,10 +213,12 @@ export function doEvent(
 
     // 优先从当前执行事件的 _transaction 拿事务（不依赖全局变量，异步安全）
     // 兜底使用 nowTransaction（供 beginTransaction/endTransaction 构建期使用）
+    // 跳过已完成的事务，避免事件进入不再处理的旧事务
+    const txFromEvent = (currentExecutingEvent as any)?._transaction
     const currentTransaction =
-        (currentExecutingEvent as any)?._transaction ?? getCurrentTransaction()
+        (txFromEvent && !txFromEvent.completed) ? txFromEvent : getCurrentTransaction()
 
-    if (currentTransaction) {
+    if (currentTransaction && !currentTransaction.completed) {
         // 当前在事务上下文里（效果函数 / 触发器回调），统一交给事务自己决定塞主队列还是收集器
         currentTransaction.enqueue(event, options?.position ?? "top")
     } else {

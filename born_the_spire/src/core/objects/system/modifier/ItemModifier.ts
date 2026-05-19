@@ -17,6 +17,7 @@ import type { ActionEvent } from "../ActionEvent"
 import type { Effect } from "../effect/Effect"
 
 import type { TriggerEventConfig, TriggerMapItemWithAction, ImportantTriggerMapItem, TriggerCondition, TriggerMapItem } from "@/core/types/object/trigger"
+import { modifierManager } from "@/core/managers/ModifierManager"
 
 /**
  * 构建条件检查上下文
@@ -807,10 +808,8 @@ export function initItemModifier(entity: Entity): ItemModifier {
     const rawEntity = toRaw(entity)
     const modifier = new ItemModifier(rawEntity)
 
-    // 注册到全局 ModifierManager
-    import("@/core/managers/ModifierManager").then(({ modifierManager }) => {
-        modifierManager.registerItemModifier(rawEntity, modifier)
-    })
+    // 同步注册到全局 ModifierManager
+    modifierManager.registerItemModifier(rawEntity, modifier)
 
     return modifier
 }

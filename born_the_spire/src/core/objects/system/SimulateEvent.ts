@@ -1,4 +1,4 @@
-import { ActionEvent } from "./ActionEvent"
+import { ActionEvent, getCurrentExecutingEvent, setCurrentExecutingEvent } from "./ActionEvent"
 import { Effect } from "./effect/Effect"
 import { createEffectByUnit } from "./effect/EffectUnit"
 import type { EffectUnit } from "./effect/EffectUnit"
@@ -6,6 +6,7 @@ import { Entity } from "./Entity"
 import type { EventParticipant } from "@/core/types/event/EventParticipant"
 import { isEntity } from "@/core/utils/typeGuards"
 import { cloneDeep } from "lodash"
+import { Transaction } from "../game/transaction"
 
 /**
  * 事件模拟系统
@@ -59,14 +60,28 @@ export async function simulateEffect(
     // 标记为模拟模式
     mockEvent.simulate = true
 
+    // 创建模拟事务，让触发器 callback 中的 doEvent 能通过 runWithCollector 被同步执行
+    const mockTransaction = new Transaction()
+    mockTransaction.simulate = true
+    ;(mockEvent as any)._transaction = mockTransaction
+
     // 创建模拟效果对象
     const mockEffect = createEffectByUnit(mockEvent, mockEffectUnit)
 
-    // 触发 before 触发器（触发器可以修改 mockEffect.params）
-    await simulateTriggers(mockEffect, "before", 0)
+    // 设置 currentExecutingEvent 为 mockEvent
+    // 这样触发器 callback 中的 doEvent 能通过 currentExecutingEvent._transaction 找到 mockTransaction
+    const previousEvent = getCurrentExecutingEvent()
+    setCurrentExecutingEvent(mockEvent)
 
-    // 触发 after 触发器
-    await simulateTriggers(mockEffect, "after", 0)
+    try {
+        // 触发 before 触发器（触发器可以修改 mockEffect.params）
+        await simulateTriggers(mockEffect, "before", 0)
+
+        // 触发 after 触发器
+        await simulateTriggers(mockEffect, "after", 0)
+    } finally {
+        setCurrentExecutingEvent(previousEvent)
+    }
 
     // 返回修改后的 effectUnit
     return {
@@ -111,17 +126,30 @@ export async function simulateEvent(
     // 标记为模拟模式
     mockEvent.simulate = true
 
-    // 触发事件级别的 before 触发器
-    await simulateEventTriggers(mockEvent, "before", 0)
+    // 创建模拟事务，让触发器 callback 中的 doEvent 能通过 runWithCollector 被同步执行
+    const mockTransaction = new Transaction()
+    mockTransaction.simulate = true
+    ;(mockEvent as any)._transaction = mockTransaction
 
-    // 触发每个效果的触发器
-    for (const effect of mockEvent.effects) {
-        await simulateTriggers(effect, "before", 1)
-        await simulateTriggers(effect, "after", -1)
+    // 设置 currentExecutingEvent 为 mockEvent
+    const previousEvent = getCurrentExecutingEvent()
+    setCurrentExecutingEvent(mockEvent)
+
+    try {
+        // 触发事件级别的 before 触发器
+        await simulateEventTriggers(mockEvent, "before", 0)
+
+        // 触发每个效果的触发器
+        for (const effect of mockEvent.effects) {
+            await simulateTriggers(effect, "before", 1)
+            await simulateTriggers(effect, "after", -1)
+        }
+
+        // 触发事件级别的 after 触发器
+        await simulateEventTriggers(mockEvent, "after", 0)
+    } finally {
+        setCurrentExecutingEvent(previousEvent)
     }
-
-    // 触发事件级别的 after 触发器
-    await simulateEventTriggers(mockEvent, "after", 0)
 
     // 返回修改后的 effectUnits
     return mockEvent.effects.map(effect => ({
@@ -247,7 +275,7 @@ export async function simulateBlock(
 ): Promise<number> {
     const result = await simulateEffect(
         {
-            key: "block",
+            key: "gainArmor",
             params: { value: baseBlock }
         },
         source,

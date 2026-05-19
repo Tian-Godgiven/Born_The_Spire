@@ -2,6 +2,7 @@ import type { Card } from "@/core/objects/item/Subclass/Card"
 import type { CardSelector } from "./CardSelector"
 import type { Enemy } from "../target/Enemy"
 import type { Player } from "../target/Player"
+import type { IntentType } from "./Intent"
 
 import { selectCards } from "./CardSelector"
 import { getCardByKey } from "@/static/list/item/cardList"
@@ -68,6 +69,9 @@ export type BehaviorPattern = {
 
     // 优先级（数字越大优先级越高，默认为 0）
     priority?: number
+
+    // 意图类型（可选，声明后直接使用，不声明则从卡牌 tag 推导）
+    intent?: IntentType
 
     // 行动配置
     action: {
@@ -338,18 +342,23 @@ function selectBySequence(
  * @param turnCount 当前回合数
  * @returns 选择的卡牌列表
  */
+export type SelectActionResult = {
+    cards: Card[]
+    intent?: IntentType
+}
+
 export async function selectAction(
     behaviorConfig: EnemyBehaviorConfig,
     enemy: Enemy,
     player: Player,
     turnCount: number
-): Promise<Card[]> {
+): Promise<SelectActionResult> {
     // 获取可用卡牌
     const availableCards = await enemy.getAvailableCards()
 
     if (availableCards.length === 0) {
         console.warn("[EnemyBehavior] 敌人没有可用卡牌")
-        return []
+        return { cards: [] }
     }
 
     // 按优先级排序
@@ -371,17 +380,18 @@ export async function selectAction(
         // 条件满足，选择卡牌
         const selectedCards = await selectActionCards(pattern, availableCards)
         if (selectedCards.length > 0) {
-            return selectedCards
+            return { cards: selectedCards, intent: pattern.intent }
         }
     }
 
     // 所有条件都不满足，使用默认行为
     if (behaviorConfig.fallback) {
-        return await selectActionCards(behaviorConfig.fallback, availableCards)
+        const selectedCards = await selectActionCards(behaviorConfig.fallback, availableCards)
+        return { cards: selectedCards, intent: behaviorConfig.fallback.intent }
     }
 
     // 兜底：随机选择一张
     console.warn("[EnemyBehavior] 没有匹配的行为模式，随机选择")
     const randomIndex = Math.floor(Math.random() * availableCards.length)
-    return [availableCards[randomIndex]]
+    return { cards: [availableCards[randomIndex]] }
 }

@@ -1,14 +1,27 @@
 import { Card } from "@/core/objects/item/Subclass/Card"
-import { getStatusValue, ifHaveStatus } from "@/core/objects/system/status/Status"
-import { simulateDamage, simulateBlock } from "./SimulateEvent"
+import { simulateEffect } from "./SimulateEvent"
 import { Entity } from "./Entity"
+import type { EventParticipant } from "@/core/types/event/EventParticipant"
+import { nanoid } from "nanoid"
+
+/**
+ * 意图模拟用的虚拟目标
+ *
+ * 不带任何触发器，避免模拟时触发 target 端的机制（如护甲吸收伤害）
+ * 意图只需要计算 source 端的 buff 影响（力量、虚弱等）
+ */
+const intentDummyTarget: EventParticipant = {
+    __id: nanoid(),
+    participantType: "dummy" as any,
+    label: "_intentDummy"
+}
 
 /**
  * 意图类型
  *
  * 敌人行动的意图分类，用于向玩家展示敌人下回合的行动
  */
-export type IntentType = "attack" | "defend" | "buff" | "debuff" | "unknown" | "special"
+export type IntentType = "attack" | "defend" | "buff" | "debuff" | "heal" | "escape" | "unknown" | "special"
 
 /**
  * 意图可见性等级
@@ -71,6 +84,16 @@ export const intentTypeMap: Record<IntentType, IntentTypeInfo> = {
         describe: "敌人将施加减益效果",
         color: "#ff44ff"
     },
+    heal: {
+        label: "治疗",
+        describe: "敌人将回复生命",
+        color: "#44cc44"
+    },
+    escape: {
+        label: "逃跑",
+        describe: "敌人将试图逃跑",
+        color: "#cccccc"
+    },
     unknown: {
         label: "未知",
         describe: "无法预测敌人的行动",
@@ -101,131 +124,112 @@ export function getIntentTypeInfo(type: IntentType): IntentTypeInfo | undefined 
 }
 
 /**
+ * 意图数值来源映射
+ *
+ * 定义每种意图类型从哪些 effectMap key 中读取数值
+ * 可通过 registerIntentValueSource 扩展（供 Mod 使用）
+ */
+const intentValueSources: Partial<Record<IntentType, string[]>> = {
+    attack: ["damage"],
+    defend: ["gainArmor"],
+    heal: ["heal"]
+}
+
+/**
+ * 注册意图数值来源（供 Mod 使用）
+ *
+ * @param intentType 意图类型
+ * @param effectKeys 对应的 effectMap key 列表
+ */
+export function registerIntentValueSource(intentType: IntentType, effectKeys: string[]) {
+    intentValueSources[intentType] = effectKeys
+}
+
+/**
+ * 从卡牌 tag 推导意图类型（兜底逻辑）
+ *
+ * 当 BehaviorPattern 没有声明 intent 时使用
+ */
+function inferIntentFromTags(card: Card): IntentType {
+    if (card.tags?.includes("attack")) return "attack"
+    if (card.tags?.includes("defence")) return "defend"
+    if (card.tags?.includes("skill")) return "defend"
+    if (card.tags?.includes("power")) return "buff"
+    if (card.tags?.includes("curse")) return "debuff"
+    return "special"
+}
+
+/**
  * 从卡牌列表分析生成意图
  *
- * 使用卡牌的 tag 确定意图类型，从卡牌属性读取数值
+ * 意图类型优先使用 BehaviorPattern 声明的 intentType，
+ * 未声明时从卡牌 tag 推导。
+ * 意图数值从卡牌效果的 params.value 读取，通过事件模拟系统计算 Buff 影响。
  *
  * @param cards 要执行的卡牌列表
  * @param owner 卡牌持有者（用于计算 Buff 影响）
- * @param visibility 可见性等级（默认为 exact）
+ * @param visibility 可见性等级
+ * @param intentType 由 BehaviorPattern 声明的意图类型（可选）
  * @returns 意图对象
  */
 export async function cardsToIntent(
     cards: Card[],
-    owner: Entity,  // 改为 Entity 类型
-    visibility: IntentVisibility = "card"
+    owner: Entity,
+    visibility: IntentVisibility = "card",
+    intentType?: IntentType,
+    target?: Entity
 ): Promise<Intent> {
     if (cards.length === 0) {
-        return {
-            type: "unknown",
-            actions: [],
-            visibility
-        }
+        return { type: "unknown", actions: [], visibility }
     }
 
-    // 根据第一张卡的 tag 确定意图类型
-    const primaryCard = cards[0]
-    let intentType: IntentType = "unknown"
+    // 1. 确定意图类型：优先用声明的，否则从卡牌 tag 推导
+    const type = intentType ?? inferIntentFromTags(cards[0])
 
-    if (primaryCard.tags?.includes("attack")) {
-        intentType = "attack"
-    } else if (primaryCard.tags?.includes("skill")) {
-        intentType = "defend"  // skill 默认为防御，后续可根据具体属性调整
-    } else if (primaryCard.tags?.includes("power")) {
-        intentType = "buff"
-    } else if (primaryCard.tags?.includes("curse")) {
-        intentType = "debuff"
-    } else {
-        intentType = "special"
-    }
-
-    // 根据意图类型计算数值
+    // 2. 计算意图数值
+    const effectKeys = intentValueSources[type]
     let intentValue: number | undefined = undefined
     let intentCount: number | undefined = undefined
 
-    if (intentType === "attack") {
-        // 攻击意图：累加所有卡牌的伤害
-        let totalDamage = 0
-        let attackCount = 0
+    if (effectKeys && effectKeys.length > 0) {
+        let totalValue = 0
+        let hitCount = 0
 
         for (const card of cards) {
-            if (card.tags?.includes("attack")) {
-                const baseDamage = ifHaveStatus(card, "damage")
-                    ? getStatusValue(card, "damage")
-                    : 0
+            const useInteraction = card.getInteraction("use")
+            if (!useInteraction || !useInteraction.effects) continue
 
-                // 临时计算：应用力量 Buff
-                const finalDamage = await calculateDamageWithBuffs(Number(baseDamage), owner)
-
-                totalDamage += finalDamage
-                attackCount++
+            for (const effect of useInteraction.effects) {
+                if (effectKeys.includes(effect.key) && effect.params?.value != null) {
+                    const baseValue = Number(effect.params.value)
+                    // 模拟 Buff 影响（力量、虚弱、易伤等）
+                    // 有 target 时用真实目标（触发易伤/减伤），无 target 时用虚拟实体
+                    // 护甲等机制在模拟模式下自动跳过（检查 event.simulate）
+                    const simulated = await simulateEffect(
+                        { key: effect.key, params: { value: baseValue } },
+                        owner, owner, target ?? intentDummyTarget
+                    )
+                    totalValue += Number(simulated.params.value)
+                    hitCount++
+                }
             }
         }
 
-        intentValue = totalDamage
-        if (attackCount > 1) {
-            intentCount = attackCount
-        }
-    } else if (intentType === "defend") {
-        // 防御意图：累加所有卡牌的格挡
-        let totalBlock = 0
-
-        for (const card of cards) {
-            if (ifHaveStatus(card, "block")) {
-                const baseBlock = Number(getStatusValue(card, "block"))
-                // 临时计算：应用敏捷 Buff（如果有的话）
-                const finalBlock = await calculateBlockWithBuffs(baseBlock, owner)
-                totalBlock += finalBlock
+        if (hitCount > 0) {
+            intentValue = totalValue
+            if (hitCount > 1) {
+                intentCount = hitCount
             }
         }
-
-        intentValue = totalBlock
     }
-    // buff/debuff/special 类型暂不显示数值
 
     return {
-        type: intentType,
+        type,
         value: intentValue,
         count: intentCount,
         actions: cards,
         visibility
     }
-}
-
-/**
- * 计算受 Buff 影响后的伤害
- *
- * 使用事件模拟系统，应用力量、虚弱等 Buff 的影响
- *
- * @param baseDamage 基础伤害
- * @param owner 卡牌持有者
- * @returns 最终伤害
- */
-async function calculateDamageWithBuffs(baseDamage: number, owner: Entity): Promise<number> {
-    // 使用事件模拟系统计算受 Buff 影响后的伤害
-    // 这会触发所有相关触发器（如力量、虚弱），但不实际执行效果
-
-    // 假设目标是玩家（敌人攻击玩家的场景）
-    // 这里需要传入实际的目标，可能需要调整 cardsToIntent 的参数
-    const finalDamage = await simulateDamage(baseDamage, owner, owner)
-
-    return finalDamage
-}
-
-/**
- * 计算受 Buff 影响后的格挡
- *
- * 使用事件模拟系统，应用敏捷等 Buff 的影响
- *
- * @param baseBlock 基础格挡
- * @param owner 卡牌持有者
- * @returns 最终格挡
- */
-async function calculateBlockWithBuffs(baseBlock: number, owner: Entity): Promise<number> {
-    // 使用事件模拟系统计算受 Buff 影响后的格挡
-    const finalBlock = await simulateBlock(baseBlock, owner, owner)
-
-    return finalBlock
 }
 
 /**

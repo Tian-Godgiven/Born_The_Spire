@@ -6,7 +6,7 @@ import { getOrganModifier } from "../system/modifier/OrganModifier";
 import { getCardByKey } from "@/static/list/item/cardList";
 import { getCardModifier } from "../system/modifier/CardModifier";
 import { cardsToIntent } from "../system/Intent";
-import type { Intent, IntentVisibility } from "../system/Intent";
+import type { Intent, IntentType, IntentVisibility } from "../system/Intent";
 import { doEvent } from "../system/ActionEvent";
 import type { Player } from "./Player";
 import { selectAction } from "../system/EnemyBehavior";
@@ -23,6 +23,8 @@ export type EnemyMap = CharaMap & {
 export class Enemy extends Chara{
     public readonly targetType = 'enemy' as const  // 类型标识
     public intent?: Intent  // 当前意图（下回合要执行的行动）
+    public _intentType?: IntentType  // 当前意图的声明类型（来自 BehaviorPattern）
+    public _intentTarget?: any  // 意图的模拟目标（用于计算 target 端 buff）
     public behavior?: EnemyBehaviorConfig  // 敌人行为配置
     public exclusiveCards: string[] = []  // 敌人专属卡牌key列表
     constructor(
@@ -88,6 +90,7 @@ export class Enemy extends Chara{
         const cardModifier = getCardModifier(this)
         const allCards = cardModifier.getAllCards()
 
+
         // 过滤掉被禁用器官提供的卡牌
         const availableCards = allCards.filter(card => {
             // 如果卡牌没有 source，认为是专属卡牌，允许使用
@@ -124,8 +127,10 @@ export class Enemy extends Chara{
      * @param cards 要执行的卡牌列表
      * @param visibility 可见性等级（默认为 exact）
      */
-    async setIntent(cards: Card[], visibility: IntentVisibility = "card") {
-        this.intent = await cardsToIntent(cards, this, visibility)
+    async setIntent(cards: Card[], visibility: IntentVisibility = "card", intentType?: IntentType, target?: Player) {
+        this._intentType = intentType
+        this._intentTarget = target
+        this.intent = await cardsToIntent(cards, this, visibility, intentType, target)
         newLog(["敌人设置意图", this.label, this.intent])
     }
 
@@ -144,12 +149,23 @@ export class Enemy extends Chara{
             return
         }
 
-        const selectedCards = await selectAction(this.behavior, this, player, turnCount)
+        const result = await selectAction(this.behavior, this, player, turnCount)
 
-        if (selectedCards.length > 0) {
+        if (result.cards.length > 0) {
             newLog(["敌人改变意图", this.label])
-            await this.setIntent(selectedCards)
+            await this.setIntent(result.cards, "card", result.intent, player)
         }
+    }
+
+    /**
+     * 刷新意图的显示值
+     *
+     * 不重新选择卡牌，只根据当前 buff 状态重新计算 value
+     * 用于敌人 buff 变化后更新意图显示（如力量变化）
+     */
+    async refreshIntent() {
+        if (!this.intent || this.intent.actions.length === 0) return
+        this.intent = await cardsToIntent(this.intent.actions, this, this.intent.visibility, this._intentType, this._intentTarget)
     }
 
     /**

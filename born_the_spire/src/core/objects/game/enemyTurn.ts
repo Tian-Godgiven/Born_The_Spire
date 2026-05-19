@@ -45,19 +45,19 @@ export async function executeEnemyTurn(
         }
 
         // 如果没有意图，尝试重新选择（容错处理）
-        const selectedCards = await selectAction(
+        const result = await selectAction(
             enemy.behavior,
             enemy,
             player,
             turnCount
         )
 
-        if (selectedCards.length === 0) {
+        if (result.cards.length === 0) {
             console.warn(`[EnemyTurn] 敌人 ${enemy.label} 没有可用行动`)
             return
         }
 
-        await enemy.setIntent(selectedCards)
+        await enemy.setIntent(result.cards, "card", result.intent, player)
     }
 
     // 执行已经设置好的意图
@@ -130,7 +130,7 @@ export async function prepareEnemyIntents(
         }
 
         // 选择行动
-        const selectedCards = await selectAction(
+        const result = await selectAction(
             enemy.behavior,
             enemy,
             player,
@@ -138,8 +138,8 @@ export async function prepareEnemyIntents(
         )
 
         // 设置意图
-        if (selectedCards.length > 0) {
-            await enemy.setIntent(selectedCards)
+        if (result.cards.length > 0) {
+            await enemy.setIntent(result.cards, "card", result.intent, player)
         }
     }
 }

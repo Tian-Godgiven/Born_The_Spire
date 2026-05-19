@@ -43,6 +43,7 @@ export const enemyList:EnemyMap[] = [
         behavior: {
             patterns: [],
             fallback: {
+                intent: "attack",
                 action: {
                     selector: { tags: ["attack"] },
                     mode: "random"
@@ -68,6 +69,7 @@ export const enemyList:EnemyMap[] = [
                 {
                     // 血量低于30%时：狂暴
                     priority: 10,
+                    intent: "attack",
                     condition: {
                         selfHealth: { below: 30 }
                     },
@@ -83,6 +85,7 @@ export const enemyList:EnemyMap[] = [
                 {
                     // 第1回合：强化自己
                     priority: 5,
+                    intent: "buff",
                     condition: {
                         turn: { equals: 1 }
                     },
@@ -94,6 +97,7 @@ export const enemyList:EnemyMap[] = [
                 }
             ],
             fallback: {
+                intent: "attack",
                 action: {
                     selector: { tags: ["attack"] },
                     mode: "random"
@@ -128,6 +132,7 @@ export const enemyList:EnemyMap[] = [
                         ]
                     },
                     describe: "循环：攻击和强化交替"
+                    // 注意：loop 模式下意图类型随卡牌变化，不声明 intent，由 tag 推导
                 }
             ]
         }
@@ -151,6 +156,7 @@ export const enemyList:EnemyMap[] = [
                 {
                     // 每3回合强化
                     priority: 10,
+                    intent: "buff",
                     condition: {
                         turn: { mod: [3, 0] }
                     },
@@ -162,6 +168,7 @@ export const enemyList:EnemyMap[] = [
                 }
             ],
             fallback: {
+                intent: "attack",
                 action: {
                     selector: { tags: ["attack"] },
                     mode: "random"
@@ -188,6 +195,7 @@ export const enemyList:EnemyMap[] = [
                 {
                     // 第一阶段（血量>66%）：防守为主
                     priority: 10,
+                    intent: "buff",
                     condition: {
                         selfHealth: { above: 66 }
                     },
@@ -200,6 +208,7 @@ export const enemyList:EnemyMap[] = [
                 {
                     // 第二阶段（33%-66%）：攻击为主
                     priority: 10,
+                    intent: "attack",
                     condition: {
                         selfHealth: { above: 33 }
                     },
@@ -215,6 +224,7 @@ export const enemyList:EnemyMap[] = [
                 {
                     // 第三阶段（<33%）：狂暴
                     priority: 10,
+                    intent: "attack",
                     condition: {
                         selfHealth: { below: 33 }
                     },
@@ -229,6 +239,7 @@ export const enemyList:EnemyMap[] = [
                 }
             ],
             fallback: {
+                intent: "attack",
                 action: {
                     selector: { tags: ["attack"] },
                     mode: "random"
@@ -253,6 +264,7 @@ export const enemyList:EnemyMap[] = [
             patterns: [
                 {
                     priority: 5,
+                    intent: "defend",
                     condition: {
                         turn: { mod: [2, 0] }
                     },
@@ -264,6 +276,7 @@ export const enemyList:EnemyMap[] = [
                 }
             ],
             fallback: {
+                intent: "attack",
                 action: {
                     selector: { tags: ["attack"] },
                     mode: "random"

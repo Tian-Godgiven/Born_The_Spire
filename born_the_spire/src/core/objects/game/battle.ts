@@ -14,6 +14,7 @@ import { endCharaTurn, startCharaTurn } from "@/core/effects/turn"
 
 import { prepareEnemyIntents, executeAllEnemiesTurn } from "./enemyTurn"
 import { cleanupAllDisabledOrgans } from "@/core/effects/organ/disableOrgan"
+import { getStateModifier } from "../system/modifier/StateModifier"
 
 
 
@@ -69,6 +70,19 @@ export class Battle {
     getEntityById(entityId: string): Chara | undefined {
         const allCharas = [...this.playerTeam, ...this.enemyTeam]
         return allCharas.find(chara => chara.__id === entityId)
+    }
+
+    /**
+     * 刷新所有存活敌人的意图显示值
+     *
+     * 不重新选择卡牌，只根据当前 buff 状态重新计算数值
+     * 在任何可能影响伤害/格挡计算的状态变化后调用
+     */
+    async refreshAllIntents() {
+        const aliveEnemies = this.getAliveEnemies()
+        for (const enemy of aliveEnemies) {
+            await enemy.refreshIntent()
+        }
     }
 
     /**
@@ -249,6 +263,23 @@ export async function startNewBattle(playerTeam:(Player|Chara)[],enemyTeam:(Enem
 
     const battle = new Battle(1,playerTeam,enemyTeam)
     nowBattle.value = battle
+
+    // 注册状态变化回调，自动刷新敌人意图
+    // 玩家状态变化 → 刷新所有敌人意图（如易伤影响所有攻击）
+    // 敌人状态变化 → 只刷新自己的意图（如力量只影响自己）
+    for (const player of playerTeam) {
+        const stateModifier = getStateModifier(player as any)
+        stateModifier.onStateChanged(() => {
+            battle.refreshAllIntents()
+        })
+    }
+    for (const enemy of enemyTeam) {
+        const sm = getStateModifier(enemy as any)
+        const e = enemy as Enemy
+        sm.onStateChanged(() => {
+            e.refreshIntent()
+        })
+    }
 
     nextTick(async ()=>{
         //当前玩家开始战斗（初始化状态）

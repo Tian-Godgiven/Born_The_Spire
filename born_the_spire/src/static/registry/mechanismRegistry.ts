@@ -243,6 +243,7 @@ function generateTriggersForMechanism(
             level: logic.absorbDamage.priority || 0,
             callback: async (event, effect) => {
                 if (!effect) return  // 添加 null 检查
+                if (event.simulate) return  // 模拟模式下不消耗护甲
 
                 const mechanismValue = entity.current[storageKey]?.value || 0
                 if (mechanismValue <= 0) return
