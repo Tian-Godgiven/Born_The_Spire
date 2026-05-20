@@ -39,6 +39,14 @@ export const organDiscountRange = {
 }
 
 /**
+ * 物质出售配置
+ */
+export const materialSellConfig = {
+    pricePerMaterial: 3,        // 每点物质的基础价格（金钱）
+    depreciationFactor: 0.85    // 每次出售后的贬值系数（0.85 = 降低 15%）
+}
+
+/**
  * 生命值出售配置
  */
 export const healthSellConfig = {

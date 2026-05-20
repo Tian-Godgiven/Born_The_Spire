@@ -26,6 +26,7 @@ import {
     potionDefaultPrice,
     cardPriceConfig,
     organDiscountRange,
+    materialSellConfig,
     healthSellConfig,
     defaultRelicSlots,
 } from "@/static/config/blackStoreBalance"
@@ -77,6 +78,7 @@ export interface BlackStoreRoomConfig extends RoomConfig {
     potionCount?: number            // 药水数量（默认 3）
     cardCount?: number              // 卡牌数量（默认取卡牌池全部，池为空则不显示）
     allowSellOrgan?: boolean        // 是否允许出售器官（默认 true）
+    allowSellMaterial?: boolean     // 是否允许出售物质（默认 true）
     allowSellHealth?: boolean       // 是否允许出售生命值（默认 true）
 
     // 稀有度权重配置
@@ -122,6 +124,7 @@ export class BlackStoreRoom extends Room {
     public readonly potionCount: number
     public readonly cardCount: number
     public readonly allowSellOrgan: boolean
+    public readonly allowSellMaterial: boolean
     public readonly allowSellHealth: boolean
 
     // 配置
@@ -131,6 +134,12 @@ export class BlackStoreRoom extends Room {
 
     // 商品列表
     private storeItems: StoreItem[] = []
+
+    // 出售物质：每次固定消耗量（进店时物质的 20%，向上取整）
+    public readonly materialSellAmount: number
+
+    // 出售物质的次数（用于计算贬值）
+    private materialSoldCount: number = 0
 
     // 出售生命值的次数（用于计算贬值）
     private healthSoldCount: number = 0
@@ -149,6 +158,7 @@ export class BlackStoreRoom extends Room {
         this.potionCount = config.potionCount ?? 3
         this.cardCount = config.cardCount ?? 999  // 默认取商店池中所有卡牌
         this.allowSellOrgan = config.allowSellOrgan ?? true
+        this.allowSellMaterial = config.allowSellMaterial ?? true
         this.allowSellHealth = config.allowSellHealth ?? true
 
         // 稀有度权重配置
@@ -162,6 +172,11 @@ export class BlackStoreRoom extends Room {
 
         // 黑白名单配置
         this.filters = config.filters
+
+        // 计算物质出售量：进店时物质的 20%，向上取整，最少 1
+        const reserveModifier = getReserveModifier(nowPlayer)
+        const initialMaterial = reserveModifier.getReserve("material")
+        this.materialSellAmount = initialMaterial > 0 ? Math.max(1, Math.ceil(initialMaterial * 0.2)) : 0
 
         // 生成商品列表
         this.generateStoreItems()
@@ -595,13 +610,96 @@ export class BlackStoreRoom extends Room {
     }
 
     /**
-     * 出售生命值
+     * 出售物质（每次固定消耗 materialSellAmount）
      */
-    async sellHealth(amount: number): Promise<number> {
+    async sellMaterial(): Promise<number> {
+        if (!this.allowSellMaterial) {
+            newLog(["此黑市不接受物质交易"])
+            return 0
+        }
+
+        if (this.materialSellAmount <= 0) {
+            newLog(["没有物质可以出售"])
+            return 0
+        }
+
+        // 检查玩家物质是否足够
+        const reserveModifier = getReserveModifier(nowPlayer)
+        const currentMaterial = reserveModifier.getReserve("material")
+
+        // 实际消耗量：不超过当前持有量
+        const actualAmount = Math.min(this.materialSellAmount, currentMaterial)
+        if (actualAmount <= 0) {
+            newLog(["物质不足！"])
+            return 0
+        }
+
+        // 计算售价（随着售出次数增加不断贬值）
+        const price = this.calculateMaterialSellPrice(actualAmount)
+
+        newLog([`出售了 ${actualAmount} 物质，获得 ${price} 金钱`])
+
+        // 扣除物质
+        reserveModifier.spendReserve("material", actualAmount)
+
+        // 给予金钱
+        reserveModifier.gainReserve("gold", price, nowPlayer)
+
+        // 增加售出次数
+        this.materialSoldCount++
+
+        return price
+    }
+
+    /**
+     * 计算物质售价（贬值机制）
+     */
+    private calculateMaterialSellPrice(amount: number): number {
+        const basePrice = amount * materialSellConfig.pricePerMaterial
+        const depreciationRate = Math.pow(materialSellConfig.depreciationFactor, this.materialSoldCount)
+
+        return Math.floor(basePrice * depreciationRate)
+    }
+
+    /**
+     * 获取物质售价预览（用于 UI 显示）
+     */
+    getMaterialSellPricePreview(): number {
+        const reserveModifier = getReserveModifier(nowPlayer)
+        const currentMaterial = reserveModifier.getReserve("material")
+        const actualAmount = Math.min(this.materialSellAmount, currentMaterial)
+        return this.calculateMaterialSellPrice(actualAmount)
+    }
+
+    /**
+     * 获取本次实际会消耗的物质量
+     */
+    getMaterialSellActualAmount(): number {
+        const reserveModifier = getReserveModifier(nowPlayer)
+        const currentMaterial = reserveModifier.getReserve("material")
+        return Math.min(this.materialSellAmount, currentMaterial)
+    }
+
+    /**
+     * 获取物质售出次数
+     */
+    getMaterialSoldCount(): number {
+        return this.materialSoldCount
+    }
+
+    /** 每次出售生命值的固定量 */
+    static readonly HEALTH_SELL_AMOUNT = 10
+
+    /**
+     * 出售生命值（每次固定消耗 10 点）
+     */
+    async sellHealth(): Promise<number> {
         if (!this.allowSellHealth) {
             newLog(["此黑市不接受生命值交易"])
             return 0
         }
+
+        const amount = BlackStoreRoom.HEALTH_SELL_AMOUNT
 
         // 检查玩家当前生命值是否足够
         const currentHealth = getCurrentValue(nowPlayer, "health")
@@ -655,8 +753,16 @@ export class BlackStoreRoom extends Room {
     /**
      * 获取生命值售价预览（用于 UI 显示）
      */
-    getHealthSellPricePreview(amount: number): number {
-        return this.calculateHealthSellPrice(amount)
+    getHealthSellPricePreview(): number {
+        return this.calculateHealthSellPrice(BlackStoreRoom.HEALTH_SELL_AMOUNT)
+    }
+
+    /**
+     * 是否能出售生命值（当前生命 > 10）
+     */
+    canSellHealth(): boolean {
+        const currentHealth = getCurrentValue(nowPlayer, "health")
+        return currentHealth > BlackStoreRoom.HEALTH_SELL_AMOUNT
     }
 
     /**

@@ -189,6 +189,9 @@
         if (props.preview) return
         if (!hasActiveAbilities.value) return
 
+        // 隐藏介绍弹窗，避免遮挡操作
+        showDetail.value = false
+
         try {
             // 如果只有一个能力，直接执行；否则显示菜单
             const abilities = relic.activeAbilities!

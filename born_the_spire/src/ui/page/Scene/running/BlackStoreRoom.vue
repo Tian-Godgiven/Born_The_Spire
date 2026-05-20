@@ -35,17 +35,41 @@
                     <div class="sell-option-desc">以购入价的 50~70% 出售</div>
                 </div>
 
-                <div
-                    v-if="allowSellHealth"
-                    class="sell-option"
-                    @click="handleSellHealth"
-                >
-                    <div class="sell-option-name">出售生命值</div>
-                    <div class="sell-option-desc">
-                        永久降低最大生命
-                        <span v-if="healthSoldCount > 0" class="depreciation-note">
-                            (已贬值 {{ healthSoldCount }} 次)
-                        </span>
+                <!-- 物质/生命切换出售 -->
+                <div v-if="allowSellMaterial || allowSellHealth" class="sell-resource">
+                    <div class="sell-toggle" v-if="allowSellMaterial && allowSellHealth">
+                        <div
+                            class="toggle-option"
+                            :class="{ 'active': sellMode === 'material' }"
+                            @click="sellMode = 'material'"
+                        >物质</div>
+                        <div
+                            class="toggle-option"
+                            :class="{ 'active': sellMode === 'health' }"
+                            @click="sellMode = 'health'"
+                        >生命</div>
+                    </div>
+
+                    <!-- 物质出售 -->
+                    <div v-if="sellMode === 'material'" class="sell-preview">
+                        <div class="sell-detail">{{ materialSellActualAmount }} 物质 → {{ materialSellPrice }} 金</div>
+                        <div class="sell-info">当前物质: {{ playerMaterial }}</div>
+                        <div
+                            class="sell-button"
+                            :class="{ 'disabled': playerMaterial <= 0 }"
+                            @click="handleSellMaterial"
+                        >出售</div>
+                    </div>
+
+                    <!-- 生命出售 -->
+                    <div v-if="sellMode === 'health'" class="sell-preview">
+                        <div class="sell-detail">10 生命 → {{ healthSellPrice }} 金</div>
+                        <div class="sell-info">当前: {{ playerCurrentHealth }} / {{ playerMaxHealth }}</div>
+                        <div
+                            class="sell-button"
+                            :class="{ 'disabled': !canSellHealthNow }"
+                            @click="handleSellHealth"
+                        >出售</div>
                     </div>
                 </div>
             </div>
@@ -225,29 +249,6 @@
         </div>
     </div>
 
-    <!-- 出售生命值弹窗 -->
-    <div v-if="showSellHealthModal" class="modal-overlay" @click="closeSellHealthModal">
-        <div class="modal-content" @click.stop>
-            <h2 class="modal-title">出售生命值</h2>
-            <div class="health-info">
-                <p>当前生命值: {{ playerCurrentHealth }} / {{ playerMaxHealth }}</p>
-                <p class="warning-text">永久降低最大生命值</p>
-            </div>
-            <div class="health-options">
-                <div
-                    v-for="amount in healthAmountOptions"
-                    :key="amount"
-                    class="health-option"
-                    :class="{ 'disabled': !canSellHealthAmount(amount) }"
-                    @click="confirmSellHealth(amount)"
-                >
-                    <div class="health-amount">{{ amount }} 生命</div>
-                    <div class="health-price">→ {{ getHealthSellPrice(amount) }} 金</div>
-                </div>
-            </div>
-            <div class="modal-close" @click="closeSellHealthModal">取消</div>
-        </div>
-    </div>
 </div>
 </template>
 
@@ -312,8 +313,8 @@ const cardItems = computed(() => allItems.value.filter(i => i.type === 'card'))
 
 // 出售相关
 const allowSellOrgan = computed(() => currentRoom.value?.allowSellOrgan ?? false)
+const allowSellMaterial = computed(() => currentRoom.value?.allowSellMaterial ?? false)
 const allowSellHealth = computed(() => currentRoom.value?.allowSellHealth ?? false)
-const healthSoldCount = computed(() => currentRoom.value?.getHealthSoldCount() || 0)
 
 // 可出售器官（带折扣信息）
 const sellableOrgans = computed(() => currentRoom.value?.getSellableOrgans() || [])
@@ -322,11 +323,27 @@ const sellableOrgans = computed(() => currentRoom.value?.getSellableOrgans() || 
 const playerCurrentHealth = computed(() => getCurrentValue(nowPlayer, 'health'))
 const playerMaxHealth = computed(() => getStatusValue(nowPlayer, 'max-health'))
 
-const healthAmountOptions = [5, 10, 15, 20]
+// 玩家物质
+const playerMaterial = computed(() => {
+    const reserveModifier = getReserveModifier(nowPlayer)
+    return reserveModifier.getReserve('material')
+})
+
+// 切换模式：物质 or 生命
+const sellMode = ref<'material' | 'health'>(
+    allowSellMaterial.value ? 'material' : 'health'
+)
+
+// 物质出售预览
+const materialSellActualAmount = computed(() => currentRoom.value?.getMaterialSellActualAmount() || 0)
+const materialSellPrice = computed(() => currentRoom.value?.getMaterialSellPricePreview() || 0)
+
+// 生命出售预览
+const healthSellPrice = computed(() => currentRoom.value?.getHealthSellPricePreview() || 0)
+const canSellHealthNow = computed(() => currentRoom.value?.canSellHealth() ?? false)
 
 // 弹窗状态
 const showSellOrganModal = ref(false)
-const showSellHealthModal = ref(false)
 
 // === 商品详情 tooltip ===
 const tooltipVisible = ref(false)
@@ -470,31 +487,24 @@ async function confirmSellOrgan(organ: Organ) {
     closeSellOrganModal()
 }
 
-// === 出售生命值 ===
-function handleSellHealth() {
-    showSellHealthModal.value = true
-}
-
-function closeSellHealthModal() {
-    showSellHealthModal.value = false
-}
-
-function canSellHealthAmount(amount: number): boolean {
-    return playerCurrentHealth.value > amount
-}
-
-function getHealthSellPrice(amount: number): number {
-    return currentRoom.value?.getHealthSellPricePreview(amount) || 0
-}
-
-async function confirmSellHealth(amount: number) {
+// === 出售物质 ===
+async function handleSellMaterial() {
     if (!currentRoom.value) return
-    if (!canSellHealthAmount(amount)) {
-        newLog(['生命值不足'])
+    if (playerMaterial.value <= 0) {
+        showDisplayMessage('"没有物质可卖。"', 2000)
         return
     }
-    await currentRoom.value.sellHealth(amount)
-    closeSellHealthModal()
+    await currentRoom.value.sellMaterial()
+}
+
+// === 出售生命值 ===
+async function handleSellHealth() {
+    if (!currentRoom.value) return
+    if (!canSellHealthNow.value) {
+        showDisplayMessage('"生命值不足。"', 2000)
+        return
+    }
+    await currentRoom.value.sellHealth()
 }
 
 // === 离开 ===
@@ -621,6 +631,71 @@ async function handleLeave() {
 .depreciation-note {
     color: red;
     font-weight: bold;
+}
+
+// 物质/生命切换出售
+.sell-resource {
+    border: 2px solid black;
+    padding: 0.6rem;
+}
+
+.sell-toggle {
+    display: flex;
+    border: 2px solid black;
+    margin-bottom: 0.5rem;
+}
+
+.toggle-option {
+    flex: 1;
+    text-align: center;
+    padding: 0.3rem 0;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:hover {
+        background: rgba(0, 0, 0, 0.05);
+    }
+
+    &.active {
+        background: black;
+        color: white;
+    }
+}
+
+.sell-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.sell-detail {
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.sell-info {
+    font-size: 0.75rem;
+    color: #888;
+}
+
+.sell-button {
+    border: 2px solid black;
+    text-align: center;
+    padding: 0.3rem;
+    margin-top: 0.2rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:hover {
+        background: rgba(0, 0, 0, 0.05);
+    }
+
+    &.disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
 }
 
 // 右侧商品区
