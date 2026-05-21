@@ -59,8 +59,8 @@ export const colosseumEvent: EventMap = {
                     key: "leave",
                     title: "见好就收",
                     description: "带着荣耀离开竞技场。",
-                    effects: [
-                        { key: "gainGold", params: { amount: 50 } }
+                    rewards: [
+                        { type: "gold", amount: 50 }
                     ]
                 }
             ]

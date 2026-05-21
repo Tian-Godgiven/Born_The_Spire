@@ -8,6 +8,7 @@ import type {
 } from "@/core/types/ActiveAbility"
 import { getStatusValue } from "@/core/objects/system/status/Status"
 import { nowGameRun } from "@/core/objects/game/run"
+import { nowBattle } from "@/core/objects/game/battle"
 import { doEvent } from "@/core/objects/system/ActionEvent"
 import type { EffectUnit } from "@/core/objects/system/effect/EffectUnit"
 
@@ -122,7 +123,7 @@ export class RestrictionChecker {
 
         // 场景条件
         if (conditions.scene) {
-            const inCombat = nowGameRun?.currentRoom?.type === 'battle'
+            const inCombat = nowBattle.value !== null
 
             if (conditions.scene === 'combat' && !inCombat) {
                 return { canUse: false, reason: "只能在战斗中使用" }
