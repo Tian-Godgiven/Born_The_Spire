@@ -22,7 +22,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import MapView from './MapView.vue'
+import MapView from '@/ui/page/Scene/running/MapView.vue'
 
 const visible = ref(false)
 

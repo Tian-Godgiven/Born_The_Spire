@@ -9,7 +9,7 @@
           v-for="reward in rewards"
           :key="reward.__key"
           class="reward-row"
-          :class="{ claimed: reward.isClaimed() }"
+          :class="{ claimed: reward.isClaimed(), locked: reward.isLocked() }"
         >
           <div class="reward-info">
             <span class="reward-icon">{{ reward.getDisplayIcon() }}</span>
@@ -44,6 +44,9 @@
               领取
             </button>
 
+            <!-- 已锁定（互斥） -->
+            <span v-else-if="reward.isLocked()" class="locked-text">已锁定</span>
+
             <!-- 已领取 -->
             <span v-else class="claimed-text">已领取</span>
           </div>
@@ -51,9 +54,12 @@
       </div>
 
       <div class="modal-actions">
-        <button class="action-btn primary" @click="handleProceed">
+        <button class="action-btn primary" :disabled="!canProceed()" @click="handleProceed">
           前进
         </button>
+        <div v-if="requireAllRewards && !canProceed()" class="require-hint">
+          请先领取所有奖励
+        </div>
       </div>
     </div>
 
@@ -154,7 +160,7 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, markRaw, shallowRef } from 'vue'
-import { currentRewards, showRewardUI, confirmRewards, navigateOnProceed } from '@/ui/hooks/interaction/rewardDisplay'
+import { currentRewards, showRewardUI, confirmRewards, navigateOnProceed, handleExclusiveGroup, canProceed, requireAllRewards } from '@/ui/hooks/interaction/rewardDisplay'
 import { organRewardActionRegistry } from '@/static/registry/organRewardActionRegistry'
 import { nowPlayer } from '@/core/objects/game/run'
 import { getDescribe, getDescribeStructured, type DescribeSegment } from '@/ui/hooks/express/describe'
@@ -211,6 +217,7 @@ async function executeOrganAction(actionKey: string) {
   reward.selectedActions = new Map([[selectedOrganKey.value, actionKey]])
   closeOrganReward()
   await reward.claim()
+  handleExclusiveGroup(reward)
 }
 
 function getOrganDescribe(organ: OrganMap): string {
@@ -306,21 +313,24 @@ function closeRelicChoice() {
 async function confirmRelicChoice() {
   if (!selectedRelicKey.value || !currentChoiceReward.value) return
 
-  currentChoiceReward.value.selectedRelics = [selectedRelicKey.value]
-  await currentChoiceReward.value.claim()
+  const reward = currentChoiceReward.value
+  reward.selectedRelics = [selectedRelicKey.value]
+  await reward.claim()
+  handleExclusiveGroup(reward)
   closeRelicChoice()
 }
 
 // 领取奖励
 async function claimReward(reward: any) {
   await reward.claim()
+  handleExclusiveGroup(reward)
 }
 
 // 前进
 async function handleProceed() {
-  // 自动领取所有未领取的奖励
+  // 自动领取所有未领取且未锁定的奖励
   for (const reward of rewards.value) {
-    if (!reward.isClaimed()) {
+    if (!reward.isClaimed() && !reward.isLocked()) {
       if (reward.type === 'organSelect' || reward.type === 'relicSelect') {
         // 跳过选择类奖励
         reward.markAsClaimed()
@@ -402,6 +412,11 @@ async function handleProceed() {
   &.claimed {
     opacity: 0.6;
   }
+
+  &.locked {
+    opacity: 0.4;
+    background: #f5f5f5;
+  }
 }
 
 .reward-info {
@@ -430,6 +445,18 @@ async function handleProceed() {
 .claimed-text {
   color: #999;
   font-size: 14px;
+}
+
+.locked-text {
+  color: #bbb;
+  font-size: 14px;
+}
+
+.require-hint {
+  font-size: 13px;
+  color: #999;
+  text-align: center;
+  margin-top: 5px;
 }
 
 .modal-actions {

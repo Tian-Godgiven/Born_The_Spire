@@ -20,6 +20,9 @@
     <!-- 全局消息提示 -->
     <GlobalMessage />
 
+    <!-- 奖励弹窗（全局） -->
+    <RewardModal />
+
     <!-- 地图覆盖层 -->
     <MapOverlay ref="mapOverlay" />
 
@@ -39,7 +42,8 @@ import { computed, ref, onMounted } from 'vue'
 import Top from "./Top/index.vue"
 import ConnectLine from "@/ui/components/interaction/chooseTarget/ConnectLine.vue"
 import LogPane from "@/ui/page/tool/logPane/LogPane.vue"
-import MapOverlay from "./MapOverlay.vue"
+import RewardModal from "@/ui/components/interaction/RewardModal.vue"
+import MapOverlay from "@/ui/components/interaction/MapOverlay.vue"
 import CardGroupModal from '@/ui/components/interaction/CardGroupModal.vue'
 import GlobalMessage from '@/ui/components/display/GlobalMessage.vue'
 import { nowGameRun } from '@/core/objects/game/run'

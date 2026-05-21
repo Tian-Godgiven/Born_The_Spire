@@ -7,8 +7,8 @@
     <PopUpContainer />
     <!-- 动态组件容器 -->
     <DynamicComponentContainer />
-    <!-- 确认弹窗 -->
-    <ConfirmModal />
+    <!-- 吞噬确认弹窗 -->
+    <DevourConfirmModal />
     <!-- 器官选择弹窗 -->
     <OrganChoice />
     <!-- 开发者控制台 -->
@@ -29,8 +29,8 @@ const PopUpContainer = defineAsyncComponent(() =>
 const DynamicComponentContainer = defineAsyncComponent(() =>
   import('./ui/components/global/DynamicComponentContainer.vue')
 );
-const ConfirmModal = defineAsyncComponent(() =>
-  import('./ui/components/interaction/ConfirmModal.vue')
+const DevourConfirmModal = defineAsyncComponent(() =>
+  import('./ui/components/interaction/DevourConfirmModal.vue')
 );
 const OrganChoice = defineAsyncComponent(() =>
   import('./ui/components/interaction/OrganChoice.vue')

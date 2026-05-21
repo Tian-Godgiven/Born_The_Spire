@@ -64,7 +64,7 @@ import {
 import { getPartLabel } from '@/static/list/target/organPart'
 import OrganDetail from '@/ui/components/interaction/OrganDetail.vue'
 import HoverShow from '@/ui/components/global/HoverShow.vue'
-import OrganPopup from '@/ui/components/object/OrganPopup.vue'
+import OrganPopup from '@/ui/components/interaction/OrganPopup.vue'
 
 const HEART_KEY = 'original_organ_00001'
 

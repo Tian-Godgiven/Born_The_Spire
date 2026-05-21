@@ -3,7 +3,6 @@
     <!-- 战斗阶段：渲染 BattleView -->
     <template v-if="currentPhase === 'battle'">
         <BattleView @battle-end="onBattleEnd" />
-        <RewardPage />
     </template>
 
     <!-- 事件阶段：渲染事件UI -->
@@ -63,7 +62,7 @@ import { nowGameRun } from '@/core/objects/game/run'
 import { EventRoom } from '@/core/objects/room/EventRoom'
 import type { Choice } from '@/core/objects/system/Choice'
 import BattleView from './BattleView.vue'
-import RewardPage from '@/ui/components/interaction/RewardPage.vue'
+
 
 // 获取当前房间
 const currentRoom = computed(() => {

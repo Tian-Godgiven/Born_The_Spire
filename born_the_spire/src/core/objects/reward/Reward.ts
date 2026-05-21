@@ -18,6 +18,7 @@ export interface RewardConfig {
     icon?: string             // 奖励图标
     component?: Component     // 自定义 Vue 组件（可选）
     customData?: Record<string, any> // 自定义数据
+    exclusiveGroup?: string   // 互斥组标识，同组奖励只能领取一个
 }
 
 /**
@@ -32,6 +33,7 @@ export abstract class Reward {
     public readonly icon?: string       // 奖励图标
     public readonly component?: Component // 自定义组件
     public readonly customData?: Record<string, any> // 自定义数据
+    public readonly exclusiveGroup?: string // 互斥组标识
     public state: RewardState           // 奖励状态
 
     constructor(config: RewardConfig) {
@@ -42,6 +44,7 @@ export abstract class Reward {
         this.icon = config.icon
         this.component = config.component
         this.customData = config.customData
+        this.exclusiveGroup = config.exclusiveGroup
         this.state = "available"
 
         // 使用 Vue 响应式包装

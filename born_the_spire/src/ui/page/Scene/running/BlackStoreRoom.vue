@@ -266,7 +266,7 @@ import { getStatusValue } from '@/core/objects/system/status/Status'
 import { goToNextStep } from '@/core/hooks/step'
 import { getDescribe } from '@/ui/hooks/express/describe'
 import LeaveButton from '@/ui/components/global/LeaveButton.vue'
-import OrganPopup from '@/ui/components/object/OrganPopup.vue'
+import OrganPopup from '@/ui/components/interaction/OrganPopup.vue'
 import Card from '@/ui/components/object/Card.vue'
 
 // 金钱类型显示名映射

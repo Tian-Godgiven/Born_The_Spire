@@ -1,14 +1,12 @@
 <template>
 <div class="battle">
     <BattleView @battle-end="onBattleEnd" />
-    <RewardPage />
 </div>
 </template>
 
 <script setup lang='ts'>
 
     import BattleView from './BattleView.vue';
-    import RewardPage from '@/ui/components/interaction/RewardPage.vue';
     import { nowGameRun } from '@/core/objects/game/run';
 
     async function onBattleEnd(result: 'player_win' | 'player_lose') {
