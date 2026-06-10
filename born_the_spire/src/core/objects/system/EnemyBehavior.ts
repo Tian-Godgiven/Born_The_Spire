@@ -104,6 +104,9 @@ export type EnemyBehaviorConfig = {
 
     // 默认行为（当所有条件都不满足时）
     fallback?: BehaviorPattern
+
+    // 每回合手牌数量（默认 5）
+    handSize?: number
 }
 
 /**

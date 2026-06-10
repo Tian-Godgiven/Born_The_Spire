@@ -767,8 +767,6 @@ export const cardList:CardMap[] = [{
             effects: [{ key: "card_strengthBite", params: { base: 6, strengthMult: 2 } }]
         }
     }
-},
-
 }]
 
 export async function getCardByKey(key:string){

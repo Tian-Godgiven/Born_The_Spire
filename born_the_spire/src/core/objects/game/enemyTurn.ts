@@ -3,78 +3,43 @@ import type { Enemy } from "@/core/objects/target/Enemy"
 import type { Player } from "@/core/objects/target/Player"
 import { selectAction } from "@/core/objects/system/EnemyBehavior"
 import { newLog } from "@/ui/hooks/global/log"
-import { startCharaTurn, endCharaTurn } from "@/core/effects/turn"
+import { endCharaTurn } from "@/core/effects/turn"
 
 /**
  * 敌人回合管理
  *
- * 处理敌人回合的完整流程：
- * 1. 回合开始
- * 2. 选择行动（根据行为配置）
- * 3. 设置意图
- * 4. 执行意图
- * 5. 回合结束
+ * 处理敌人回合的完整流程，基于双牌堆系统：
+ *   prepareEnemyIntents：行为选牌 → 进抽牌堆 → 抽手牌 → 设置意图
+ *   executeEnemyTurn：按手牌顺序打出 → 清空手牌
  */
 
 /**
- * 执行敌人回合
+ * 执行单个敌人的回合
  *
- * 执行敌人已经设置好的意图（意图应该在玩家回合开始前通过 prepareEnemyIntents 设置）
- *
- * @param enemy 敌人
- * @param player 玩家
- * @param turnCount 当前回合数
- * @param battle 战斗对象
+ * 按 hand 中的顺序依次打出卡牌（无 use 交互的牌自动跳过）。
+ * 手牌全为垃圾牌（无可打出的牌）时直接跳过回合。
  */
 export async function executeEnemyTurn(
     enemy: Enemy,
     player: Player,
-    turnCount: number,
+    _turnCount: number,
     battle: Battle
 ) {
     newLog(["===== 敌人回合开始 =====", enemy.label])
 
-    // 检查是否有意图
-    if (!enemy.intent) {
-        console.warn(`[EnemyTurn] 敌人 ${enemy.label} 没有设置意图，尝试重新选择行动`)
-
-        // 检查是否有行为配置
-        if (!enemy.behavior) {
-            console.error(`[EnemyTurn] 敌人 ${enemy.label} 没有行为配置`)
-            return
-        }
-
-        // 如果没有意图，尝试重新选择（容错处理）
-        const result = await selectAction(
-            enemy.behavior,
-            enemy,
-            player,
-            turnCount
-        )
-
-        if (result.cards.length === 0) {
-            console.warn(`[EnemyTurn] 敌人 ${enemy.label} 没有可用行动`)
-            return
-        }
-
-        await enemy.setIntent(result.cards, "card", result.intent, player)
+    if (enemy.hand.length === 0) {
+        newLog([`${enemy.label} 手牌为空，跳过回合`])
+    } else {
+        await enemy.executeHandInOrder(player)
+        enemy.clearHandAfterTurn()
     }
 
-    // 执行已经设置好的意图
-    await enemy.executeIntent(player)
-
     newLog(["===== 敌人回合结束 =====", enemy.label])
-    // 通知敌人回合结束
     await endCharaTurn(enemy, battle)
 }
 
 /**
  * 执行所有敌人的回合
- *
- * @param enemies 敌人列表
- * @param player 玩家
- * @param turnCount 当前回合数
- * @param battle 战斗对象
  */
 export async function executeAllEnemiesTurn(
     enemies: Enemy[],
@@ -83,32 +48,19 @@ export async function executeAllEnemiesTurn(
     battle: Battle
 ) {
     for (const enemy of enemies) {
-        // 跳过已死亡的敌人
-        if (enemy.current.isAlive?.value !== 1) {
-            continue
-        }
-
-        // 检查是否有多次行动
-        const actionsPerTurn = Number(enemy.status["actions-per-turn"]?.value || 1)
-
-        // 执行多次行动
-        for (let i = 0; i < actionsPerTurn; i++) {
-            if (i > 0) {
-                newLog([`${enemy.label} 第 ${i + 1} 次行动`])
-            }
-            await executeEnemyTurn(enemy, player, turnCount, battle)
-        }
+        if (enemy.current.isAlive?.value !== 1) continue
+        await executeEnemyTurn(enemy, player, turnCount, battle)
     }
 }
 
 /**
  * 准备敌人的意图（在玩家回合开始前调用）
  *
- * 让所有敌人选择下回合的行动并设置意图，供玩家查看
- *
- * @param enemies 敌人列表
- * @param player 玩家
- * @param turnCount 当前回合数
+ * 流程：
+ *   1. 清理上回合残留的行动牌条目
+ *   2. 行为模式执行 n 次（n = actions-per-turn），将 n 张行动牌放入抽牌堆
+ *   3. 从抽牌堆抽 handSize 张组成手牌（行动牌保序，垃圾牌随机插入）
+ *   4. 根据手牌中的行动牌设置意图
  */
 export async function prepareEnemyIntents(
     enemies: Enemy[],
@@ -118,28 +70,40 @@ export async function prepareEnemyIntents(
     newLog(["准备敌人意图", `回合 ${turnCount}`])
 
     for (const enemy of enemies) {
-        // 跳过已死亡的敌人
-        if (enemy.current.isAlive?.value !== 1) {
-            continue
-        }
-
-        // 检查是否有行为配置
+        if (enemy.current.isAlive?.value !== 1) continue
         if (!enemy.behavior) {
             console.warn(`[prepareEnemyIntents] 敌人 ${enemy.label} 没有行为配置`)
             continue
         }
 
-        // 选择行动
-        const result = await selectAction(
-            enemy.behavior,
-            enemy,
-            player,
-            turnCount
-        )
+        // 1. 清理上回合未消耗的行动牌条目（实际卡牌仍在 CardModifier，只清引用）
+        enemy.drawPile.actions = []
 
-        // 设置意图
-        if (result.cards.length > 0) {
-            await enemy.setIntent(result.cards, "card", result.intent, player)
+        const actionsPerTurn = Number(enemy.status["actions-per-turn"]?.value || 1)
+        const handSize = enemy.behavior.handSize ?? 5
+
+        // 2. 行为模式执行 n 次，将选出的行动牌放入抽牌堆
+        for (let order = 0; order < actionsPerTurn; order++) {
+            const result = await selectAction(enemy.behavior, enemy, player, turnCount)
+            if (result.cards.length > 0) {
+                enemy.drawPile.actions.push({
+                    card: result.cards[0],
+                    order,
+                    intent: result.intent
+                })
+            }
+        }
+
+        // 3. 构建手牌
+        const drawnActions = enemy.buildHand(handSize)
+
+        // 4. 设置意图（仅展示行动牌，让玩家可以预判）
+        if (drawnActions.length > 0) {
+            const intentCards = drawnActions.map(a => a.card)
+            const intentType  = drawnActions[0].intent
+            await enemy.setIntent(intentCards, "card", intentType, player)
+        } else {
+            enemy.clearIntent()
         }
     }
 }

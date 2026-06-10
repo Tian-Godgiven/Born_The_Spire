@@ -27,6 +27,13 @@ export class Enemy extends Chara{
     public _intentTarget?: any  // 意图的模拟目标（用于计算 target 端 buff）
     public behavior?: EnemyBehaviorConfig  // 敌人行为配置
     public exclusiveCards: string[] = []  // 敌人专属卡牌key列表
+
+    // 双牌堆系统
+    public drawPile: {
+        actions: { card: Card, order: number, intent?: IntentType }[]
+        junk: Card[]
+    } = { actions: [], junk: [] }
+    public hand: Card[] = []
     constructor(
         map:EnemyMap
     ){
@@ -214,6 +221,82 @@ export class Enemy extends Chara{
     }
 
     /**
+     * 往抽牌堆里塞入一张垃圾牌
+     */
+    addJunkToDrawPile(card: Card): void {
+        card.owner = this
+        this.drawPile.junk.push(card)
+    }
+
+    /**
+     * 从抽牌堆构建手牌
+     *
+     * 行动牌与垃圾牌合并后随机抽取 handSize 张：
+     * 已抽到的行动牌按原始顺序排列，垃圾牌随机插入其中。
+     * 未抽到的垃圾牌留在 drawPile.junk 等待下回合；行动牌清空（始终保留在 CardModifier）。
+     *
+     * @returns 已抽到的行动牌列表（含意图类型，用于设置意图）
+     */
+    buildHand(handSize: number): { card: Card, intent?: IntentType }[] {
+        type ActionEntry = { card: Card, isAction: true, order: number, intent?: IntentType }
+        type JunkEntry   = { card: Card, isAction: false }
+        type Entry = ActionEntry | JunkEntry
+
+        const pool: Entry[] = [
+            ...this.drawPile.actions.map(a => ({ card: a.card, isAction: true as const, order: a.order, intent: a.intent })),
+            ...this.drawPile.junk.map(j => ({ card: j, isAction: false as const }))
+        ]
+
+        // Fisher-Yates 洗牌
+        for (let i = pool.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [pool[i], pool[j]] = [pool[j], pool[i]]
+        }
+
+        const drawn    = pool.slice(0, handSize)
+        const notDrawn = pool.slice(handSize)
+
+        // 未抽到的垃圾牌留待下回合；行动牌条目清空
+        this.drawPile.junk    = notDrawn.filter((e): e is JunkEntry => !e.isAction).map(e => e.card)
+        this.drawPile.actions = []
+
+        // 抽到的行动牌按原始顺序排列
+        const drawnActions = drawn
+            .filter((e): e is ActionEntry => e.isAction)
+            .sort((a, b) => a.order - b.order)
+
+        const drawnJunk = drawn.filter(e => !e.isAction).map(e => e.card)
+
+        // 将垃圾牌随机插入行动牌序列
+        const finalHand: Card[] = drawnActions.map(e => e.card)
+        for (const junkCard of drawnJunk) {
+            const pos = Math.floor(Math.random() * (finalHand.length + 1))
+            finalHand.splice(pos, 0, junkCard)
+        }
+
+        this.hand = finalHand
+        return drawnActions.map(e => ({ card: e.card, intent: e.intent }))
+    }
+
+    /**
+     * 按手牌顺序执行所有卡牌
+     *
+     * 有 use 交互的牌正常打出；无 use 交互的牌（A型垃圾）跳过。
+     */
+    async executeHandInOrder(target: Player): Promise<void> {
+        for (const card of this.hand) {
+            await this.playCard(card, target)
+        }
+    }
+
+    /**
+     * 回合结束后清空手牌
+     */
+    clearHandAfterTurn(): void {
+        this.hand = []
+    }
+
+    /**
      * 敌人打出一张卡牌
      *
      * 敌人打出卡牌不需要支付能量，直接执行效果
@@ -221,7 +304,7 @@ export class Enemy extends Chara{
      * @param card 要打出的卡牌
      * @param target 目标
      */
-    private async playCard(card: Card, target: Player) {
+    public async playCard(card: Card, target: Player) {
         // 检查卡牌来源的器官是否被禁用
         if (card.source && (card.source as any).targetType === 'organ' && isOrganDisabled(card.source as any)) {
             newLog(["敌人使用卡牌被禁用", this.label, card.label])
