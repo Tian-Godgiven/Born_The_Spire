@@ -3,6 +3,7 @@ import type { RoomConfig, BattleRoomType } from "./Room"
 import { startNewBattle, Battle, nowPlayerTeam, endNowBattle } from "../game/battle"
 import type { Enemy } from "../target/Enemy"
 import type { EnemyMap } from "../target/Enemy"
+import type { EnemyBehaviorConfig } from "../system/EnemyBehavior"
 import { newLog } from "@/ui/hooks/global/log"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
@@ -15,15 +16,25 @@ import { goToNextStep } from "@/core/hooks/step"
 import { FloorSelectRoom } from "./FloorSelectRoom"
 
 /**
+ * 战斗房间中的单个敌人实例配置
+ * 可以是 key 字符串，或带覆盖属性的对象
+ */
+export type EnemyInstanceConfig = string | {
+    key: string
+    behavior?: EnemyBehaviorConfig  // 覆盖 enemyList 中的默认行为
+    statusOverrides?: Record<string, number>  // 覆盖默认属性值（如血量）
+}
+
+/**
  * 战斗房间配置
  */
 export interface BattleRoomConfig extends RoomConfig {
     type: "battle"
     battleType?: BattleRoomType  // 战斗类型：normal, elite, boss
-    enemyConfigs?: EnemyMap[] | string[]    // 敌人配置列表或敌人 key 列表
+    enemyConfigs?: EnemyMap[] | EnemyInstanceConfig[]    // 敌人配置列表或实例配置
     customData?: {
         battleType?: BattleRoomType
-        enemyConfigs?: string[]  // 敌人 key 列表
+        enemyConfigs?: EnemyInstanceConfig[]
     }
 }
 
@@ -50,26 +61,34 @@ export class BattleRoom extends Room {
             || config.customData?.enemyConfigs
             || []
 
-        // 如果是字符串数组（敌人 key），需要从 enemyList 中查找
-        if (enemyConfigsSource.length > 0 && typeof enemyConfigsSource[0] === 'string') {
-            this.enemyConfigs = this.loadEnemyConfigsByKeys(enemyConfigsSource as string[])
-        } else {
+        // 如果是 EnemyMap[] 则直接用，否则按 EnemyInstanceConfig[] 处理
+        if (enemyConfigsSource.length > 0 && typeof enemyConfigsSource[0] === 'object' && 'behavior' in (enemyConfigsSource[0] as any) && 'status' in (enemyConfigsSource[0] as any)) {
             this.enemyConfigs = enemyConfigsSource as EnemyMap[]
+        } else {
+            this.enemyConfigs = this.loadEnemyConfigs(enemyConfigsSource as EnemyInstanceConfig[])
         }
     }
 
     /**
-     * 根据敌人 key 列表加载敌人配置
+     * 根据 EnemyInstanceConfig 列表加载敌人配置，支持行为/属性覆盖
      */
-    private loadEnemyConfigsByKeys(keys: string[]): EnemyMap[] {
+    private loadEnemyConfigs(entries: EnemyInstanceConfig[]): EnemyMap[] {
         const enemyList = getLazyModule<EnemyMap[]>('enemyList')
-        return keys.map(key => {
-            const config = enemyList.find((e: EnemyMap) => e.key === key)
-            if (!config) {
+        return entries.map(entry => {
+            const key = typeof entry === 'string' ? entry : entry.key
+            const base = enemyList.find((e: EnemyMap) => e.key === key)
+            if (!base) {
                 console.warn(`[BattleRoom] 未找到敌人配置: ${key}`)
+                return undefined
             }
-            return config
-        }).filter((config): config is EnemyMap => config !== undefined)
+            if (typeof entry === 'string') return base
+
+            // 合并覆盖项
+            const overrides: Partial<EnemyMap> = {}
+            if (entry.behavior) overrides.behavior = entry.behavior
+            if (entry.statusOverrides) overrides.status = { ...base.status, ...entry.statusOverrides }
+            return Object.keys(overrides).length > 0 ? { ...base, ...overrides } : base
+        }).filter((c): c is EnemyMap => c !== undefined)
     }
 
     /**

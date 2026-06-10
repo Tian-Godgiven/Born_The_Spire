@@ -14,8 +14,8 @@ import { applyState, removeState, changeStateStack } from "@/core/effects/state/
 import { addStatusBase, addStatusCurrent, multiplyStatusBase, setCurrentToMax, setBaseStatus, decrementStatus, resetCooldown } from "@/core/effects/status/changeStatus"
 import { addCurrent, addStatusBaseCurrentValue } from "@/core/effects/current/changeCurrent"
 import { gainReserve, spendReserve } from "@/core/effects/reserve/reserve"
-import { killTarget, reviveTarget } from "@/core/effects/life/lifeControl"
-import { replaceOrgan, chooseOrganRemove, damageOrgan, healOrgan } from "@/core/effects/organ/organEffects"
+import { killTarget, reviveTarget, loseHp } from "@/core/effects/life/lifeControl"
+import { replaceOrgan, chooseOrganRemove, damageOrgan, healOrgan, modifyOrganCardStatus, repairOrgan } from "@/core/effects/organ/organEffects"
 import { removeOrganEffect } from "@/core/effects/organ/organRemoveEffect"
 import { upgradeCardEffect } from "@/core/effects/card/cardUpgradeEffect"
 import { removeCardEffect } from "@/core/effects/card/cardRemoveEffect"
@@ -33,7 +33,10 @@ import { addAbilityChargesEffect, reduceAbilityCooldownEffect, setAbilityToggleE
 import { addStatusModifier, addMaxHealthAndHeal } from "@/core/effects/modifier/addModifier"
 import { accumulateAndTrigger } from "@/core/effects/relic/accumulateAndTrigger"
 import { exhaustRandomCardByTag } from "@/core/effects/card/exhaustRandomCardByTag"
-import { card_wasteHeatRecovery } from "@/core/effects/card/cardSpecificEffects"
+import { card_wasteHeatRecovery, card_unstableCharge, card_commandScreech, card_commandStrike, card_heatBlast, card_corrosiveBurst } from "@/core/effects/card/cardSpecificEffects"
+import { organ_heatTick, organ_rustySeparator, organ_emergencyBattery, organ_pheromoneGland, gainArmorPerAlly, organ_heatAccumulate, organ_poisonArmor, organ_toxicPulse, organ_armorBash, state_hardenAbsorb, card_strengthBite, organ_lifeSteal } from "@/core/effects/organ/organSpecificEffects"
+import { boss_corruptionTick, boss_armorToPower, boss_sporePassive, boss_poisonSurge, boss_armorOverload, boss_armorScaleDamage, boss_toxicAmplify, boss_toxicHeal, boss_toxicArmor, boss_myceliumSpread, boss_steelWill, boss_corruptionCorePoison } from "@/core/effects/boss/bossEffects"
+import { clearArmorEffect } from "@/core/effects/clearArmor"
 import { addCardToHand } from "@/core/effects/card/addCardToHand"
 import { countAndTrigger } from "@/core/effects/status/countAndTrigger"
 import { toggleStatus } from "@/core/effects/status/toggleStatus"
@@ -340,6 +343,70 @@ export const effectMap:EffectData[] = [
     key:"healOrgan",
     effect:healOrgan
 },{
+    label:"修复器官质量",
+    key:"repairOrgan",
+    effect:repairOrgan
+},{
+    label:"修改器官卡牌属性",
+    key:"modifyOrganCardStatus",
+    effect:modifyOrganCardStatus
+},{
+    label:"热量计时",
+    key:"organ_heatTick",
+    effect:organ_heatTick
+},{
+    label:"过期隔板",
+    key:"organ_rustySeparator",
+    effect:organ_rustySeparator
+},{
+    label:"急救电池",
+    key:"organ_emergencyBattery",
+    effect:organ_emergencyBattery
+},{
+    label:"信息素腺体：扩散指挥",
+    key:"organ_pheromoneGland",
+    effect:organ_pheromoneGland
+},{
+    label:"王室甲壳：每友军获得护甲",
+    key:"gainArmorPerAlly",
+    effect:gainArmorPerAlly
+},{
+    label:"热量积累器：固定积热+过载",
+    key:"organ_heatAccumulate",
+    effect:organ_heatAccumulate
+},{
+    label:"毒素护甲：每回合首次受伤获护甲",
+    key:"organ_poisonArmor",
+    effect:organ_poisonArmor
+},{
+    label:"毒素脉冲：给双方施毒",
+    key:"organ_toxicPulse",
+    effect:organ_toxicPulse
+},{
+    label:"护甲冲撞：消耗所有护甲造成等量伤害",
+    key:"organ_armorBash",
+    effect:organ_armorBash
+},{
+    label:"护甲清零效果（支持壁垒拦截）",
+    key:"clearArmorEffect",
+    effect:clearArmorEffect
+},{
+    label:"指挥嘶鸣：给所有友军+指挥层",
+    key:"card_commandScreech",
+    effect:card_commandScreech
+},{
+    label:"指挥连击：按指挥层数打击",
+    key:"card_commandStrike",
+    effect:card_commandStrike
+},{
+    label:"热能冲击：基础+热量/2伤害",
+    key:"card_heatBlast",
+    effect:card_heatBlast
+},{
+    label:"腐蚀爆发：双面伤害+成长",
+    key:"card_corrosiveBurst",
+    effect:card_corrosiveBurst
+},{
     label:"启用器官奖励动作",
     key:"enableOrganRewardAction",
     effect:enableOrganRewardAction
@@ -416,6 +483,10 @@ export const effectMap:EffectData[] = [
     key:"card_wasteHeatRecovery",
     effect:card_wasteHeatRecovery
 },{
+    label:"不稳定充能：随机改变充能层数",
+    key:"card_unstableCharge",
+    effect:card_unstableCharge
+},{
     label:"向手牌添加卡牌",
     key:"addCardToHand",
     effect:addCardToHand
@@ -480,5 +551,69 @@ export const effectMap:EffectData[] = [
     label:"向牌堆添加随机卡牌",
     key:"addRandomCardsToPile",
     effect:addRandomCardsToPile
+},{
+    label:"直接扣除生命值（绕过护甲）",
+    key:"loseHp",
+    effect:loseHp
+},{
+    label:"变硬：按层数百分比减少本次伤害",
+    key:"state_hardenAbsorb",
+    effect:state_hardenAbsorb
+},{
+    label:"撕咬：造成基础+力量×系数伤害",
+    key:"card_strengthBite",
+    effect:card_strengthBite
+},{
+    label:"腐食再生：按缺失HP回血，受预算限制",
+    key:"organ_lifeSteal",
+    effect:organ_lifeSteal
+},{
+    label:"腐化积累：每回合+2腐化，达到阈值爆发",
+    key:"boss_corruptionTick",
+    effect:boss_corruptionTick
+},{
+    label:"护甲转力量：护甲/N转化为临时力量",
+    key:"boss_armorToPower",
+    effect:boss_armorToPower
+},{
+    label:"孢子被动：对所有对手施加N层中毒",
+    key:"boss_sporePassive",
+    effect:boss_sporePassive
+},{
+    label:"中毒爆发：对手中毒≥阈值时造成直接伤害",
+    key:"boss_poisonSurge",
+    effect:boss_poisonSurge
+},{
+    label:"过载积甲：护甲≥阈值时钢铁压碾",
+    key:"boss_armorOverload",
+    effect:boss_armorOverload
+},{
+    label:"护甲冲击：基础+护甲/N点伤害",
+    key:"boss_armorScaleDamage",
+    effect:boss_armorScaleDamage
+},{
+    label:"中毒放大：施加中毒时额外+N层",
+    key:"boss_toxicAmplify",
+    effect:boss_toxicAmplify
+},{
+    label:"毒素回血：按对手中毒总层数回血",
+    key:"boss_toxicHeal",
+    effect:boss_toxicHeal
+},{
+    label:"毒素护甲：按对手中毒总层数获得护甲",
+    key:"boss_toxicArmor",
+    effect:boss_toxicArmor
+},{
+    label:"菌网扩散：对随机对手施加N层中毒",
+    key:"boss_myceliumSpread",
+    effect:boss_myceliumSpread
+},{
+    label:"钢铁意志：每场战斗1次抵御致命伤害",
+    key:"boss_steelWill",
+    effect:boss_steelWill
+},{
+    label:"腐化核心：每次出牌对所有对手施加N层中毒",
+    key:"boss_corruptionCorePoison",
+    effect:boss_corruptionCorePoison
 }]
 

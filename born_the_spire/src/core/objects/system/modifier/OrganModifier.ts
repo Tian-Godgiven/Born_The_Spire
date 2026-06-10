@@ -20,6 +20,7 @@ import { showComponent } from "@/core/hooks/componentManager"
 
 import { getCardModifier } from "./CardModifier"
 import { isPlayer } from "@/core/utils/typeGuards"
+import { nowBattle } from "@/core/objects/game/battle"
 
 
 
@@ -196,6 +197,25 @@ export class OrganModifier extends ItemModifier {
                 }
             }, `词条 (${organ.entry.length}个)`)
         }
+
+        // 7. 触发初始等级的里程碑（level > 1 时补跑低等级里程碑）
+        if (organ.level > 1 && organ.upgradeConfig?.milestones) {
+            const milestones = organ.upgradeConfig.milestones
+                .filter(m => m.level <= organ.level)
+                .sort((a, b) => a.level - b.level)
+
+            for (const milestone of milestones) {
+                if (milestone.effects?.length) {
+                    await doEvent({
+                        key: "organMilestone",
+                        source: this.owner,
+                        medium: organ,
+                        target: this.owner,
+                        effectUnits: milestone.effects
+                    })
+                }
+            }
+        }
     }
 
     /**
@@ -361,11 +381,26 @@ export class OrganModifier extends ItemModifier {
         // 触发 break 交互（一次性效果）
         const breakInteraction = organ.getInteraction("break")
         if(breakInteraction && breakInteraction.effects) {
+            // 解析 break 交互的 target（默认为器官持有者）
+            let breakTarget: Entity | Entity[] = this.owner
+            const targetCfg = breakInteraction.target
+            if (targetCfg) {
+                const battle = nowBattle.value
+                if (battle) {
+                    if (targetCfg.faction === "player") {
+                        breakTarget = battle.getTeam("player") || [this.owner]
+                    } else if (targetCfg.faction === "enemy") {
+                        breakTarget = battle.getAliveEnemies()
+                    } else if (targetCfg.faction === "all") {
+                        breakTarget = [...(battle.getTeam("player") || []), ...battle.getAliveEnemies()]
+                    }
+                }
+            }
             doEvent({
                 key: "breakOrgan",
                 source: this.owner,
                 medium: organ,
-                target: this.owner,
+                target: breakTarget,
                 effectUnits: breakInteraction.effects
             })
         }

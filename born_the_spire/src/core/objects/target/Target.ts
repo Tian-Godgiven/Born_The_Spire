@@ -31,8 +31,10 @@ export class Target extends Entity{
     }
 }
 
+export type OrganEntry = string | { key: string, level?: number }
+
 export type CharaMap = TargetMap & {
-    organ:string[]
+    organ: OrganEntry[]
     trigger?:TriggerMap
     reaction?:ReactionMap
 }
@@ -59,13 +61,18 @@ export class Chara extends Target{
             if (map.organ) {
                 const organList = getLazyModule<any[]>('organList')
 
-                for(let key of map.organ){
+                for(let entry of map.organ){
+                    const key = typeof entry === 'string' ? entry : entry.key
+                    const levelOverride = typeof entry === 'string' ? undefined : entry.level
                     const organData = organList.find((o: any) => o.key === key)
                     if (!organData) {
                         console.error(`[Chara] 未找到器官: ${key}`)
                         continue
                     }
-                    const organ = await createOrgan(organData)
+                    const organDataWithLevel = levelOverride !== undefined
+                        ? { ...organData, level: levelOverride }
+                        : organData
+                    const organ = await createOrgan(organDataWithLevel)
                     getOrgan(chara, chara, organ)
                 }
             }
@@ -101,17 +108,22 @@ export class Chara extends Target{
     }
 
     // 添加器官的方法
-    protected async initOrgans(organKeys: string[]) {
-        if (organKeys) {
+    protected async initOrgans(organEntries: OrganEntry[]) {
+        if (organEntries) {
             const organList = getLazyModule<any[]>('organList')
 
-            for(let key of organKeys){
+            for(let entry of organEntries){
+                const key = typeof entry === 'string' ? entry : entry.key
+                const levelOverride = typeof entry === 'string' ? undefined : entry.level
                 const organData = organList.find((o: any) => o.key === key)
                 if (!organData) {
                     console.error(`[Chara] 未找到器官: ${key}`)
                     continue
                 }
-                const organ = await createOrgan(organData)
+                const organDataWithLevel = levelOverride !== undefined
+                    ? { ...organData, level: levelOverride }
+                    : organData
+                const organ = await createOrgan(organDataWithLevel)
                 getOrgan(this, this, organ)
             }
         }

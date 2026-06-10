@@ -116,7 +116,21 @@ export class Transaction{
             await event.onExecute(event)
         }
 
-        // 2. 执行每个效果
+        // 2. 执行效果（事件被取消则跳过）
+        await this._applyEffects(event)
+
+        // 3. Event after 触发器
+        await event.trigger("after", 0)
+
+        // 4. 调用 onComplete 回调（如果有）
+        if (event.onComplete) {
+            event.onComplete(event)
+        }
+    }
+
+    private async _applyEffects(event: ActionEvent) {
+        if (event.isCancelled()) return
+
         for (let effect of event.effects) {
             // 如果效果有独立目标，作为子事件执行
             if (effect.targetSpec) {
@@ -147,14 +161,6 @@ export class Transaction{
 
             // Effect after 触发器
             await effect.trigger("after", 0)
-        }
-
-        // 3. Event after 触发器
-        await event.trigger("after", 0)
-
-        // 5. 调用 onComplete 回调（如果有）
-        if (event.onComplete) {
-            event.onComplete(event)
         }
     }
 

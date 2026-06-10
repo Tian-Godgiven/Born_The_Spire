@@ -61,7 +61,7 @@ export class ActionEvent<
         this.info = info;
         //构建该事件所包含的效果对象
         for(let effectUnit of effectUnits){
-            const effect = createEffectByUnit(this,effectUnit)
+            const effect = createEffectByUnit(this, effectUnit, this.medium)
             this.effects.push(effect)
         }
     }

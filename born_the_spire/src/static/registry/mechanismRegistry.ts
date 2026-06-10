@@ -9,6 +9,7 @@ import { getMechanismManager } from "@/core/objects/system/mechanism/MechanismMa
 import { Current } from "@/core/objects/system/Current/current"
 import { Status, appendStatus } from "@/core/objects/system/status/Status"
 import { newLog } from "@/ui/hooks/global/log"
+import { doEvent } from "@/core/objects/system/ActionEvent"
 
 /**
  * 机制投票
@@ -277,7 +278,17 @@ function generateTriggersForMechanism(
                 how: "make",
                 key: "turnStart",
                 callback: async () => {
-                    if (entity.current[storageKey]) {
+                    if (!entity.current[storageKey]?.value) return
+                    if (config.key === "armor") {
+                        // 护甲清零走事件系统，支持壁垒等机制拦截
+                        doEvent({
+                            key: "clearArmor",
+                            source: entity,
+                            medium: entity,
+                            target: entity,
+                            effectUnits: [{ key: "clearArmorEffect", params: {} }]
+                        })
+                    } else {
                         entity.current[storageKey].value = 0
                     }
                 }

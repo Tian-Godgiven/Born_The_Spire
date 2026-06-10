@@ -284,7 +284,184 @@ export const enemyList:EnemyMap[] = [
                 describe: "默认：攻击"
             }
         }
-    }
+    },
+
+    // ========== 第一层：有机体 ==========
+
+    {
+        label: "蚁兵",
+        key: "enemy_ant_soldier",
+        status: { "max-health": 25 },
+        organ: [
+            { key: "enemy_organ_ant_mandible", level: 1 },
+            "enemy_organ_ant_acid_gland"
+        ]
+    },
+
+    {
+        label: "蚁卫",
+        key: "enemy_ant_guard",
+        status: { "max-health": 45 },
+        organ: [
+            { key: "enemy_organ_ant_mandible", level: 2 },
+            "enemy_organ_ant_carapace",
+            "enemy_organ_ant_charge_gland"
+        ]
+    },
+
+    {
+        label: "孢子菌",
+        key: "enemy_spore_fungus",
+        status: { "max-health": 35 },
+        organ: [
+            "enemy_organ_fungal_cap",
+            "enemy_organ_spore_sac"
+        ]
+    },
+
+    {
+        label: "毒液蟾",
+        key: "enemy_poison_toad",
+        status: { "max-health": 30 },
+        organ: [
+            "enemy_organ_poison_gland",
+            "enemy_organ_poison_skin",
+            "enemy_organ_sticky_tongue"
+        ]
+    },
+
+    // ========== 第一层：机械 ==========
+
+    {
+        label: "装甲哨卫",
+        key: "enemy_armored_sentry",
+        status: { "max-health": 50 },
+        organ: [
+            "enemy_organ_rusty_separator",
+            "enemy_organ_charge_cannon"
+        ]
+    },
+
+    {
+        label: "维修无人机",
+        key: "enemy_repair_drone",
+        status: { "max-health": 20 },
+        organ: [
+            "enemy_organ_repair_module",
+            "enemy_organ_emergency_battery"
+        ]
+    },
+
+    {
+        label: "故障机器",
+        key: "enemy_broken_machine",
+        status: { "max-health": 40 },
+        organ: [
+            "enemy_organ_unstable_battery",
+            "enemy_organ_heavy_hammer"
+        ]
+    },
+
+    // ========== 第一层精英 ==========
+
+    {
+        label: "蚁后",
+        key: "enemy_ant_queen",
+        status: { "max-health": 70 },
+        organ: [
+            "enemy_organ_pheromone_gland",
+            "enemy_organ_queen_mandible",
+            "enemy_organ_royal_carapace"
+        ]
+    },
+
+    {
+        label: "废堆猎手",
+        key: "enemy_heap_hunter",
+        status: { "max-health": 150 },
+        organ: [
+            "enemy_organ_corruption_gland",
+            "enemy_organ_life_steal",
+            "enemy_organ_rot_jaw",
+            "enemy_organ_filthy_hide"
+        ]
+    },
+
+    {
+        label: "铁壁要塞",
+        key: "enemy_iron_fortress",
+        status: { "max-health": 120 },
+        organ: [
+            "enemy_organ_barricade_shell",
+            "enemy_organ_metallicize_core",
+            "enemy_organ_defense_module",
+            "enemy_organ_malleable_plating"
+        ]
+    },
+
+    {
+        label: "有毒混合物",
+        key: "enemy_toxic_amalgam",
+        status: { "max-health": 100 },
+        organ: [
+            "enemy_organ_toxic_core",
+            "enemy_organ_poison_armor",
+            "enemy_organ_volatile_sac"
+        ]
+    },
+
+    // ========== 第一层Boss ==========
+
+    // Boss 1：废堆融合体 — 腐化积累定时炸弹
+    {
+        label: "废堆融合体",
+        key: "enemy_heap_amalgam",
+        status: {
+            "max-health": 220,
+            "action-order": 20
+        },
+        organ: [
+            "boss1_organ_corruption_tick",
+            "boss1_organ_corruption_core",
+            "boss1_organ_iron_skeleton",
+            "boss1_organ_overheat_engine",
+            "boss1_organ_fusion_shell"
+        ]
+    },
+
+    // Boss 2：剧毒菌母 — 中毒滚雪球DoT施压
+    {
+        label: "剧毒菌母",
+        key: "enemy_toxic_mother",
+        status: {
+            "max-health": 260,
+            "action-order": 20
+        },
+        organ: [
+            "boss2_organ_spore_passive",
+            "boss2_organ_spore_net",
+            "boss2_organ_toxic_amplifier",
+            "boss2_organ_mycelium_roots",
+            "boss2_organ_toxic_armor"
+        ]
+    },
+
+    // Boss 3：废铁战甲 — 护甲积累反向定时炸弹
+    {
+        label: "废铁战甲",
+        key: "enemy_iron_war_machine",
+        status: {
+            "max-health": 180,
+            "action-order": 20
+        },
+        organ: [
+            "boss3_organ_armor_core",
+            "boss3_organ_overload_engine",
+            "boss3_organ_iron_wall_core",
+            "boss3_organ_iron_assimilation",
+            "boss3_organ_steel_will"
+        ]
+    },
 ]
 
 export async function getEnemyByKey(key:string){

@@ -252,6 +252,20 @@ export class StateModifier {
                     const triggerKey = (triggerDef as any).importantKey || triggerDef.key
                     unit.registerTriggerRemover(triggerRemover.remove, triggerKey)
                 }
+            } else if ((triggerDef as any).cancelEvent) {
+                // 特殊格式：直接取消触发事件（在 before 阶段同步拦截，不产生子事件）
+                const triggerRemover = this.owner.appendTrigger({
+                    when,
+                    how,
+                    key,
+                    level,
+                    callback: (event) => {
+                        if (!this.getState(state.key)) return
+                        event.cancel()
+                    }
+                })
+                const triggerKey = (triggerDef as any).importantKey || triggerDef.key
+                unit.registerTriggerRemover(triggerRemover.remove, triggerKey)
             } else if ("action" in triggerDef) {
                 // 新格式：通过 action 查找 reaction
                 const action = (triggerDef as any).action
@@ -271,6 +285,18 @@ export class StateModifier {
                     callback: (event, effect, _triggerLevel) => {
                         // 防御性检查：状态已被移除则跳过
                         if (!this.getState(state.key)) return
+
+                        // requirePositiveEffect：跳过实际值为0的事件（如被护甲完全吸收的伤害）
+                        if ((triggerDef as any).requirePositiveEffect) {
+                            const hasPositive = event.effects.some((e: any) => Number(e.params?.value ?? 0) > 0)
+                            if (!hasPositive) return
+                        }
+
+                        // requireFromAttackCard：仅当伤害来自攻击牌时触发
+                        if ((triggerDef as any).requireFromAttackCard) {
+                            const hasAttackCard = event.effects.some((e: any) => e.params?.fromAttackCard === true)
+                            if (!hasAttackCard) return
+                        }
 
                         // 直接处理事件创建，确保 source 是状态本身
                         for (let eventConfig of reactionEvents) {

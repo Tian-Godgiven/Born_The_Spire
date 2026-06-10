@@ -106,6 +106,8 @@ export interface TriggerMapItemWithAction {
     action: string;  // 指定响应名称（与 event 互斥）
     info?: string;
     condition?: TriggerCondition | Condition;
+    requirePositiveEffect?: boolean;  // 仅当事件中存在值>0的效果时才触发（用于柔韧等）
+    requireFromAttackCard?: boolean;  // 仅当伤害来自攻击牌时才触发（用于柔韧等）
     triggerTarget?: {
         participantType: "entity"
         key: string  // 通过 key 指定目标，如 "player" 表示当前战斗中的玩家
@@ -114,8 +116,20 @@ export interface TriggerMapItemWithAction {
     disableUntil?: "battleEnd"
 }
 
+// 特殊格式：在 before 阶段直接取消触发事件，不产生子事件（用于壁垒等）
+export interface TriggerMapItemWithCancelEvent {
+    when: "before" | "after";
+    how: "make" | "via" | "take";
+    key: string;
+    level?: number;
+    cancelEvent: true;
+    importantKey?: string;
+    info?: string;
+    condition?: TriggerCondition | Condition;
+}
+
 // 触发器映射项：支持旧格式或新格式
-export type TriggerMapItem = TriggerMapItemWithEvent | TriggerMapItemWithAction
+export type TriggerMapItem = TriggerMapItemWithEvent | TriggerMapItemWithAction | TriggerMapItemWithCancelEvent
 
 // 有 importantKey 的版本（仅支持新格式）
 export interface ImportantTriggerMapItem {
@@ -128,6 +142,8 @@ export interface ImportantTriggerMapItem {
     onlyKey?: string;
     info?: string;
     condition?: TriggerCondition | Condition;
+    requirePositiveEffect?: boolean;  // 仅当事件中存在值>0的效果时才触发
+    requireFromAttackCard?: boolean;  // 仅当伤害来自攻击牌时才触发
     triggerTarget?: {
         participantType: "entity"
         key: string  // 通过 key 指定目标，如 "player" 表示当前战斗中的玩家

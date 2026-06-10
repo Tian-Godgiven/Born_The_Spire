@@ -1,6 +1,7 @@
 import type { ActionEvent } from "../ActionEvent";
 import type { Effect } from "./Effect";
-import { isState, isEffect } from "@/core/utils/typeGuards";
+import type { EventParticipant } from "@/core/types/event/EventParticipant";
+import { isState, isEffect, isEntity } from "@/core/utils/typeGuards";
 import { getStatusValue } from "../status/Status";
 import { getCurrentValue } from "../Current/current";
 import { newError } from "@/ui/hooks/global/alert";
@@ -31,12 +32,15 @@ export type EffectParams = {
  * - $source.stateStack(key): 从 source 获取状态层数（key 可选，默认 default）
  * - random(min,max): 生成随机数（不带 $）
  */
-export function resolveEffectParams(param: EffectParams[string], event: ActionEvent, effect: Effect) {
+export function resolveEffectParams(param: EffectParams[string], event: ActionEvent, effect: Effect, owner?: EventParticipant) {
     // 构建解析上下文
+    // owner：定义该 EffectUnit 的物品（卡牌/器官/遗物），由 createEffectByUnit 的调用方显式传入
+    // $self 表达式解析为 owner，与 event.medium 解耦
     const context = {
         source: event.source,
         medium: event.medium,
         target: event.target,
+        owner: isEntity(owner) ? owner : undefined,
         event,
         triggerEffect: effect,
         lazyResolve: true,  // 效果构造时，$triggerEffect.params() 延迟解析

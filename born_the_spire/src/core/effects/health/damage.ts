@@ -1,12 +1,17 @@
 import { ActionEvent, handleEventEntity } from "@/core/objects/system/ActionEvent";
 import { changeCurrentValue, getCurrentValue } from "@/core/objects/system/Current/current";
 import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc";
-import { isEntity, isEffect } from "@/core/utils/typeGuards";
+import { isCard, isEntity, isEffect } from "@/core/utils/typeGuards";
 import { newError } from "@/ui/hooks/global/alert";
 
 //对单个目标造成伤害
 export const damageTo:EffectFunc = (event:ActionEvent,effect)=>{
-    const value = Number(effect.params.value)
+    if (isCard(event.medium) && (event.medium as any).tags?.includes("attack")) {
+        effect.params.fromAttackCard = true
+    }
+    const baseValue = Number(effect.params.value)
+    const multiplier = effect.params.multiplier !== undefined ? Number(effect.params.multiplier) : 1
+    const value = baseValue * multiplier
     const {target} = event
     handleEventEntity(target,(t)=>{
         // 伤害只能作用于实体对象

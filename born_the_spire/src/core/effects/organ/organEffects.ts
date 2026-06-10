@@ -14,6 +14,8 @@ import { OrganTags } from "@/static/list/target/organTags"
 import { getCurrentValue, setCurrentValue } from "@/core/objects/system/Current/current"
 import { createOrgan } from "@/core/factories"
 import { doEvent } from "@/core/objects/system/ActionEvent"
+import { getCardModifier } from "@/core/objects/system/modifier/CardModifier"
+import type { Chara } from "@/core/objects/target/Target"
 
 /**
  * 替换器官效果
@@ -220,4 +222,81 @@ export const healOrgan: EffectFunc = async (_event, effect) => {
     setCurrentValue(organ, "mass", newMass)
 
     newLog([organ, `质量恢复 +${heal}`, `(${currentMass} → ${newMass})`])
+}
+
+/**
+ * 修复器官：找到 target 身上质量损失最多的器官，恢复 value 点质量
+ *
+ * params:
+ *   value: number - 恢复的质量点数
+ */
+export const repairOrgan: EffectFunc = (event, effect) => {
+    const value = Number(effect.params.value ?? 0)
+    const target = Array.isArray(event.target) ? event.target[0] : event.target
+    if (!isEntity(target)) return false
+
+    const organs = getOrganModifier(target as any).getOrgans()
+    const repairable = organs.filter(o => o.status["max-mass"])
+
+    if (repairable.length === 0) return false
+
+    // 找质量损失最多的器官
+    const organ = repairable.reduce((worst, o) => {
+        const loss = (o.status["max-mass"].value as number) - getCurrentValue(o, "mass")
+        const worstLoss = (worst.status["max-mass"].value as number) - getCurrentValue(worst, "mass")
+        return loss > worstLoss ? o : worst
+    })
+
+    const currentMass = getCurrentValue(organ, "mass")
+    const maxMass = Number(organ.status["max-mass"].value)
+    if (currentMass >= maxMass) return false
+
+    const newMass = Math.min(maxMass, currentMass + value)
+    setCurrentValue(organ, "mass", newMass)
+    newLog([organ, `质量修复 +${value}`, `(${currentMass} → ${newMass})`])
+    return true
+}
+
+/**
+ * 修改本器官提供的卡牌的 status
+ *
+ * 用于器官升级里程碑：只强化该器官自身提供的卡牌实例
+ *
+ * params:
+ *   statusKey: string - 要修改的 status 键
+ *   delta: number    - 变化量（正数增加，负数减少）
+ */
+export const modifyOrganCardStatus: EffectFunc = (event, effect) => {
+    const { medium, target } = event
+    const statusKey = String(effect.params.statusKey ?? "")
+    const delta = Number(effect.params.delta ?? 0)
+
+    if (!statusKey) {
+        newLog(["modifyOrganCardStatus: 缺少 statusKey 参数"])
+        return false
+    }
+
+    if (!(medium instanceof Organ)) {
+        newLog(["modifyOrganCardStatus: medium 必须是器官"])
+        return false
+    }
+
+    const owner = Array.isArray(target) ? target[0] : target
+    if (!isEntity(owner)) return false
+
+    const cardModifier = getCardModifier(owner as Chara)
+    const cards = cardModifier.getCardsFromSource(medium)
+
+    for (const card of cards) {
+        const status = card.status[statusKey]
+        if (!status) {
+            console.warn(`[modifyOrganCardStatus] 卡牌 ${card.label} 没有 status: ${statusKey}`)
+            continue
+        }
+        const current = typeof status.baseValue === "string" ? Number(status.baseValue) : Number(status.baseValue)
+        status.setOriginalBaseValue(current + delta)
+        newLog([card, `${statusKey} ${delta > 0 ? "+" : ""}${delta} → ${current + delta}`])
+    }
+
+    return true
 }

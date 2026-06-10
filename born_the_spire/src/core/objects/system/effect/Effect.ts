@@ -20,7 +20,8 @@ type EffectConstructor = {
     params:EffectParams,
     describe?:string[],
     triggerEvent:ActionEvent,
-    resultStoreAs?:string
+    resultStoreAs?:string,
+    owner?:EventParticipant
 }
 
 export class Effect implements EventParticipant{
@@ -34,8 +35,9 @@ export class Effect implements EventParticipant{
     public actionEvent:ActionEvent;//引发这个效果的事件
     public resultStoreAs?:string
     public targetSpec?:string//独立目标规格，设置后该效果作为子事件执行
+    private _owner?:EventParticipant  // 定义该 EffectUnit 的物品，仅用于 $self 表达式解析
     private _cancelled:boolean = false
-    constructor({label="",key,effectFunc,params,describe=[],resultStoreAs,triggerEvent}:EffectConstructor){
+    constructor({label="",key,effectFunc,params,describe=[],resultStoreAs,triggerEvent,owner}:EffectConstructor){
         this.label = label;
         this.key = key;
         this.effectFunc = effectFunc;
@@ -43,6 +45,7 @@ export class Effect implements EventParticipant{
         this.describe = describe;
         this.actionEvent = triggerEvent
         this.resultStoreAs = resultStoreAs
+        this._owner = owner
 
         // 立即解析参数中的 $ 语法
         this.resolveParams()
@@ -65,9 +68,8 @@ export class Effect implements EventParticipant{
     private resolveParams() {
         for (const key in this.params) {
             const param = this.params[key]
-            // 如果是字符串且以 $ 开头，尝试解析
             if (typeof param === "string" && param.startsWith("$")) {
-                const resolved = resolveEffectParams(param, this.actionEvent, this)
+                const resolved = resolveEffectParams(param, this.actionEvent, this, this._owner)
                 if (resolved !== undefined) {
                     this.params[key] = resolved
                 }

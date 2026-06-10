@@ -7,6 +7,7 @@ import { newLog } from "@/ui/hooks/global/log"
 import { nowBattle } from "@/core/objects/game/battle"
 import { endBattle } from "@/core/hooks/battle"
 import { getItemModifier } from "@/core/objects/system/modifier/ItemModifier"
+import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
 
 /**
  * 杀死目标
@@ -45,6 +46,14 @@ export const killTarget: EffectFunc = (event: ActionEvent, effect) => {
         // 将 isAlive 设置为 0
         changeCurrentValue(t, "isAlive", 0, event)
 
+        // 死亡时触发所有器官的损坏流程（break 交互、broken 触发器）
+        const organModifier = getOrganModifier(t)
+        for (const organ of organModifier.getOrgans()) {
+            if (!organ.isDisabled) {
+                organModifier.breakOrgan(organ)
+            }
+        }
+
         // 死亡时清理物品修饰器（器官/遗物等的副作用）
         getItemModifier(t).then(modifier => {
             modifier.clearAll()
@@ -59,6 +68,28 @@ export const killTarget: EffectFunc = (event: ActionEvent, effect) => {
                 endBattle(battleResult === 'player_win' ? 'win' : 'lose')
             }
         }
+    })
+
+    return true
+}
+
+/**
+ * 直接扣除目标生命值，绕过护甲系统
+ *
+ * params:
+ * - value: number - 扣除量
+ */
+export const loseHp: EffectFunc = (event: ActionEvent, effect) => {
+    const value = Number(effect.params.value)
+    const { target } = event
+
+    handleEventEntity(target, (t) => {
+        if (!isEntity(t)) {
+            newError(["loseHp 效果只能作用于实体对象，当前目标类型:", t.participantType])
+            return
+        }
+        const oldValue = getCurrentValue(t, "health", 0)
+        changeCurrentValue(t, "health", oldValue - value, event)
     })
 
     return true

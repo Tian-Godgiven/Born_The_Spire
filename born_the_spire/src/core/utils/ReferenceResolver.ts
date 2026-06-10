@@ -10,6 +10,7 @@
  *   $eventResult(key)                      → 从事件结果获取值
  *   $triggerEffect.params(key)             → 获取触发效果的参数（延迟解析）
  *   $triggerEffect.target.accessor(args)   → 获取触发效果的事件目标的属性
+ *   $owner.accessor(args)                  → 定义该 EffectUnit 的物品（卡牌/器官/遗物）自身属性
  *   $participant.accessor(args)            → 从参与者获取属性值
  *   $event.info(key)                       → 获取触发事件的 info 字段值
  *   $scene                                 → 当前场景类型（combat/pool/event/...）

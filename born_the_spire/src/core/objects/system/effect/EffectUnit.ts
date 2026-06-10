@@ -1,6 +1,7 @@
 import { Effect } from "./Effect"
 import type { EffectParams } from "./EffectFunc"
 import type { ActionEvent } from "../ActionEvent"
+import type { EventParticipant } from "@/core/types/event/EventParticipant"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { newError } from "@/ui/hooks/global/alert"
 
@@ -15,7 +16,7 @@ export interface EffectUnit{
 }
 
 //通过effectUnit创建effect对象
-export function createEffectByUnit(event:ActionEvent,unit:EffectUnit):Effect{
+export function createEffectByUnit(event:ActionEvent,unit:EffectUnit,owner?:EventParticipant):Effect{
     /**
      * 架构说明：为什么使用懒加载 effectMap？
      *
@@ -54,7 +55,8 @@ export function createEffectByUnit(event:ActionEvent,unit:EffectUnit):Effect{
         params: clonedParams,
         describe,
         triggerEvent:event,
-        resultStoreAs
+        resultStoreAs,
+        owner
     })
     // 传递独立目标规格
     if (target) {
