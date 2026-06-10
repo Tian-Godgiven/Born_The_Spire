@@ -35,7 +35,6 @@ import { accumulateAndTrigger } from "@/core/effects/relic/accumulateAndTrigger"
 import { exhaustRandomCardByTag } from "@/core/effects/card/exhaustRandomCardByTag"
 import { card_wasteHeatRecovery, card_unstableCharge, card_commandScreech, card_commandStrike, card_heatBlast, card_corrosiveBurst } from "@/core/effects/card/cardSpecificEffects"
 import { organ_heatTick, organ_rustySeparator, organ_emergencyBattery, organ_pheromoneGland, gainArmorPerAlly, organ_heatAccumulate, organ_poisonArmor, organ_toxicPulse, organ_armorBash, state_hardenAbsorb, card_strengthBite, organ_lifeSteal } from "@/core/effects/organ/organSpecificEffects"
-import { boss_corruptionTick, boss_armorToPower, boss_sporePassive, boss_poisonSurge, boss_armorOverload, boss_armorScaleDamage, boss_toxicAmplify, boss_toxicHeal, boss_toxicArmor, boss_myceliumSpread, boss_steelWill, boss_corruptionCorePoison } from "@/core/effects/boss/bossEffects"
 import { clearArmorEffect } from "@/core/effects/clearArmor"
 import { addCardToHand } from "@/core/effects/card/addCardToHand"
 import { countAndTrigger } from "@/core/effects/status/countAndTrigger"
@@ -567,53 +566,5 @@ export const effectMap:EffectData[] = [
     label:"腐食再生：按缺失HP回血，受预算限制",
     key:"organ_lifeSteal",
     effect:organ_lifeSteal
-},{
-    label:"腐化积累：每回合+2腐化，达到阈值爆发",
-    key:"boss_corruptionTick",
-    effect:boss_corruptionTick
-},{
-    label:"护甲转力量：护甲/N转化为临时力量",
-    key:"boss_armorToPower",
-    effect:boss_armorToPower
-},{
-    label:"孢子被动：对所有对手施加N层中毒",
-    key:"boss_sporePassive",
-    effect:boss_sporePassive
-},{
-    label:"中毒爆发：对手中毒≥阈值时造成直接伤害",
-    key:"boss_poisonSurge",
-    effect:boss_poisonSurge
-},{
-    label:"过载积甲：护甲≥阈值时钢铁压碾",
-    key:"boss_armorOverload",
-    effect:boss_armorOverload
-},{
-    label:"护甲冲击：基础+护甲/N点伤害",
-    key:"boss_armorScaleDamage",
-    effect:boss_armorScaleDamage
-},{
-    label:"中毒放大：施加中毒时额外+N层",
-    key:"boss_toxicAmplify",
-    effect:boss_toxicAmplify
-},{
-    label:"毒素回血：按对手中毒总层数回血",
-    key:"boss_toxicHeal",
-    effect:boss_toxicHeal
-},{
-    label:"毒素护甲：按对手中毒总层数获得护甲",
-    key:"boss_toxicArmor",
-    effect:boss_toxicArmor
-},{
-    label:"菌网扩散：对随机对手施加N层中毒",
-    key:"boss_myceliumSpread",
-    effect:boss_myceliumSpread
-},{
-    label:"钢铁意志：每场战斗1次抵御致命伤害",
-    key:"boss_steelWill",
-    effect:boss_steelWill
-},{
-    label:"腐化核心：每次出牌对所有对手施加N层中毒",
-    key:"boss_corruptionCorePoison",
-    effect:boss_corruptionCorePoison
 }]
 

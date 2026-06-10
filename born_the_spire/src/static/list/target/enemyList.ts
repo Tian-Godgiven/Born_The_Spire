@@ -410,58 +410,6 @@ export const enemyList:EnemyMap[] = [
         ]
     },
 
-    // ========== 第一层Boss ==========
-
-    // Boss 1：废堆融合体 — 腐化积累定时炸弹
-    {
-        label: "废堆融合体",
-        key: "enemy_heap_amalgam",
-        status: {
-            "max-health": 220,
-            "action-order": 20
-        },
-        organ: [
-            "boss1_organ_corruption_tick",
-            "boss1_organ_corruption_core",
-            "boss1_organ_iron_skeleton",
-            "boss1_organ_overheat_engine",
-            "boss1_organ_fusion_shell"
-        ]
-    },
-
-    // Boss 2：剧毒菌母 — 中毒滚雪球DoT施压
-    {
-        label: "剧毒菌母",
-        key: "enemy_toxic_mother",
-        status: {
-            "max-health": 260,
-            "action-order": 20
-        },
-        organ: [
-            "boss2_organ_spore_passive",
-            "boss2_organ_spore_net",
-            "boss2_organ_toxic_amplifier",
-            "boss2_organ_mycelium_roots",
-            "boss2_organ_toxic_armor"
-        ]
-    },
-
-    // Boss 3：废铁战甲 — 护甲积累反向定时炸弹
-    {
-        label: "废铁战甲",
-        key: "enemy_iron_war_machine",
-        status: {
-            "max-health": 180,
-            "action-order": 20
-        },
-        organ: [
-            "boss3_organ_armor_core",
-            "boss3_organ_overload_engine",
-            "boss3_organ_iron_wall_core",
-            "boss3_organ_iron_assimilation",
-            "boss3_organ_steel_will"
-        ]
-    },
 ]
 
 export async function getEnemyByKey(key:string){

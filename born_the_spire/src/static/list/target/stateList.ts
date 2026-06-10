@@ -490,13 +490,4 @@ export const stateList: StateData[] = [
     showType: "number",
     repeate: "refresh"
 },
-// 腐化：废堆融合体的定时炸弹，每回合+2层，达到10层爆发对所有对手造成30点直接伤害
-{
-    label: "腐化",
-    key: "corruption",
-    category: "debuff",
-    describe: ["每回合积累，达到10层时爆发"],
-    showType: "number",
-    repeate: "stack"
-}
 ]
