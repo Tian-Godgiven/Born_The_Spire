@@ -12,8 +12,8 @@ import type { EffectUnit } from "../system/effect/EffectUnit";
 import type { Component } from "vue";
 import type { ActiveAbility } from "@/core/types/ActiveAbility";
 import type { BadgeConfig } from "@/core/types/BadgeConfig";
-import { nowBattle } from "../game/battle";
 import { isEntity } from "@/core/utils/typeGuards";
+import { resolveTriggerMountTargets } from "@/core/utils/resolveTriggerMountTargets";
 
 /**
  * 器官升级里程碑配置
@@ -199,31 +199,17 @@ export class Organ extends Entity{
         if(!interaction.triggers) return removers
 
         for(const triggerDef of interaction.triggers) {
-            // 确定触发器挂载的目标
-            let triggerMountTarget: Entity = owner
-            // 新格式：使用 triggerTarget 指定挂载目标（默认挂载到 owner）
-            if ((triggerDef as any).triggerTarget) {
-                if ((triggerDef as any).triggerTarget.participantType === "entity") {
-                    const battle = nowBattle.value
-                    if (battle) {
-                        const targetKey = (triggerDef as any).triggerTarget.key
-                        if (targetKey === "player") {
-                            const player = battle.getTeam("player")?.[0]
-                            if (player && isEntity(player)) {
-                                triggerMountTarget = player
-                            }
-                        }
-                    }
-                }
-            }
+            const mountTargets = resolveTriggerMountTargets((triggerDef as any).triggerTarget, owner)
 
             // 使用 Trigger.ts 的 createTriggerByTriggerMap 创建触发器
             // source=this（器官本身），target=owner（器官拥有者）
             const triggerObj = createTriggerByTriggerMap(this, owner, triggerDef as any)
 
-            // 将触发器挂载到指定目标上
-            const { remove } = triggerMountTarget.trigger.appendTrigger(triggerObj)
-            removers.push(remove)
+            // 将触发器挂载到所有目标上
+            for (const mt of mountTargets) {
+                const { remove } = mt.trigger.appendTrigger(triggerObj)
+                removers.push(remove)
+            }
         }
 
         return removers

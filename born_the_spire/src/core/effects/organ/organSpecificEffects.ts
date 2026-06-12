@@ -1,5 +1,5 @@
 import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
-import { isEntity, isEffect } from "@/core/utils/typeGuards"
+import { isEntity, isEffect, isEnemy } from "@/core/utils/typeGuards"
 import { getStateModifier } from "@/core/objects/system/modifier/StateModifier"
 import { getContextRandom } from "@/core/hooks/random"
 import { doEvent } from "@/core/objects/system/ActionEvent"
@@ -7,6 +7,7 @@ import { newLog } from "@/ui/hooks/global/log"
 import { changeCurrentValue, getCurrentValue } from "@/core/objects/system/Current/current"
 import { Organ } from "@/core/objects/target/Organ"
 import { nowBattle } from "@/core/objects/game/battle"
+import { stateList } from "@/static/list/target/stateList"
 
 /**
  * 热量计时：不稳定电池器官每回合触发
@@ -331,6 +332,116 @@ export const card_strengthBite: EffectFunc = (event, effect) => {
         effectUnits: [{ key: "damage", params: { value: totalDamage } }]
     })
 
+    return true
+}
+
+/**
+ * 剧毒心核：拦截 applyState 效果，若目标是 poison 则 stacks+1
+ * targetType: triggerEffect（event.target 是 applyState Effect 对象）
+ */
+export const organ_poisonAmplify: EffectFunc = (event, _effect) => {
+    const target = Array.isArray(event.target) ? event.target[0] : event.target
+    if (!isEffect(target)) return false
+    if (target.key !== "applyState") return false
+    if (target.params.stateKey !== "poison") return false
+    target.params.stacks = Number(target.params.stacks ?? 1) + 1
+    return true
+}
+
+/**
+ * 腐化铠甲：回合结束时，每有1个对手具备 debuff 则获得 n 点护甲
+ * params: { value } — 每个对手的护甲量
+ */
+export const organ_corruptionArmor: EffectFunc = (event, effect) => {
+    const target = Array.isArray(event.target) ? event.target[0] : event.target
+    if (!isEntity(target)) return false
+
+    const battle = nowBattle.value
+    if (!battle) return false
+
+    const armorPerDebuffOpponent = Number(effect.params?.value ?? 3)
+
+    // 对手列表：持有者是敌人→玩家；持有者是玩家→敌人
+    const opponents = isEnemy(target) ? battle.getAlivePlayers() : battle.getAliveEnemies()
+
+    let debuffCount = 0
+    for (const opponent of opponents) {
+        const states = getStateModifier(opponent as any).getAllStates()
+        const hasDebuff = states.some(s => {
+            const data = stateList.find(d => d.key === s.key)
+            if (data?.category !== "debuff") return false
+            return (s.stacks.find(st => st.key === "default")?.stack ?? 0) > 0
+        })
+        if (hasDebuff) debuffCount++
+    }
+
+    if (debuffCount <= 0) return false
+
+    const armorGain = debuffCount * armorPerDebuffOpponent
+    doEvent({
+        key: "gainArmor",
+        source: event.source,
+        medium: event.medium,
+        target,
+        effectUnits: [{ key: "gainArmor", params: { value: armorGain } }]
+    })
+    newLog([target, `腐化铠甲：+${armorGain} 护甲（${debuffCount} 个对手有 debuff）`])
+    return true
+}
+
+/**
+ * 相位转换：当持有者 HP 降至阈值以下时，将 actions-per-turn 提升至目标值
+ * params: { threshold, actions }
+ */
+export const organ_phaseShift: EffectFunc = (event, effect) => {
+    const target = Array.isArray(event.target) ? event.target[0] : event.target
+    if (!isEntity(target)) return false
+
+    const threshold = Number(effect.params?.threshold ?? 0.5)
+    const actionsTarget = Number(effect.params?.actions ?? 2)
+
+    const currentHealth = getCurrentValue(target as any, "health")
+    const maxHealth = Number((target as any).status?.["max-health"]?.value ?? currentHealth)
+    if (maxHealth <= 0) return false
+
+    if (currentHealth / maxHealth >= threshold) return false
+
+    const actionsStatus = (target as any).status?.["actions-per-turn"]
+    if (!actionsStatus) return false
+    if (Number(actionsStatus.value) >= actionsTarget) return false
+
+    actionsStatus.setOriginalBaseValue(actionsTarget)
+    newLog([target, `相位转换：每回合行动次数增加至 ${actionsTarget}`])
+    return true
+}
+
+/**
+ * 菌网扩散：给随机一个对手施加 n 层中毒
+ * params: { stacks }
+ */
+export const organ_mycelialSpread: EffectFunc = (event, effect) => {
+    const source = Array.isArray(event.target) ? event.target[0] : event.target
+    if (!isEntity(source)) return false
+
+    const battle = nowBattle.value
+    if (!battle) return false
+
+    const stacks = Number(effect.params?.stacks ?? 2)
+    const opponents = isEnemy(source) ? battle.getAlivePlayers() : battle.getAliveEnemies()
+    if (opponents.length === 0) return false
+
+    const rng = getContextRandom("mycelialSpread")
+    const idx = Math.floor(rng.nextFloatRange(0, opponents.length))
+    const randomOpponent = opponents[idx]
+
+    doEvent({
+        key: "applyState",
+        source: event.source,
+        medium: event.medium,
+        target: randomOpponent,
+        effectUnits: [{ key: "applyState", params: { stateKey: "poison", stacks } }]
+    })
+    newLog([source, `菌网扩散：对`, randomOpponent, `施加 ${stacks} 层中毒`])
     return true
 }
 

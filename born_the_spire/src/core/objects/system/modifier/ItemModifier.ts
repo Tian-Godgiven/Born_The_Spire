@@ -10,7 +10,8 @@ import { doEvent } from "../ActionEvent"
 import type { EffectUnit } from "../effect/EffectUnit"
 import { resolveTriggerEventTarget } from "../trigger/resolveTriggerEventTarget"
 import { nowBattle } from "@/core/objects/game/battle"
-import { isEntity } from "@/core/utils/typeGuards"
+import { isEntity, isEnemy } from "@/core/utils/typeGuards"
+import { resolveTriggerMountTargets } from "@/core/utils/resolveTriggerMountTargets"
 import { checkCondition as checkConditionExpr } from "@/core/types/ConditionSystem"
 import type { ConditionContext, Condition } from "@/core/types/ConditionSystem"
 import type { ActionEvent } from "../ActionEvent"
@@ -264,22 +265,8 @@ export class ItemModifier {
         this.owner = owner
     }
 
-    private resolvePossessTriggerMountTarget(triggerDef: TriggerMapItemWithAction | ImportantTriggerMapItem): Entity | null {
-        // 如果 triggerDef 中显式指定了 triggerTarget，使用它
-        if (triggerDef.triggerTarget?.participantType === "entity" && triggerDef.triggerTarget.key === "player") {
-            const battle = nowBattle.value
-            if (!battle) {
-                return null
-            }
-            const player = battle.getTeam("player")?.[0]
-            return player && isEntity(player) ? player : null
-        }
-
-        // 默认行为：挂载到物品的拥有者（this.owner）
-        // 对于遗物：this.owner = 玩家
-        // 对于器官：this.owner = 敌人
-        // 这样触发器可以监听拥有者的事件（如玩家抽牌、敌人行动等）
-        return this.owner
+    private resolvePossessTriggerMountTargets(triggerDef: TriggerMapItemWithAction | ImportantTriggerMapItem): Entity[] {
+        return resolveTriggerMountTargets(triggerDef.triggerTarget, this.owner)
     }
 
     private mountPossessTrigger(
@@ -368,10 +355,10 @@ export class ItemModifier {
             how: "take",
             key: "battleStart",
             callback: () => {
-                const triggerMountTarget = this.resolvePossessTriggerMountTarget(triggerDef)
-                if (!triggerMountTarget) return
-
-                this.mountPossessTrigger(item as Item, triggerDef, triggerMountTarget, unit)
+                const targets = this.resolvePossessTriggerMountTargets(triggerDef)
+                for (const t of targets) {
+                    this.mountPossessTrigger(item as Item, triggerDef, t, unit)
+                }
                 deferRemover.remove()
             }
         })
@@ -384,30 +371,32 @@ export class ItemModifier {
         triggerDef: TriggerMapItem | ImportantTriggerMapItem,
         unit: ItemModifierUnit
     ): void {
-        // 只处理新格式（有 action 属性的）
         if (!('action' in triggerDef)) {
             return
         }
 
         const timing = triggerDef.timing || "immediate"
-        const triggerMountTarget = this.resolvePossessTriggerMountTarget(triggerDef)
+        const targets = this.resolvePossessTriggerMountTargets(triggerDef)
 
         if (timing === "battleStart") {
-            if (triggerMountTarget) {
-                this.mountPossessTrigger(item as Item, triggerDef, triggerMountTarget, unit)
+            if (targets.length > 0) {
+                for (const t of targets) {
+                    this.mountPossessTrigger(item as Item, triggerDef, t, unit)
+                }
                 return
             }
-
             this.registerBattleStartDeferredTrigger(item as Item, triggerDef, unit)
             return
         }
 
-        if (!triggerMountTarget) {
+        if (targets.length === 0) {
             console.warn(`[ItemModifier] 无法解析触发器挂载目标: ${('importantKey' in triggerDef ? triggerDef.importantKey : undefined) || triggerDef.key}`)
             return
         }
 
-        this.mountPossessTrigger(item as Item, triggerDef, triggerMountTarget, unit)
+        for (const t of targets) {
+            this.mountPossessTrigger(item as Item, triggerDef, t, unit)
+        }
     }
 
     /**

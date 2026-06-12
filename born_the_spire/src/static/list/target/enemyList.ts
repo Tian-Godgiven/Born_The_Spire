@@ -410,6 +410,25 @@ export const enemyList:EnemyMap[] = [
         ]
     },
 
+    // ========== 第一层Boss ==========
+
+    {
+        label: "疫孢菌母",
+        key: "enemy_plague_mother",
+        status: {
+            "max-health": 180,
+            "actions-per-turn": 1
+        },
+        organ: [
+            "enemy_organ_spore_gland",
+            "enemy_organ_parasitic_root",
+            "enemy_organ_corruption_armor",
+            "enemy_organ_toxic_core_boss",
+            "enemy_organ_mycelial_network",
+            "enemy_organ_phase_shift"
+        ]
+    },
+
 ]
 
 export async function getEnemyByKey(key:string){

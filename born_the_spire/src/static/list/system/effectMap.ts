@@ -34,7 +34,8 @@ import { addStatusModifier, addMaxHealthAndHeal } from "@/core/effects/modifier/
 import { accumulateAndTrigger } from "@/core/effects/relic/accumulateAndTrigger"
 import { exhaustRandomCardByTag } from "@/core/effects/card/exhaustRandomCardByTag"
 import { card_wasteHeatRecovery, card_unstableCharge, card_commandScreech, card_commandStrike, card_heatBlast, card_corrosiveBurst } from "@/core/effects/card/cardSpecificEffects"
-import { organ_heatTick, organ_rustySeparator, organ_emergencyBattery, organ_pheromoneGland, gainArmorPerAlly, organ_heatAccumulate, organ_poisonArmor, organ_toxicPulse, organ_armorBash, state_hardenAbsorb, card_strengthBite, organ_lifeSteal } from "@/core/effects/organ/organSpecificEffects"
+import { organ_heatTick, organ_rustySeparator, organ_emergencyBattery, organ_pheromoneGland, gainArmorPerAlly, organ_heatAccumulate, organ_poisonArmor, organ_toxicPulse, organ_armorBash, state_hardenAbsorb, card_strengthBite, organ_lifeSteal, organ_poisonAmplify, organ_corruptionArmor, organ_phaseShift, organ_mycelialSpread } from "@/core/effects/organ/organSpecificEffects"
+import { stuffCard } from "@/core/effects/card/stuffCard"
 import { clearArmorEffect } from "@/core/effects/clearArmor"
 import { addCardToHand } from "@/core/effects/card/addCardToHand"
 import { countAndTrigger } from "@/core/effects/status/countAndTrigger"
@@ -566,5 +567,25 @@ export const effectMap:EffectData[] = [
     label:"腐食再生：按缺失HP回血，受预算限制",
     key:"organ_lifeSteal",
     effect:organ_lifeSteal
+},{
+    label:"剧毒心核：拦截applyState，poison stacks+1",
+    key:"organ_poisonAmplify",
+    effect:organ_poisonAmplify
+},{
+    label:"腐化铠甲：对手有debuff时获得护甲",
+    key:"organ_corruptionArmor",
+    effect:organ_corruptionArmor
+},{
+    label:"相位转换：HP低于阈值时提升行动次数",
+    key:"organ_phaseShift",
+    effect:organ_phaseShift
+},{
+    label:"菌网扩散：给随机对手施加中毒",
+    key:"organ_mycelialSpread",
+    effect:organ_mycelialSpread
+},{
+    label:"塞牌：向目标牌堆塞入指定卡牌",
+    key:"stuffCard",
+    effect:stuffCard
 }]
 

@@ -1395,6 +1395,179 @@ export const organList:OrganMap[] = [
     }
 },
 
+// ========== 疫孢菌母器官 ==========
+
+// 孢子腺：每回合通过孢子爆发卡向玩家塞孢子牌
+{
+    label: "孢子腺",
+    key: "enemy_organ_spore_gland",
+    describe: ["提供孢子爆发卡牌：向对手牌堆塞入3张孢子牌"],
+    rarity: OrganRarity.Rare,
+    part: OrganPartEnum.Gland,
+    status: { "max-mass": 50 },
+    current: ["mass"],
+    cards: ["boss2_card_spore_burst"],
+    interaction: {
+        possess: {
+            target: { key: "self" },
+            effects: []
+        }
+    }
+},
+
+// 寄生菌根：对手每累计受到8点伤害，持有者回复2点生命
+{
+    label: "寄生菌根",
+    key: "enemy_organ_parasitic_root",
+    describe: ["对手每累计受到8点伤害，回复2点生命"],
+    rarity: OrganRarity.Uncommon,
+    part: OrganPartEnum.Nerve,
+    status: { "max-mass": 40, "lifeDrainAccum": 0 },
+    current: ["mass"],
+    interaction: {
+        possess: {
+            target: { key: "owner" },
+            effects: [{
+                key: "accumulateAndTrigger",
+                params: {
+                    pointKey: "lifeDrainAccum",
+                    on: { when: "after", how: "take", key: "damage" },
+                    triggerTarget: "allOpponents",
+                    gain: "$triggerEffect.params(value)",
+                    threshold: 8,
+                    consume: 8,
+                    targetType: "owner",
+                    effects: [{ key: "heal", params: { value: 2 } }]
+                }
+            }]
+        }
+    }
+},
+
+// 腐化铠甲：回合结束时，每有1个对手具备debuff获得3点护甲
+{
+    label: "腐化铠甲",
+    key: "enemy_organ_corruption_armor",
+    describe: ["回合结束时，每有1个对手具备debuff获得3点护甲"],
+    rarity: OrganRarity.Uncommon,
+    part: OrganPartEnum.Skin,
+    status: { "max-mass": 40 },
+    current: ["mass"],
+    interaction: {
+        possess: {
+            target: { key: "self" },
+            effects: [],
+            triggers: [{
+                when: "after",
+                how: "make",
+                key: "turnEnd",
+                action: "corruptionArmorTick"
+            }]
+        }
+    },
+    reaction: {
+        corruptionArmorTick: [{
+            key: "corruptionArmorTick",
+            label: "腐化铠甲：获得护甲",
+            targetType: "owner",
+            effect: [{ key: "organ_corruptionArmor", params: { value: 3 } }]
+        }]
+    }
+},
+
+// 剧毒心核：施加中毒时额外+1层
+{
+    label: "剧毒心核",
+    key: "enemy_organ_toxic_core_boss",
+    describe: ["施加中毒时额外+1层"],
+    rarity: OrganRarity.Rare,
+    part: OrganPartEnum.Core,
+    status: { "max-mass": 50 },
+    current: ["mass"],
+    interaction: {
+        possess: {
+            target: { key: "self" },
+            effects: [],
+            triggers: [{
+                when: "before",
+                how: "make",
+                key: "applyState",
+                action: "poisonAmplify"
+            }]
+        }
+    },
+    reaction: {
+        poisonAmplify: [{
+            key: "poisonAmplify",
+            label: "剧毒心核：中毒+1",
+            targetType: "triggerEffect",
+            effect: [{ key: "organ_poisonAmplify", params: {} }]
+        }]
+    }
+},
+
+// 菌网根系：回合开始时给随机1个对手施加2层中毒
+{
+    label: "菌网根系",
+    key: "enemy_organ_mycelial_network",
+    describe: ["回合开始时，给随机1个对手施加2层中毒"],
+    rarity: OrganRarity.Common,
+    part: OrganPartEnum.Nerve,
+    status: { "max-mass": 30 },
+    current: ["mass"],
+    interaction: {
+        possess: {
+            target: { key: "self" },
+            effects: [],
+            triggers: [{
+                when: "after",
+                how: "make",
+                key: "turnStart",
+                action: "mycelialSpread"
+            }]
+        }
+    },
+    reaction: {
+        mycelialSpread: [{
+            key: "mycelialSpread",
+            label: "菌网扩散：施加中毒",
+            targetType: "owner",
+            effect: [{ key: "organ_mycelialSpread", params: { stacks: 2 } }]
+        }]
+    }
+},
+
+// 相位器官：内部器官，HP降至50%以下时将行动次数提升至2（不可被玩家获取）
+{
+    label: "相位器官",
+    key: "enemy_organ_phase_shift",
+    describe: ["HP低于50%时，每回合行动次数增加至2"],
+    rarity: OrganRarity.Common,
+    part: OrganPartEnum.Core,
+    status: { "max-mass": 999 },
+    current: ["mass"],
+    interaction: {
+        possess: {
+            target: { key: "self" },
+            effects: [],
+            triggers: [{
+                when: "after",
+                how: "take",
+                key: "damage",
+                action: "checkPhaseShift"
+            }]
+        }
+    },
+    reaction: {
+        checkPhaseShift: [{
+            key: "checkPhaseShift",
+            label: "相位转换",
+            targetType: "owner",
+            effect: [{ key: "organ_phaseShift", params: { threshold: 0.5, actions: 2 } }]
+        }]
+    }
+},
+
 // 不稳定毒囊：损坏时对所有玩家施加3层中毒
 {
     label: "不稳定毒囊",

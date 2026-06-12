@@ -129,6 +129,7 @@ export const cardEntryDefinitions: Record<string, CardEntryDefinition> = {
                     when: "before",  // 在回合结束前，卡牌被丢弃之前
                     how: "take",     // 玩家被结束回合
                     key: "turnEnd",
+                    level: -10,      // 低优先级，让 inHand 触发器先执行
                     action: "voidExhaust"
                 }
             )

@@ -767,6 +767,75 @@ export const cardList:CardMap[] = [{
             effects: [{ key: "card_strengthBite", params: { base: 6, strengthMult: 2 } }]
         }
     }
+},
+
+// ========== 疫孢菌母卡牌 ==========
+
+// 感染打击：疫孢菌母主攻击牌
+{
+    label: "感染打击",
+    key: "boss2_card_infection_strike",
+    tags: ["attack", "enemy"],
+    status: { cost: 1 },
+    describe: ["造成8点伤害，施加2层中毒"],
+    interaction: {
+        use: {
+            target: { faction: "opponent" },
+            effects: [
+                { key: "damage", params: { value: 8 } },
+                { key: "applyState", params: { stateKey: "poison", stacks: 2 } }
+            ]
+        }
+    }
+},
+
+// 孢子爆发：向玩家抽牌堆塞入孢子牌
+{
+    label: "孢子爆发",
+    key: "boss2_card_spore_burst",
+    tags: ["skill", "enemy"],
+    status: { cost: 1 },
+    describe: ["向对手牌堆塞入3张孢子牌"],
+    interaction: {
+        use: {
+            target: { faction: "opponent" },
+            effects: [{ key: "stuffCard", params: { cardKey: "boss2_card_spore", count: 3 } }]
+        }
+    }
+},
+
+// 孢子牌：被塞入玩家牌堆的垃圾牌，在手牌时回合结束施加中毒
+{
+    label: "孢子",
+    key: "boss2_card_spore",
+    tags: ["skill"],
+    status: { cost: 4 },
+    entry: ["card_void"],
+    describe: ["在手牌中时，回合结束施加1层中毒（随后消耗）"],
+    interaction: {
+        use: {
+            target: { key: "self" },
+            effects: []
+        },
+        inHand: {
+            target: { key: "self" },
+            effects: [],
+            triggers: [{
+                when: "before",
+                how: "take",
+                key: "turnEnd",
+                action: "sporePoison"
+            }]
+        }
+    },
+    reaction: {
+        sporePoison: [{
+            key: "sporePoison",
+            label: "孢子毒素",
+            targetType: "owner",
+            effect: [{ key: "applyState", params: { stateKey: "poison", stacks: 1 } }]
+        }]
+    }
 }]
 
 export async function getCardByKey(key:string){

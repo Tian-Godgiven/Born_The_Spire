@@ -547,4 +547,35 @@ export const battleList: BattleRoomConfig[] = [
         ]
     },
 
+    // ========== 第一层Boss战斗 ==========
+
+    // Boss 2：疫孢菌母 — 孢子蔓延+中毒DoT
+    {
+        key: "battle_f1_boss_plague_mother",
+        name: "疫孢菌母",
+        description: "腐败的源点正在散播孢子",
+        battleType: "boss",
+        enemyConfigs: [
+            {
+                key: "enemy_plague_mother",
+                behavior: {
+                    patterns: [
+                        {
+                            priority: 10,
+                            intent: "unknown",
+                            condition: { turn: { mod: [3, 1] } },
+                            action: { selector: { key: "boss2_card_spore_burst" }, mode: "random" },
+                            describe: "每3回合（第1、4、7...）：孢子爆发"
+                        }
+                    ],
+                    fallback: {
+                        intent: "attack",
+                        action: { selector: { key: "boss2_card_infection_strike" }, mode: "random" },
+                        describe: "感染打击"
+                    }
+                }
+            }
+        ]
+    },
+
 ]
