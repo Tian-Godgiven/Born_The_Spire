@@ -836,6 +836,162 @@ export const cardList:CardMap[] = [{
             effect: [{ key: "applyState", params: { stateKey: "poison", stacks: 1 } }]
         }]
     }
+},
+
+// ========== 第一层Boss 1：炙渣王 ==========
+
+// 铸铁力：熔铸魂提供，自 buff 力量
+{
+    label: "铸铁力",
+    key: "boss1_card_iron_might",
+    tags: ["power", "enemy"],
+    status: { cost: 1, power: 1 },
+    describe: ["获得", { key: ["status", "power"] }, "层力量"],
+    interaction: {
+        use: {
+            target: { key: "self" },
+            effects: [{ key: "applyState", params: { stateKey: "power", stacks: 1 } }]
+        }
+    }
+},
+
+// 重铸：点火核提供，Boss 在 ignition≥4 时打出，+4 力量并清零 ignition
+{
+    label: "重铸",
+    key: "boss1_card_recasting",
+    tags: ["skill", "enemy"],
+    status: { cost: 0, power: 4 },
+    describe: ["获得", { key: ["status", "power"] }, "层力量，移除自身全部点火"],
+    interaction: {
+        use: {
+            target: { key: "self" },
+            effects: [
+                { key: "applyState", params: { stateKey: "power", stacks: 4 } },
+                { key: "removeState", params: { stateKey: "ignition" } }
+            ]
+        }
+    }
+},
+
+// 铁刺：铁角腺提供，多段攻击
+{
+    label: "铁刺",
+    key: "boss1_card_iron_spike",
+    tags: ["attack", "multiHit", "enemy"],
+    status: { cost: 1, damage: 4, hits: 2 },
+    describe: ["攻击", { key: ["status", "hits"] }, "次，每次造成", { key: ["status", "damage"] }, "点伤害"],
+    interaction: {
+        use: {
+            target: { faction: "opponent" },
+            effects: [
+                { key: "repeatEffects", params: { times: "$owner.status(hits)", effects: [{ key: "damage", params: { value: 4 } }] } }
+            ]
+        }
+    }
+},
+
+// 熔铸打击：熔渣心提供，单体重击
+{
+    label: "熔铸打击",
+    key: "boss1_card_cast_strike",
+    tags: ["attack", "enemy"],
+    status: { cost: 1, damage: 8 },
+    describe: ["造成", { key: ["status", "damage"] }, "点伤害"],
+    interaction: {
+        use: {
+            target: { faction: "opponent" },
+            effects: [{ key: "damage", params: { value: 8 } }]
+        }
+    }
+},
+
+// 高炉护壁：熔渣心提供，获得护甲
+{
+    label: "高炉护壁",
+    key: "boss1_card_furnace_wall",
+    tags: ["defence", "enemy"],
+    status: { cost: 1, armor: 8 },
+    describe: ["获得", { key: ["status", "armor"] }, "点护甲"],
+    interaction: {
+        use: {
+            target: { key: "self" },
+            effects: [{ key: "gainArmor", params: { value: 8 } }]
+        }
+    }
+},
+
+// ========== 第一层Boss 3：废铁战甲 ==========
+
+// 装甲组装：铁壁核心提供，使用者获甲+对手上易伤
+{
+    label: "装甲组装",
+    key: "boss3_card_armor_assembly",
+    tags: ["skill", "enemy"],
+    status: { cost: 1, armor: 15, vulnerable: 1 },
+    describe: ["获得", { key: ["status", "armor"] }, "点护甲，施加", { key: ["status", "vulnerable"] }, "层易伤"],
+    interaction: {
+        use: {
+            target: { faction: "opponent" },
+            effects: [
+                { key: "gainArmor", params: { value: 15 }, target: "source" },
+                { key: "applyState", params: { stateKey: "vulnerable", stacks: 1 } }
+            ]
+        }
+    }
+},
+
+// 过载屏障：过载核心提供，自 buff 力场护盾
+{
+    label: "过载屏障",
+    key: "boss3_card_overload_barrier",
+    tags: ["skill", "enemy"],
+    status: { cost: 1, forceFieldShield: 2 },
+    describe: ["获得", { key: ["status", "forceFieldShield"] }, "层力场护盾"],
+    interaction: {
+        use: {
+            target: { key: "self" },
+            effects: [{ key: "applyState", params: { stateKey: "forceFieldShield", stacks: 2 } }]
+        }
+    }
+},
+// 火力压制：液压双管提供，多段攻击
+{
+    label: "火力压制",
+    key: "boss3_card_firepower_suppression",
+    tags: ["attack", "multiHit", "enemy"],
+    status: { cost: 1, damage: 8, multiHit: 2 },
+    describe: [
+        "造成", { key: ["status", "damage"] }, "点伤害，重复",
+        { key: ["status", "multiHit"] }, "次"
+    ],
+    interaction: {
+        use: {
+            target: { faction: "opponent" },
+            effects: [
+                { key: "damageTo", params: { value: 8 } },
+                { key: "damageTo", params: { value: 8 } }
+            ]
+        }
+    }
+},
+// 钢铁压碾：钢铁意志提供，无视护甲伤害 + 自身护甲清零
+{
+    label: "钢铁压碾",
+    key: "boss3_card_steel_roll",
+    tags: ["skill", "enemy"],
+    status: { cost: 2, damage: 25 },
+    describe: [
+        "造成", { key: ["status", "damage"] }, "点无视护甲伤害，自身护甲清零"
+    ],
+    interaction: {
+        use: {
+            target: { faction: "opponent" },
+            effects: [
+                { key: "damageIgnoreArmor", params: { value: 25 } },
+                { key: "clearArmorEffect", params: {}, target: "source" }
+            ]
+        }
+    }
 }]
 
 export async function getCardByKey(key:string){

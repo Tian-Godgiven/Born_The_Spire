@@ -10,6 +10,7 @@
  *   $eventResult(key)                      → 从事件结果获取值
  *   $triggerEffect.params(key)             → 获取触发效果的参数（延迟解析）
  *   $triggerEffect.target.accessor(args)   → 获取触发效果的事件目标的属性
+ *   $triggerCard.accessor(args)            → 触发事件的 medium 作为卡牌解读（非卡时静默 false）
  *   $owner.accessor(args)                  → 定义该 EffectUnit 的物品（卡牌/器官/遗物）自身属性
  *   $participant.accessor(args)            → 从参与者获取属性值
  *   $event.info(key)                       → 获取触发事件的 info 字段值
@@ -40,6 +41,7 @@ import { getTargetValue, resolveTargetOptional } from "@/core/types/TargetSpec"
 import { readEntityValue } from "@/core/types/EntityAccessor"
 import { getContextRandom } from "@/core/hooks/random"
 import { newError } from "@/ui/hooks/global/alert"
+import { isCard } from "@/core/utils/typeGuards"
 
 // ==================== 类型定义 ====================
 
@@ -54,7 +56,7 @@ export interface ReferenceContext extends TargetContext {
  * 解析后的引用（内部使用）
  */
 interface ParsedReference {
-    type: "eventResult" | "eventInfo" | "triggerEffect" | "triggerEffectTarget" | "participant" | "unknown"
+    type: "eventResult" | "eventInfo" | "triggerEffect" | "triggerEffectTarget" | "triggerCard" | "participant" | "unknown"
     participant?: string
     accessor?: string
     args?: string[]
@@ -138,6 +140,8 @@ export class ReferenceResolver {
                 return this.resolveTriggerEffect(parsed, context)
             case "triggerEffectTarget":
                 return this.resolveTriggerEffectTarget(parsed, context)
+            case "triggerCard":
+                return this.resolveTriggerCard(parsed, context)
             case "participant":
                 return this.resolveParticipantReference(parsed, context)
             default:
@@ -163,6 +167,19 @@ export class ReferenceResolver {
         const triggerEffectMatch = ref.match(/^\$triggerEffect\.params\(([^)]*)\)$/)
         if (triggerEffectMatch) {
             return { type: "triggerEffect", args: [triggerEffectMatch[1]], raw: ref }
+        }
+
+        // $triggerCard.accessor(args) — 触发事件的 medium 作为卡牌解读，非卡时静默返回 false
+        const triggerCardMatch = ref.match(/^\$triggerCard\.(\w+)\(([^)]*)\)$/)
+        if (triggerCardMatch) {
+            const argsStr = triggerCardMatch[2]
+            const args = argsStr ? argsStr.split(",").map(s => s.trim()) : []
+            return {
+                type: "triggerCard",
+                accessor: triggerCardMatch[1],
+                args,
+                raw: ref
+            }
         }
 
         // $triggerEffect.target.accessor(args) — 获取触发效果的事件目标的属性
@@ -226,6 +243,21 @@ export class ReferenceResolver {
         }
 
         return (context.triggerEffect as any)?.params?.[key]
+    }
+
+    /**
+     * 解析 $triggerCard.accessor(args)
+     * 触发事件的 medium 作为卡牌解读；非卡（无 medium 或非 Card 类型）时静默返回 false，
+     * 让整个 condition 表达式自然为假，避免把"这个事件不是由卡牌引发"当成错误上报
+     */
+    private resolveTriggerCard(parsed: ParsedReference, context: ReferenceContext): any {
+        const medium = context.event?.medium
+        if (!medium || !isCard(medium as any)) return false
+        const { accessor, args } = parsed
+        if (!accessor) return undefined
+        const argsStr = args && args.length > 0 ? args.join(",") : ""
+        const accessorStr = `${accessor}(${argsStr})`
+        return this.resolveAccessorOnEntity(medium as Entity, accessorStr)
     }
 
     /**

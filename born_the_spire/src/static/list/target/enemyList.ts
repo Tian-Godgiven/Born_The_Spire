@@ -413,6 +413,21 @@ export const enemyList:EnemyMap[] = [
     // ========== 第一层Boss ==========
 
     {
+        label: "炙渣王",
+        key: "enemy_slag_king",
+        status: {
+            "max-health": 220,
+            "actions-per-turn": 1
+        },
+        organ: [
+            "enemy_organ_ignition_core",
+            "enemy_organ_cast_soul",
+            "enemy_organ_iron_horn_gland",
+            "enemy_organ_slag_heart"
+        ]
+    },
+
+    {
         label: "疫孢菌母",
         key: "enemy_plague_mother",
         status: {
@@ -424,8 +439,36 @@ export const enemyList:EnemyMap[] = [
             "enemy_organ_parasitic_root",
             "enemy_organ_corruption_armor",
             "enemy_organ_toxic_core_boss",
-            "enemy_organ_mycelial_network",
-            "enemy_organ_phase_shift"
+            "enemy_organ_mycelial_network"
+        ],
+        trigger: [{
+            when: "after",
+            how: "take",
+            key: "damage",
+            action: "checkPhaseShift"
+        }],
+        reaction: {
+            checkPhaseShift: [{
+                key: "checkPhaseShift",
+                label: "相位转换",
+                targetType: "owner",
+                effect: [{ key: "organ_phaseShift", params: { threshold: 0.5, actions: 2 } }]
+            }]
+        }
+    },
+
+    {
+        label: "废铁战甲",
+        key: "enemy_iron_war_machine",
+        status: {
+            "max-health": 180,
+            "actions-per-turn": 1
+        },
+        organ: [
+            "enemy_organ_iron_wall_core",
+            "enemy_organ_overload_core",
+            "enemy_organ_hydraulic_dual_gun",
+            "enemy_organ_steel_will"
         ]
     },
 

@@ -446,6 +446,40 @@ export const organ_mycelialSpread: EffectFunc = (event, effect) => {
 }
 
 /**
+ * 六棱腺：拦截 damage Effect，若来源攻击牌带 multiHit 标签则 value + bonus
+ * targetType: triggerEffect（event.target 是 damage Effect 对象）
+ * params: { bonus }（默认 1）
+ */
+export const organ_multiHitBonus: EffectFunc = (event, effect) => {
+    const target = Array.isArray(event.target) ? event.target[0] : event.target
+    if (!isEffect(target)) return false
+    if (target.key !== "damage") return false
+
+    const medium = target.actionEvent?.medium
+    const cardTags = (medium as any)?.tags
+    if (!Array.isArray(cardTags) || !cardTags.includes("multiHit")) return false
+
+    const bonus = Number(effect.params?.bonus ?? 1)
+    target.params.value = Number(target.params.value ?? 0) + bonus
+    return true
+}
+
+/**
+ * 狂热核：拦截 applyState 效果，若 stateKey 是 power 则 stacks + bonus
+ * targetType: triggerEffect（event.target 是 applyState Effect 对象）
+ * params: { bonus }（默认 1）
+ */
+export const organ_powerAmplify: EffectFunc = (event, effect) => {
+    const target = Array.isArray(event.target) ? event.target[0] : event.target
+    if (!isEffect(target)) return false
+    if (target.key !== "applyState") return false
+    if (target.params.stateKey !== "power") return false
+    const bonus = Number(effect.params?.bonus ?? 1)
+    target.params.stacks = Number(target.params.stacks ?? 1) + bonus
+    return true
+}
+
+/**
  * 腐食再生：使用攻击牌后，按缺失HP百分比回血，每场战斗上限为最大HP×50%
  * params: coefficient（回血系数，默认0.3）
  * 预算通过 lifeStealBudget 状态层数追踪（初始值 = maxHp×50%）

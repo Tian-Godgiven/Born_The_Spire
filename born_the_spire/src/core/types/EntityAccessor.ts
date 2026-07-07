@@ -12,6 +12,7 @@
  *   hasOrgan(key)   → 是否拥有某个器官
  *   hasRelic(key)   → 是否拥有某个遗物
  *   hasCard(key)    → 手牌中是否有某张牌
+ *   hasTag(key)     → 实体（通常是卡牌）的 tags 中是否含指定 tag
  *   pileCount(pile) → 牌堆卡牌数量（hand/draw/discard/exhaust）
  */
 
@@ -47,7 +48,7 @@ export function readEntityValue(accessor: string, entity: Entity): AccessorResul
     // 无括号的直接属性访问（未来扩展用）
     throw new Error(
         `[EntityAccessor] 无法解析访问器: "${accessor}"。` +
-        `支持的格式: status(key), current(key), hasStatus(key), hasState(key), hasOrgan(key), hasRelic(key), hasCard(key), state(key), stateStack(key?)`
+        `支持的格式: status(key), current(key), hasStatus(key), hasState(key), hasOrgan(key), hasRelic(key), hasCard(key), hasTag(key), state(key), stateStack(key?)`
     )
 }
 
@@ -59,7 +60,7 @@ function callAccessorFunction(funcName: string, arg: string, entity: Entity): Ac
     if (!fn) {
         throw new Error(
             `[EntityAccessor] 未知的访问器: "${funcName}"。` +
-            `内置访问器: status, current, hasStatus, hasState, hasOrgan, hasRelic, hasCard, state, stateStack`
+            `内置访问器: status, current, hasStatus, hasState, hasOrgan, hasRelic, hasCard, hasTag, state, stateStack`
         )
     }
     return fn(arg, entity)
@@ -79,6 +80,7 @@ const builtinAccessors = new Map<string, AccessorFunction>([
     ["hasOrgan",    (arg, entity) => hasOrgan(arg, entity)],
     ["hasRelic",    (arg, entity) => hasRelic(arg, entity)],
     ["hasCard",     (arg, entity) => hasCard(arg, entity)],
+    ["hasTag",      (arg, entity) => hasTag(arg, entity)],
     ["state",       (arg, entity) => state(arg, entity)],
     ["stateStack",  (arg, entity) => stateStack(arg, entity)],
     ["pileCount",   (arg, entity) => pileCount(arg, entity)],
@@ -173,6 +175,12 @@ function hasCard(key: string, entity: Entity): boolean {
     const handPile = (entity as any).cardPiles?.handPile
     if (!handPile) return false
     return handPile.some((c: any) => c.key === key)
+}
+
+function hasTag(key: string, entity: Entity): boolean {
+    const tags = (entity as any).tags
+    if (!Array.isArray(tags)) return false
+    return tags.includes(key)
 }
 
 function reserve(key: string, entity: Entity): number {

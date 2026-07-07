@@ -3,11 +3,14 @@ import type { Target } from "../../target/Target"
 import type { StateData } from "../State"
 import type { LogUnit } from "@/ui/hooks/global/log"
 import type { TriggerEventConfig } from "@/core/types/object/trigger"
+import type { ConditionContext } from "@/core/types/ConditionSystem"
 import { newLog } from "@/ui/hooks/global/log"
 
 import { doEvent } from "../ActionEvent"
 import { resolveTriggerEventTarget } from "../trigger/Trigger"
 import { isEntity } from "@/core/utils/typeGuards"
+import { checkCondition } from "@/core/types/ConditionSystem"
+import { nowBattle } from "@/core/objects/game/battle"
 import { nanoid } from "nanoid"
 import _ from "lodash"
 import { State } from "../State"
@@ -286,16 +289,27 @@ export class StateModifier {
                         // 防御性检查：状态已被移除则跳过
                         if (!this.getState(state.key)) return
 
+                        // 通用 condition 检查（DSL / 数组 / and-or-not 组）
+                        const triggerCondition = (triggerDef as any).condition
+                        if (triggerCondition) {
+                            const ctx: ConditionContext = {
+                                item: state as any,
+                                owner: this.owner,
+                                source: state as any,
+                                target: event?.target as any,
+                                event,
+                                triggerSource: state as any,
+                                triggerOwner: this.owner,
+                                triggerEffect: effect ?? undefined,
+                                battle: nowBattle.value
+                            }
+                            if (!checkCondition(triggerCondition, ctx)) return
+                        }
+
                         // requirePositiveEffect：跳过实际值为0的事件（如被护甲完全吸收的伤害）
                         if ((triggerDef as any).requirePositiveEffect) {
                             const hasPositive = event.effects.some((e: any) => Number(e.params?.value ?? 0) > 0)
                             if (!hasPositive) return
-                        }
-
-                        // requireFromAttackCard：仅当伤害来自攻击牌时触发
-                        if ((triggerDef as any).requireFromAttackCard) {
-                            const hasAttackCard = event.effects.some((e: any) => e.params?.fromAttackCard === true)
-                            if (!hasAttackCard) return
                         }
 
                         // 直接处理事件创建，确保 source 是状态本身

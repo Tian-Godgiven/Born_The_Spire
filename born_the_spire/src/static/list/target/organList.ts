@@ -1246,7 +1246,7 @@ export const organList:OrganMap[] = [
                     how: "via",
                     key: "useCard",
                     action: "lifeStealHeal",
-                    requireFromAttackCard: true
+                    condition: "$triggerCard.hasTag(attack)"
                 }
             ]
         }
@@ -1537,37 +1537,6 @@ export const organList:OrganMap[] = [
     }
 },
 
-// 相位器官：内部器官，HP降至50%以下时将行动次数提升至2（不可被玩家获取）
-{
-    label: "相位器官",
-    key: "enemy_organ_phase_shift",
-    describe: ["HP低于50%时，每回合行动次数增加至2"],
-    rarity: OrganRarity.Common,
-    part: OrganPartEnum.Core,
-    status: { "max-mass": 999 },
-    current: ["mass"],
-    interaction: {
-        possess: {
-            target: { key: "self" },
-            effects: [],
-            triggers: [{
-                when: "after",
-                how: "take",
-                key: "damage",
-                action: "checkPhaseShift"
-            }]
-        }
-    },
-    reaction: {
-        checkPhaseShift: [{
-            key: "checkPhaseShift",
-            label: "相位转换",
-            targetType: "owner",
-            effect: [{ key: "organ_phaseShift", params: { threshold: 0.5, actions: 2 } }]
-        }]
-    }
-},
-
 // 不稳定毒囊：损坏时对所有玩家施加3层中毒
 {
     label: "不稳定毒囊",
@@ -1586,6 +1555,293 @@ export const organList:OrganMap[] = [
             target: { faction: "player", number: "all" },
             effects: [{ key: "applyState", params: { stateKey: "poison", stacks: 3 } }]
         }
+    }
+},
+
+// ========== 炙渣王器官 ==========
+
+// 点火核：提供重铸卡牌；持有者每打出一张攻击牌获得1层点火
+{
+    label: "点火核",
+    key: "enemy_organ_ignition_core",
+    describe: ["提供重铸卡牌；每打出一张攻击牌，自身获得1层点火"],
+    rarity: OrganRarity.Rare,
+    part: OrganPartEnum.Core,
+    status: { "max-mass": 50 },
+    current: ["mass"],
+    cards: ["boss1_card_recasting"],
+    interaction: {
+        possess: {
+            target: { key: "self" },
+            effects: [],
+            triggers: [{
+                when: "after",
+                how: "via",
+                key: "useCard",
+                action: "gainIgnition",
+                condition: "$triggerCard.hasTag(attack)"
+            }]
+        }
+    },
+    reaction: {
+        gainIgnition: [{
+            key: "gainIgnition",
+            label: "点火核：积累点火",
+            targetType: "triggerOwner",
+            effect: [{ key: "applyState", params: { stateKey: "ignition", stacks: 1 } }]
+        }]
+    }
+},
+
+// 熔铸魂：提供铸铁力卡牌；战斗开始获得2层力量
+{
+    label: "熔铸魂",
+    key: "enemy_organ_cast_soul",
+    describe: ["提供铸铁力卡牌；战斗开始时获得2层力量"],
+    rarity: OrganRarity.Uncommon,
+    part: OrganPartEnum.Heart,
+    status: { "max-mass": 40 },
+    current: ["mass"],
+    cards: ["boss1_card_iron_might"],
+    interaction: {
+        possess: {
+            target: { key: "self" },
+            effects: [],
+            triggers: [{
+                when: "after",
+                how: "make",
+                key: "battleStart",
+                action: "gainInitialPower"
+            }]
+        }
+    },
+    reaction: {
+        gainInitialPower: [{
+            key: "gainInitialPower",
+            label: "熔铸魂：开局力量",
+            targetType: "triggerOwner",
+            effect: [{ key: "applyState", params: { stateKey: "power", stacks: 2 } }]
+        }]
+    }
+},
+
+// 铁角腺：提供铁刺卡牌；多段攻击（multiHit）每段+1伤
+{
+    label: "铁角腺",
+    key: "enemy_organ_iron_horn_gland",
+    describe: ["提供铁刺卡牌；多段攻击每段额外造成1点伤害"],
+    rarity: OrganRarity.Uncommon,
+    part: OrganPartEnum.Gland,
+    status: { "max-mass": 40 },
+    current: ["mass"],
+    cards: ["boss1_card_iron_spike"],
+    interaction: {
+        possess: {
+            target: { key: "self" },
+            effects: [],
+            triggers: [{
+                when: "before",
+                how: "make",
+                key: "damage",
+                action: "multiHitBonus"
+            }]
+        }
+    },
+    reaction: {
+        multiHitBonus: [{
+            key: "multiHitBonus",
+            label: "铁角腺：多段+1伤",
+            targetType: "triggerEffect",
+            effect: [{ key: "organ_multiHitBonus", params: { bonus: 1 } }]
+        }]
+    }
+},
+
+// 熔渣心：提供熔铸打击/高炉护壁；获得力量时额外+1
+{
+    label: "熔渣心",
+    key: "enemy_organ_slag_heart",
+    describe: ["提供熔铸打击与高炉护壁；获得力量时额外+1层"],
+    rarity: OrganRarity.Common,
+    part: OrganPartEnum.Heart,
+    status: { "max-mass": 30 },
+    current: ["mass"],
+    cards: ["boss1_card_cast_strike", "boss1_card_furnace_wall"],
+    interaction: {
+        possess: {
+            target: { key: "self" },
+            effects: [],
+            triggers: [{
+                when: "before",
+                how: "make",
+                key: "applyState",
+                action: "powerAmplify"
+            }]
+        }
+    },
+    reaction: {
+        powerAmplify: [{
+            key: "powerAmplify",
+            label: "熔渣心：力量+1",
+            targetType: "triggerEffect",
+            effect: [{ key: "organ_powerAmplify", params: { bonus: 1 } }]
+        }]
+    }
+},
+
+// ========== 第一层Boss 3：废铁战甲器官 ==========
+
+// 铁壁核心：提供装甲组装卡牌；战斗开始时+15甲
+{
+    label: "铁壁核心",
+    key: "enemy_organ_iron_wall_core",
+    describe: ["提供装甲组装卡牌；战斗开始时获得15点护甲"],
+    rarity: OrganRarity.Uncommon,
+    part: OrganPartEnum.Core,
+    status: { "max-mass": 40 },
+    current: ["mass"],
+    cards: ["boss3_card_armor_assembly"],
+    interaction: {
+        possess: {
+            target: { key: "self" },
+            effects: [],
+            triggers: [{
+                when: "after",
+                how: "make",
+                key: "battleStart",
+                action: "openingArmor"
+            }]
+        }
+    },
+    reaction: {
+        openingArmor: [{
+            key: "openingArmor",
+            label: "铁壁核心：开局护甲",
+            targetType: "triggerOwner",
+            effect: [{ key: "gainArmor", params: { value: 15 } }]
+        }]
+    }
+},
+
+// 过载核心：提供过载屏障卡牌；战斗开始时+1层力场护盾
+{
+    label: "过载核心",
+    key: "enemy_organ_overload_core",
+    describe: ["提供过载屏障卡牌；战斗开始时获得1层力场护盾"],
+    rarity: OrganRarity.Rare,
+    part: OrganPartEnum.Heart,
+    status: { "max-mass": 40 },
+    current: ["mass"],
+    cards: ["boss3_card_overload_barrier"],
+    interaction: {
+        possess: {
+            target: { key: "self" },
+            effects: [],
+            triggers: [{
+                when: "after",
+                how: "make",
+                key: "battleStart",
+                action: "openingForceField"
+            }]
+        }
+    },
+    reaction: {
+        openingForceField: [{
+            key: "openingForceField",
+            label: "过载核心：开局力场护盾",
+            targetType: "triggerOwner",
+            effect: [{ key: "applyState", params: { stateKey: "forceFieldShield", stacks: 1 } }]
+        }]
+    }
+},
+
+// 液压双管：提供火力压制卡牌；每回合首次攻击 +3 伤
+{
+    label: "液压双管",
+    key: "enemy_organ_hydraulic_dual_gun",
+    describe: ["提供火力压制卡牌；每回合首次攻击伤害+3"],
+    rarity: OrganRarity.Uncommon,
+    part: OrganPartEnum.Muscle,
+    status: { "max-mass": 40 },
+    current: ["mass"],
+    cards: ["boss3_card_firepower_suppression"],
+    interaction: {
+        possess: {
+            target: { key: "self" },
+            effects: [],
+            triggers: [{
+                when: "before",
+                how: "make",
+                key: "damage",
+                action: "hydraulicBoost",
+                condition: {
+                    and: [
+                        "$triggerCard.hasTag(attack)",
+                        { not: "$item.hasState(hydraulicUsed)" }
+                    ]
+                }
+            }]
+        }
+    },
+    reaction: {
+        hydraulicBoost: [
+            {
+                key: "hydraulicBoost_amp",
+                label: "液压双管：伤害+3",
+                targetType: "triggerEffect",
+                effect: [{ key: "modifyDamageValue", params: { delta: 3 } }]
+            },
+            {
+                key: "hydraulicBoost_flag",
+                label: "液压双管：标记本回合已释放",
+                targetType: "item",
+                effect: [{ key: "applyState", params: { stateKey: "hydraulicUsed", stacks: 1 } }]
+            }
+        ]
+    }
+},
+
+// 钢铁意志：提供钢铁压碾卡牌；每场战斗第一次致命伤害免疫
+{
+    label: "钢铁意志",
+    key: "enemy_organ_steel_will",
+    describe: ["提供钢铁压碾卡牌；每场战斗第一次致命伤害免疫"],
+    rarity: OrganRarity.Rare,
+    part: OrganPartEnum.Nerve,
+    status: { "max-mass": 40 },
+    current: ["mass"],
+    cards: ["boss3_card_steel_roll"],
+    interaction: {
+        possess: {
+            target: { key: "self" },
+            effects: [],
+            triggers: [
+                {
+                    when: "after", how: "make", key: "battleStart",
+                    action: "lethalGuardCharge"
+                },
+                {
+                    when: "before", how: "take", key: "damage",
+                    level: -100,
+                    action: "lethalGuardTrigger",
+                    condition: "$item.hasState(lethalGuardReady)"
+                }
+            ]
+        }
+    },
+    reaction: {
+        lethalGuardCharge: [{
+            key: "lethalGuardCharge",
+            label: "钢铁意志：充能",
+            targetType: "item",
+            effect: [{ key: "applyState", params: { stateKey: "lethalGuardReady", stacks: 1 } }]
+        }],
+        lethalGuardTrigger: [{
+            key: "lethalGuardCheck",
+            label: "钢铁意志：致命保命",
+            targetType: "triggerEffect",
+            effect: [{ key: "checkAndSaveLethal" }]
+        }]
     }
 },
 ]

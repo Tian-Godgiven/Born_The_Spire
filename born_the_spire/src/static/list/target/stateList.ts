@@ -98,12 +98,12 @@ export const stateList: StateData[] = [
             }
         }
     },
-    // 易伤：承受伤害时，伤害增加50%
+    // 易伤：承受攻击牌伤害时，伤害增加50%
     {
         label: "易伤",
         key: "vulnerable",
         category: "debuff",
-        describe: ["承受的伤害增加50%"],
+        describe: ["承受攻击的伤害增加50%"],
         showType: "number",
         repeate: "stack",
         stackChange: [
@@ -115,7 +115,8 @@ export const stateList: StateData[] = [
                     when: "before",
                     how: "take",
                     key: "damage",
-                    action: "vulnerableDebuff"
+                    action: "vulnerableDebuff",
+                    condition: "$triggerCard.hasTag(attack)"
                 }],
                 reaction: {
                     vulnerableDebuff: [{
@@ -402,7 +403,7 @@ export const stateList: StateData[] = [
                     key: "damage",
                     action: "malleableTick",
                     requirePositiveEffect: true,
-                    requireFromAttackCard: true
+                    condition: "$triggerCard.hasTag(attack)"
                 }],
                 reaction: {
                     malleableTick: [{
@@ -460,7 +461,7 @@ export const stateList: StateData[] = [
                 how: "take",
                 key: "damage",
                 action: "hardenAbsorb",
-                requireFromAttackCard: true
+                condition: "$triggerCard.hasTag(attack)"
             }],
             reaction: {
                 hardenAbsorb: [
@@ -481,6 +482,61 @@ export const stateList: StateData[] = [
         }
     }
 },
+// 力场护盾：每层免疫下一次攻击牌伤害，被打消耗1层，不自动衰减（充能次数型防御）
+{
+    label: "力场护盾",
+    key: "forceFieldShield",
+    category: "buff",
+    describe: ["每层免疫下一次攻击伤害"],
+    showType: "number",
+    repeate: "stack",
+    interaction: {
+        possess: {
+            triggers: [{
+                when: "before",
+                how: "take",
+                key: "damage",
+                action: "absorbAndConsume",
+                condition: "$triggerCard.hasTag(attack)"
+            }],
+            reaction: {
+                absorbAndConsume: [
+                    {
+                        key: "forceFieldShield_absorb",
+                        label: "力场护盾：吸收伤害",
+                        targetType: "triggerEffect",
+                        effect: [{ key: "nullifyDamageValue" }]
+                    },
+                    {
+                        key: "forceFieldShield_consume",
+                        label: "力场护盾：消耗层数",
+                        targetType: "triggerOwner",
+                        effect: [{ key: "changeStateStack", params: { stateKey: "forceFieldShield", delta: -1 } }]
+                    }
+                ]
+            }
+        }
+    }
+},
+// 液压已释放：液压双管器官的内部标记，本回合首次攻击后附加，turnEnd 清除
+{
+    label: "液压已释放",
+    key: "hydraulicUsed",
+    category: "buff",
+    describe: ["液压双管本回合首次攻击已释放"],
+    showType: "bool",
+    repeate: "refresh",
+    stackChange: [{ timing: "turnEnd", delta: "all" }]
+},
+// 钢铁意志充能：致命保命器官的内部标记，战斗开始时附加，触发后消耗
+{
+    label: "钢铁意志充能",
+    key: "lethalGuardReady",
+    category: "buff",
+    describe: ["钢铁意志：下次致命伤害将被免疫"],
+    showType: "bool",
+    repeate: "refresh"
+},
 // lifeStealBudget：腐食再生的每场战斗回血预算，层数=剩余可回血量
 {
     label: "回血预算",
@@ -489,5 +545,15 @@ export const stateList: StateData[] = [
     describe: ["腐食再生每场战斗可回血的剩余额度"],
     showType: "number",
     repeate: "refresh"
+},
+// 点火：通用计数器状态，可被任何"逐步积累到阈值触发爆发"的敌人复用
+// Boss 1 炙渣王：攻击牌积累 ignition，达到 4 时释放重铸获得+4力量
+{
+    label: "点火",
+    key: "ignition",
+    category: "buff",
+    describe: ["积累计数，用于触发爆发型行动"],
+    showType: "number",
+    repeate: "stack"
 },
 ]

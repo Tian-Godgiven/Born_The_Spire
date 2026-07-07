@@ -1,5 +1,5 @@
 import _ from "lodash"
-import {damageTo, reduceDamageFor, modifyDamageValue, modifyDamageByPercent} from "@/core/effects/health/damage"
+import {damageTo, reduceDamageFor, modifyDamageValue, modifyDamageByPercent, nullifyDamageValue, damageIgnoreArmor, checkAndSaveLethal} from "@/core/effects/health/damage"
 import { healTo } from "@/core/effects/health/heal"
 import type { EffectUnit } from "@/core/objects/system/effect/EffectUnit"
 import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
@@ -34,7 +34,7 @@ import { addStatusModifier, addMaxHealthAndHeal } from "@/core/effects/modifier/
 import { accumulateAndTrigger } from "@/core/effects/relic/accumulateAndTrigger"
 import { exhaustRandomCardByTag } from "@/core/effects/card/exhaustRandomCardByTag"
 import { card_wasteHeatRecovery, card_unstableCharge, card_commandScreech, card_commandStrike, card_heatBlast, card_corrosiveBurst } from "@/core/effects/card/cardSpecificEffects"
-import { organ_heatTick, organ_rustySeparator, organ_emergencyBattery, organ_pheromoneGland, gainArmorPerAlly, organ_heatAccumulate, organ_poisonArmor, organ_toxicPulse, organ_armorBash, state_hardenAbsorb, card_strengthBite, organ_lifeSteal, organ_poisonAmplify, organ_corruptionArmor, organ_phaseShift, organ_mycelialSpread } from "@/core/effects/organ/organSpecificEffects"
+import { organ_heatTick, organ_rustySeparator, organ_emergencyBattery, organ_pheromoneGland, gainArmorPerAlly, organ_heatAccumulate, organ_poisonArmor, organ_toxicPulse, organ_armorBash, state_hardenAbsorb, card_strengthBite, organ_lifeSteal, organ_poisonAmplify, organ_corruptionArmor, organ_phaseShift, organ_mycelialSpread, organ_multiHitBonus, organ_powerAmplify } from "@/core/effects/organ/organSpecificEffects"
 import { stuffCard } from "@/core/effects/card/stuffCard"
 import { clearArmorEffect } from "@/core/effects/clearArmor"
 import { addCardToHand } from "@/core/effects/card/addCardToHand"
@@ -99,6 +99,24 @@ export const effectMap:EffectData[] = [
     key:"modifyDamageByPercent",
     effect:modifyDamageByPercent,
     preview: previewModifyByPercent("damage")
+},
+//全免疫：将伤害值置零
+{
+    label:"全免疫：伤害值置零",
+    key:"nullifyDamageValue",
+    effect:nullifyDamageValue
+},
+//无视护甲伤害：spawn 带 info.ignoreArmor 的 damage 子事件
+{
+    label:"无视护甲伤害",
+    key:"damageIgnoreArmor",
+    effect:damageIgnoreArmor
+},
+//致命保命：致命伤害置零并消耗 lethalGuardReady
+{
+    label:"致命保命",
+    key:"checkAndSaveLethal",
+    effect:checkAndSaveLethal
 },
 //收到伤害时，减少受到的伤害
 {
@@ -587,5 +605,13 @@ export const effectMap:EffectData[] = [
     label:"塞牌：向目标牌堆塞入指定卡牌",
     key:"stuffCard",
     effect:stuffCard
+},{
+    label:"六棱腺：多段攻击每段+bonus伤",
+    key:"organ_multiHitBonus",
+    effect:organ_multiHitBonus
+},{
+    label:"狂热核：获得力量额外+bonus层",
+    key:"organ_powerAmplify",
+    effect:organ_powerAmplify
 }]
 

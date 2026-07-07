@@ -107,7 +107,6 @@ export interface TriggerMapItemWithAction {
     info?: string;
     condition?: TriggerCondition | Condition;
     requirePositiveEffect?: boolean;  // 仅当事件中存在值>0的效果时才触发（用于柔韧等）
-    requireFromAttackCard?: boolean;  // 仅当伤害来自攻击牌时才触发（用于柔韧等）
     triggerTarget?: {
         participantType: "entity" | "entities"
         // entity:   "player" | "opponent"          → 单个目标（取第一个）
@@ -147,7 +146,6 @@ export interface ImportantTriggerMapItem {
     info?: string;
     condition?: TriggerCondition | Condition;
     requirePositiveEffect?: boolean;  // 仅当事件中存在值>0的效果时才触发
-    requireFromAttackCard?: boolean;  // 仅当伤害来自攻击牌时才触发
     triggerTarget?: {
         participantType: "entity" | "entities"
         key: string

@@ -6,6 +6,7 @@ import type { IntentType } from "./Intent"
 
 import { selectCards } from "./CardSelector"
 import { getCardByKey } from "@/static/list/item/cardList"
+import { getStateStack } from "./State"
 
 /**
  * 敌人行为配置系统
@@ -175,13 +176,13 @@ export function evaluateCondition(
 
     // 检查状态层数条件
     if (condition.hasState) {
-        // const _target = condition.hasState.target === "self" ? enemy : player
-        // 需要实现 getStateStacks 方法
-        // const stacks = target.getStateStacks?.(condition.hasState.stateKey) || 0
-        // const requiredStacks = condition.hasState.stacks ?? 1
-        // if (stacks < requiredStacks) {
-        //     return false
-        // }
+        const target = condition.hasState.target === "self" ? enemy : player
+        const stackValue = getStateStack(target as any, condition.hasState.stateKey)
+        const stacks = stackValue === false ? 0 : stackValue
+        const requiredStacks = condition.hasState.stacks ?? 1
+        if (stacks < requiredStacks) {
+            return false
+        }
     }
 
     // 检查自定义条件

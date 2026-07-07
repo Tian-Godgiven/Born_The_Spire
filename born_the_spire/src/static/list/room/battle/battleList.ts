@@ -549,6 +549,45 @@ export const battleList: BattleRoomConfig[] = [
 
     // ========== 第一层Boss战斗 ==========
 
+    // Boss 1：炙渣王 — 点火自锻+力量爆发
+    {
+        key: "battle_f1_boss_slag_king",
+        name: "炙渣王",
+        description: "废熔渣意志聚合体，被击打反而自我锻造得更强",
+        battleType: "boss",
+        enemyConfigs: [
+            {
+                key: "enemy_slag_king",
+                behavior: {
+                    patterns: [
+                        {
+                            priority: 100,
+                            intent: "buff",
+                            condition: { turn: { equals: 1 } },
+                            action: { selector: { key: "boss1_card_iron_might" }, mode: "random" },
+                            describe: "第1回合固定：铸铁力"
+                        },
+                        {
+                            priority: 50,
+                            intent: "buff",
+                            condition: { hasState: { target: "self", stateKey: "ignition", stacks: 4 } },
+                            action: { selector: { key: "boss1_card_recasting" }, mode: "random" },
+                            describe: "点火≥4：重铸"
+                        }
+                    ],
+                    fallback: {
+                        intent: "unknown",
+                        action: {
+                            selector: { tags: ["attack", "defence"] },
+                            mode: "random"
+                        },
+                        describe: "随机：铁刺/熔铸打击/高炉护壁"
+                    }
+                }
+            }
+        ]
+    },
+
     // Boss 2：疫孢菌母 — 孢子蔓延+中毒DoT
     {
         key: "battle_f1_boss_plague_mother",
@@ -572,6 +611,46 @@ export const battleList: BattleRoomConfig[] = [
                         intent: "attack",
                         action: { selector: { key: "boss2_card_infection_strike" }, mode: "random" },
                         describe: "感染打击"
+                    }
+                }
+            }
+        ]
+    },
+
+    // Boss 3：废铁战甲 — 护甲堆叠 → 钢铁压碾爆发
+    {
+        key: "battle_f1_boss_iron_war_machine",
+        name: "废铁战甲",
+        description: "废料拼凑的巨型机甲，第一层机械种族的顶点",
+        battleType: "boss",
+        enemyConfigs: [
+            {
+                key: "enemy_iron_war_machine",
+                behavior: {
+                    patterns: [
+                        {
+                            priority: 50,
+                            intent: "attack",
+                            condition: {
+                                custom: (enemy) => Number((enemy as any).current?.armor?.value ?? 0) >= 40
+                            },
+                            action: { selector: { key: "boss3_card_steel_roll" }, mode: "random" },
+                            describe: "护甲≥40：钢铁压碾"
+                        }
+                    ],
+                    fallback: {
+                        action: {
+                            selector: {},
+                            mode: "loop",
+                            sequence: [
+                                "boss3_card_armor_assembly",
+                                "boss3_card_firepower_suppression",
+                                "boss3_card_armor_assembly",
+                                "boss3_card_firepower_suppression",
+                                "boss3_card_overload_barrier"
+                            ]
+                        },
+                        describe: "循环：装甲组装/火力压制/过载屏障"
                     }
                 }
             }
