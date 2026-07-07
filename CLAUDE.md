@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Born The Spire（蘇生尖塔）是以《杀戮尖塔》为灵感的中文 Roguelike 卡牌游戏，基于 Tauri 2 + Vue 3 构建，面向 Windows 桌面平台。核心机制：打败敌人 → 从敌人身上选取器官 → 器官提供卡牌和被动效果 → 组合成强力构建。
 
-详细游戏概念见 `文档/未归档/游戏核心概念与设计理念.md`。
+详细游戏概念见 `文档/参考/游戏核心概念与设计理念.md`。
 
 **Tech Stack:** Tauri 2 (Rust) + Vue 3 (TypeScript/SASS)
 
@@ -56,7 +56,7 @@ how:  "make" | "via" | "take"     — 实体是事件的来源/媒介/目标
 key:  "damage" | "turnStart" | …  — 事件类型
 ```
 
-**推荐写法（声明式）**：在器官/遗物/卡牌数据中用 `action` + `reaction` 模式，详见 `文档/未归档/反应系统详解.md`。
+**推荐写法（声明式）**：在器官/遗物/卡牌数据中用 `action` + `reaction` 模式，详见 `文档/参考/反应系统详解.md`。
 
 **底层写法（命令式）**，仅在无法用声明式实现时使用：
 
@@ -152,11 +152,11 @@ entity.status[key] = status            // 错误，Vue 会破坏内部 ref
 2. 在 `src/static/list/system/effectMap.ts` 注册
 3. 命名规范：原子效果用 `gainArmor`，专属效果用 `organ_` / `card_` 前缀
 
-详见 `文档/未归档/效果开发指南.md`。
+详见 `文档/参考/效果开发指南.md`。
 
 ### 新增卡牌 / 器官 / 遗物 / 敌人
 
-各类内容的文件清单和最小格式模板见 `文档/未归档/新内容开发清单.md`。
+各类内容的文件清单和最小格式模板见 `文档/内容开发/新内容开发清单.md`。
 
 ### 器官奖励动作 / 水池扩展动作
 
@@ -232,21 +232,26 @@ clear / help
 
 ## Documentation Guidelines
 
-文档放在 `文档/未归档/`，由用户归档整理。
+文档目录结构：
+- `文档/参考/` — 引擎原理与开发核心
+- `文档/内容开发/` — 添加新内容时会查的清单和指南
+- `文档/设计/` — 各层敌人/Boss/精英的具体设计
+- `文档/子系统/` — 器官/房间/UI/随机数等专门功能
+- `文档/未归档/` — 尚未分类的老文档（Root A 遗留，逐步整理中）
 
 格式规范：
 - 用标题和代码块组织，不用 `-` `*` `1.` 等 list 符号，改用缩进
 - 不加 ⚠️ TODO 标记，TODO 记录在 `文档/任务列表.md`
 - 主要用中文，技术术语保留英文
 
-## Development Reference Docs（`文档/未归档/`）
+## Development Reference Docs
 
 开发新内容时按需查阅：
 
-- **游戏核心概念与设计理念.md** — 游戏定位、核心循环、Mod 友好原则
-- **新内容开发清单.md** — 添加卡牌/器官/遗物/敌人/状态/战斗时需改哪些文件
-- **效果开发指南.md** — 三层效果分类（原子/复合/专属）、决策流程、命名规范
-- **反应系统详解.md** — action+reaction 模式完整说明、triggerTarget vs targetType、执行流程
-- **状态系统开发指南.md** — StateData 格式、stackChange、状态自带触发器
-- **敌人AI系统.md** — behavior/pattern/condition 格式、双牌堆、多阶段Boss
-- **实现参考手册.md** — Effect拦截、$triggerEffect语法、inHand交互、StateModifier API 等关键机制
+- **`文档/参考/游戏核心概念与设计理念.md`** — 游戏定位、核心循环、Mod 友好原则
+- **`文档/内容开发/新内容开发清单.md`** — 添加卡牌/器官/遗物/敌人/状态/战斗时需改哪些文件
+- **`文档/参考/效果开发指南.md`** — 三层效果分类（原子/复合/专属）、决策流程、命名规范
+- **`文档/参考/反应系统详解.md`** — action+reaction 模式完整说明、triggerTarget vs targetType、执行流程
+- **`文档/内容开发/状态系统开发指南.md`** — StateData 格式、stackChange、状态自带触发器
+- **`文档/内容开发/敌人AI系统.md`** — behavior/pattern/condition 格式、双牌堆、多阶段Boss
+- **`文档/参考/实现参考手册.md`** — Effect拦截、$triggerEffect语法、inHand交互、StateModifier API 等关键机制
