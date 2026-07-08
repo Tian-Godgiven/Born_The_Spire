@@ -556,4 +556,38 @@ export const stateList: StateData[] = [
     showType: "number",
     repeate: "stack"
 },
+// 愤怒：这回合每打出攻击牌，获得等同层数的格挡（"歇斯底里"卡专用）
+{
+    label: "愤怒",
+    key: "rage",
+    category: "buff",
+    describe: ["这回合每打出一张攻击牌，获得等同于本状态层数的格挡"],
+    showType: "number",
+    repeate: "stack",
+    stackChange: [
+        { timing: "turnEnd", delta: "all" }
+    ],
+    interaction: {
+        possess: {
+            triggers: [{
+                when: "after",
+                how: "make",
+                key: "useCard",
+                action: "rageGainBlock",
+                condition: "$triggerCard.hasTag(attack)"
+            }],
+            reaction: {
+                rageGainBlock: [{
+                    key: "rageGainBlock",
+                    label: "愤怒格挡",
+                    targetType: "owner",
+                    effect: [{
+                        key: "gainArmor",
+                        params: { value: "$source.stateStack()" }
+                    }]
+                }]
+            }
+        }
+    }
+},
 ]

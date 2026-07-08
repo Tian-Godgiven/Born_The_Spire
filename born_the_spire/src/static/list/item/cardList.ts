@@ -992,6 +992,37 @@ export const cardList:CardMap[] = [{
             ]
         }
     }
+},{
+    label:"歇斯底里",
+    tags:["skill"],
+    rarity:"uncommon",
+    pool:["common"],
+    entry:["card_exhaust"],
+    status:{
+        cost:1,
+        rageStacks:1,
+        selfDamage:20
+    },
+    describe:[
+        "获得",{key:["status","rageStacks"]},"层",{$:"愤怒"},
+        "。自身受到",{key:["status","selfDamage"]},"点伤害。消耗。"
+    ],
+    key:"card_hysteria",
+    interaction:{
+        use:{
+            target:{key:"self"},
+            effects:[
+                {key:"applyState",params:{stateKey:"rage",stacks:"$medium.status(rageStacks)"}},
+                {key:"damage",params:{value:"$medium.status(selfDamage)"}}
+            ]
+        }
+    },
+    upgradeConfig:{
+        maxLevel:1,
+        levelConfigs:{
+            1:{status:{rageStacks:2,selfDamage:35}}
+        }
+    }
 }]
 
 export async function getCardByKey(key:string){
