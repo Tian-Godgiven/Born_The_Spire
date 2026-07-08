@@ -247,6 +247,40 @@ behavior: {
 
 ---
 
+## 意图数值计算
+
+意图显示的数值（伤害/格挡等）由 `intentValueSources` 映射决定 —— 每种意图类型从哪些 effect key 的 `params.value` 累加取值。
+
+内置映射（`src/core/objects/system/Intent.ts`）：
+
+```typescript
+const intentValueSources: Partial<Record<IntentType, string[]>> = {
+    attack: ["damage"],
+    defend: ["gainArmor"],
+    heal: ["heal"]
+}
+```
+
+`buff` / `debuff` / `special` / `escape` / `unknown` 未列入 → 不显示数值，只显示类型标签。
+
+Mod 通过 `registerIntentValueSource(intentType, effectKeys)` 扩展或覆盖。
+
+### Buff 影响与护甲不扣减
+
+数值不是直接读 `params.value`，而是走 `simulateEffect` 通过模拟事件系统计算：
+
+  source 端 Buff（力量、虚弱等）→ 影响输出
+  target 端 Buff（易伤、减伤等）→ 影响接收
+  护甲吸收 → **不扣减**（意图显示的是"打出多少伤害"，护甲是独立展示的资源）
+
+技术实现：`event.simulate = true`，护甲相关触发器在 `simulate` 模式下自动跳过。
+
+未指定 target 时，用 `intentDummyTarget`（无触发器的空实体）替代，避免触发 target 端机制。
+
+---
+
+---
+
 ## 完整敌人定义示例
 
 三阶段精英，第1回合强化，每3回合使用技能，平时攻击：
