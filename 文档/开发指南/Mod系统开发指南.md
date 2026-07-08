@@ -103,7 +103,7 @@ xdnmb_effect_000005     # 效果
 ### 遗物 (Relic)
 
 ```typescript
-import type { RelicMap } from '@/core/objects/item/Relic'
+import type { RelicMap } from '@/core/objects/item/Subclass/Relic'
 
 export const yourRelic: RelicMap = {
     label: '你的遗物',
@@ -177,6 +177,31 @@ export const yourEnemy: EnemyMap = {
     }
 }
 ```
+
+### 卡牌 (Card)
+
+```typescript
+import type { CardMap } from '@/core/objects/item/Subclass/Card'
+
+export const yourCard: CardMap = {
+    label: '你的卡牌',
+    key: 'your_mod_card_000001',
+    tags: ['attack'],
+    status: {
+        cost: 1,
+        damage: 5,
+    },
+    describe: ['造成 5 点伤害'],
+    interaction: {
+        use: {
+            target: { faction: 'opponent' },
+            effects: [{ key: 'damage', params: { value: 5 } }]
+        }
+    }
+}
+```
+
+对应注册函数 `registerCard(card)`。
 
 ### 效果 (Effect)
 
