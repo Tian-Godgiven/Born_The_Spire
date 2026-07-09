@@ -863,7 +863,7 @@ export const organList:OrganMap[] = [
                 label: "不稳定电池：获得能量",
                 targetType: "triggerOwner",
                 effect: [{
-                    key: "getEnergy",
+                    key: "gainEnergy",
                     params: { value: 1 }
                 }]
             },

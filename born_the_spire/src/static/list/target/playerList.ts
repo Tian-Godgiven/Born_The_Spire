@@ -48,7 +48,7 @@ export const playerList:Record<string,PlayerMap> = {
             recoverEnergy:[{
                 key:"turnStart_recoverEnergy",
                 label:"回合开始时恢复能量",
-                effect:[{key:"getEnergy", params:{value:"max"}}],
+                effect:[{key:"refillEnergy", params:{}}],
                 targetType:"triggerOwner",
             }],
             emptyEnergy:[{

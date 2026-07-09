@@ -5,7 +5,7 @@ import type { EffectUnit } from "@/core/objects/system/effect/EffectUnit"
 import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import { ActionEvent, handleEventEntity } from "@/core/objects/system/ActionEvent"
 import { drawCard, drawFromDrawPile } from "@/core/effects/card/drawCard"
-import { costEnergy, emptyEnergy, getEnergy, pay_costEnergy } from "@/core/effects/energy"
+import { gainEnergy, loseEnergy, refillEnergy, emptyEnergy, payEnergy } from "@/core/effects/energy"
 import { newError } from "@/ui/hooks/global/alert"
 import { discardCard, pay_discardCard, pay_exhaustCard, pay_removePower, discardAllCard } from "@/core/effects/card/discard"
 import { voidExhaust, moveInherentToHand } from "@/core/effects/card/entryEffects"
@@ -24,7 +24,8 @@ import { isEntity } from "@/core/utils/typeGuards"
 import { discoverCard, chooseRandomCard, chooseCardUpgrade, chooseCardRemove, chooseCardDuplicate, customCardChoice } from "@/core/effects/card/cardChoice"
 import { cancelEvent, cancelCurrentEvent } from "@/core/effects/event/cancelEvent"
 import { gainArmor } from "@/core/effects/gainArmor"
-import { addFirstTurnDraw } from "@/core/effects/card/addFirstTurnDraw"
+import { addTurnDraw } from "@/core/effects/card/addTurnDraw"
+import { modifyDrawValue } from "@/core/effects/card/modifyDrawValue"
 import { enableOrganRewardAction, disableOrganRewardAction } from "@/core/effects/organReward/organRewardActionEffects"
 import { enablePoolAction, disablePoolAction } from "@/core/effects/pool/poolActionEffects"
 import { addTemporaryCardEffect, addTemporaryOrganEffect, markCardTemporaryEffect, markOrganTemporaryEffect } from "@/core/effects/temporary/temporaryEffects"
@@ -45,6 +46,7 @@ import { giveTemporaryEffectToRandomCards } from "@/core/effects/card/giveTempor
 import { repeatEffects } from "@/core/effects/composite/repeatEffects"
 import { chooseHandCardDiscard } from "@/core/effects/card/chooseHandCard"
 import { retrieveCardsToHand } from "@/core/effects/card/retrieveCards"
+import { chooseAndMarkCard } from "@/core/effects/card/chooseAndMarkCard"
 import { artifactBlockDebuff } from "@/core/effects/state/artifactBlock"
 import { previewValue, previewModifyValue, previewModifyByPercent } from "@/core/utils/effectPreview"
 import { loseHealthTo } from "@/core/effects/health/loseHealth"
@@ -172,21 +174,25 @@ export const effectMap:EffectData[] = [
     key:"drawFromDrawPile",
     effect:drawFromDrawPile
 },{
-    label:"削减能量",
-    key:"costEnergy",
-    effect:costEnergy
-},{
-    label:"支付能量",
-    key:"pay_costEnergy",
-    effect:pay_costEnergy
-},{
     label:"获得能量",
-    key:"getEnergy",
-    effect:getEnergy,
+    key:"gainEnergy",
+    effect:gainEnergy
 },{
-    label:"清空能量",
+    label:"失去能量",
+    key:"loseEnergy",
+    effect:loseEnergy
+},{
+    label:"能量回满",
+    key:"refillEnergy",
+    effect:refillEnergy
+},{
+    label:"能量归零",
     key:"emptyEnergy",
     effect:emptyEnergy
+},{
+    label:"支付能量",
+    key:"payEnergy",
+    effect:payEnergy
 },{
     label:"丢弃卡牌",
     key:"discard",
@@ -325,9 +331,13 @@ export const effectMap:EffectData[] = [
     effect:gainArmor,
     preview: previewValue
 },{
-    label:"第一回合额外抽牌",
-    key:"addFirstTurnDraw",
-    effect:addFirstTurnDraw
+    label:"指定回合额外抽牌",
+    key:"addTurnDraw",
+    effect:addTurnDraw
+},{
+    label:"修改抽牌数",
+    key:"modifyDrawValue",
+    effect:modifyDrawValue
 },{
     label:"获得卡牌",
     key:"gainCard",
@@ -548,6 +558,10 @@ export const effectMap:EffectData[] = [
     label:"从牌堆取回卡牌到手牌",
     key:"retrieveCardsToHand",
     effect:retrieveCardsToHand
+},{
+    label:"选一张卡并记到物品上",
+    key:"chooseAndMarkCard",
+    effect:chooseAndMarkCard
 },{
     label:"直接失去生命（绕过伤害）",
     key:"loseHealth",

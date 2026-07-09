@@ -181,10 +181,10 @@ export async function useCard(card:Card,fromPile:Card[],source:Player,targets:Ta
     const cardCost = getStatusValue(card,"cost")
     //支付能量
     const costEffect:EffectUnit = {
-        key:"pay_costEnergy",
+        key:"payEnergy",
         describe:[`支付${cardCost}点能量`],
-        params:{cost:cardCost},
-        resultStoreAs:"costEnergyResult"
+        params:{value:cardCost},
+        resultStoreAs:"payEnergyResult"
     }
     //卡牌效果
     const cardUse = card.getInteraction("use")
@@ -208,7 +208,7 @@ export async function useCard(card:Card,fromPile:Card[],source:Player,targets:Ta
     await endTransaction()
 
     // 检查支付结果
-    const paySuccess = payEvent.getEventResult("costEnergyResult")
+    const paySuccess = payEvent.getEventResult("payEnergyResult")
     if (!paySuccess) {
         // 支付失败，不执行后续操作
         return

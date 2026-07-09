@@ -378,32 +378,30 @@ export class OrganModifier extends ItemModifier {
         // 激活 broken 触发器
         organ.activateBrokenTriggers(this.owner)
 
-        // 触发 break 交互（一次性效果）
-        const breakInteraction = organ.getInteraction("break")
-        if(breakInteraction && breakInteraction.effects) {
-            // 解析 break 交互的 target（默认为器官持有者）
-            let breakTarget: Entity | Entity[] = this.owner
-            const targetCfg = breakInteraction.target
-            if (targetCfg) {
-                const battle = nowBattle.value
-                if (battle) {
-                    if (targetCfg.faction === "player") {
-                        breakTarget = battle.getTeam("player") || [this.owner]
-                    } else if (targetCfg.faction === "enemy") {
-                        breakTarget = battle.getAliveEnemies()
-                    } else if (targetCfg.faction === "all") {
-                        breakTarget = [...(battle.getTeam("player") || []), ...battle.getAliveEnemies()]
-                    }
+        // 触发 breakOrgan 事件（无条件广播，让外部触发器可以响应）
+        // 若器官定义了 break interaction，其 effects 作为事件效果一并执行
+        const breakInteraction = organ.getInteraction("break") || undefined
+        let breakTarget: Entity | Entity[] = this.owner
+        const targetCfg = breakInteraction?.target
+        if (targetCfg) {
+            const battle = nowBattle.value
+            if (battle) {
+                if (targetCfg.faction === "player") {
+                    breakTarget = battle.getTeam("player") || [this.owner]
+                } else if (targetCfg.faction === "enemy") {
+                    breakTarget = battle.getAliveEnemies()
+                } else if (targetCfg.faction === "all") {
+                    breakTarget = [...(battle.getTeam("player") || []), ...battle.getAliveEnemies()]
                 }
             }
-            doEvent({
-                key: "breakOrgan",
-                source: this.owner,
-                medium: organ,
-                target: breakTarget,
-                effectUnits: breakInteraction.effects
-            })
         }
+        doEvent({
+            key: "breakOrgan",
+            source: this.owner,
+            medium: organ,
+            target: breakTarget,
+            effectUnits: breakInteraction?.effects ?? []
+        })
 
         newLog([organ, "已损坏"])
         return true

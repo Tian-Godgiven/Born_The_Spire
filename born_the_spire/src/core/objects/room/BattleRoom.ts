@@ -415,7 +415,7 @@ export class BattleRoom extends Room {
         }
 
         // 3. Boss遗物（3选1）
-        const relicReward = await this.generateRelicSelectReward(3, 1, "Boss遗物")
+        const relicReward = await this.generateRelicSelectReward(3, 1, "Boss遗物", "boss")
         if (relicReward) {
             rewards.push(relicReward)
         }
@@ -481,12 +481,24 @@ export class BattleRoom extends Room {
     private async generateRelicSelectReward(
         optionCount: number,
         selectCount: number,
-        title?: string
+        title?: string,
+        pool: string = "common"
     ): Promise<any> {
         const relicList = getLazyModule<any[]>('relicList')
 
+        // 按池过滤：读 relic.pool，缺省视为 common
+        const filtered = relicList.filter((relic: any) => {
+            const relicPools = relic.pool && relic.pool.length > 0 ? relic.pool : ["common"]
+            return relicPools.includes(pool)
+        })
+
+        if (filtered.length === 0) {
+            console.warn(`[BattleRoom] 池 "${pool}" 无可用遗物`)
+            return null
+        }
+
         // 随机选择遗物
-        const shuffled = [...relicList].sort(() => Math.random() - 0.5)
+        const shuffled = [...filtered].sort(() => Math.random() - 0.5)
         const selectedRelics = shuffled.slice(0, optionCount)
 
         if (selectedRelics.length === 0) {

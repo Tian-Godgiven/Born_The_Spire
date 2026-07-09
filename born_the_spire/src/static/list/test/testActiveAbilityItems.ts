@@ -69,7 +69,7 @@ export const testEnergyCore: RelicMap = {
         },
 
         effects: [{
-            key: "getEnergy",
+            key: "gainEnergy",
             params: { value: 2 }
         }]
     }, {
@@ -82,7 +82,7 @@ export const testEnergyCore: RelicMap = {
         },
 
         effects: [{
-            key: "getEnergy",
+            key: "gainEnergy",
             params: { value: 2 }
         }]
     }, {
@@ -132,7 +132,7 @@ export const testEnhancedHeart = {
         },
 
         effects: [{
-            key: "costEnergy",
+            key: "loseEnergy",
             params: { value: 1 }
         }]
     }],

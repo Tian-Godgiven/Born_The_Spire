@@ -63,93 +63,32 @@ export const relicList: RelicMap[] = [
         }],
         interaction: {}
     },
-    // 多功能遗物 - 多个 use
-    {
-        label: "神秘遗物",
-        describe: ["可以激活、充能或粉碎"],
-        key: "original_relic_00003",
-        rarity: "rare",
-        pool: ["common"],
-        status: {
-            "energy": 1,
-            "draw": 2,
-            "damage": 50
-        },
-        activeAbilities: [
-            {
-                key: "activate",
-                label: "激活",
-                describe: ["获得1点能量"],
-                usage: { type: "direct" },
-                effects: [{ key: "getEnergy", params: { value: 1 } }]
-            },
-            {
-                key: "charge",
-                label: "充能",
-                describe: ["抽2张牌"],
-                usage: { type: "direct" },
-                effects: [{ key: "drawFromDrawPile", params: { value: 2 } }]
-            },
-            {
-                key: "smash",
-                label: "粉碎",
-                describe: ["对所有敌人造成50点伤害"],
-                usage: { type: "allTargets", target: { faction: "enemy", number: "all" } },
-                effects: [{ key: "damage", params: { value: 50 } }]
-            }
-        ],
-        interaction: {}
-    },
-    // 献祭遗物 - 解锁器官奖励中的献祭动作
-    {
-        label: "血祭之石",
-        describe: ["战斗奖励中，器官选择时可以选择献祭，回复生命值"],
-        key: "original_relic_sacrifice",
-        rarity: "uncommon",
-        pool: ["common"],
-        interaction: {
-            possess: {
-                target: { key: "owner" },
-                effects: [{
-                    key: "enableOrganRewardAction",
-                    params: {
-                        actionKey: "sacrifice"
-                    }
-                }],
-            },
-            lose: {
-                target: { key: "owner" },
-                effects: [{
-                    key: "disableOrganRewardAction",
-                    params: {
-                        actionKey: "sacrifice"
-                    }
-                }]
-            }
-        }
-    },
-    // 示例：修改抽牌数量的遗物
     {
         label: "学者之戒",
-        describe: ["每回合多抽", { key: ["status", "extra-draw"] }, "张牌"],
+        describe: ["第1回合多抽2张", "第2回合多抽1张"],
         key: "original_relic_00004",
         rarity: "common",
         pool: ["common"],
-        status: {
-            "extra-draw": 2
-        },
         interaction: {
             possess: {
-                target: { key: "owner" },
-                effects: [{
-                    key: "addStatusBase",
-                    params: {
-                        statusKey: "draw-per-turn",
-                        value: 2,
-                        type: "additive"
-                    }
+                target: { key: "self" },
+                triggers: [{
+                    when: "after",
+                    how: "make",
+                    key: "battleStart",
+                    action: "applyScholarDraw"
                 }]
             }
+        },
+        reaction: {
+            applyScholarDraw: [{
+                targetType: "owner",
+                key: "applyScholarDraw",
+                effect: [
+                    { key: "addTurnDraw", params: { turn: 1, value: 2 } },
+                    { key: "addTurnDraw", params: { turn: 2, value: 1 } }
+                ]
+            }]
         }
     },
     // 第一回合额外抽牌
@@ -170,47 +109,19 @@ export const relicList: RelicMap[] = [
                     when: "after",
                     how: "make",
                     key: "battleStart",
-                    action: "addFirstTurnDraw"
+                    action: "applyFirstTurnDraw"
                 }]
             }
         },
         reaction: {
-            addFirstTurnDraw: [{
+            applyFirstTurnDraw: [{
                 targetType: "owner",
-                key: "addFirstTurnDrawBonus",
+                key: "applyFirstTurnDraw",
                 effect: [{
-                    key: "addFirstTurnDraw",
-                    params: { value: 2 }
+                    key: "addTurnDraw",
+                    params: { turn: 1, value: 2 }
                 }]
             }]
-        }
-    },
-    // 锻炼遗物 - 解锁水池中的锻炼行动
-    {
-        label: "健身手环",
-        describe: ["水池中可以选择锻炼，消耗物质增加最大生命"],
-        key: "original_relic_exercise",
-        rarity: "uncommon",
-        pool: ["common"],
-        interaction: {
-            possess: {
-                target: { key: "owner" },
-                effects: [{
-                    key: "enablePoolAction",
-                    params: {
-                        actionKey: "exercise"
-                    }
-                }]
-            },
-            lose: {
-                target: { key: "owner" },
-                effects: [{
-                    key: "disablePoolAction",
-                    params: {
-                        actionKey: "exercise"
-                    }
-                }]
-            }
         }
     },
     {
@@ -412,37 +323,6 @@ export const relicList: RelicMap[] = [
         }
     },
     {
-        label: "学者笔记",
-        describe: ["每打出", { key: ["status", "maxPoint"] }, "张牌", "抽1张牌"],
-        key: "original_relic_scholar_note",
-        rarity: "common",
-        pool: ["common"],
-        status: {
-            "point": 0,
-            "maxPoint": 5
-        },
-        badges: [
-            { type: "counter", status: "point", maxStatus: "maxPoint" }
-        ],
-        interaction: {
-            possess: {
-                target: { key: "owner" },
-                effects: [{
-                    key: "accumulateAndTrigger",
-                    params: {
-                        pointKey: "point",
-                        on: { when: "after", how: "make", key: "useCard" },
-                        gain: 1,
-                        threshold: 5,
-                        consume: 5,
-                        targetType: "owner",
-                        effects: [{ key: "drawFromDrawPile", params: { value: 1 } }]
-                    }
-                }]
-            }
-        }
-    },
-    {
         label: "过载电池",
         describe: ["每场战斗一次", "受到超过", { key: ["status", "minDamage"] }, "点伤害时", "回复", { key: ["status", "healAmount"] }, "生命"],
         key: "original_relic_overload_battery",
@@ -601,6 +481,293 @@ export const relicList: RelicMap[] = [
             ]
         }
     },
+    {
+        label: "卫士纹章",
+        describe: ["每回合开始时", "获得", { key: ["status", "armor-gain"] }, "点护甲"],
+        key: "original_relic_guardian_emblem",
+        rarity: "common",
+        pool: ["common"],
+        status: {
+            "armor-gain": 3
+        },
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                triggers: [{
+                    when: "after",
+                    how: "make",
+                    key: "turnStart",
+                    action: "gainArmorOnTurnStart"
+                }]
+            }
+        },
+        reaction: {
+            gainArmorOnTurnStart: [{
+                targetType: "owner",
+                key: "gainArmor",
+                effect: [{
+                    key: "gainArmor",
+                    params: { value: 3 }
+                }]
+            }]
+        }
+    },
+    {
+        label: "药引",
+        describe: ["每当有药水对你使用时,", "抽 1 张牌"],
+        key: "original_relic_reagent",
+        rarity: "common",
+        pool: ["common"],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                triggers: [{
+                    when: "after",
+                    how: "take",
+                    key: "useItem",
+                    action: "drawOnPotionUsed",
+                    condition: "$medium.itemType() == potion"
+                }]
+            }
+        },
+        reaction: {
+            drawOnPotionUsed: [{
+                targetType: "owner",
+                key: "drawFromDrawPile",
+                effect: [{
+                    key: "drawFromDrawPile",
+                    params: { value: 1 }
+                }]
+            }]
+        }
+    },
+    {
+        label: "拾荒袋",
+        describe: ["每当你进入房间时,", "获得 5 金币"],
+        key: "original_relic_scavenger_bag",
+        rarity: "common",
+        pool: ["common"],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                triggers: [{
+                    when: "after",
+                    how: "take",
+                    key: "roomEnter",
+                    action: "gainCoinOnRoomEnter"
+                }]
+            }
+        },
+        reaction: {
+            gainCoinOnRoomEnter: [{
+                targetType: "owner",
+                key: "gainReserve",
+                effect: [{
+                    key: "gainReserve",
+                    params: { reserveKey: "gold", amount: 5 }
+                }]
+            }]
+        }
+    },
+    {
+        label: "尖针",
+        describe: ["每当你施加 debuff 时,", "对目标造成 5 点伤害"],
+        key: "original_relic_needle",
+        rarity: "uncommon",
+        pool: ["uncommon"],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                triggers: [{
+                    when: "after",
+                    how: "make",
+                    key: "applyState",
+                    action: "damageOnDebuffApply",
+                    condition: "$triggerEffect.stateCategory() == debuff"
+                }]
+            }
+        },
+        reaction: {
+            damageOnDebuffApply: [{
+                targetType: "target",
+                key: "damage",
+                effect: [{
+                    key: "damage",
+                    params: { value: 5 }
+                }]
+            }]
+        }
+    },
+    {
+        label: "鹫发",
+        describe: ["每回合首次,", "你的非临时器官被摧毁时", "回复 5 生命"],
+        key: "original_relic_vulture_plume",
+        rarity: "uncommon",
+        pool: ["uncommon"],
+        status: {
+            "used": 0
+        },
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                triggers: [
+                    {
+                        when: "after",
+                        how: "take",
+                        key: "breakOrgan",
+                        condition: [
+                            "$item.status(used) == 0",
+                            { not: "$medium.isTemporary()" }
+                        ],
+                        action: "healAndLock"
+                    },
+                    {
+                        when: "after",
+                        how: "make",
+                        key: "turnStart",
+                        action: "resetUsed"
+                    }
+                ]
+            }
+        },
+        reaction: {
+            healAndLock: [
+                {
+                    targetType: "owner",
+                    key: "heal",
+                    effect: [{
+                        key: "heal",
+                        params: { value: 5 }
+                    }]
+                },
+                {
+                    targetType: "item",
+                    key: "setBaseStatus",
+                    effect: [{
+                        key: "setBaseStatus",
+                        params: { statusKey: "used", value: 1 }
+                    }]
+                }
+            ],
+            resetUsed: [{
+                targetType: "item",
+                key: "setBaseStatus",
+                effect: [{
+                    key: "setBaseStatus",
+                    params: { statusKey: "used", value: 0 }
+                }]
+            }]
+        }
+    },
+    {
+        label: "祈愿石",
+        describe: ["第 1 回合,", "你的能量归零时,", "获得 2 点能量"],
+        key: "original_relic_wish_stone",
+        rarity: "uncommon",
+        pool: ["uncommon"],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                triggers: [{
+                    when: "after",
+                    how: "take",
+                    key: "loseEnergy",
+                    condition: [
+                        "$battle.turn == 1",
+                        "$owner.current(energy) == 0"
+                    ],
+                    disableUntil: "battleEnd",
+                    action: "grantEnergy"
+                }]
+            }
+        },
+        reaction: {
+            grantEnergy: [{
+                targetType: "owner",
+                key: "gainEnergy",
+                effect: [{
+                    key: "gainEnergy",
+                    params: { value: 2 }
+                }]
+            }]
+        }
+    },
+    {
+        label: "口香糖",
+        describe: ["伸缩自如的爱❤️"],
+        key: "original_relic_bubble_gum",
+        rarity: "rare",
+        pool: ["rare"],
+        status: {
+            markedCardId: { label: "记号卡id", value: "", hidden: true, display: false, calc: false }
+        },
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                effects: [{
+                    key: "chooseAndMarkCard",
+                    params: {
+                        title: "选一张牌作为记号",
+                        description: "第 2 回合开始时，它会从抽/弃/消耗牌堆移入你的手牌",
+                        fromPile: "deck",
+                        storeKey: "markedCardId"
+                    }
+                }],
+                triggers: [{
+                    when: "after",
+                    how: "take",
+                    key: "turnStart",
+                    condition: "$battle.turn == 2",
+                    disableUntil: "battleEnd",
+                    action: "pullMarkedCard"
+                }]
+            }
+        },
+        reaction: {
+            pullMarkedCard: [{
+                targetType: "owner",
+                key: "retrieveCardsToHand",
+                effect: [{
+                    key: "retrieveCardsToHand",
+                    params: {
+                        sourcePile: "any",
+                        cardId: "$owner.status(markedCardId)"
+                    }
+                }]
+            }]
+        }
+    },
+    {
+        label: "第六指",
+        describe: ["每抽", { key: ["status", "maxPoint"] }, "张牌", "再抽1张"],
+        key: "original_relic_sixth_finger",
+        rarity: "rare",
+        pool: ["rare"],
+        status: {
+            "point": 0,
+            "maxPoint": 6
+        },
+        badges: [
+            { type: "counter", status: "point", maxStatus: "maxPoint" }
+        ],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                effects: [{
+                    key: "accumulateAndTrigger",
+                    params: {
+                        pointKey: "point",
+                        on: { when: "after", how: "take", key: "drawCard" },
+                        gain: 1,
+                        threshold: 6,
+                        consume: 6,
+                        targetType: "owner",
+                        effects: [{ key: "drawFromDrawPile", params: { value: 1 } }]
+                    }
+                }]
+            }
+        }
+    },
     // 商店遗物 - 会员卡
     {
         label: "会员卡",
@@ -624,6 +791,116 @@ export const relicList: RelicMap[] = [
                     }
                 }]
             }
+        }
+    },
+    // ===== Boss 遗物 =====
+    {
+        label: "炽热之心",
+        describe: ["能量上限 +1", "战斗结束时", "失去 3 点生命"],
+        key: "original_relic_flaming_heart",
+        rarity: "rare",
+        pool: ["boss"],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                effects: [{
+                    key: "addStatusBase",
+                    params: {
+                        statusKey: "max-energy",
+                        value: 1,
+                        type: "additive"
+                    }
+                }],
+                triggers: [{
+                    when: "after",
+                    how: "make",
+                    key: "battleEnd",
+                    action: "flamingHeartCost"
+                }]
+            }
+        },
+        reaction: {
+            flamingHeartCost: [{
+                targetType: "owner",
+                key: "loseHealth",
+                effect: [{
+                    key: "loseHealthTo",
+                    params: { value: 3 }
+                }]
+            }]
+        }
+    },
+    {
+        label: "能量沉淀",
+        describe: ["回合结束时未使用的能量", "在下回合开始时返还"],
+        key: "original_relic_energy_sediment",
+        rarity: "rare",
+        pool: ["boss"],
+        status: { storedEnergy: 0 },
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                triggers: [
+                    { when: "after", how: "take", key: "turnEnd",   action: "storeEnergy" },
+                    { when: "after", how: "take", key: "turnStart", action: "releaseEnergy" }
+                ]
+            }
+        },
+        reaction: {
+            storeEnergy: [{
+                targetType: "triggerSource",
+                key: "store",
+                effect: [{
+                    key: "setBaseStatus",
+                    params: { statusKey: "storedEnergy", value: "$owner.current(energy)" }
+                }]
+            }],
+            releaseEnergy: [
+                {
+                    targetType: "triggerOwner",
+                    key: "release",
+                    effect: [{ key: "gainEnergy", params: { value: "$item.status(storedEnergy)" } }]
+                },
+                {
+                    targetType: "triggerSource",
+                    key: "reset",
+                    effect: [{ key: "setBaseStatus", params: { statusKey: "storedEnergy", value: 0 } }]
+                }
+            ]
+        }
+    },
+    {
+        label: "先知之瞳",
+        describe: [
+            "获得时能量上限 +2",
+            "第 1 回合抽牌 +5",
+            "第 3 回合起每回合抽牌 -1"
+        ],
+        key: "original_relic_prophet_eye",
+        rarity: "rare",
+        pool: ["boss"],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                effects: [
+                    { key: "addStatusBase", params: { statusKey: "max-energy", value: 2, type: "additive" } },
+                    { key: "addTurnDraw", params: { turn: 1, value: 5 } }
+                ],
+                triggers: [{
+                    when: "before",
+                    how: "take",
+                    key: "turnStartDrawCard",
+                    condition: "$battle.turn >= 3",
+                    action: "reduceTurnDraw"
+                }]
+            }
+        },
+        reaction: {
+            reduceTurnDraw: [{
+                targetType: "triggerEffect",
+                key: "modifyDrawValue",
+                effect: [{ key: "modifyDrawValue", params: { delta: -1 } }]
+            }]
         }
     },
 ]

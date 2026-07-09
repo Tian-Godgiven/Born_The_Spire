@@ -319,8 +319,8 @@ export class RestrictionChecker {
             // 扣除能量
             if (costs.energy !== undefined) {
                 effectUnits.push({
-                    key: "addCurrent",
-                    params: { currentKey: "energy", value: -costs.energy }
+                    key: "payEnergy",
+                    params: { value: costs.energy }
                 })
             }
 

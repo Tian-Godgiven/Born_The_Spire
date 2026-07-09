@@ -19,6 +19,7 @@
 import type { Entity } from "@/core/objects/system/Entity"
 import { getStateModifier } from "@/core/objects/system/modifier/StateModifier"
 import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
+import { stateList } from "@/static/list/target/stateList"
 
 export type AccessorResult = number | string | boolean
 
@@ -85,6 +86,14 @@ const builtinAccessors = new Map<string, AccessorFunction>([
     ["stateStack",  (arg, entity) => stateStack(arg, entity)],
     ["pileCount",   (arg, entity) => pileCount(arg, entity)],
     ["reserve",     (arg, entity) => reserve(arg, entity)],
+    ["itemType",    (_arg, entity) => (entity as any).itemType ?? ""],
+    ["isTemporary", (_arg, entity) => (entity as any).isTemporary === true],
+    ["stateCategory", (_arg, entity) => {
+        const stateKey = (entity as any).params?.stateKey
+        if (!stateKey) return ""
+        const data = stateList.find(s => s.key === stateKey)
+        return data?.category ?? ""
+    }],
 ])
 
 // ==================== 内置访问器实现 ====================

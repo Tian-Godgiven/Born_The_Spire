@@ -35,9 +35,9 @@ export async function startPlayerTurn(player:Player,battle:Battle){
     const turnStartEffects: EffectUnit[] = [
         // 恢复能量到最大值
         {
-            key: "getEnergy",
+            key: "refillEnergy",
             describe: ["恢复能量"],
-            params: { value: "max" }
+            params: {}
         }
         // 注意：抽牌通过玩家的默认触发器实现（playerList.ts 中定义）
         // 这样可以被其他效果修改（如遗物、器官等）
