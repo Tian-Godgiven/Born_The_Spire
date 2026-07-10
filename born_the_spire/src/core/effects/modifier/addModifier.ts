@@ -18,18 +18,20 @@ import { getCurrentValue, changeCurrentValue } from "@/core/objects/system/Curre
  *
  * 参数：
  * - value: 增加的最大生命值（同时也是回复的生命值）
+ * - percent: 按当前 max-health 的百分比换算实际值（例如 -0.1 = 扣当前 max 的 10%，向下取整）
+ *            传了 percent 时以 percent 结果为准，忽略 value；两者都未传则报错
  * - canKill: 移除时是否可以致死（默认 false，不会致死）
  */
 export const addMaxHealthAndHeal: EffectFunc = (event, effect) => {
     const { target } = event;
-    const { value = 0, canKill = false } = effect.params;
+    const { value = 0, percent, canKill = false } = effect.params;
 
-    if (!value) {
-        newError(["addMaxHealthAndHeal 效果缺少 value 参数"]);
+    const percentProvided = percent !== undefined && percent !== null;
+    if (!percentProvided && !value) {
+        newError(["addMaxHealthAndHeal 效果缺少 value 或 percent 参数"]);
         return;
     }
 
-    const valueNum = Number(value);
     const canKillBool = Boolean(canKill);
     const removers: Array<() => void> = []
 
@@ -46,6 +48,13 @@ export const addMaxHealthAndHeal: EffectFunc = (event, effect) => {
             return;
         }
 
+        // 按 percent 或 value 计算实际增量
+        const valueNum = percentProvided
+            ? Math.floor(Number(status.value) * Number(percent))
+            : Number(value)
+
+        if (valueNum === 0) return
+
         const remover = status.addByJSON(event.source, {
             targetLayer: "base",
             modifierType: "additive",
@@ -53,7 +62,7 @@ export const addMaxHealthAndHeal: EffectFunc = (event, effect) => {
             clearable: false  // 器官提供的最大生命是永久的
         });
 
-        // 2. 回复当前生命（+value）
+        // 2. 同步当前生命（+valueNum；正数回血，负数扣血自动夹紧）
         const currentHealth = getCurrentValue(entity, "health");
         changeCurrentValue(entity, "health", currentHealth + valueNum, event);
 

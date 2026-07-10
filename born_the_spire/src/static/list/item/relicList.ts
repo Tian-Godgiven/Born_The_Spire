@@ -903,6 +903,60 @@ export const relicList: RelicMap[] = [
             }]
         }
     },
+    {
+        label: "空茧",
+        describe: [
+            "获得时，从牌组中",
+            "永久移除 2 张牌",
+            "最大生命 -10%"
+        ],
+        key: "original_relic_empty_cocoon",
+        rarity: "rare",
+        pool: ["boss"],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                effects: [
+                    { key: "addMaxHealthAndHeal", params: { percent: -0.1 } },
+                    { key: "chooseCardRemove", params: { count: 2, minCount: 2 } }
+                ]
+            }
+        }
+    },
+    {
+        label: "有生命活铁",
+        describe: [
+            "每 3 回合，回合开始时",
+            "获得 10 点护甲（跨战斗累计）"
+        ],
+        key: "original_relic_living_iron",
+        rarity: "rare",
+        pool: ["boss"],
+        status: {
+            "point": 0,
+            "maxPoint": 3
+        },
+        badges: [
+            { type: "counter", status: "point", maxStatus: "maxPoint" }
+        ],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                effects: [{
+                    key: "accumulateAndTrigger",
+                    params: {
+                        pointKey: "point",
+                        on: { when: "after", how: "make", key: "turnStart" },
+                        gain: 1,
+                        threshold: 3,
+                        consume: 3,
+                        targetType: "owner",
+                        effects: [{ key: "gainArmor", params: { value: 10 } }]
+                    }
+                }]
+            }
+        }
+    },
 ]
 /**
  * ○环 — 当遗物池耗尽时的垫底遗物

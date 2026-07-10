@@ -269,8 +269,48 @@ key: enemy_iron_war_machine
 
 ---
 
+## Boss 遗物设计
+
+Boss 击败后额外给予的强力遗物（`pool: ["boss"]`、`rarity: "rare"`），区别于器官奖励。第一层规划 5 个，玩家从中选 1 个作为 Boss 战奖励。设计原则：每个都是"强收益 + 明显代价 / 规则改变"，避免同质化。
+
+### 已实现 5 个
+
+炽热之心（original_relic_flaming_heart）
+    描述：能量上限 +1；战斗结束时失去 3 点生命
+    机制：possess 时 addStatusBase max-energy +1；battleEnd 触发 loseHealth 3
+    设计定位：能量+代价，稳定持续消耗，前中期强、后期需回血支撑
+
+能量沉淀（original_relic_energy_sediment）
+    描述：回合结束时未使用的能量在下回合开始时返还
+    机制：status.storedEnergy；turnEnd 存能、turnStart 释放并清零
+    设计定位：纯收益，鼓励能量节奏优化（能量牌/打小怪保能量）
+
+先知之瞳（original_relic_prophet_eye）
+    描述：获得时能量上限 +2；第 1 回合抽牌 +5；第 3 回合起每回合抽牌 -1
+    机制：possess 加 max-energy +2 + addTurnDraw{turn:1, value:5}；turnStartDrawCard 触发条件 $battle.turn >= 3 时 modifyDrawValue -1
+    设计定位：前爆发后衰减，鼓励打 combo / 速攻构筑
+
+空茧（original_relic_empty_cocoon）
+    描述：获得时从牌组中永久移除 2 张牌；最大生命 -10%
+    机制：possess.effects 挂 addMaxHealthAndHeal{percent:-0.1} + chooseCardRemove{count:2, minCount:2}
+    设计定位：一次性交易，用生命换牌组精简；策略 = 挑基础打击/防御删掉换构筑纯度
+
+有生命活铁（original_relic_living_iron）
+    描述：每 3 回合，回合开始时获得 10 点护甲（跨战斗累计）
+    机制：status.point/maxPoint=3；accumulateAndTrigger on=turnStart, gain=1, threshold=3, consume=3, effects=gainArmor{value:10}；不设 maxTriggerPerBattle → point 天然跨战斗保留
+    UI：badges counter 显示 "point/maxPoint" 进度圈
+    设计定位：跨战斗节奏防御。玩家可有意识地控制回合数对齐"3 的倍数"，让"欠的那份"延续到下场兑现；纯收益无代价，靠"节奏运营"的策略深度立起 Boss 遗物档位
+    参考同构：第六指（每抽 6 张再抽 1 张）——把事件从 drawCard 换成 turnStart、效果从 draw 换成 gainArmor
+
+### 技术备忘
+
+percent 参数（负值即扣 max）由 `addMaxHealthAndHeal` 提供，实现于 `src/core/effects/modifier/addModifier.ts`
+删牌能力由 `chooseCardRemove` 提供，弹选牌 UI + `minCount` 强制选完
+上述遗物的 pool 均为 `["boss"]`，rarity 均为 `"rare"`
+
+---
+
 ## 待讨论
 
 Boss 1（炙渣王）的完整实现
 各 Boss 的器官数值平衡
-Boss 遗物设计（Boss 击败后额外给予的强力遗物，区别于器官奖励）
