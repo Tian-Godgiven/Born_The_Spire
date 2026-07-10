@@ -19,11 +19,11 @@ import { replaceOrgan, chooseOrganRemove, damageOrgan, healOrgan, modifyOrganCar
 import { removeOrganEffect } from "@/core/effects/organ/organRemoveEffect"
 import { upgradeCardEffect } from "@/core/effects/card/cardUpgradeEffect"
 import { removeCardEffect } from "@/core/effects/card/cardRemoveEffect"
-import { gainCard, gainPotion, gainRelic, gainOrgan } from "@/core/effects/item/gainItem"
+import { gainCard, gainPotion, losePotion, gainRelic, gainOrgan } from "@/core/effects/item/gainItem"
 import { isEntity } from "@/core/utils/typeGuards"
 import { discoverCard, chooseRandomCard, chooseCardUpgrade, chooseCardRemove, chooseCardDuplicate, customCardChoice } from "@/core/effects/card/cardChoice"
 import { cancelEvent, cancelCurrentEvent } from "@/core/effects/event/cancelEvent"
-import { gainArmor } from "@/core/effects/gainArmor"
+import { gainArmor, modifyArmorValue } from "@/core/effects/gainArmor"
 import { addTurnDraw } from "@/core/effects/card/addTurnDraw"
 import { modifyDrawValue } from "@/core/effects/card/modifyDrawValue"
 import { enableOrganRewardAction, disableOrganRewardAction } from "@/core/effects/organReward/organRewardActionEffects"
@@ -44,6 +44,7 @@ import { toggleStatus } from "@/core/effects/status/toggleStatus"
 import { disableOrgan, disableRandomOrgans, cleanupAllDisabledOrgans, isOrganDisabled } from "@/core/effects/organ/disableOrgan"
 import { giveTemporaryEffectToRandomCards } from "@/core/effects/card/giveTemporaryEffectToRandomCards"
 import { repeatEffects } from "@/core/effects/composite/repeatEffects"
+import { randomPickEffect } from "@/core/effects/composite/randomPickEffect"
 import { chooseHandCardDiscard } from "@/core/effects/card/chooseHandCard"
 import { retrieveCardsToHand } from "@/core/effects/card/retrieveCards"
 import { chooseAndMarkCard } from "@/core/effects/card/chooseAndMarkCard"
@@ -331,6 +332,11 @@ export const effectMap:EffectData[] = [
     effect:gainArmor,
     preview: previewValue
 },{
+    label:"修改护甲值",
+    key:"modifyArmorValue",
+    effect:modifyArmorValue,
+    preview: previewModifyValue("gainArmor")
+},{
     label:"指定回合额外抽牌",
     key:"addTurnDraw",
     effect:addTurnDraw
@@ -346,6 +352,10 @@ export const effectMap:EffectData[] = [
     label:"获得药水",
     key:"gainPotion",
     effect:gainPotion
+},{
+    label:"失去药水",
+    key:"losePotion",
+    effect:losePotion
 },{
     label:"获得遗物",
     key:"gainRelic",
@@ -546,6 +556,10 @@ export const effectMap:EffectData[] = [
     label:"重复执行效果",
     key:"repeatEffects",
     effect:repeatEffects
+},{
+    label:"从多选项随机执行一组效果",
+    key:"randomPickEffect",
+    effect:randomPickEffect
 },{
     label:"从手牌选择卡牌丢弃",
     key:"chooseHandCardDiscard",

@@ -957,6 +957,377 @@ export const relicList: RelicMap[] = [
             }
         }
     },
+    {
+        label: "晨昏日晷",
+        describe: ["偶数回合开始时", "获得 1 点能量"],
+        key: "original_relic_solar_dial",
+        rarity: "uncommon",
+        pool: ["shop"],
+        status: {
+            "cooldown": 2,
+            "maxCooldown": 2
+        },
+        badges: [
+            { type: "cooldown", status: "cooldown" }
+        ],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                triggers: [
+                    {
+                        when: "after",
+                        how: "make",
+                        key: "turnStart",
+                        level: 1,
+                        action: "decrementCooldown"
+                    },
+                    {
+                        when: "after",
+                        how: "make",
+                        key: "turnStart",
+                        condition: "$source.status(cooldown) <= 0",
+                        action: "gainEnergyAndReset"
+                    }
+                ]
+            }
+        },
+        reaction: {
+            decrementCooldown: [{
+                targetType: "triggerSource",
+                key: "decrementCooldown",
+                effect: [{
+                    key: "decrementStatus",
+                    params: { statusKey: "cooldown", amount: 1 }
+                }]
+            }],
+            gainEnergyAndReset: [
+                {
+                    targetType: "owner",
+                    key: "gainEnergy",
+                    effect: [{
+                        key: "gainEnergy",
+                        params: { value: 1 }
+                    }]
+                },
+                {
+                    targetType: "triggerSource",
+                    key: "resetCooldown",
+                    effect: [{
+                        key: "resetCooldown",
+                        params: {}
+                    }]
+                }
+            ]
+        }
+    },
+    {
+        label: "血债契约",
+        describe: ["击杀敌人时", "获得 2 金币"],
+        key: "original_relic_blood_contract",
+        rarity: "rare",
+        pool: ["shop"],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                triggers: [{
+                    when: "after",
+                    how: "make",
+                    key: "death",
+                    action: "gainGoldOnKill"
+                }]
+            }
+        },
+        reaction: {
+            gainGoldOnKill: [{
+                targetType: "owner",
+                key: "gainReserve",
+                effect: [{
+                    key: "gainReserve",
+                    params: { reserveKey: "gold", amount: 2 }
+                }]
+            }]
+        }
+    },
+    {
+        label: "银月项链",
+        describe: ["回合开始时若生命满值", "额外抽 2 张牌"],
+        key: "original_relic_silver_moon_necklace",
+        rarity: "uncommon",
+        pool: ["shop"],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                triggers: [{
+                    when: "after",
+                    how: "make",
+                    key: "turnStart",
+                    condition: "$owner.hpPercent >= 1.0",
+                    action: "drawOnFullHp"
+                }]
+            }
+        },
+        reaction: {
+            drawOnFullHp: [{
+                targetType: "owner",
+                key: "drawFromDrawPile",
+                effect: [{
+                    key: "drawFromDrawPile",
+                    params: { value: 2 }
+                }]
+            }]
+        }
+    },
+    {
+        label: "金铸头骨",
+        describe: [
+            "受致命伤害时消耗 200 金币复活",
+            "并回复 50% 最大生命",
+            "本次运行仅 1 次"
+        ],
+        key: "original_relic_gilded_skull",
+        rarity: "rare",
+        pool: ["shop"],
+        status: {
+            "used": 0,
+            "maxUse": 1
+        },
+        badges: [
+            { type: "counter", status: "used", maxStatus: "maxUse" }
+        ],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                triggers: [{
+                    when: "before",
+                    how: "take",
+                    key: "dead",
+                    condition: [
+                        "$item.status(used) == 0",
+                        "$owner.reserve(gold) >= 200"
+                    ],
+                    action: "goldenSalvation"
+                }]
+            }
+        },
+        reaction: {
+            goldenSalvation: [
+                {
+                    targetType: "owner",
+                    key: "cancelDeath",
+                    effect: [{ key: "cancelCurrentEvent" }]
+                },
+                {
+                    targetType: "owner",
+                    key: "healToHalf",
+                    effect: [{ key: "heal", params: { percent: 0.5 } }]
+                },
+                {
+                    targetType: "owner",
+                    key: "payGold",
+                    effect: [{
+                        key: "spendReserve",
+                        params: { reserveKey: "gold", amount: 200 }
+                    }]
+                },
+                {
+                    targetType: "triggerSource",
+                    key: "markUsed",
+                    effect: [{
+                        key: "setBaseStatus",
+                        params: { statusKey: "used", value: 1 }
+                    }]
+                }
+            ]
+        }
+    },
+    {
+        label: "心跳鼓",
+        describe: [
+            "本回合累计受到",
+            { key: ["status", "maxPoint"] },
+            "点伤害时",
+            "下回合开始额外获得 1 能量"
+        ],
+        key: "original_relic_heartbeat_drum",
+        rarity: "uncommon",
+        pool: ["shop"],
+        status: {
+            "point": 0,
+            "maxPoint": 8,
+            "chargeReady": 0
+        },
+        badges: [
+            { type: "counter", status: "point", maxStatus: "maxPoint" }
+        ],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                effects: [{
+                    key: "accumulateAndTrigger",
+                    params: {
+                        pointKey: "point",
+                        on: { when: "after", how: "take", key: "damage" },
+                        gain: "$triggerEffect.params(value)",
+                        threshold: 8,
+                        consume: "all",
+                        maxRepeat: 1,
+                        targetType: "triggerSource",
+                        effects: [{
+                            key: "setBaseStatus",
+                            params: { statusKey: "chargeReady", value: 1 }
+                        }]
+                    }
+                }],
+                triggers: [{
+                    when: "after",
+                    how: "take",
+                    key: "turnStart",
+                    action: "consumeCharge"
+                }]
+            }
+        },
+        reaction: {
+            consumeCharge: [
+                {
+                    targetType: "owner",
+                    key: "grantEnergy",
+                    condition: ["$item.status(chargeReady) == 1"],
+                    effect: [{
+                        key: "gainEnergy",
+                        params: { value: 1 }
+                    }]
+                },
+                {
+                    targetType: "triggerSource",
+                    key: "clearCharge",
+                    effect: [{
+                        key: "setBaseStatus",
+                        params: { statusKey: "chargeReady", value: 0 }
+                    }]
+                },
+                {
+                    targetType: "triggerSource",
+                    key: "resetPoint",
+                    effect: [{
+                        key: "setBaseStatus",
+                        params: { statusKey: "point", value: 0 }
+                    }]
+                }
+            ]
+        }
+    },
+    {
+        label: "锋刃靴",
+        describe: [
+            "本战斗内首次打出攻击牌时",
+            "该次伤害 +6"
+        ],
+        key: "original_relic_edge_boots",
+        rarity: "uncommon",
+        pool: ["shop"],
+        status: {
+            "used": 0,
+            "maxUse": 1
+        },
+        badges: [
+            { type: "counter", status: "used", maxStatus: "maxUse" }
+        ],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                triggers: [
+                    {
+                        when: "after",
+                        how: "take",
+                        key: "battleStart",
+                        action: "resetUsed"
+                    },
+                    {
+                        when: "before",
+                        how: "make",
+                        key: "damage",
+                        condition: [
+                            "$item.status(used) == 0",
+                            "$triggerCard.hasTag(attack)"
+                        ],
+                        action: "firstAttackBoost"
+                    }
+                ]
+            }
+        },
+        reaction: {
+            resetUsed: [{
+                targetType: "triggerSource",
+                key: "resetUsed",
+                effect: [{
+                    key: "setBaseStatus",
+                    params: { statusKey: "used", value: 0 }
+                }]
+            }],
+            firstAttackBoost: [
+                {
+                    targetType: "triggerEffect",
+                    key: "boost",
+                    effect: [{
+                        key: "modifyDamageValue",
+                        params: { delta: 6 }
+                    }]
+                },
+                {
+                    targetType: "triggerSource",
+                    key: "markUsed",
+                    effect: [{
+                        key: "setBaseStatus",
+                        params: { statusKey: "used", value: 1 }
+                    }]
+                }
+            ]
+        }
+    },
+    {
+        label: "预言之骰",
+        describe: [
+            "战斗开始时从 4 个预言中选择 1 个立即生效",
+            "力量 / 敏捷 / 抽牌 / 能量"
+        ],
+        key: "original_relic_prophecy_dice",
+        rarity: "rare",
+        pool: ["shop"],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                triggers: [{
+                    when: "after",
+                    how: "take",
+                    key: "battleStart",
+                    action: "prophecyChoose"
+                }]
+            }
+        },
+        reaction: {
+            prophecyChoose: [{
+                targetType: "owner",
+                key: "prophecyChoose",
+                effect: [{
+                    key: "customCardChoice",
+                    params: {
+                        title: "预言之骰",
+                        description: "选择一个预言立即生效",
+                        cardKeys: [
+                            "card_prophecy_power",
+                            "card_prophecy_dex",
+                            "card_prophecy_draw",
+                            "card_prophecy_energy"
+                        ],
+                        minSelect: 1,
+                        maxSelect: 1,
+                        cancelable: false,
+                        action: "triggerUse"
+                    }
+                }]
+            }]
+        }
+    },
 ]
 /**
  * ○环 — 当遗物池耗尽时的垫底遗物

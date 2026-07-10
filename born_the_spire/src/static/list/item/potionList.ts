@@ -99,19 +99,51 @@ export const potionList:PotionMap[] = [
             }
         }
     },
-    // 瓶中精灵 - 无法使用（等待战斗系统完善）
+    // 瓶中精灵 - 携带时死亡自动触发，用尽即消耗
     {
         label:"瓶中精灵",
         status:{
             "reviveHealth":30
         },
-        describe:["死亡时以",{key:["status","reviveHealth"]},"点生命值复活（当前无法使用，等待战斗系统完善）"],
+        describe:["死亡时以",{key:["status","reviveHealth"]},"点生命值复活"],
         targetType:"player",
         canDrop: false,  // 无法丢弃
         key:"original_potion_00005",
         interaction:{
-            // 暂无 use 交互，无法主动使用
-            // 未来实现：possess 时添加触发器，监听死亡事件并复活
+            possess:{
+                target:{key:"owner"},
+                triggers:[{
+                    when:"before",
+                    how:"take",
+                    key:"dead",
+                    action:"fairyRevive"
+                }]
+            }
+        },
+        reaction:{
+            fairyRevive:[
+                {
+                    targetType:"owner",
+                    key:"cancelDeath",
+                    effect:[{key:"cancelCurrentEvent"}]
+                },
+                {
+                    targetType:"owner",
+                    key:"healFairy",
+                    effect:[{
+                        key:"heal",
+                        params:{value:"$item.status(reviveHealth)"}
+                    }]
+                },
+                {
+                    targetType:"owner",
+                    key:"consumeFairy",
+                    effect:[{
+                        key:"losePotion",
+                        params:{potionKey:"original_potion_00005"}
+                    }]
+                }
+            ]
         }
     }
 ]

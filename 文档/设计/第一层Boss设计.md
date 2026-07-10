@@ -12,7 +12,7 @@
 
 ---
 
-## Boss 1：炙渣王（待实现）
+## Boss 1：炙渣王（已实现）
 
 key: enemy_slag_king
 血量：220
@@ -312,5 +312,4 @@ percent 参数（负值即扣 max）由 `addMaxHealthAndHeal` 提供，实现于
 
 ## 待讨论
 
-Boss 1（炙渣王）的完整实现
 各 Boss 的器官数值平衡

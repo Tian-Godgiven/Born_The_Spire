@@ -1023,6 +1023,72 @@ export const cardList:CardMap[] = [{
             1:{status:{rageStacks:2,selfDamage:35}}
         }
     }
+},{
+    label:"力量之愿",
+    tags:["skill"],
+    rarity:"uncommon",
+    pool:["exclusive"],
+    status:{ cost:0 },
+    describe:["本回合力量 +2"],
+    key:"card_prophecy_power",
+    interaction:{
+        use:{
+            target:{key:"self"},
+            effects:[
+                {key:"applyState",params:{stateKey:"power",stacks:2}},
+                {key:"applyState",params:{stateKey:"tempPower",stacks:2}}
+            ]
+        }
+    }
+},{
+    label:"敏捷之愿",
+    tags:["skill"],
+    rarity:"uncommon",
+    pool:["exclusive"],
+    status:{ cost:0 },
+    describe:["本回合敏捷 +2"],
+    key:"card_prophecy_dex",
+    interaction:{
+        use:{
+            target:{key:"self"},
+            effects:[
+                {key:"applyState",params:{stateKey:"dexterity",stacks:2}},
+                {key:"applyState",params:{stateKey:"tempDex",stacks:2}}
+            ]
+        }
+    }
+},{
+    label:"洞察之愿",
+    tags:["skill"],
+    rarity:"uncommon",
+    pool:["exclusive"],
+    status:{ cost:0 },
+    describe:["抽 2 张牌"],
+    key:"card_prophecy_draw",
+    interaction:{
+        use:{
+            target:{key:"self"},
+            effects:[
+                {key:"drawFromDrawPile",params:{value:2}}
+            ]
+        }
+    }
+},{
+    label:"燃能之愿",
+    tags:["skill"],
+    rarity:"uncommon",
+    pool:["exclusive"],
+    status:{ cost:0 },
+    describe:["本回合能量 +1"],
+    key:"card_prophecy_energy",
+    interaction:{
+        use:{
+            target:{key:"self"},
+            effects:[
+                {key:"gainEnergy",params:{value:1}}
+            ]
+        }
+    }
 }]
 
 export async function getCardByKey(key:string){

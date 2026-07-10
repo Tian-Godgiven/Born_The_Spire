@@ -126,6 +126,10 @@ export function executeItemReaction(params: {
             effectUnits: eventConfig.effect ?? []
         })
 
+        // 挂父事件引用：让 cancelCurrentEvent 能定位到触发本 reaction 的事件
+        // （复活/免疫/阻挡等机制依赖此通路，见 cancelEvent.ts 注释）
+        newEvent.parentEvent = triggerEvent
+
         // 设置触发器上下文
         newEvent.triggerContext = triggerEvent.triggerContext || {
             source: item,

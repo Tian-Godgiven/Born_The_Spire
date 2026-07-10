@@ -242,6 +242,74 @@ export const stateList: StateData[] = [
         showType: "number",
         repeate: "stack",
     },
+    // 敏捷：获得护甲时，护甲值增加（允许负数）
+    {
+        label: "敏捷",
+        key: "dexterity",
+        category: "buff",
+        describe: ["获得的护甲增加"],
+        showType: "number",
+        repeate: "stack",
+        allowNegative: true,
+        interaction: {
+            possess: {
+                triggers: [{
+                    when: "before",
+                    how: "make",
+                    key: "gainArmor",
+                    action: "dexterityBoost"
+                }],
+                reaction: {
+                    dexterityBoost: [{
+                        key: "dexterityBoost",
+                        label: "敏捷增甲",
+                        targetType: "triggerEffect",
+                        effect: [{
+                            key: "modifyArmorValue",
+                            params: { delta: "$source.stateStack()" }
+                        }]
+                    }]
+                }
+            }
+        }
+    },
+    // 临时敏捷标记：回合结束时失去等量敏捷层数
+    {
+        label: "临时敏捷",
+        key: "tempDex",
+        describe: ["回合结束时失去等量敏捷"],
+        showType: "number",
+        repeate: "stack",
+        allowNegative: true,
+        interaction: {
+            possess: {
+                triggers: [{
+                    when: "after",
+                    how: "take",
+                    key: "turnEnd",
+                    action: "removeTempDex"
+                }],
+                reaction: {
+                    removeTempDex: [{
+                        key: "removeTempDex",
+                        label: "移除临时敏捷",
+                        targetType: "triggerOwner",
+                        effect: [{
+                            key: "changeStateStack",
+                            params: {
+                                stateKey: "dexterity",
+                                delta: "$source.stateStack()",
+                                negate: true
+                            }
+                        }, {
+                            key: "removeState",
+                            params: { stateKey: "tempDex" }
+                        }]
+                    }]
+                }
+            }
+        }
+    },
     // 临时力量标记：回合结束时失去等量力量层数
     {
         label: "临时力量",

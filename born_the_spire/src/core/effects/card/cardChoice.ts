@@ -201,7 +201,8 @@ export const chooseCardDuplicate: EffectFunc = async (event, effect) => {
  *   maxSelect?: number
  *   cancelable?: boolean
  *   filter?: (card: Card) => boolean
- *   action?: "gain" | "remove" | "upgrade" | "duplicate" | "none" - 选择后的操作（默认none）
+ *   action?: "gain" | "remove" | "upgrade" | "duplicate" | "discard" | "triggerUse" | "none" - 选择后的操作（默认none）
+ *     - triggerUse: 触发卡牌的 interaction.use.effects（卡不进牌组，仅执行效果）
  * }
  */
 export const customCardChoice: EffectFunc = async (event, effect) => {
@@ -293,6 +294,19 @@ export const customCardChoice: EffectFunc = async (event, effect) => {
           }]
         })
         break
+      case "triggerUse": {
+        const useInteraction = card.getInteraction("use")
+        if (useInteraction && Array.isArray(useInteraction.effects)) {
+          await doEvent({
+            key: "cardEffect",
+            source: target,
+            medium: card,
+            target: target,
+            effectUnits: useInteraction.effects
+          })
+        }
+        break
+      }
       case "none":
       default:
         // 不执行任何操作，只是选择

@@ -90,6 +90,37 @@ export const gainPotion: EffectFunc = async (event, effect) => {
 }
 
 /**
+ * 失去药水效果
+ *
+ * params:
+ * - potionKey: 药水 key
+ */
+export const losePotion: EffectFunc = (event, effect) => {
+    const potionKey = String(effect.params.potionKey)
+
+    if (!potionKey) {
+        console.error("[losePotion] 缺少必要参数 potionKey", effect.params)
+        return
+    }
+
+    const target = event.target
+    if (Array.isArray(target)) {
+        console.error("[losePotion] target 不能是数组")
+        return
+    }
+
+    if (!isEntity(target)) {
+        console.error("[losePotion] target 必须是实体")
+        return
+    }
+
+    const potionModifier = getPotionModifier(target)
+    potionModifier.removePotionByKey(potionKey)
+
+    newLog([target, "失去了药水", potionKey])
+}
+
+/**
  * 获得遗物效果
  *
  * params:
