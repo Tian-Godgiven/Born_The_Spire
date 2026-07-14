@@ -46,6 +46,11 @@
         附 effectMap 常用效果分组速查
         长度约 500 行
 
+    事件实现场景手册.md
+        10 场景：单幕纯 effect / ifAble 门槛 / rewards 选择弹窗 / 互斥组 / 打开选择界面 / 多幕基础 / saveData+ifShow 数据传递 / 嵌入战斗 / customCallback 兜底 / 新增 event effect
+        附 eventEffectMap 速查、字段速查、执行顺序图、8 个常见坑
+        长度约 650 行
+
 ## 使用建议
 
 新会话开始想实现某种效果，按下面顺序找入口：

@@ -265,6 +265,7 @@ clear / help
 - **`敌人实现场景手册.md`** — 10 场景，多阶段 Boss（血量阈值）、weighted/loop mode
 - **`触发器实现场景手册.md`** — 9 场景横切手册：when/how/key 三维、跨方引用、condition 语法坑、accumulateAndTrigger/triggerTarget
 - **`效果实现场景手册.md`** — 10 场景横切手册：EffectUnit 数组、`$` 引用表达式、影响牌堆/status/state、拦截修改参数、新建 EffectFunc
+- **`事件实现场景手册.md`** — 10 场景：单幕/多幕/ifAble/rewards/互斥组/选择界面/saveData+ifShow/嵌入战斗/customCallback/新增 event effect；含 eventEffectMap 速查与 8 个常见坑
 - **`常见错误排查手册.md`** — 跨类型错误主题分类：事件系统绕过、修饰器误清理、触发器 when/how 错用等
 
 场景手册与开发指南的分工：开发指南答「需要动哪些文件、字段格式」，场景手册答「我想做出 XX 效果，具体数据怎么写」。
