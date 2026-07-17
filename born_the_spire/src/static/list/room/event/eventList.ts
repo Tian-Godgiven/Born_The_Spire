@@ -4,6 +4,7 @@
  */
 
 import type { EventMap } from "@/core/types/EventMapData"
+import { eventEffectMap } from "./eventEffectMap"
 
 /**
  * 事件配置列表
@@ -245,6 +246,218 @@ export const eventList: EventMap[] = [
                             //todo
                         }
                     }
+                ]
+            }
+        ]
+    },
+
+    // 无常之神：累进赌博（每次停下骰子掷一次，6 阶后自动结束）
+    {
+        key: "event_god_of_chance",
+        title: "无常之神",
+        description: "废墟中，一枚骰子在无休止地旋转。",
+        icon: "🎲",
+        scenes: [
+            {
+                key: "roll",
+                title: "无常之神",
+                description: (data) => {
+                    const stage = data.stage ?? 0
+                    const lines = [
+                        "一枚骰子在废墟中无休止地旋转。你【可以】停下它。",
+                        "骰子重新旋转起来。你【或许应该】停下它。",
+                        "骰子重新旋转起来。你【理应】停下它。",
+                        "骰子重新旋转起来。你【必须】停下它。",
+                        "骰子重新旋转起来。你【定将】停下它。",
+                        "骰子重新旋转起来。你【不得不】停下它。"
+                    ]
+                    return lines[stage]
+                },
+                options: [
+                    {
+                        key: "roll_continue",
+                        title: "停下骰子",
+                        description: "让它静止一瞬，接受这次裁决",
+                        icon: "✋",
+                        ifShow: (data) => (data.stage ?? 0) < 5,
+                        saveData: (data) => { data.stage = (data.stage ?? 0) + 1 },
+                        customCallback: async (data) => {
+                            await eventEffectMap["godOfChance_roll"]({ stage: data.stage })
+                        },
+                        nextScene: "roll"
+                    },
+                    {
+                        key: "roll_final",
+                        title: "停下骰子",
+                        description: "让它静止一瞬，接受这次裁决",
+                        icon: "✋",
+                        ifShow: (data) => (data.stage ?? 0) === 5,
+                        saveData: (data) => { data.stage = (data.stage ?? 0) + 1 },
+                        customCallback: async (data) => {
+                            await eventEffectMap["godOfChance_roll"]({ stage: data.stage })
+                        },
+                        nextScene: "finale"
+                    },
+                    {
+                        key: "leave",
+                        title: "让它继续转，转身离开",
+                        description: "抵抗诱惑，把骰子留给下一个人",
+                        icon: "🚪"
+                    }
+                ]
+            },
+            {
+                key: "finale",
+                title: "无常之神",
+                description: "骰子继续旋转，但你已经无法让它停下了。",
+                options: [{
+                    key: "leave",
+                    title: "转身离开",
+                    description: "残响仍在耳边",
+                    icon: "🚪"
+                }]
+            }
+        ]
+    },
+
+    // 胚胎发育：轮回赌博（多次代价推进器官阶段，第 5 阶段可"进化"重置 + evolutionRounds +1）
+    {
+        key: "event_embryogenesis",
+        title: "胚胎发育",
+        description: "一枚微微跳动的胚胎悬浮在你面前——还未成形，却仿佛在等待被塑造。",
+        icon: "🥚",
+        scenes: [
+            {
+                key: "main",
+                title: "胚胎发育",
+                description: (data) => {
+                    const stage = data.stage ?? 1
+                    const rounds = data.evolutionRounds ?? 0
+                    const stageNames = ["合子", "桑葚胚", "囊胚", "原肠胚", "神经胚"]
+                    const stageDescs = [
+                        "只是一枚受精卵。战斗结束回复 8 生命。",
+                        "细胞开始分裂堆聚。每场战斗第一张攻击卡额外触发 1 次。",
+                        "内里生成腔体。回合开始 +5 格挡；每场战斗塞入一张【分化】卡到抽牌堆。",
+                        "开始向内折叠分化。（专属效果待定。）每场战斗塞入一张【分化】卡。",
+                        "神经系统雏形浮现。每场战斗胜利 +5 最大生命并回复 5 生命；每场战斗塞入一张【分化】卡。"
+                    ]
+                    const roundLine = rounds > 0
+                        ? `\n已进化 ${rounds} 轮，效果按轮次强化。`
+                        : ""
+                    return `胚胎已发育至【${stageNames[stage - 1]}】。\n${stageDescs[stage - 1]}${roundLine}`
+                },
+                options: [
+                    // 接生：结束事件，装当前阶段器官
+                    {
+                        key: "deliver",
+                        title: "接生",
+                        description: "把它从悬浮中取下，让它成为你身体的一部分",
+                        icon: "🍼",
+                        customCallback: async (data) => {
+                            await eventEffectMap["deliverEmbryo"]({
+                                stage: data.stage ?? 1,
+                                evolutionRounds: data.evolutionRounds ?? 0
+                            })
+                        }
+                    },
+                    // 让它发育（阶段 1-4）：抽代价 → 跳 costPreview
+                    {
+                        key: "develop",
+                        title: "让它发育",
+                        description: "它跳动得更急，仿佛在等你付出什么",
+                        icon: "🧬",
+                        ifShow: (data) => (data.stage ?? 1) < 5,
+                        customCallback: async (data) => {
+                            data.pendingCost = await eventEffectMap["drawEmbryoCost"]({ heavy: false })
+                        },
+                        nextScene: "costPreview"
+                    },
+                    // 让它进化（阶段 5）：抽重代价 → 跳 costPreview
+                    {
+                        key: "evolve",
+                        title: "让它进化",
+                        description: "让它将自己拆散，重新开始——但这次它会记得",
+                        icon: "🌀",
+                        ifShow: (data) => (data.stage ?? 1) === 5,
+                        customCallback: async (data) => {
+                            data.pendingCost = await eventEffectMap["drawEmbryoCost"]({ heavy: true })
+                        },
+                        nextScene: "costPreview"
+                    }
+                ]
+            },
+            {
+                key: "costPreview",
+                title: "胚胎发育",
+                description: (data) => {
+                    const label = data.pendingCost?.label ?? "……"
+                    const isEvolve = (data.stage ?? 1) === 5
+                    const next = isEvolve
+                        ? "接受它，胚胎将拆散重生，进化轮次 +1。"
+                        : "接受它，胚胎将推进至下一阶段。"
+                    return `胚胎需要吸取：【${label}】\n${next}\n拒绝它，你只能就此接生它。`
+                },
+                options: [
+                    // 接受代价：付代价 + 阶段推进/进化 → 回 main
+                    {
+                        key: "acceptCost",
+                        title: "接受",
+                        description: "让它汲取",
+                        icon: "✅",
+                        saveData: (data) => {
+                            const currentStage = data.stage ?? 1
+                            if (currentStage === 5) {
+                                data.evolutionRounds = (data.evolutionRounds ?? 0) + 1
+                                data.stage = 1
+                            } else {
+                                data.stage = currentStage + 1
+                            }
+                        },
+                        customCallback: async (data) => {
+                            await eventEffectMap["applyEmbryoCost"]({ cost: data.pendingCost })
+                            data.pendingCost = null
+                        },
+                        nextScene: "main"
+                    },
+                    // 拒绝代价：等同接生（结束事件）
+                    {
+                        key: "refuseCost",
+                        title: "拒绝",
+                        description: "太重了。你决定就此接生它",
+                        icon: "🚪",
+                        customCallback: async (data) => {
+                            await eventEffectMap["deliverEmbryo"]({
+                                stage: data.stage ?? 1,
+                                evolutionRounds: data.evolutionRounds ?? 0
+                            })
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+
+    // 废弃神龛：牌库单发赌博（无离开选项，二选一都必须承担后果）
+    {
+        key: "event_abandoned_shrine",
+        title: "废弃神龛",
+        description: "斜倚的石壁间藏着一座早被遗忘的神龛。神像面目模糊，供台上残留着几缕熄灭的香灰——它似乎仍在等待着什么。",
+        icon: "⛩️",
+        options: [
+            {
+                title: "祈祷",
+                description: "你合十低语，一段不知归属的旋律在耳边回响。牌库中随机一张卡将被神灵取走。",
+                icon: "🙏",
+                effects: [
+                    { key: "removeRandomCard", params: { count: 1 } }
+                ]
+            },
+            {
+                title: "亵渎",
+                description: "你将手按上神像冰凉的额头。一阵刺骨的寒意涌上，牌库中随机一张卡被诡异地复刻。",
+                icon: "🩸",
+                effects: [
+                    { key: "duplicateRandomCard", params: { count: 1 } }
                 ]
             }
         ]

@@ -87,7 +87,7 @@ export class EventRoom extends Room {
             const firstScene = this.eventConfig.scenes![0]
             this._currentSceneKey = firstScene.key
             this.currentTitle = firstScene.title
-            this.currentDescription = firstScene.description
+            this.currentDescription = this.resolveDescription(firstScene)
             this.choiceGroup = this.createChoiceGroupForScene(firstScene)
         } else {
             // 单幕事件
@@ -112,6 +112,15 @@ export class EventRoom extends Room {
     }
 
     /**
+     * 解析幕描述：字符串直接返回；函数则以当前 sceneData 求值
+     */
+    private resolveDescription(scene: EventSceneMap): string {
+        return typeof scene.description === "function"
+            ? scene.description(this.sceneData)
+            : scene.description
+    }
+
+    /**
      * 根据事件 key 加载事件配置
      */
     private loadEventByKey(key: string): EventMap {
@@ -131,7 +140,7 @@ export class EventRoom extends Room {
 
         return new ChoiceGroup({
             title: scene.title,
-            description: scene.description,
+            description: this.resolveDescription(scene),
             choices,
             minSelect: 1,
             maxSelect: 1,
@@ -211,10 +220,11 @@ export class EventRoom extends Room {
 
         this._currentSceneKey = sceneKey
         this.currentTitle = scene.title
-        this.currentDescription = scene.description
+        const resolvedDesc = this.resolveDescription(scene)
+        this.currentDescription = resolvedDesc
         newLog([`===== ${scene.title} =====`])
-        if (scene.description) {
-            newLog([scene.description])
+        if (resolvedDesc) {
+            newLog([resolvedDesc])
         }
 
         // 如果是战斗场景，启动战斗

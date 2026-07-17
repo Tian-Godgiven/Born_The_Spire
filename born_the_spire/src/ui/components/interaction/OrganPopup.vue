@@ -47,6 +47,7 @@ import { Organ } from '@/core/objects/target/Organ'
 import { getDescribeStructured, type DescribeSegment } from '@/ui/hooks/express/describe'
 import Card from '@/ui/components/object/Card.vue'
 import type { Card as CardType } from '@/core/objects/item/Subclass/Card'
+import { entryDefinitions } from '@/core/objects/system/Entry'
 
 const props = defineProps<{
     organ: Organ
@@ -60,20 +61,9 @@ let mouseX = 0
 let mouseY = 0
 let hideCardTimeout: NodeJS.Timeout | null = null
 
-// 词条 label 映射
-const entryLabelMap: Record<string, string> = {
-    'organ_fragile': '脆弱',
-    'organ_sturdy': '坚固',
-    'organ_regenerative': '再生',
-    'card_ethereal': '虚无',
-    'card_exhaust': '消耗',
-    'card_innate': '固有',
-    'card_retain': '保留'
-}
-
-// 获取词条 label
+// 获取词条 label —— 走 entryDefinitions 合并表，避免硬编码字典与词条系统脱节
 function getEntryLabel(entryKey: string): string {
-    return entryLabelMap[entryKey] || entryKey
+    return entryDefinitions[entryKey]?.label || entryKey
 }
 
 // 获取稀有度标签

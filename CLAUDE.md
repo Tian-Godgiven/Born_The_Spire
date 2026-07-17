@@ -252,9 +252,13 @@ clear / help
 - **`文档/开发指南/新内容开发清单.md`** — 添加卡牌/器官/遗物/敌人/状态/战斗时需改哪些文件
 - **`文档/参考/效果开发指南.md`** — 三层效果分类（原子/复合/专属）、决策流程、命名规范
 - **`文档/参考/反应系统详解.md`** — action+reaction 模式完整说明、triggerTarget vs targetType、执行流程
+- **`文档/子系统/属性与当前值/属性系统.md`** — Status 的 base/current 两层、originalBaseValue、changeStatusValue/getStatusValue API 用法
+- **`文档/子系统/属性与当前值/属性注册表系统.md`** — statusMap 定义格式（hidden/notNegative/category）、ensureStatusExists 动态注册
+- **`文档/参考/修饰器总论.md`** — StatusModifier / ContentModifier / StateModifier 三大修饰器语义、Status 内部管理、自动清理时机
 - **`文档/开发指南/状态系统开发指南.md`** — StateData 格式、stackChange、状态自带触发器
 - **`文档/开发指南/敌人AI系统.md`** — behavior/pattern/condition 格式、双牌堆、多阶段Boss
 - **`文档/参考/实现参考手册.md`** — Effect拦截、$triggerEffect语法、inHand交互、StateModifier API 等关键机制
+- **`文档/参考/字段值枚举手册.md`** — rarity/tags/targetType/faction 等跨内容列表的魔法字符串清单，防止拼错或引入新变体
 
 实现具体效果时的场景式教程（`文档/开发指南/场景手册/`）：
 
@@ -263,9 +267,11 @@ clear / help
 - **`器官实现场景手册.md`** — 10 场景，含对称原则、独立原则；主动能力样板
 - **`遗物实现场景手册.md`** — 12 场景，累计触发/解锁行动/主动能力/获得时选择存id/池分配/每回合触发
 - **`敌人实现场景手册.md`** — 10 场景，多阶段 Boss（血量阈值）、weighted/loop mode
+- **`词条实现场景手册.md`** — 3 场景横切手册：方法覆盖类 / 触发器挂载类 / status 语法糖类，含决策流程与常见坑
 - **`触发器实现场景手册.md`** — 9 场景横切手册：when/how/key 三维、跨方引用、condition 语法坑、accumulateAndTrigger/triggerTarget
 - **`效果实现场景手册.md`** — 10 场景横切手册：EffectUnit 数组、`$` 引用表达式、影响牌堆/status/state、拦截修改参数、新建 EffectFunc
 - **`事件实现场景手册.md`** — 10 场景：单幕/多幕/ifAble/rewards/互斥组/选择界面/saveData+ifShow/嵌入战斗/customCallback/新增 event effect；含 eventEffectMap 速查与 8 个常见坑
+- **`动画实现场景手册.md`** — 12 场景 + AnimationManager 内部机制 + 9 个常见坑：复用/注册 preset、useAnimation 组件接入、多阶段演出、watch 驱动、channel/priority/repeat/interruptible 决策；append/replace 模式标注未实测
 - **`常见错误排查手册.md`** — 跨类型错误主题分类：事件系统绕过、修饰器误清理、触发器 when/how 错用等
 
 场景手册与开发指南的分工：开发指南答「需要动哪些文件、字段格式」，场景手册答「我想做出 XX 效果，具体数据怎么写」。

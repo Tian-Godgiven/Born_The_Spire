@@ -3,7 +3,7 @@
  */
 
 import { allForOneCard, clawCard, daggerSprayCard } from './attack'
-import { thousandCutsCard } from './power'
+import { thousandCutsCard } from './ability'
 import { doubleTapCard, piercingWailCard, preparedCard, panaceaCard, blindCard, chrysalisCard, deepBreathCard } from './skill'
 import { doubtCard, injuryCard, regretCard } from './curse'
 

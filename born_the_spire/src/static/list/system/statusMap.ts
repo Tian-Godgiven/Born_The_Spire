@@ -129,6 +129,30 @@ export const statusMapList: Record<string, StatusMap> = {
         describe: "是否已染血（0=未染血，1=已染血）",
         category: "special",
         hidden: true
+    },
+    "retain-on-turn-end": {
+        label: "回合末保留",
+        value: 0,
+        describe: "大于 0 时，回合结束时该卡不会被自动丢弃（0=不保留，>=1=保留）",
+        category: "card",
+        hidden: true,
+        notNegative: true
+    },
+    "cannot-play": {
+        label: "不可打出",
+        value: 0,
+        describe: "大于 0 时，该卡无法主动打出（0=可打出，>=1=不可打出）",
+        category: "card",
+        hidden: true,
+        notNegative: true
+    },
+    "disabled": {
+        label: "已失效",
+        value: 0,
+        describe: "大于 0 时，该物品被视为失效（使用方在 trigger 上加 condition 检查即可短路）",
+        category: "special",
+        hidden: true,
+        notNegative: true
     }
 } as const
 

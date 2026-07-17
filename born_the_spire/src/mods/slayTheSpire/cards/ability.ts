@@ -7,7 +7,7 @@ import type { CardMap } from '@/core/objects/item/Subclass/Card'
 export const thousandCutsCard: CardMap = {
     label: "凌迟",
     tags: ["power"],
-    entry: ["card_power"],
+    entry: ["card_ability"],
     status: {
         cost: 2,
         stacks: 1

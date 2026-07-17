@@ -4,6 +4,7 @@ import type { Card } from "@/core/objects/item/Subclass/Card"
 import type { Player } from "@/core/objects/target/Player"
 import { createTriggerByTriggerMap } from "@/core/objects/system/trigger/Trigger"
 import { isCard, isPlayer } from "@/core/utils/typeGuards"
+import { ensureStatusExists, changeStatusValue } from "@/core/objects/system/status/Status"
 
 /**
  * 卡牌专用词条定义
@@ -31,13 +32,32 @@ function checkOwnerTypes(
 
 /**
  * 卡牌词条定义注册表
+ *
+ * 词条按实现模式分三类（详见 文档/开发指南/场景手册/词条实现场景手册.md）：
+ *
+ *   ─── 方法覆盖类 ─────────────────────────────────
+ *     onApply 覆盖 card 的方法（如 getAfterUseEffect）
+ *     适用：改变卡自身的行为（打出后去哪等）
+ *     成员：card_exhaust / card_ability
+ *
+ *   ─── 触发器挂载类 ───────────────────────────────
+ *     onApply 给 owner 挂 reaction + trigger
+ *     适用：响应 owner 的事件（回合结束/战斗开始等）
+ *     成员：card_void / card_inherent
+ *
+ *   ─── status 语法糖类 ─────────────────────────────
+ *     onApply 给 card 挂 status
+ *     适用：可查询的属性 flag，任意来源均可挂
+ *     成员：card_retain (retain-on-turn-end) / card_cannot_play (cannot-play)
  */
 export const cardEntryDefinitions: Record<string, CardEntryDefinition> = {
+    // ==================== 方法覆盖类 ====================
+
     // 消耗词条
     card_exhaust: {
         label: "消耗",
         describe: ["使用后，将其移入消耗堆，而非弃牌堆"],
-        conflictsWith: ["card_void"],  // 与其他"使用后去向"词条互斥
+        conflictsWith: ["card_ability"],  // 与 ability 争"使用后去向"
         onApply: (owner, ownersOwner) => {
             const result = checkOwnerTypes(owner, ownersOwner)
             if (!result) {
@@ -66,10 +86,10 @@ export const cardEntryDefinitions: Record<string, CardEntryDefinition> = {
     },
 
     // 能力词条
-    card_power: {
+    card_ability: {
         label: "能力",
         describe: ["使用后，从本场战斗中移除"],
-        conflictsWith: ["card_exhaust", "card_void"],
+        conflictsWith: ["card_exhaust"],  // 与 exhaust 争"使用后去向"
         onApply: (owner, ownersOwner) => {
             const result = checkOwnerTypes(owner, ownersOwner)
             if (!result) {
@@ -80,7 +100,7 @@ export const cardEntryDefinitions: Record<string, CardEntryDefinition> = {
             const originalMethod = card.getAfterUseEffect.bind(card)
 
             card.getAfterUseEffect = (fromPile) => ({
-                key: "pay_removePower",
+                key: "pay_removeAbility",
                 describe: ["将能力牌从战斗中移除"],
                 params: {
                     sourcePile: fromPile,
@@ -94,11 +114,12 @@ export const cardEntryDefinitions: Record<string, CardEntryDefinition> = {
         }
     },
 
+    // ==================== 触发器挂载类 ====================
+
     // 虚无词条
     card_void: {
         label: "虚无",
         describe: ["若回合结束时仍在手牌中，会移入消耗堆而非弃牌堆"],
-        conflictsWith: ["card_exhaust"],  // 与 exhaust 词条互斥
         onApply: (owner, ownersOwner) => {
             const result = checkOwnerTypes(owner, ownersOwner)
             if (!result) {
@@ -190,7 +211,14 @@ export const cardEntryDefinitions: Record<string, CardEntryDefinition> = {
         }
     },
 
-    // 不能被打出词条
+    // ==================== status 语法糖类 ====================
+
+    /**
+     * 不能被打出词条 = 给卡挂 "cannot-play" status = 1 的语法糖
+     *
+     * CardModifier.canPlayCard 检查 "cannot-play" status > 0 的卡拒绝打出。
+     * 任意其他效果直接挂这个 status 也能达到"暂时禁用"效果（临时 debuff / 状态压制等）。
+     */
     card_cannot_play: {
         label: "不能被打出",
         describe: ["该卡牌无法被使用"],
@@ -199,9 +227,44 @@ export const cardEntryDefinitions: Record<string, CardEntryDefinition> = {
             if (!result) {
                 return []
             }
-            // 实际逻辑在 CardModifier.canPlayCard 中检查词条
-            // 这里不需要做任何事，返回空数组
-            return []
+            const { card } = result
+
+            ensureStatusExists(card, "cannot-play", 0)
+            const removeStatus = changeStatusValue(card, "cannot-play", "card_cannot_play", {
+                value: 1,
+                type: "additive",
+                target: "base"
+            })
+
+            return [removeStatus]
+        }
+    },
+
+    /**
+     * 保留词条 = 给卡挂 "retain-on-turn-end" status = 1 的语法糖
+     *
+     * CardModifier.discardHandOnTurnEnd 检查 "retain-on-turn-end" > 0 的卡跳过弃牌堆，
+     * 并对它们触发 retain 事件。任意其他效果直接挂这个 status 也能达到"保留"效果，
+     * 词条只是最基础的实现。
+     */
+    card_retain: {
+        label: "保留",
+        describe: ["回合结束时不会被弃入弃牌堆"],
+        onApply: (owner, ownersOwner) => {
+            const result = checkOwnerTypes(owner, ownersOwner)
+            if (!result) {
+                return []
+            }
+            const { card } = result
+
+            ensureStatusExists(card, "retain-on-turn-end", 0)
+            const removeStatus = changeStatusValue(card, "retain-on-turn-end", "card_retain", {
+                value: 1,
+                type: "additive",
+                target: "base"
+            })
+
+            return [removeStatus]
         }
     }
 }

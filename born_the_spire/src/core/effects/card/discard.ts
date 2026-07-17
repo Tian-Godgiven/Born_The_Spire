@@ -7,6 +7,7 @@ import { Player } from "@/core/objects/target/Player";
 import { cardMove, leaveHand } from ".";
 import { isCard } from "@/core/utils/typeGuards";
 import type { Entity } from "@/core/objects/system/Entity";
+import { getCardModifier } from "@/core/objects/system/modifier/CardModifier";
 
 //从指定牌堆丢弃指定的卡牌到弃牌堆
 export const discardCard:EffectFunc = (event,effect)=>{
@@ -78,7 +79,7 @@ export const pay_exhaustCard:EffectFunc = (event,effect)=>{
  * 能力牌使用后：从牌堆中移除，不放入任何堆
  * 不走 cardMove（没有目标牌堆），直接用 leaveHand 处理手牌情况
  */
-export const pay_removePower:EffectFunc = (event,effect)=>{
+export const pay_removeAbility:EffectFunc = (event,effect)=>{
     const {source, target} = event
     if(source instanceof Player == false) return;
     const pile = effect.params.sourcePile as Card[]
@@ -96,7 +97,12 @@ export const pay_removePower:EffectFunc = (event,effect)=>{
     })
 }
 
-//丢弃目标的所有卡牌
+/**
+ * 丢弃目标指定牌堆的所有卡牌（通用弃堆）
+ *
+ * 不带 retain 过滤——自动弃牌（如回合结束）请用 discardHandOnTurnEnd。
+ * 本 effect 保留给主动弃堆场景（如"丢弃全部抽牌堆"、"清空指定牌堆"等）。
+ */
 export const discardAllCard:EffectFunc = async(event,effect)=>{
     const {source,target} = event
     //只有玩家对象具备卡牌
@@ -119,4 +125,18 @@ export const discardAllCard:EffectFunc = async(event,effect)=>{
             "params":{sourcePileName:pileName}
         }]
     })
+}
+
+/**
+ * 手牌自动弃牌：主体逻辑在 CardModifier 内，此处只是 EffectFunc 薄壳
+ *
+ * "自动"指非玩家/效果主动发起，而是流程末尾清理性质的弃牌（如回合结束）。
+ * 会跳过带 "retain-on-turn-end" > 0 的卡牌（保留词条 / 其他任何来源的 modifier 均可影响）。
+ * 主动弃堆走 discardAllCard。
+ */
+export const discardHandOnTurnEnd:EffectFunc = (event, _effect) => {
+    const { source, target } = event
+    if (target instanceof Player == false) return
+    const player = target
+    getCardModifier(player).discardHandOnTurnEnd(source as Entity, player)
 }

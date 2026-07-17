@@ -1328,6 +1328,75 @@ export const relicList: RelicMap[] = [
             }]
         }
     },
+    {
+        label: "无常之神的祝福",
+        describe: [
+            "接下来 ", { key: ["status", "battles-remaining"] }, " 场战斗，",
+            "战斗开始时获得 3 层力量和 3 层敏捷"
+        ],
+        key: "relic_god_of_chance_blessing",
+        rarity: "rare",
+        pool: ["exclusive"],
+        status: {
+            "battles-remaining": 3,
+            "maxBattles": 3,
+            "disabled": 0
+        },
+        badges: [
+            { type: "cooldown", status: "battles-remaining" }
+        ],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                triggers: [
+                    {
+                        when: "after",
+                        how: "take",
+                        key: "battleStart",
+                        level: 1,
+                        condition: "$source.status(disabled) == 0",
+                        action: "grantBlessing"
+                    },
+                    {
+                        when: "after",
+                        how: "take",
+                        key: "battleStart",
+                        level: 0,
+                        condition: "$source.status(battles-remaining) <= 0",
+                        action: "markDisabled"
+                    }
+                ]
+            }
+        },
+        reaction: {
+            grantBlessing: [
+                {
+                    targetType: "owner",
+                    key: "gainPowerDexterity",
+                    effect: [
+                        { key: "applyState", params: { stateKey: "power", stacks: 3 } },
+                        { key: "applyState", params: { stateKey: "dexterity", stacks: 3 } }
+                    ]
+                },
+                {
+                    targetType: "triggerSource",
+                    key: "decrementRemaining",
+                    effect: [{
+                        key: "decrementStatus",
+                        params: { statusKey: "battles-remaining", amount: 1 }
+                    }]
+                }
+            ],
+            markDisabled: [{
+                targetType: "triggerSource",
+                key: "markDisabled",
+                effect: [{
+                    key: "setBaseStatus",
+                    params: { statusKey: "disabled", value: 1 }
+                }]
+            }]
+        }
+    },
 ]
 /**
  * ○环 — 当遗物池耗尽时的垫底遗物

@@ -7,12 +7,16 @@ import { newLog } from "@/ui/hooks/global/log"
 import { doEvent } from "@/core/objects/system/ActionEvent"
 import { nowPlayer } from "@/core/objects/game/run"
 import { getLazyModule } from "@/core/utils/lazyLoader"
-import { randomChoices } from "@/core/hooks/random"
+import { randomChoices, randomChoice, randomChance, randomWeightedChoice } from "@/core/hooks/random"
+import { showRandomCardShowcase } from "@/ui/hooks/interaction/randomCardShowcase"
+import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
+import { getPotionModifier } from "@/core/objects/system/modifier/PotionModifier"
+import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
 
 /**
  * 事件效果函数类型
  */
-export type EventEffectFunc = (params?: any) => void | Promise<void>
+export type EventEffectFunc = (params?: any) => any | Promise<any>
 
 /**
  * 事件效果映射表
@@ -302,12 +306,27 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
     /**
      * 随机获得遗物
      */
-    "gainRandomRelic": async (params?: { count?: number }) => {
+    "gainRandomRelic": async (params?: { count?: number, rarity?: string }) => {
         const count = params?.count || 1
         const relicList = getLazyModule<any[]>('relicList')
 
+        // 按稀有度筛选（如果指定）——若筛选空，退回全池并警告（用于内容未打 rarity 时兜底）
+        let filtered = relicList
+        if (params?.rarity) {
+            const byRarity = relicList.filter((r: any) => r.rarity === params.rarity)
+            if (byRarity.length > 0) {
+                filtered = byRarity
+            } else {
+                newLog([`没有 ${params.rarity} 稀有度的遗物，退回随机全池`])
+            }
+        }
+        if (filtered.length === 0) {
+            newLog(["遗物池为空，无遗物可获得"])
+            return
+        }
+
         // 随机选择遗物
-        const selected = randomChoices(relicList, count, "gainRandomRelic")
+        const selected = randomChoices(filtered, count, "gainRandomRelic")
 
         for (const relicData of selected) {
             await doEvent({
@@ -326,12 +345,27 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
     /**
      * 随机获得药水
      */
-    "gainRandomPotion": async (params?: { count?: number }) => {
+    "gainRandomPotion": async (params?: { count?: number, rarity?: string }) => {
         const count = params?.count || 1
         const potionList = getLazyModule<any[]>('potionList')
 
+        // 按稀有度筛选（如果指定）——若筛选空，退回全池并警告（用于内容未打 rarity 时兜底）
+        let filtered = potionList
+        if (params?.rarity) {
+            const byRarity = potionList.filter((p: any) => p.rarity === params.rarity)
+            if (byRarity.length > 0) {
+                filtered = byRarity
+            } else {
+                newLog([`没有 ${params.rarity} 稀有度的药水，退回随机全池`])
+            }
+        }
+        if (filtered.length === 0) {
+            newLog(["药水池为空，无药水可获得"])
+            return
+        }
+
         // 随机选择药水
-        const selected = randomChoices(potionList, count, "gainRandomPotion")
+        const selected = randomChoices(filtered, count, "gainRandomPotion")
 
         for (const potionData of selected) {
             await doEvent({
@@ -350,14 +384,24 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
     /**
      * 随机获得卡牌
      */
-    "gainRandomCard": async (params?: { count?: number, rarity?: string }) => {
+    "gainRandomCard": async (params?: { count?: number, rarity?: string, tags?: string[] }) => {
         const count = params?.count || 1
         const cardList = getLazyModule<any[]>('cardList')
 
         // 根据稀有度筛选（如果指定）
         let filteredCards = cardList
         if (params?.rarity) {
-            filteredCards = cardList.filter((c: any) => c.rarity === params.rarity)
+            filteredCards = filteredCards.filter((c: any) => c.rarity === params.rarity)
+        }
+        // 根据标签筛选（如果指定，任一命中即可）
+        if (params?.tags && params.tags.length > 0) {
+            filteredCards = filteredCards.filter((c: any) =>
+                (c.tags ?? []).some((t: string) => params!.tags!.includes(t))
+            )
+        }
+        if (filteredCards.length === 0) {
+            newLog(["没有符合条件的卡牌可获得"])
+            return
         }
 
         // 随机选择卡牌
@@ -417,6 +461,276 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
                 }]
             })
         }
+    },
+
+    /**
+     * 随机移除一张卡牌（无需玩家选择，带展示动画）
+     * 用于像"废弃神龛"这种赌博式事件
+     */
+    "removeRandomCard": async (params?: { count?: number }) => {
+        const count = params?.count || 1
+        const cards = nowPlayer.getCardGroup()
+        if (cards.length === 0) {
+            newLog(["卡组中没有卡牌可移除"])
+            return
+        }
+
+        const selected = randomChoices(cards, Math.min(count, cards.length), "removeRandomCard")
+
+        for (const card of selected) {
+            await showRandomCardShowcase(card, "remove")
+            await doEvent({
+                key: "removeCard",
+                source: nowPlayer,
+                medium: card,
+                target: nowPlayer,
+                effectUnits: [{
+                    key: "removeCard",
+                    params: { card }
+                }]
+            })
+        }
+    },
+
+    /**
+     * 随机复制一张卡牌（无需玩家选择，带展示动画）
+     * 复制的卡牌会加入卡组
+     */
+    "duplicateRandomCard": async (params?: { count?: number }) => {
+        const count = params?.count || 1
+        const cards = nowPlayer.getCardGroup()
+        if (cards.length === 0) {
+            newLog(["卡组中没有卡牌可复制"])
+            return
+        }
+
+        const selected = randomChoices(cards, Math.min(count, cards.length), "duplicateRandomCard")
+
+        for (const card of selected) {
+            await showRandomCardShowcase(card, "duplicate")
+            await doEvent({
+                key: "gainCard",
+                source: nowPlayer,
+                medium: nowPlayer,
+                target: nowPlayer,
+                effectUnits: [{
+                    key: "gainCard",
+                    params: { cardKey: card.key }
+                }]
+            })
+        }
+    },
+
+    /**
+     * 失去最大生命（固定值）
+     */
+    "loseMaxHealth": async (params: { amount: number }) => {
+        await doEvent({
+            key: "loseMaxHealth",
+            source: nowPlayer,
+            medium: nowPlayer,
+            target: nowPlayer,
+            effectUnits: [{
+                key: "addMaxHealthAndHeal",
+                params: { value: -Math.abs(params.amount) }
+            }]
+        })
+    },
+
+    /**
+     * 随机失去一瓶药水
+     */
+    "loseRandomPotion": async () => {
+        const potions = getPotionModifier(nowPlayer).getPotions()
+        if (potions.length === 0) {
+            newLog(["没有可失去的药水"])
+            return
+        }
+        const chosen = randomChoice(potions, "loseRandomPotion")
+        await doEvent({
+            key: "losePotion",
+            source: nowPlayer,
+            medium: chosen,
+            target: nowPlayer,
+            effectUnits: [{
+                key: "losePotion",
+                params: { potionKey: chosen.key }
+            }]
+        })
+    },
+
+    /**
+     * 失去所有药水
+     */
+    "loseAllPotions": async () => {
+        const potions = [...getPotionModifier(nowPlayer).getPotions()]
+        if (potions.length === 0) {
+            newLog(["没有药水可失去"])
+            return
+        }
+        for (const potion of potions) {
+            await doEvent({
+                key: "losePotion",
+                source: nowPlayer,
+                medium: potion,
+                target: nowPlayer,
+                effectUnits: [{
+                    key: "losePotion",
+                    params: { potionKey: potion.key }
+                }]
+            })
+        }
+    },
+
+    /**
+     * 随机失去一个已装器官（无玩家选择）
+     * 用于"无常之神"等强制惩罚事件
+     */
+    "loseRandomOrgan": async () => {
+        const organs = getOrganModifier(nowPlayer).getOrgans()
+        if (organs.length === 0) {
+            newLog(["没有可失去的器官"])
+            return
+        }
+        const chosen = randomChoice(organs, "loseRandomOrgan")
+        newLog(["神明夺走了你的", chosen])
+        await doEvent({
+            key: "removeOrgan",
+            source: nowPlayer,
+            medium: chosen,
+            target: nowPlayer,
+            effectUnits: [{
+                key: "removeOrgan",
+                params: { organ: chosen }
+            }]
+        })
+    },
+
+    /**
+     * 无常之神：单次骰子结果
+     * 按阶段的正负概率、大中小权重、结果池，抽出并应用一项结果。
+     *
+     * 阶段规则见 文档/设计/第一层事件设计.md 无常之神条目。
+     */
+    "godOfChance_roll": async (params: { stage: number }) => {
+        const stage = params.stage
+        if (stage < 1 || stage > 6) {
+            throw new Error(`[godOfChance_roll] 非法阶段 ${stage}，应在 1-6 之间`)
+        }
+        const idx = stage - 1
+
+        // 正/负概率与大/中/小权重（暗中操作+明面递增）
+        const positiveProbs = [0.50, 0.48, 0.46, 0.44, 0.42, 0.37]
+        const sizeWeights = [
+            [70, 25, 5],
+            [60, 30, 10],
+            [40, 40, 20],
+            [25, 40, 35],
+            [15, 35, 50],
+            [5, 30, 65],
+        ]
+
+        const isPositive = randomChance(positiveProbs[idx], `godOfChance_pn_${stage}`)
+        const size = randomWeightedChoice(
+            ["small", "medium", "large"] as const,
+            sizeWeights[idx],
+            `godOfChance_size_${stage}`
+        )
+
+        // 玩家现状（用于筛选可用负面项）
+        const goldNow = getReserveModifier(nowPlayer).getReserve("gold")
+        const materialNow = getReserveModifier(nowPlayer).getReserve("material")
+        const potionCount = getPotionModifier(nowPlayer).getPotions().length
+        const organCount = getOrganModifier(nowPlayer).getOrgans().length
+
+        type Result = { label: string; available: boolean; run: () => void | Promise<void> }
+        const eff = eventEffectMap
+
+        const smallPositive: Result[] = [
+            { label: "+10 金", available: true, run: () => eff["gainGold"]({ amount: 10 }) },
+            { label: "+5 物质", available: true, run: () => eff["gainMaterial"]({ amount: 5 }) },
+            { label: "+3 生命", available: true, run: () => eff["healHealth"]({ amount: 3 }) },
+        ]
+        const mediumPositive: Result[] = [
+            { label: "+30 金", available: true, run: () => eff["gainGold"]({ amount: 30 }) },
+            { label: "+15 物质", available: true, run: () => eff["gainMaterial"]({ amount: 15 }) },
+            { label: "回复 20% 当前生命", available: true, run: async () => {
+                const cur = Number(nowPlayer.current.health.value)
+                const amount = Math.max(1, Math.floor(cur * 0.20))
+                await eff["healHealth"]({ amount })
+            } },
+            { label: "+5 最大生命", available: true, run: () => eff["gainMaxHealth"]({ amount: 5 }) },
+            { label: "1 瓶普通药水", available: true, run: () => eff["gainRandomPotion"]({ rarity: "common" }) },
+        ]
+        const largePositive: Result[] = [
+            { label: "+60 金", available: true, run: () => eff["gainGold"]({ amount: 60 }) },
+            { label: "+30 物质", available: true, run: () => eff["gainMaterial"]({ amount: 30 }) },
+            { label: "回复 50% 当前生命", available: true, run: async () => {
+                const cur = Number(nowPlayer.current.health.value)
+                const amount = Math.max(1, Math.floor(cur * 0.50))
+                await eff["healHealth"]({ amount })
+            } },
+            { label: "+15 最大生命", available: true, run: () => eff["gainMaxHealth"]({ amount: 15 }) },
+            { label: "1 瓶稀有药水", available: true, run: () => eff["gainRandomPotion"]({ rarity: "rare" }) },
+            { label: "1 件稀有遗物", available: true, run: () => eff["gainRandomRelic"]({ rarity: "rare" }) },
+            { label: "下 3 场战斗每场开始 +3 力量+3 敏捷", available: true, run: () => eff["gainRelic"]({ relicKey: "relic_god_of_chance_blessing" }) },
+            // 【贪】卡走 10% 硬独立判定，不进本表
+        ]
+
+        const smallNegative: Result[] = [
+            { label: "-10 金", available: goldNow >= 10, run: () => eff["loseGold"]({ amount: 10 }) },
+            { label: "-3 生命", available: true, run: () => eff["loseHealth"]({ amount: 3 }) },
+            { label: "-5 物质", available: materialNow >= 5, run: () => eff["loseMaterial"]({ amount: 5 }) },
+        ]
+        const mediumNegative: Result[] = [
+            { label: "-30 金", available: goldNow >= 30, run: () => eff["loseGold"]({ amount: 30 }) },
+            { label: "损失 10% 当前生命", available: true, run: async () => {
+                const cur = Number(nowPlayer.current.health.value)
+                const amount = Math.max(1, Math.floor(cur * 0.10))
+                await eff["loseHealth"]({ amount })
+            } },
+            { label: "-5 最大生命", available: true, run: () => eff["loseMaxHealth"]({ amount: 5 }) },
+            { label: "随机失去 1 瓶药水", available: potionCount >= 1, run: () => eff["loseRandomPotion"]() },
+            { label: "获得 1 张普通诅咒", available: true, run: () => eff["gainRandomCard"]({ tags: ["curse"] }) },
+        ]
+        const largeNegative: Result[] = [
+            { label: "-60 金", available: goldNow >= 60, run: () => eff["loseGold"]({ amount: 60 }) },
+            { label: "损失 25% 当前生命", available: true, run: async () => {
+                const cur = Number(nowPlayer.current.health.value)
+                const amount = Math.max(1, Math.floor(cur * 0.25))
+                await eff["loseHealth"]({ amount })
+            } },
+            { label: "-15 最大生命", available: true, run: () => eff["loseMaxHealth"]({ amount: 15 }) },
+            { label: "失去随机器官", available: organCount >= 1, run: () => eff["loseRandomOrgan"]() },
+            { label: "获得 1 张强诅咒", available: true, run: () => eff["gainRandomCard"]({ tags: ["curse"] }) },
+            { label: "失去所有药水", available: potionCount >= 1, run: () => eff["loseAllPotions"]() },
+        ]
+
+        // 大正面池的【贪】走硬 10% 独立判定
+        if (isPositive && size === "large" && randomChance(0.10, `godOfChance_greed_${stage}`)) {
+            newLog(["骰子给出的是：【贪】"])
+            await eff["gainCard"]({ cardKey: "card_greed" })
+            return
+        }
+
+        const poolMap: Record<string, Result[]> = {
+            "true-small": smallPositive,
+            "true-medium": mediumPositive,
+            "true-large": largePositive,
+            "false-small": smallNegative,
+            "false-medium": mediumNegative,
+            "false-large": largeNegative,
+        }
+        const pool = poolMap[`${isPositive}-${size}`]
+        const usable = pool.filter(r => r.available)
+        if (usable.length === 0) {
+            throw new Error(
+                `[godOfChance_roll] stage ${stage} ${isPositive ? "正" : "负"}${size} 池中无可用候选`
+            )
+        }
+        const chosen = randomChoice(usable, `godOfChance_pick_${stage}`)
+        newLog([`骰子给出的是：${chosen.label}`])
+        await chosen.run()
     },
 
     /**

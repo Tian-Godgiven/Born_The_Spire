@@ -20,6 +20,7 @@ export interface DrawConfig {
     pool?: string | string[]            // 限定池（如 "shop"、["shop", "common"]）
     rarity?: string | string[]          // 限定稀有度（如 "rare"、["uncommon", "rare"]）
     tags?: string | string[]            // 限定标签（如 "attack"、["attack", "skill"]）
+    cost?: number                       // 限定卡牌费用（仅对 type="card" 有意义）
     exclude?: string[]                  // 排除的key列表（防重复）
     rarityWeights?: Record<string, number>  // 稀有度权重（如 { common: 70, uncommon: 25, rare: 5 }）
     context?: string                    // 随机数上下文
@@ -91,6 +92,16 @@ export function filterItems(items: ItemMap[], config: DrawConfig): ItemMap[] {
         filtered = filtered.filter(item => {
             const itemTags = (item as any).tags as string[] | undefined
             return itemTags?.some(t => tags.includes(t)) ?? false
+        })
+    }
+
+    // 按 cost 过滤（卡牌的 status.cost.value 精确匹配）
+    if (config.cost !== undefined) {
+        const targetCost = config.cost
+        filtered = filtered.filter(item => {
+            const cardStatus = (item as any).status as Record<string, number> | undefined
+            const itemCost = cardStatus?.cost
+            return itemCost !== undefined && itemCost === targetCost
         })
     }
 

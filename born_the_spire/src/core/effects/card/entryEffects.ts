@@ -46,7 +46,7 @@ export const moveInherentToHand: EffectFunc = (event, _effect) => {
         const card = drawPile[i]
         const entryModifier = getEntryModifier(card)
 
-        if (entryModifier.hasEntry("inherent")) {
+        if (entryModifier.hasEntry("card_inherent")) {
             // 将固有卡牌移到手牌
             cardMove(drawPile, card, player.cardPiles.handPile, {handPile:player.cardPiles.handPile, owner:player})
         }

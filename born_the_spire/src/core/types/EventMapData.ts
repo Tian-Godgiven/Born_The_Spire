@@ -60,7 +60,8 @@ export interface EventOptionMap {
 export interface EventSceneMap {
     key: string                     // 幕的唯一标识
     title: string                   // 幕标题
-    description: string             // 幕描述
+    // 幕描述。静态字符串或函数——函数式描述在渲染时接收 sceneData，用于随剧情累进变化的文本
+    description: string | ((sceneData: any) => string)
 
     // 场景类型："text"（默认）为文本选择，"battle" 为嵌入战斗
     type?: "text" | "battle"

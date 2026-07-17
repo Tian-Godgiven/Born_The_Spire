@@ -42,7 +42,7 @@ export const playerList:Record<string,PlayerMap> = {
                 label:"回合结束时弃牌",
                 targetType:"triggerOwner",
                 effect:[
-                    {key:"discardAllCard",params:{pileName:"handPile"}}
+                    {key:"discardHandOnTurnEnd",params:{}}
                 ]
             }],
             recoverEnergy:[{

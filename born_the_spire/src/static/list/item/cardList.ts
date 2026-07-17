@@ -1089,6 +1089,39 @@ export const cardList:CardMap[] = [{
             ]
         }
     }
+},{
+    label:"贪",
+    tags:["skill"],
+    pool:["exclusive"],
+    entry:["card_retain","card_exhaust"],
+    status:{ cost:0 },
+    describe:["获得 2 点能量，抽 3 张牌"],
+    key:"card_greed",
+    interaction:{
+        use:{
+            target:{key:"self"},
+            effects:[
+                {key:"gainEnergy",params:{value:2}},
+                {key:"drawCard",params:{value:3}}
+            ]
+        }
+    }
+},{
+    label:"分化",
+    tags:["skill"],
+    pool:["exclusive"],
+    entry:["card_exhaust"],
+    status:{ cost:0 },
+    describe:["随机获得一张 0 费卡加入手牌"],
+    key:"card_embryo_differentiation",
+    interaction:{
+        use:{
+            target:{key:"self"},
+            effects:[
+                {key:"addRandomCardsToPile",params:{count:1,cost:0,pileName:"handPile"}}
+            ]
+        }
+    }
 }]
 
 export async function getCardByKey(key:string){

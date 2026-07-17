@@ -5,6 +5,7 @@
  *   count: number              - 添加数量
  *   tags?: string | string[]   - 筛选标签（如 "skill"）
  *   pool?: string | string[]   - 筛选池（默认 "common"）
+ *   cost?: number              - 筛选卡牌费用（按 status.cost.base 精确匹配）
  *   pileName?: string          - 目标牌堆（默认 "drawPile"）
  *   overrideCost?: number      - 覆盖卡牌费用（通过修饰器实现，保留原始值）
  * }
@@ -25,6 +26,7 @@ export const addRandomCardsToPile: EffectFunc = async (event, effect) => {
         count = 1,
         tags,
         pool,
+        cost,
         pileName = "drawPile",
         overrideCost
     } = effect.params
@@ -38,6 +40,7 @@ export const addRandomCardsToPile: EffectFunc = async (event, effect) => {
         const cardMap = drawItem("card", {
             tags: tags as string | string[] | undefined,
             pool: pool as string | string[] | undefined,
+            cost: cost !== undefined ? Number(cost) : undefined,
             exclude,
             context: `addRandomCards:${i}`
         })

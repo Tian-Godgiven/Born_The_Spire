@@ -11,7 +11,8 @@ import { reactive, toRaw } from "vue"
 import { nowBattle } from "../../game/battle"
 import { getCardByKey, getAllCards } from "@/static/list/item/cardList"
 import { isPlayer, isOrgan } from "@/core/utils/typeGuards"
-import { getEntryModifier } from "./EntryModifier"
+import { doEvent } from "../ActionEvent"
+import { ifHaveStatus, getStatusValue } from "../status/Status"
 
 /**
  * 卡牌修饰器管理器
@@ -119,13 +120,19 @@ export class CardModifier {
 
     /**
      * 检查卡牌是否可以打出
+     *
+     * "不可打出"判断走 status 而非 hasEntry —— 任意来源（card_cannot_play 词条 / 效果 /
+     * 未来任意机制）只要给卡挂 "cannot-play" status > 0 都能生效
+     *
      * @param card 要检查的卡牌
      * @returns 如果卡牌可以打出返回 true，否则返回失败原因
      */
     canPlayCard(card: Card): true | string {
-        // 检查卡牌是否有"不能被打出"词条
-        const entryModifier = getEntryModifier(card)
-        if (entryModifier.hasEntry("card_cannot_play")) {
+        // 检查卡牌是否被禁用（status 语法糖类词条 / 任意效果均可挂）
+        if (
+            ifHaveStatus(card, "cannot-play") &&
+            (getStatusValue(card, "cannot-play") as number) > 0
+        ) {
             return `该卡牌无法被打出`
         }
 
@@ -194,6 +201,60 @@ export class CardModifier {
      */
     getAllSourcedCards(): Map<Entity, Card[]> {
         return new Map(this.cardsFromSources)
+    }
+
+    /**
+     * 手牌自动弃牌：跳过带 "retain-on-turn-end" > 0 的卡，并对被保留的卡触发 retain 事件
+     *
+     * 保留判断走 status 而非直接查词条 —— 任何来源（card_retain 词条 / 效果 / 未来任意机制）
+     * 只要给卡挂 "retain-on-turn-end" status 都能生效
+     *
+     * 事件顺序：先 retain（对保留下来的卡）再 discard（对剩下的卡）
+     * retain 事件 effectUnits 为空，纯触发器容器
+     *
+     * @param source 触发事件的来源（通常是玩家自己）
+     * @param player 手牌所属的玩家
+     */
+    discardHandOnTurnEnd(source: Entity, player: Player) {
+        const handPile = player.cardPiles.handPile
+        if (handPile.length === 0) return
+
+        const retained: Card[] = []
+        const cardsToDiscard: Card[] = []
+        for (const card of handPile) {
+            if (
+                ifHaveStatus(card, "retain-on-turn-end") &&
+                (getStatusValue(card, "retain-on-turn-end") as number) > 0
+            ) {
+                retained.push(card)
+            } else {
+                cardsToDiscard.push(card)
+            }
+        }
+
+        if (retained.length > 0) {
+            doEvent({
+                key: "retain",
+                source,
+                medium: player,
+                target: retained,
+                effectUnits: []
+            })
+        }
+
+        if (cardsToDiscard.length === 0) return
+
+        doEvent({
+            key: "discard",
+            source,
+            medium: player,
+            target: cardsToDiscard,
+            effectUnits: [{
+                key: "discard",
+                describe: ["回合结束丢弃手牌"],
+                params: { sourcePileName: "handPile" }
+            }]
+        })
     }
 
     /**

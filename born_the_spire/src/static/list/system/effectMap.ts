@@ -7,7 +7,7 @@ import { ActionEvent, handleEventEntity } from "@/core/objects/system/ActionEven
 import { drawCard, drawFromDrawPile } from "@/core/effects/card/drawCard"
 import { gainEnergy, loseEnergy, refillEnergy, emptyEnergy, payEnergy } from "@/core/effects/energy"
 import { newError } from "@/ui/hooks/global/alert"
-import { discardCard, pay_discardCard, pay_exhaustCard, pay_removePower, discardAllCard } from "@/core/effects/card/discard"
+import { discardCard, pay_discardCard, pay_exhaustCard, pay_removeAbility, discardAllCard, discardHandOnTurnEnd } from "@/core/effects/card/discard"
 import { voidExhaust, moveInherentToHand } from "@/core/effects/card/entryEffects"
 import { fragileBreak, regenerateMass } from "@/core/effects/organ/organEntryEffects"
 import { applyState, removeState, changeStateStack } from "@/core/effects/state/stateControl"
@@ -208,12 +208,16 @@ export const effectMap:EffectData[] = [
     effect:pay_exhaustCard
 },{
     label:"能力牌移除",
-    key:"pay_removePower",
-    effect:pay_removePower
+    key:"pay_removeAbility",
+    effect:pay_removeAbility
 },{
     label:"弃掉所有卡牌",
     key:"discardAllCard",
     effect:discardAllCard
+},{
+    label:"回合末丢弃手牌（跳过保留）",
+    key:"discardHandOnTurnEnd",
+    effect:discardHandOnTurnEnd
 },{
     label:"基础属性改变：加减",
     key:"addStatusBase",

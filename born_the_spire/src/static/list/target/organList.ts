@@ -1844,6 +1844,226 @@ export const organList:OrganMap[] = [
         }]
     }
 },
+
+// ========== 胚胎发育事件产出：5 阶段线性器官 ==========
+// 事件 event_embryogenesis 逐阶段接生所得；evolutionRounds 记录事件内"进化"次数，接生时写入器官 status
+
+// 阶段 1 · 合子（Zygote）
+{
+    label: "合子",
+    key: "organ_embryo_stage1",
+    describe: ["战斗结束时回复 8 生命", "每完成一轮进化，额外回复 2 生命"],
+    rarity: OrganRarity.Common,
+    part: OrganPartEnum.Core,
+    status: {
+        "max-mass": 20,
+        "evolutionRounds": 0
+    },
+    current: ["mass"],
+    interaction: {
+        possess: {
+            target: { key: "self" },
+            effects: [],
+            triggers: [{
+                when: "after",
+                how: "take",
+                key: "battleEnd",
+                action: "zygoteHeal"
+            }]
+        }
+    },
+    reaction: {
+        zygoteHeal: [{
+            key: "healHealth",
+            label: "合子：赛后回复",
+            targetType: "owner",
+            effect: [
+                { key: "healHealth", params: { amount: 8 } },
+                { key: "repeatEffects", params: {
+                    times: "$item.status(evolutionRounds)",
+                    effects: [{ key: "healHealth", params: { amount: 2 } }]
+                }}
+            ]
+        }]
+    }
+},
+
+// 阶段 2 · 桑葚胚（Morula）
+// 简化说明：原设计"evolutionRounds >= 2 才 +1 触发（晚熟）"因缺算术表达式改为线性——每轮进化 +1 次；
+// 结果：基础 2 次，每 evolutionRounds 累加 1 次。如需恢复晚熟，需引入 bonusTriggers hidden status 由 possess effect 初始化
+{
+    label: "桑葚胚",
+    key: "organ_embryo_stage2",
+    describe: ["每场战斗第一张攻击卡额外触发 1 次", "每完成一轮进化，额外多触发 1 次"],
+    rarity: OrganRarity.Uncommon,
+    part: OrganPartEnum.Core,
+    status: {
+        "max-mass": 25,
+        "evolutionRounds": 0,
+        "used": 0
+    },
+    current: ["mass"],
+    interaction: {
+        possess: {
+            target: { key: "self" },
+            triggers: [
+                {
+                    when: "after",
+                    how: "take",
+                    key: "battleStart",
+                    action: "morulaResetUsed"
+                },
+                {
+                    when: "before",
+                    how: "make",
+                    key: "useCard",
+                    condition: [
+                        "$item.status(used) == 0",
+                        "$triggerCard.hasTag(attack)"
+                    ],
+                    action: "morulaRepeatAttack"
+                }
+            ]
+        }
+    },
+    reaction: {
+        morulaResetUsed: [{
+            targetType: "item",
+            key: "morulaResetUsed",
+            effect: [{ key: "setBaseStatus", params: { statusKey: "used", value: 0 } }]
+        }],
+        morulaRepeatAttack: [
+            {
+                targetType: "triggerEffect",
+                key: "morulaBaseRepeat",
+                effect: [{ key: "modifyRepeat", params: { addRepeat: 1 } }]
+            },
+            {
+                targetType: "triggerEffect",
+                key: "morulaEvolutionBonus",
+                effect: [{
+                    key: "repeatEffects",
+                    params: {
+                        times: "$item.status(evolutionRounds)",
+                        effects: [{ key: "modifyRepeat", params: { addRepeat: 1 } }]
+                    }
+                }]
+            },
+            {
+                targetType: "item",
+                key: "morulaMarkUsed",
+                effect: [{ key: "setBaseStatus", params: { statusKey: "used", value: 1 } }]
+            }
+        ]
+    }
+},
+
+// 阶段 3 · 囊胚（Blastula）
+{
+    label: "囊胚",
+    key: "organ_embryo_stage3",
+    describe: ["回合开始时获得 5 护甲", "每完成一轮进化，额外获得 1 护甲", "提供 1 张", { "@": 0 }, "到牌组"],
+    rarity: OrganRarity.Uncommon,
+    part: OrganPartEnum.Core,
+    status: {
+        "max-mass": 30,
+        "evolutionRounds": 0
+    },
+    current: ["mass"],
+    cards: ["card_embryo_differentiation"],
+    interaction: {
+        possess: {
+            target: { key: "self" },
+            effects: [],
+            triggers: [{
+                when: "after",
+                how: "take",
+                key: "turnStart",
+                action: "blastulaArmor"
+            }]
+        }
+    },
+    reaction: {
+        blastulaArmor: [{
+            key: "gainArmor",
+            label: "囊胚：外壳",
+            targetType: "owner",
+            effect: [
+                { key: "gainArmor", params: { value: 5 } },
+                { key: "repeatEffects", params: {
+                    times: "$item.status(evolutionRounds)",
+                    effects: [{ key: "gainArmor", params: { value: 1 } }]
+                }}
+            ]
+        }]
+    }
+},
+
+// 阶段 4 · 原肠胚（Gastrula）
+{
+    label: "原肠胚",
+    key: "organ_embryo_stage4",
+    // TODO(design): 阶段 4 专属效果方向未拍板；当前占位仅提供分化卡
+    describe: ["（待定专属效果）", "提供 1 张", { "@": 0 }, "到牌组"],
+    rarity: OrganRarity.Rare,
+    part: OrganPartEnum.Core,
+    status: {
+        "max-mass": 35,
+        "evolutionRounds": 0
+    },
+    current: ["mass"],
+    cards: ["card_embryo_differentiation"],
+    interaction: {
+        possess: {
+            target: { key: "self" },
+            effects: []
+        }
+    }
+},
+
+// 阶段 5 · 神经胚（Neurula）
+{
+    label: "神经胚",
+    key: "organ_embryo_stage5",
+    describe: ["每场战斗胜利后获得 5 最大生命并回复 5 生命", "每完成一轮进化，额外获得 2 最大生命", "提供 1 张", { "@": 0 }, "到牌组"],
+    rarity: OrganRarity.Rare,
+    part: OrganPartEnum.Core,
+    status: {
+        "max-mass": 40,
+        "evolutionRounds": 0
+    },
+    current: ["mass"],
+    cards: ["card_embryo_differentiation"],
+    interaction: {
+        possess: {
+            target: { key: "self" },
+            effects: [],
+            triggers: [{
+                when: "after",
+                how: "take",
+                key: "battleEnd",
+                // TODO(trigger): condition 需限定 event.info.result === "win"；当前不判胜负
+                action: "neurulaGrow"
+            }]
+        }
+    },
+    reaction: {
+        // TODO(condition): 战斗失败时也会触发 battleEnd；理论上应加 condition 判 event.info.result === "win"
+        // 现有 $expr 语法不支持读取 event.info.*，先不判胜负——失败时 gameOver 弹窗压住，增益不会实际影响
+        neurulaGrow: [{
+            key: "addMaxHealthAndHeal",
+            label: "神经胚：永久成长",
+            targetType: "owner",
+            effect: [
+                { key: "addMaxHealthAndHeal", params: { value: 5 } },
+                { key: "repeatEffects", params: {
+                    times: "$item.status(evolutionRounds)",
+                    effects: [{ key: "addMaxHealthAndHeal", params: { value: 2 } }]
+                }}
+            ]
+        }]
+    }
+},
 ]
 
 export async function getOrganByKey(key:string){
