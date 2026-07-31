@@ -7,6 +7,12 @@ import type { EventMap } from "@/core/types/EventMapData"
 import { eventEffectMap } from "./eventEffectMap"
 import { nowPlayer } from "@/core/objects/game/run"
 import { randomChoice, randomChance } from "@/core/hooks/random"
+import { getCardModifier } from "@/core/objects/system/modifier/CardModifier"
+import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
+import { isOrgan } from "@/core/utils/typeGuards"
+import { showTransplantSelect } from "@/ui/hooks/interaction/transplantSelect"
+import type { Organ } from "@/core/objects/target/Organ"
+import type { Card } from "@/core/objects/item/Subclass/Card"
 
 /**
  * 收藏家 NPC 点名：按稀有度优先（rare > uncommon > common），同层随机。
@@ -627,9 +633,22 @@ export const eventList: EventMap[] = [
                         effects: [
                             { key: "loseHealthPercent", params: { percent: 10 } }
                         ],
-                        customCallback: async (data) => {
-                            // TODO 打开"选卡 + 选目标器官"两阶段界面，调用 ContentModifier 改归属
-                            // await openTransplantSelectUI()
+                        customCallback: async () => {
+                            const cardMod = getCardModifier(nowPlayer)
+                            const organMod = getOrganModifier(nowPlayer)
+
+                            const allOrgans = organMod.getOrgans()
+                            const groups: { organ: Organ, cards: Card[] }[] = []
+                            for (const [source, cards] of cardMod.getAllSourcedCards()) {
+                                if (isOrgan(source) && cards.length > 0) {
+                                    groups.push({ organ: source as Organ, cards })
+                                }
+                            }
+
+                            if (groups.length === 0 || allOrgans.length < 2) return
+
+                            const { card, targetOrgan } = await showTransplantSelect({ groups, allOrgans })
+                            cardMod.transferCardOwnership(card, targetOrgan)
                         },
                         nextScene: "operation" // 回到本场景，可继续手术或离开
                     },

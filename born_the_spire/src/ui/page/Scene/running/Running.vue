@@ -26,6 +26,9 @@
     <!-- 奖励拦截弹窗（饲主的饥饿的怪物等"拦一份战利品"遗物用） -->
     <RewardInterceptModal />
 
+    <!-- 移植手术两阶段选择弹窗（event_transplant_surgery 用） -->
+    <TransplantSelectModal />
+
     <!-- 地图覆盖层 -->
     <MapOverlay ref="mapOverlay" />
 
@@ -47,6 +50,7 @@ import ConnectLine from "@/ui/components/interaction/chooseTarget/ConnectLine.vu
 import LogPane from "@/ui/page/tool/logPane/LogPane.vue"
 import RewardModal from "@/ui/components/interaction/RewardModal.vue"
 import RewardInterceptModal from "@/ui/components/interaction/RewardInterceptModal.vue"
+import TransplantSelectModal from "@/ui/components/interaction/TransplantSelectModal.vue"
 import MapOverlay from "@/ui/components/interaction/MapOverlay.vue"
 import CardGroupModal from '@/ui/components/interaction/CardGroupModal.vue'
 import GlobalMessage from '@/ui/components/display/GlobalMessage.vue'

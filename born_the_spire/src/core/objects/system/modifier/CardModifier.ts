@@ -190,6 +190,45 @@ export class CardModifier {
     }
 
     /**
+     * 转移卡牌归属：把 card 从其当前 source 挪到 newSource
+     *
+     * 只改归属，不动 owner、不重挂词条、不动牌堆。移植手术等
+     * "改归属不改效果"的场景直接调此方法一行搞定。
+     */
+    transferCardOwnership(card: Card, newSource: Entity): boolean {
+        let currentSource: Entity | undefined
+        for (const [source, cards] of this.cardsFromSources) {
+            if (cards.includes(card)) {
+                currentSource = source
+                break
+            }
+        }
+
+        if (!currentSource) {
+            newLog(["转移失败：卡牌", card, "未在任何来源下"])
+            return false
+        }
+
+        if (currentSource === newSource) return true
+
+        const oldCards = this.cardsFromSources.get(currentSource)!
+        oldCards.splice(oldCards.indexOf(card), 1)
+        if (oldCards.length === 0) {
+            this.cardsFromSources.delete(currentSource)
+        }
+
+        if (!this.cardsFromSources.has(newSource)) {
+            this.cardsFromSources.set(newSource, [])
+        }
+        this.cardsFromSources.get(newSource)!.push(card)
+
+        card.source = newSource
+
+        newLog(["卡牌", card, "归属从", currentSource, "转移到", newSource])
+        return true
+    }
+
+    /**
      * 获取指定来源提供的卡牌列表
      */
     getCardsFromSource(source: Entity): Card[] {
