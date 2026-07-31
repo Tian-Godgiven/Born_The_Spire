@@ -200,6 +200,34 @@ export const debugCommands: ConsoleCommand[] = [
         }
     },
     {
+        name: 'gainReserve',
+        group: '调试',
+        description: '增加储备资源（gold / material / 等）',
+        usage: 'gainReserve("type", amount)',
+        examples: ['gainReserve("material", 100)', 'gainReserve("gold", 50)'],
+        execute: async (args, addOutput) => {
+            if (!nowGameRun) {
+                addOutput('游戏未开始，请先点击"开始游戏"', 'error')
+                return
+            }
+            const [reserveKey, amount] = args
+            if (!reserveKey || typeof amount !== 'number') {
+                addOutput('用法: gainReserve("reserveKey", amount)', 'error')
+                addOutput('例如: gainReserve("material", 100)', 'info')
+                return
+            }
+            try {
+                const { getReserveModifier } = await import('@/core/objects/system/modifier/ReserveModifier')
+                const reserveModifier = getReserveModifier(nowPlayer)
+                reserveModifier.gainReserve(reserveKey, amount, nowPlayer)
+                const now = reserveModifier.getReserve(reserveKey)
+                addOutput(`✓ 增加 ${reserveKey} +${amount}（当前 ${now}）`, 'result')
+            } catch (error: any) {
+                addOutput(`增加储备失败: ${error.message}`, 'error')
+            }
+        }
+    },
+    {
         name: 'listTriggers',
         group: '调试',
         description: '列出玩家触发器',

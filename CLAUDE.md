@@ -209,19 +209,10 @@ await completeAndGoNext()   // 完成当前房间，显示地图让玩家选择�
 
 - UI：`src/ui/page/tool/console/DevConsole.vue`
 - 注册表：`src/core/utils/consoleCommandRegistry.ts`
+- 内置命令按分组注册在 `src/ui/page/tool/console/commands/*.ts`（room / battle / card / potion / relic / organ / debug）
+- 在控制台里输入 `help` 查看所有命令，`clear` 清屏
 
-当前命令：
-
-```
-listRooms()                    — 列出所有房间
-listRooms("类型")              — 列出指定类型房间
-enterRoom("key")               — 进入指定房间
-enterRoom("key", 层级)         — 进入指定房间并设置层级
-gameOver()                     — 触发游戏失败
-clear / help
-```
-
-添加新命令：在 `DevConsole.vue` 的函数实现、`executeFunction` switch、`showHelp` 三处添加。
+添加新命令：在 `src/ui/page/tool/console/commands/` 下找对应分组文件（或新建），追加一个 `ConsoleCommand` 对象，然后在 `commands/index.ts` 的 `registerCommands()` 里 push 进去即可。
 
 ## Development Workflow Preferences
 
