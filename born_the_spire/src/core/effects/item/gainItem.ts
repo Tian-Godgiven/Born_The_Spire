@@ -150,6 +150,35 @@ export const gainRelic: EffectFunc = async (event, effect) => {
 }
 
 /**
+ * 按 key 移除遗物（用于遗物自我销毁 / 事件强制移除）
+ *
+ * params:
+ * - relicKey: 要移除的遗物 key
+ */
+export const removeRelicByKey: EffectFunc = (event, effect) => {
+    const relicKey = String(effect.params.relicKey)
+
+    if (!relicKey) {
+        console.error("[removeRelicByKey] 缺少必要参数 relicKey", effect.params)
+        return
+    }
+
+    const target = event.target
+    if (Array.isArray(target)) {
+        console.error("[removeRelicByKey] target 不能是数组")
+        return
+    }
+
+    if (!isEntity(target)) {
+        console.error("[removeRelicByKey] target 必须是实体")
+        return
+    }
+
+    const relicModifier = getRelicModifier(target)
+    relicModifier.removeRelicByKey(relicKey)
+}
+
+/**
  * 获得器官效果
  *
  * params:

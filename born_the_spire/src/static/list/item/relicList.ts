@@ -1397,6 +1397,428 @@ export const relicList: RelicMap[] = [
             }]
         }
     },
+    // 孵化中的胚胎（孵化室事件专属，图标: 🪱）：3 场战斗后按累计受伤孵化成共生之种 / 饥饿之种
+    {
+        label: "孵化中的胚胎",
+        describe: [
+            "接下来 ", { key: ["status", "battles-remaining"] }, " 场战斗，",
+            "战斗开始 +2 力量；每回合结束受到 1/2/3/… 递增伤害。",
+            "累计受伤 ", { key: ["status", "damage-taken"] }, "/30。",
+            "孵化时：≤30 → 共生之种；>30 → 饥饿之种。"
+        ],
+        key: "event_relic_incubating_embryo",
+        rarity: "rare",
+        pool: ["exclusive"],
+        status: {
+            "battles-remaining": 3,
+            "maxBattles": 3,
+            "damage-taken": 0,
+            "turn-count": 0,
+            "disabled": 0
+        },
+        badges: [
+            { type: "cooldown", status: "battles-remaining" }
+        ],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                // 用 accumulateAndTrigger 作纯累计器：threshold 永达不到、effects 空。
+                // 关键：未配 maxTriggerPerBattle 时不会注册战斗开始重置回调（见 accumulateAndTrigger.ts:137），
+                // 因此 damage-taken 会跨战斗保留，符合"3 场累计受伤"的需求
+                effects: [{
+                    key: "accumulateAndTrigger",
+                    params: {
+                        pointKey: "damage-taken",
+                        on: { when: "after", how: "take", key: "damage" },
+                        gain: "$triggerEffect.params(value)",
+                        threshold: 999999,
+                        effects: []
+                    }
+                }],
+                triggers: [
+                    {
+                        when: "after",
+                        how: "take",
+                        key: "battleStart",
+                        level: 10,
+                        condition: "$source.status(disabled) == 0",
+                        action: "embryoBoost"
+                    },
+                    {
+                        when: "after",
+                        how: "take",
+                        key: "turnEnd",
+                        condition: "$source.status(disabled) == 0",
+                        action: "embryoDrain"
+                    },
+                    {
+                        when: "after",
+                        how: "take",
+                        key: "battleEnd",
+                        level: 10,
+                        condition: "$source.status(disabled) == 0",
+                        action: "embryoTick"
+                    },
+                    {
+                        when: "after",
+                        how: "take",
+                        key: "battleEnd",
+                        level: 5,
+                        condition: [
+                            "$source.status(disabled) == 0",
+                            "$source.status(battles-remaining) <= 0",
+                            "$source.status(damage-taken) <= 30"
+                        ],
+                        action: "hatchSymbiote"
+                    },
+                    {
+                        when: "after",
+                        how: "take",
+                        key: "battleEnd",
+                        level: 5,
+                        condition: [
+                            "$source.status(disabled) == 0",
+                            "$source.status(battles-remaining) <= 0",
+                            "$source.status(damage-taken) > 30"
+                        ],
+                        action: "hatchHungry"
+                    }
+                ]
+            }
+        },
+        reaction: {
+            embryoBoost: [
+                {
+                    targetType: "owner",
+                    key: "applyState",
+                    effect: [{ key: "applyState", params: { stateKey: "power", stacks: 2 } }]
+                },
+                {
+                    targetType: "triggerSource",
+                    key: "resetTurnCount",
+                    effect: [{ key: "setBaseStatus", params: { statusKey: "turn-count", value: 0 } }]
+                }
+            ],
+            embryoDrain: [
+                {
+                    targetType: "triggerSource",
+                    key: "incrementTurnCount",
+                    effect: [{ key: "addStatusBase", params: { statusKey: "turn-count", value: 1 } }]
+                },
+                {
+                    targetType: "owner",
+                    key: "embryoDamage",
+                    effect: [{ key: "damage", params: { value: "$medium.status(turn-count)" } }]
+                }
+            ],
+            embryoTick: [{
+                targetType: "triggerSource",
+                key: "decrementBattles",
+                effect: [{ key: "decrementStatus", params: { statusKey: "battles-remaining", amount: 1 } }]
+            }],
+            // 先 disable 再孵化：防止同事件栈内后续触发器再次进入
+            hatchSymbiote: [
+                {
+                    targetType: "triggerSource",
+                    key: "markDisabled",
+                    effect: [{ key: "setBaseStatus", params: { statusKey: "disabled", value: 1 } }]
+                },
+                {
+                    targetType: "owner",
+                    key: "hatchSymbiote",
+                    effect: [{ key: "gainRelic", params: { relicKey: "event_relic_symbiote_seed" } }]
+                },
+                {
+                    targetType: "owner",
+                    key: "selfDestroy",
+                    effect: [{ key: "removeRelicByKey", params: { relicKey: "event_relic_incubating_embryo" } }]
+                }
+            ],
+            hatchHungry: [
+                {
+                    targetType: "triggerSource",
+                    key: "markDisabled",
+                    effect: [{ key: "setBaseStatus", params: { statusKey: "disabled", value: 1 } }]
+                },
+                {
+                    targetType: "owner",
+                    key: "hatchHungry",
+                    effect: [{ key: "gainRelic", params: { relicKey: "event_relic_hungry_seed" } }]
+                },
+                {
+                    targetType: "owner",
+                    key: "selfDestroy",
+                    effect: [{ key: "removeRelicByKey", params: { relicKey: "event_relic_incubating_embryo" } }]
+                }
+            ]
+        }
+    },
+    // 共生之种（孵化室事件专属）：每场战斗开始 +2 力量，每回合开始 +5 护甲
+    {
+        label: "共生之种",
+        describe: ["每场战斗开始 +2 力量，每回合开始 +5 护甲"],
+        key: "event_relic_symbiote_seed",
+        rarity: "rare",
+        pool: ["exclusive"],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                triggers: [
+                    {
+                        when: "after",
+                        how: "take",
+                        key: "battleStart",
+                        action: "symbioteBoost"
+                    },
+                    {
+                        when: "after",
+                        how: "make",
+                        key: "turnStart",
+                        action: "symbioteArmor"
+                    }
+                ]
+            }
+        },
+        reaction: {
+            symbioteBoost: [{
+                targetType: "owner",
+                key: "applyState",
+                effect: [{
+                    key: "applyState",
+                    params: { stateKey: "power", stacks: 2 }
+                }]
+            }],
+            symbioteArmor: [{
+                targetType: "owner",
+                key: "gainArmor",
+                effect: [{
+                    key: "gainArmor",
+                    params: { value: 5 }
+                }]
+            }]
+        }
+    },
+    // 饥饿之种（孵化室事件专属）：每场战斗开始 +2 虚弱；获得时永久塞 1 张「寄生」
+    {
+        label: "饥饿之种",
+        describe: ["每场战斗开始使自己获得 2 层虚弱。获得时永久往牌组塞入 1 张「寄生」。"],
+        key: "event_relic_hungry_seed",
+        rarity: "rare",
+        pool: ["exclusive"],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                effects: [{
+                    key: "gainCard",
+                    params: { cardKey: "original_card_parasite" }
+                }],
+                triggers: [
+                    {
+                        when: "after",
+                        how: "take",
+                        key: "battleStart",
+                        action: "hungrySeedWeak"
+                    }
+                ]
+            }
+        },
+        reaction: {
+            hungrySeedWeak: [{
+                targetType: "owner",
+                key: "applyState",
+                effect: [{
+                    key: "applyState",
+                    params: { stateKey: "weak", stacks: 2 }
+                }]
+            }]
+        }
+    },
+    // 秀色可餐（献祭祭坛事件专属）：永久 +1 能量上限
+    {
+        label: "秀色可餐",
+        describe: ["能量上限 +1"],
+        key: "original_relic_delectable_feast",
+        rarity: "rare",
+        pool: ["exclusive"],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                effects: [{
+                    key: "addStatusBase",
+                    params: { statusKey: "max-energy", value: 1, type: "additive" }
+                }]
+            }
+        }
+    },
+    // 浅尝辄止（献祭祭坛事件专属）：3 场内每回合开始 +1 抽牌，3 场后禁用
+    {
+        label: "浅尝辄止",
+        describe: [
+            "接下来 ", { key: ["status", "battles-remaining"] }, " 场战斗，",
+            "每回合开始时额外抽 1 张牌"
+        ],
+        key: "original_relic_shallow_taste",
+        rarity: "rare",
+        pool: ["exclusive"],
+        status: {
+            "battles-remaining": 3,
+            "maxBattles": 3,
+            "disabled": 0
+        },
+        badges: [
+            { type: "cooldown", status: "battles-remaining" }
+        ],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                triggers: [
+                    {
+                        when: "after",
+                        how: "make",
+                        key: "turnStart",
+                        condition: "$source.status(disabled) == 0",
+                        action: "drawExtra"
+                    },
+                    {
+                        when: "after",
+                        how: "take",
+                        key: "battleEnd",
+                        condition: "$source.status(disabled) == 0",
+                        action: "consumeBattle"
+                    },
+                    {
+                        when: "after",
+                        how: "take",
+                        key: "battleStart",
+                        level: 0,
+                        condition: "$source.status(battles-remaining) <= 0",
+                        action: "markDisabled"
+                    }
+                ]
+            }
+        },
+        reaction: {
+            drawExtra: [{
+                targetType: "owner",
+                key: "drawFromDrawPile",
+                effect: [{
+                    key: "drawFromDrawPile",
+                    params: { value: 1 }
+                }]
+            }],
+            consumeBattle: [{
+                targetType: "triggerSource",
+                key: "decrementBattles",
+                effect: [{
+                    key: "decrementStatus",
+                    params: { statusKey: "battles-remaining", amount: 1 }
+                }]
+            }],
+            markDisabled: [{
+                targetType: "triggerSource",
+                key: "markDisabled",
+                effect: [{
+                    key: "setBaseStatus",
+                    params: { statusKey: "disabled", value: 1 }
+                }]
+            }]
+        }
+    },
+    // 饥饿的怪物（饲主事件专属）：跟着你走的宠物，每场战斗结束前"盯上"一份战利品
+    {
+        label: "饥饿的怪物",
+        describe: [
+            "一只跟着你走的饥饿怪物。",
+            "每场战斗结束前，它盯上一份战利品：「让给它」→ 好感度 +1；「抢过来」→ 未喂 +1。",
+            "未喂连满 3 次后，下一次它强制占据。",
+            "好感度 ≥ 3：陪睡 —— 每次休息治疗额外 +10 HP。",
+            "好感度 ≥ 6：共战 —— 每回合结束对随机敌人造成 5 伤害。",
+            "好感度 ≥ 9：挡刀 —— 每场战斗第 1 次致命伤挡下，留 1 HP。"
+        ],
+        key: "event_relic_hungry_beast",
+        rarity: "rare",
+        pool: ["exclusive"],
+        status: {
+            "hungry-beast-favor": 0,
+            "hungry-beast-refuse-count": 0,
+            "hungry-beast-blocked-once": 0
+        },
+        badges: [
+            { type: "counter", status: "hungry-beast-favor" }
+        ],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                effects: [
+                    { key: "hungryBeast_registerInterceptor", params: {} }
+                ],
+                triggers: [
+                    {
+                        when: "after",
+                        how: "take",
+                        key: "restHeal",
+                        condition: "$source.status(hungry-beast-favor) >= 3",
+                        action: "petHeal"
+                    },
+                    {
+                        when: "after",
+                        how: "take",
+                        key: "turnEnd",
+                        condition: "$source.status(hungry-beast-favor) >= 6",
+                        action: "coFightStrike"
+                    },
+                    {
+                        when: "before",
+                        how: "take",
+                        key: "dead",
+                        condition: [
+                            "$source.status(hungry-beast-favor) >= 9",
+                            "$source.status(hungry-beast-blocked-once) == 0"
+                        ],
+                        action: "petBlock"
+                    },
+                    {
+                        when: "after",
+                        how: "take",
+                        key: "battleStart",
+                        action: "resetPetBlock"
+                    }
+                ]
+            }
+        },
+        reaction: {
+            petHeal: [{
+                targetType: "owner",
+                key: "heal",
+                effect: [{ key: "heal", params: { value: 10 } }]
+            }],
+            coFightStrike: [{
+                targetType: "allEnemies.random",
+                key: "damage",
+                effect: [{ key: "damage", params: { value: 5 } }]
+            }],
+            petBlock: [
+                { targetType: "owner", key: "cancelDeath", effect: [{ key: "cancelCurrentEvent" }] },
+                { targetType: "owner", key: "healOne", effect: [{ key: "heal", params: { value: 1 } }] },
+                {
+                    targetType: "triggerSource",
+                    key: "markBlocked",
+                    effect: [{
+                        key: "setBaseStatus",
+                        params: { statusKey: "hungry-beast-blocked-once", value: 1 }
+                    }]
+                }
+            ],
+            resetPetBlock: [{
+                targetType: "triggerSource",
+                key: "resetBlocked",
+                effect: [{
+                    key: "setBaseStatus",
+                    params: { statusKey: "hungry-beast-blocked-once", value: 0 }
+                }]
+            }]
+        }
+    },
 ]
 /**
  * ○环 — 当遗物池耗尽时的垫底遗物

@@ -87,6 +87,16 @@ export class Card extends Item{
                 }
             }
         }
+
+        // 挂载 possess 触发器：卡牌自身响应事件的通路（如"被移除时"）
+        // 用 owner 作为 target context，reaction 中 targetType:"owner" 可解析为 player
+        const possessInteraction = this.getInteraction("possess")
+        if (possessInteraction && possessInteraction.triggers) {
+            for (const triggerDef of possessInteraction.triggers) {
+                const triggerObj = createTriggerByTriggerMap(this, owner, triggerDef)
+                this.trigger.appendTrigger(triggerObj)
+            }
+        }
     }
 
     /**

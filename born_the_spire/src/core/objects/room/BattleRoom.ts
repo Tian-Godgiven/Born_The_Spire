@@ -11,6 +11,8 @@ import { nowPlayer, nowGameRun } from "@/core/objects/game/run"
 import { processEliteDefeat, processVictoryMastery } from "@/core/hooks/organUnlock"
 import { createEnemy } from "@/core/factories"
 import { rewardRegistry } from "@/static/registry/rewardRegistry"
+import { doEvent } from "@/core/objects/system/ActionEvent"
+import { beginTransaction, endTransaction } from "@/core/objects/game/transaction"
 import { gainMark } from "@/core/hooks/mark"
 import { goToNextStep } from "@/core/hooks/step"
 import { FloorSelectRoom } from "./FloorSelectRoom"
@@ -249,10 +251,7 @@ export class BattleRoom extends Room {
         }
 
         // 6. 显示奖励页面并等待玩家完成选择
-        if (rewards.length > 0) {
-            const { showRewards } = await import("@/ui/hooks/interaction/rewardDisplay")
-            await showRewards(rewards, "战斗胜利", "选择你的奖励")
-        }
+        await this.finalizeAndShowRewards(rewards, "战斗胜利", "选择你的奖励")
     }
 
     /**
@@ -305,10 +304,7 @@ export class BattleRoom extends Room {
         }
 
         // 5. 显示奖励页面
-        if (rewards.length > 0) {
-            const { showRewards } = await import("@/ui/hooks/interaction/rewardDisplay")
-            await showRewards(rewards, "精英战斗胜利", "选择你的奖励")
-        }
+        await this.finalizeAndShowRewards(rewards, "精英战斗胜利", "选择你的奖励")
     }
 
     /**
@@ -364,10 +360,7 @@ export class BattleRoom extends Room {
         }
 
         // 5. 显示奖励页面
-        if (rewards.length > 0) {
-            const { showRewards } = await import("@/ui/hooks/interaction/rewardDisplay")
-            await showRewards(rewards, "强化精英战斗胜利", "选择你的奖励")
-        }
+        await this.finalizeAndShowRewards(rewards, "强化精英战斗胜利", "选择你的奖励")
 
         // 6. 获得印记
         await gainMark(nowPlayer, "mark_elite")
@@ -421,13 +414,35 @@ export class BattleRoom extends Room {
         }
 
         // 4. 显示奖励页面
-        if (rewards.length > 0) {
-            const { showRewards } = await import("@/ui/hooks/interaction/rewardDisplay")
-            await showRewards(rewards, "Boss战斗胜利", "选择你的奖励")
-        }
+        await this.finalizeAndShowRewards(rewards, "Boss战斗胜利", "选择你的奖励")
 
         // 5. 触发楼层选择
         await this.triggerFloorSelection()
+    }
+
+    /**
+     * 发布 beforeShowRewards 事件后显示奖励页面
+     * 遗物可在事件的 after take 触发器里 splice/push info.rewards（或整体换引用）来占用/添加奖励
+     * 触发器可以是 async（如饲主"让/抢"弹窗），因此显式开事务并 await
+     */
+    private async finalizeAndShowRewards(rewards: any[], title: string, subtitle: string): Promise<void> {
+        if (rewards.length === 0) return
+
+        const rewardInfo = { rewards }
+        beginTransaction()
+        doEvent({
+            key: "beforeShowRewards",
+            source: nowPlayer,
+            medium: nowPlayer,
+            target: nowPlayer,
+            info: rewardInfo,
+            effectUnits: []
+        })
+        await endTransaction()
+
+        if (rewardInfo.rewards.length === 0) return
+        const { showRewards } = await import("@/ui/hooks/interaction/rewardDisplay")
+        await showRewards(rewardInfo.rewards, title, subtitle)
     }
 
     /**

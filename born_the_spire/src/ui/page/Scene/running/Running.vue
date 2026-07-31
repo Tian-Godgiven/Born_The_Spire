@@ -23,6 +23,9 @@
     <!-- 奖励弹窗（全局） -->
     <RewardModal />
 
+    <!-- 奖励拦截弹窗（饲主的饥饿的怪物等"拦一份战利品"遗物用） -->
+    <RewardInterceptModal />
+
     <!-- 地图覆盖层 -->
     <MapOverlay ref="mapOverlay" />
 
@@ -43,6 +46,7 @@ import Top from "./Top/index.vue"
 import ConnectLine from "@/ui/components/interaction/chooseTarget/ConnectLine.vue"
 import LogPane from "@/ui/page/tool/logPane/LogPane.vue"
 import RewardModal from "@/ui/components/interaction/RewardModal.vue"
+import RewardInterceptModal from "@/ui/components/interaction/RewardInterceptModal.vue"
 import MapOverlay from "@/ui/components/interaction/MapOverlay.vue"
 import CardGroupModal from '@/ui/components/interaction/CardGroupModal.vue'
 import GlobalMessage from '@/ui/components/display/GlobalMessage.vue'

@@ -9,6 +9,7 @@ import { MaterialReward } from "@/core/objects/reward/MaterialReward"
 import { OrganSelectReward } from "@/core/objects/reward/OrganSelectReward"
 import { RelicReward } from "@/core/objects/reward/RelicReward"
 import { RelicSelectReward } from "@/core/objects/reward/RelicSelectReward"
+import { CardSelectReward } from "@/core/objects/reward/CardSelectReward"
 import { PotionReward } from "@/core/objects/reward/PotionReward"
 
 /**
@@ -23,6 +24,7 @@ export function initRewardRegistry(): void {
     rewardRegistry.registerRewardType("organSelect", OrganSelectReward)
     rewardRegistry.registerRewardType("relic", RelicReward)
     rewardRegistry.registerRewardType("relicSelect", RelicSelectReward)
+    rewardRegistry.registerRewardType("cardSelect", CardSelectReward)
     rewardRegistry.registerRewardType("potion", PotionReward)
 
 }

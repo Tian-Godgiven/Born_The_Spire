@@ -98,8 +98,9 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
             healValue = Math.floor(maxHealth * params.percent / 100)
         }
         if (healValue <= 0) return
+        // restHeal：休息治疗事件通路，饥饿的怪物≥3陪睡等"仅休息触发"的效果监听此事件
         await doEvent({
-            key: "heal",
+            key: "restHeal",
             source: nowPlayer,
             medium: nowPlayer,
             target: nowPlayer,
@@ -300,6 +301,42 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
                     minCount: params.minCount ?? 0
                 }
             }]
+        })
+    },
+
+    /**
+     * 给玩家挂状态
+     */
+    "gainState": async (params: { stateKey: string, stacks?: number }) => {
+        await doEvent({
+            key: "applyState",
+            source: nowPlayer,
+            medium: nowPlayer,
+            target: nowPlayer,
+            effectUnits: [{
+                key: "applyState",
+                params: { stateKey: params.stateKey, stacks: params.stacks ?? 1 }
+            }]
+        })
+    },
+
+    /**
+     * 移除指定 key 的器官（定向，不走 UI 选择）
+     */
+    "removeOrganByKey": async (params: { organKey: string }) => {
+        const organs = (nowPlayer as any).organs
+        if (!Array.isArray(organs)) return
+        const organ = organs.find((o: any) => o.key === params.organKey)
+        if (!organ) {
+            console.warn(`[removeOrganByKey] 找不到器官: ${params.organKey}`)
+            return
+        }
+        await doEvent({
+            key: "removeOrgan",
+            source: nowPlayer,
+            medium: nowPlayer,
+            target: nowPlayer,
+            effectUnits: [{ key: "removeOrgan", params: { organ } }]
         })
     },
 

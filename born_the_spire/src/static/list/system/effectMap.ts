@@ -19,7 +19,7 @@ import { replaceOrgan, chooseOrganRemove, damageOrgan, healOrgan, modifyOrganCar
 import { removeOrganEffect } from "@/core/effects/organ/organRemoveEffect"
 import { upgradeCardEffect } from "@/core/effects/card/cardUpgradeEffect"
 import { removeCardEffect } from "@/core/effects/card/cardRemoveEffect"
-import { gainCard, gainPotion, losePotion, gainRelic, gainOrgan } from "@/core/effects/item/gainItem"
+import { gainCard, gainPotion, losePotion, gainRelic, gainOrgan, removeRelicByKey } from "@/core/effects/item/gainItem"
 import { isEntity } from "@/core/utils/typeGuards"
 import { discoverCard, chooseRandomCard, chooseCardUpgrade, chooseCardRemove, chooseCardDuplicate, customCardChoice } from "@/core/effects/card/cardChoice"
 import { cancelEvent, cancelCurrentEvent } from "@/core/effects/event/cancelEvent"
@@ -33,6 +33,7 @@ import { addTemporaryEffect } from "@/core/effects/card/addTemporaryEffect"
 import { addAbilityChargesEffect, reduceAbilityCooldownEffect, setAbilityToggleEffect, resetAbilityUsesEffect, setAbilityEnabledEffect, modifyAbilityCostEffect } from "@/core/effects/ability/abilityEffects"
 import { addStatusModifier, addMaxHealthAndHeal } from "@/core/effects/modifier/addModifier"
 import { accumulateAndTrigger } from "@/core/effects/relic/accumulateAndTrigger"
+import { hungryBeast_registerInterceptor } from "@/core/effects/relic/hungryBeastInterceptor"
 import { exhaustRandomCardByTag } from "@/core/effects/card/exhaustRandomCardByTag"
 import { card_wasteHeatRecovery, card_unstableCharge, card_commandScreech, card_commandStrike, card_heatBlast, card_corrosiveBurst } from "@/core/effects/card/cardSpecificEffects"
 import { organ_heatTick, organ_rustySeparator, organ_emergencyBattery, organ_pheromoneGland, gainArmorPerAlly, organ_heatAccumulate, organ_poisonArmor, organ_toxicPulse, organ_armorBash, state_hardenAbsorb, card_strengthBite, organ_lifeSteal, organ_poisonAmplify, organ_corruptionArmor, organ_phaseShift, organ_mycelialSpread, organ_multiHitBonus, organ_powerAmplify } from "@/core/effects/organ/organSpecificEffects"
@@ -365,6 +366,10 @@ export const effectMap:EffectData[] = [
     key:"gainRelic",
     effect:gainRelic
 },{
+    label:"按key移除遗物",
+    key:"removeRelicByKey",
+    effect:removeRelicByKey
+},{
     label:"获得器官",
     key:"gainOrgan",
     effect:gainOrgan
@@ -516,6 +521,10 @@ export const effectMap:EffectData[] = [
     label:"积累计数并触发效果",
     key:"accumulateAndTrigger",
     effect:accumulateAndTrigger
+},{
+    label:"饥饿的怪物：注册战斗奖励拦截触发器",
+    key:"hungryBeast_registerInterceptor",
+    effect:hungryBeast_registerInterceptor
 },{
     label:"随机消耗指定标签的卡牌",
     key:"exhaustRandomCardByTag",

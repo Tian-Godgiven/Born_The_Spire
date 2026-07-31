@@ -447,6 +447,11 @@ export class EventRoom extends Room {
             newLog([this.eventConfig.description])
         }
 
+        // 事件级 onEnter 钩子：用于预 pick / 掷骰等一次性写入 sceneData
+        if (this.eventConfig.onEnter) {
+            await this.eventConfig.onEnter(this.sceneData)
+        }
+
         // 如果第一幕是战斗场景，直接启动战斗
         if (this.isMultiScene) {
             const firstScene = this.eventConfig.scenes![0]
@@ -536,9 +541,11 @@ export class EventRoom extends Room {
             }
         }
 
-        // 4. 执行自定义回调
+        // 4. 执行自定义回调（返回字符串时覆盖 nextScene，用于动态分幕）
+        let dynamicNextScene: string | undefined
         if (option.customCallback) {
-            await option.customCallback(this.sceneData)
+            const result = await option.customCallback(this.sceneData)
+            if (typeof result === "string") dynamicNextScene = result
         }
 
         // 6. 如果有复杂交互组件，由 UI 层处理
@@ -546,10 +553,11 @@ export class EventRoom extends Room {
 
         // 7. 处理幕切换（多幕事件）
         if (this.isMultiScene) {
-            if (option.nextScene) {
+            const nextScene = dynamicNextScene ?? option.nextScene
+            if (nextScene) {
                 // 有下一幕：延迟跳转
                 setTimeout(() => {
-                    this.goToScene(option.nextScene)
+                    this.goToScene(nextScene)
                 }, 500)
             } else {
                 // 没有下一幕：最后一幕，直接离开

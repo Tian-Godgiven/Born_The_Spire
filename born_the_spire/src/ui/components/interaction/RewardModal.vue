@@ -35,6 +35,15 @@
               查看选择
             </button>
 
+            <!-- 卡牌选择 -->
+            <button
+              v-else-if="reward.type === 'cardSelect' && !reward.isClaimed()"
+              class="action-btn"
+              @click="openCardChoice(reward)"
+            >
+              查看选择
+            </button>
+
             <!-- 可点击领取的奖励（金币、物质、药水等） -->
             <button
               v-else-if="!reward.isClaimed()"
@@ -149,6 +158,40 @@
             class="action-btn primary"
             :disabled="!selectedRelicKey"
             @click="confirmRelicChoice"
+          >
+            确认
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 卡牌选择弹窗 -->
+    <div v-if="showCardChoice" class="choice-overlay" @click.self="closeCardChoice">
+      <div class="choice-modal">
+        <div class="choice-title">选择卡牌</div>
+        <div class="choice-description">{{ currentChoiceReward?.getDisplayDescription() }}</div>
+
+        <div class="choice-grid">
+          <div
+            v-for="card in currentChoiceReward?.cardOptions"
+            :key="card.key"
+            class="choice-card"
+            :class="{ selected: selectedCardKey === card.key }"
+            @click="selectedCardKey = card.key"
+          >
+            <div class="choice-name">{{ card.label }}</div>
+            <div v-if="card.description" class="choice-description">
+              {{ card.description }}
+            </div>
+          </div>
+        </div>
+
+        <div class="choice-actions">
+          <button class="action-btn" @click="closeCardChoice">取消</button>
+          <button
+            class="action-btn primary"
+            :disabled="!selectedCardKey"
+            @click="confirmCardChoice"
           >
             确认
           </button>
@@ -320,6 +363,32 @@ async function confirmRelicChoice() {
   closeRelicChoice()
 }
 
+// 卡牌选择弹窗
+const showCardChoice = ref(false)
+const selectedCardKey = ref<string | null>(null)
+
+function openCardChoice(reward: any) {
+  currentChoiceReward.value = reward
+  selectedCardKey.value = null
+  showCardChoice.value = true
+}
+
+function closeCardChoice() {
+  showCardChoice.value = false
+  currentChoiceReward.value = null
+  selectedCardKey.value = null
+}
+
+async function confirmCardChoice() {
+  if (!selectedCardKey.value || !currentChoiceReward.value) return
+
+  const reward = currentChoiceReward.value
+  reward.selectedCards = [selectedCardKey.value]
+  await reward.claim()
+  handleExclusiveGroup(reward)
+  closeCardChoice()
+}
+
 // 领取奖励
 async function claimReward(reward: any) {
   await reward.claim()
@@ -331,7 +400,7 @@ async function handleProceed() {
   // 自动领取所有未领取且未锁定的奖励
   for (const reward of rewards.value) {
     if (!reward.isClaimed() && !reward.isLocked()) {
-      if (reward.type === 'organSelect' || reward.type === 'relicSelect') {
+      if (reward.type === 'organSelect' || reward.type === 'relicSelect' || reward.type === 'cardSelect') {
         // 跳过选择类奖励
         reward.markAsClaimed()
       } else {

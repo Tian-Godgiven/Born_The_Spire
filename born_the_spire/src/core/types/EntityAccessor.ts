@@ -14,6 +14,8 @@
  *   hasCard(key)    → 手牌中是否有某张牌
  *   hasTag(key)     → 实体（通常是卡牌）的 tags 中是否含指定 tag
  *   pileCount(pile) → 牌堆卡牌数量（hand/draw/discard/exhaust）
+ *   organCount()           → 已装器官数量
+ *   organsWithCardsCount() → 已装器官中挂了卡的数量
  */
 
 import type { Entity } from "@/core/objects/system/Entity"
@@ -61,7 +63,7 @@ function callAccessorFunction(funcName: string, arg: string, entity: Entity): Ac
     if (!fn) {
         throw new Error(
             `[EntityAccessor] 未知的访问器: "${funcName}"。` +
-            `内置访问器: status, current, hasStatus, hasState, hasOrgan, hasRelic, hasCard, hasTag, state, stateStack`
+            `内置访问器: status, current, hasStatus, hasState, hasOrgan, hasRelic, hasCard, hasTag, state, stateStack, pileCount, reserve, itemType, isTemporary, stateCategory, organCount, organsWithCardsCount`
         )
     }
     return fn(arg, entity)
@@ -94,6 +96,8 @@ const builtinAccessors = new Map<string, AccessorFunction>([
         const data = stateList.find(s => s.key === stateKey)
         return data?.category ?? ""
     }],
+    ["organCount",           (_arg, entity) => organCount(entity)],
+    ["organsWithCardsCount", (_arg, entity) => organsWithCardsCount(entity)],
 ])
 
 // ==================== 内置访问器实现 ====================
@@ -194,6 +198,29 @@ function hasTag(key: string, entity: Entity): boolean {
 
 function reserve(key: string, entity: Entity): number {
     return getReserveModifier(entity).getReserve(key)
+}
+
+/**
+ * 已装器官数量
+ */
+function organCount(entity: Entity): number {
+    const organs = (entity as any).organs
+    return Array.isArray(organs) ? organs.length : 0
+}
+
+/**
+ * 已装器官中至少挂了 1 张卡的数量
+ */
+function organsWithCardsCount(entity: Entity): number {
+    const organs = (entity as any).organs
+    if (!Array.isArray(organs)) return 0
+    return organs.filter((o: any) => {
+        const playerCards = o.cardsByOwner?.player
+        if (Array.isArray(playerCards) && playerCards.length > 0) return true
+        if (typeof playerCards === "string" && playerCards.length > 0) return true
+        if (Array.isArray(o.cards) && o.cards.length > 0) return true
+        return false
+    }).length
 }
 
 const pileNameMap: Record<string, string> = {

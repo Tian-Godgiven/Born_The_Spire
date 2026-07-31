@@ -153,6 +153,30 @@ export const statusMapList: Record<string, StatusMap> = {
         category: "special",
         hidden: true,
         notNegative: true
+    },
+    "hungry-beast-favor": {
+        label: "宠物好感度",
+        value: 0,
+        describe: "饥饿的怪物 - 好感度计数（≥3 陪睡 / ≥6 共战 / ≥9 挡刀）",
+        category: "special",
+        hidden: true,
+        notNegative: true
+    },
+    "hungry-beast-refuse-count": {
+        label: "宠物未喂计数",
+        value: 0,
+        describe: "饥饿的怪物 - 连续未喂计数，≥3 时下场战斗强制占据",
+        category: "special",
+        hidden: true,
+        notNegative: true
+    },
+    "hungry-beast-blocked-once": {
+        label: "宠物本场已挡刀",
+        value: 0,
+        describe: "饥饿的怪物 - 大于 0 表示本场战斗已消耗挡刀（每场 battleStart 时清零，由遗物 possess.triggers 负责）",
+        category: "special",
+        hidden: true,
+        notNegative: true
     }
 } as const
 

@@ -42,7 +42,9 @@ export interface EventOptionMap {
         params?: any                // 效果参数
     }>
     component?: Component | string  // 复杂交互组件（转盘、配对等）
-    customCallback?: (sceneData?: any) => void | Promise<void>  // 自定义回调（多幕事件可访问 sceneData）
+    // 自定义回调（多幕事件可访问 sceneData）
+    // 返回字符串时会覆盖 option.nextScene，用于动态分幕（如掷骰后跳向不同结局）
+    customCallback?: (sceneData?: any) => void | string | Promise<void | string>
     rewards?: Array<{ type: string; [key: string]: any }>  // 奖励配置列表（弹出奖励选择弹窗）
 
     // 是否可用（不满足时选项置灰，仍然显示）
@@ -88,6 +90,9 @@ export interface EventMap {
 
     // 多幕事件（新增）
     scenes?: EventSceneMap[]        // 多幕配置（如果提供 scenes，则忽略 options）
+
+    // 事件进入时执行的钩子（多幕事件常用于预 pick / 骰随机结果并写入 sceneData）
+    onEnter?: (sceneData: any) => void | Promise<void>
 
     component?: Component | string  // 自定义事件组件（可选）
     availableCondition?: RoomAvailableCondition  // 出现条件（可选）

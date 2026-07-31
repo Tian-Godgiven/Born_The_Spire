@@ -5,6 +5,25 @@
 
 import type { EventMap } from "@/core/types/EventMapData"
 import { eventEffectMap } from "./eventEffectMap"
+import { nowPlayer } from "@/core/objects/game/run"
+import { randomChoice } from "@/core/hooks/random"
+
+/**
+ * 收藏家 NPC 点名：按稀有度优先（rare > uncommon > common），同层随机。
+ * 只此一处使用，内嵌于本文件，不抽公共 helper。
+ */
+function pickCollectorTarget(organs: any[]): any {
+    const buckets: Record<string, any[]> = { rare: [], uncommon: [], common: [] }
+    for (const o of organs) {
+        const r = o.rarity ?? "common"
+        if (buckets[r]) buckets[r].push(o)
+        else buckets.common.push(o)
+    }
+    const bucket = buckets.rare.length ? buckets.rare
+                : buckets.uncommon.length ? buckets.uncommon
+                : buckets.common
+    return randomChoice(bucket, "collectorPick")
+}
 
 /**
  * 事件配置列表
@@ -338,7 +357,7 @@ export const eventList: EventMap[] = [
                         "只是一枚受精卵。战斗结束回复 8 生命。",
                         "细胞开始分裂堆聚。每场战斗第一张攻击卡额外触发 1 次。",
                         "内里生成腔体。回合开始 +5 格挡；每场战斗塞入一张【分化】卡到抽牌堆。",
-                        "开始向内折叠分化。（专属效果待定。）每场战斗塞入一张【分化】卡。",
+                        "开始向内折叠分化。每场战斗塞入一张【分化】卡直接进手牌（不进抽牌堆）。",
                         "神经系统雏形浮现。每场战斗胜利 +5 最大生命并回复 5 生命；每场战斗塞入一张【分化】卡。"
                     ]
                     const roundLine = rounds > 0
@@ -458,6 +477,277 @@ export const eventList: EventMap[] = [
                 icon: "🩸",
                 effects: [
                     { key: "duplicateRandomCard", params: { count: 1 } }
+                ]
+            }
+        ]
+    },
+
+    // 收藏家：NPC 点名要器官，让/谈/拒
+    // 数据草稿 2026-07-29：见任务列表.md，前置全部完成 ✅
+    //   ✅ NPC 点名 pickCollectorTarget（本文件顶部 helper，rare > uncommon > common 稀有度优先）
+    //   ✅ removeOrganByKey event effect（eventEffectMap.ts）
+    //   ✅ ifAble organCount()
+    //   ✅ let_him_pick / haggle 已接通
+    //   ✅ haggle 掷骰分支（customCallback 返回 nextScene，EventRoom 扩展已支持）
+    //   ✅ onEnter 预 pick + 函数式 description 插值（main 场景就展示"他盯上了 X"）
+    {
+        key: "event_collector",
+        title: "收藏家",
+        description: "一位衣着华丽的收藏家摊开厚厚的器官图鉴，上下打量着你。「让我看看，你身上有没有我想要的东西？」",
+        icon: "🎩",
+        onEnter: async (data) => {
+            const organs = (nowPlayer as any).organs
+            if (!Array.isArray(organs) || organs.length === 0) return
+            const picked = pickCollectorTarget(organs)
+            data.pickedOrgan = { key: picked.key, label: picked.label, rarity: picked.rarity }
+        },
+        scenes: [
+            {
+                key: "main",
+                title: "收藏家",
+                description: (data) => data.pickedOrgan
+                    ? `他的目光在你身上梭巡，最后一眼盯上了「${data.pickedOrgan.label}」。「就是它了。」`
+                    : "他上下打量了你一番，微微皱起眉：「……你身上似乎没什么值得我出手的。」",
+                options: [
+                    {
+                        key: "let_him_pick",
+                        title: "让他挑",
+                        description: "交出他选中的器官，换 200 金 + 1 件稀有遗物。",
+                        icon: "👉",
+                        ifAble: "$owner.organCount() >= 1",
+                        customCallback: async (data) => {
+                            if (!data.pickedOrgan) return
+                            await eventEffectMap.removeOrganByKey({ organKey: data.pickedOrgan.key })
+                        },
+                        effects: [
+                            { key: "gainGold", params: { amount: 200 } },
+                            { key: "gainRandomRelic", params: { rarity: "rare" } }
+                        ]
+                    },
+                    {
+                        key: "haggle",
+                        title: "讨价还价",
+                        description: "赌一把——成功大赚一笔（400 金 + 2 件稀有遗物 + 失去器官），失败他愤然离场（无收益，器官保留）。",
+                        icon: "🎲",
+                        ifAble: "$owner.organCount() >= 1",
+                        customCallback: async (data) => {
+                            if (!data.pickedOrgan) return "haggle_lose"
+                            const success = randomChance(0.5, "collectorHaggle")
+                            if (success) {
+                                await eventEffectMap.removeOrganByKey({ organKey: data.pickedOrgan.key })
+                                return "haggle_win"
+                            }
+                            return "haggle_lose"
+                        }
+                    },
+                    {
+                        key: "refuse",
+                        title: "拒绝",
+                        description: "客气地送走收藏家。",
+                        icon: "🚪"
+                    }
+                ]
+            },
+            {
+                key: "haggle_win",
+                title: "讨价还价·成功",
+                description: (data) => `收藏家哈哈大笑：「痛快！」他甩出双倍的金钱和两件稀奇玩意，从你身上取走了「${data.pickedOrgan?.label ?? "器官"}」。`,
+                options: [
+                    {
+                        key: "haggle_win_done",
+                        title: "收下",
+                        icon: "💰",
+                        effects: [
+                            { key: "gainGold", params: { amount: 400 } },
+                            { key: "gainRandomRelic", params: { rarity: "rare" } },
+                            { key: "gainRandomRelic", params: { rarity: "rare" } }
+                        ]
+                    }
+                ]
+            },
+            {
+                key: "haggle_lose",
+                title: "讨价还价·失败",
+                description: "收藏家冷哼一声：「不识抬举。」拂袖而去。",
+                options: [
+                    {
+                        key: "haggle_lose_done",
+                        title: "目送他离开",
+                        icon: "🚪"
+                    }
+                ]
+            }
+        ]
+    },
+
+    // 移植手术：多幕循环，卡牌归属在器官间转移
+    // 数据草稿 2026-07-29：等实现前置解决后才能跑通（见任务列表.md）
+    //   1) 两阶段"选卡 + 选目标器官"UI 组件（选卡时按器官分组显示）
+    //   2) ContentModifier "改归属"通路（把卡从器官 A 移到器官 B）
+    //   ✅ ifAble 语法：organCount() / organsWithCardsCount() 已加
+    {
+        key: "event_transplant_surgery",
+        title: "移植手术",
+        description: "一个自称「外科医师」的怪人邀请你上手术台。他戴着沾血的口罩，桌上摆着几件生锈的工具。",
+        icon: "🔪",
+        scenes: [
+            {
+                key: "main",
+                title: "移植手术",
+                description: "医生看着你，等待你的决定。",
+                options: [
+                    {
+                        key: "get_on_table",
+                        title: "上手术台",
+                        description: "每次手术失当前 HP 10%，将一张已装器官上的卡改到另一个已装器官。",
+                        icon: "🩺",
+                        ifAble: "$owner.organCount() >= 2 && $owner.organsWithCardsCount() >= 1",
+                        nextScene: "operation"
+                    },
+                    {
+                        key: "leave_main",
+                        title: "离开",
+                        description: "拒绝医生的邀请。",
+                        icon: "🚪"
+                    }
+                ]
+            },
+            {
+                key: "operation",
+                title: "手术台",
+                description: "医生示意你选择：从哪个器官取一张卡，移到哪个器官。",
+                options: [
+                    {
+                        key: "do_surgery",
+                        title: "开始手术（失当前 HP 10%）",
+                        description: "选择一张卡和目标器官，卡归属转移到目标器官（效果不变）。",
+                        icon: "🔪",
+                        effects: [
+                            { key: "loseHealthPercent", params: { percent: 10 } }
+                        ],
+                        customCallback: async (data) => {
+                            // TODO 打开"选卡 + 选目标器官"两阶段界面，调用 ContentModifier 改归属
+                            // await openTransplantSelectUI()
+                        },
+                        nextScene: "operation" // 回到本场景，可继续手术或离开
+                    },
+                    {
+                        key: "leave_table",
+                        title: "结束离开",
+                        description: "从手术台起身",
+                        icon: "🚪"
+                    }
+                ]
+            }
+        ]
+    },
+
+    // 饲主：宠物 vs 立即套现
+    // 数据草稿 2026-07-29：事件本身简单，但衍生遗物是大系统（见任务列表.md）
+    //   1) 新增遗物「饥饿的怪物」：战斗奖励占用（让/抢/强制占据）+ 好感度阶段解锁（3/6/9 三阶）
+    //   2) 战斗奖励生成流程 hook：支持"宠物看上标记"和"强制占据"三态显示
+    //   3) 挡刀致命伤拦截通路（好感度 9 阶）
+    {
+        key: "event_feeder",
+        title: "饲主",
+        description: "一个佝偻的老人牵着一只饿肚子的怪物，怪物的目光死死盯着你。",
+        icon: "🐕",
+        options: [
+            {
+                key: "feed_beast",
+                title: "喂养它",
+                description: "获得遗物「饥饿的怪物」，它将跟你走。它会占用你的战斗奖励；喂得越多解锁越强（3/6/9 好感度三阶）。",
+                icon: "🍖",
+                effects: [
+                    { key: "gainRelic", params: { relicKey: "event_relic_hungry_beast" } }
+                ]
+            },
+            {
+                key: "kill_beast",
+                title: "杀掉它",
+                description: "立即获得 60 金 + 60 物质。",
+                icon: "🗡",
+                effects: [
+                    { key: "gainGold", params: { amount: 60 } },
+                    { key: "gainMaterial", params: { amount: 60 } }
+                ]
+            }
+        ]
+    },
+
+    // 孵化室：跨战斗延迟结算，孵化好坏由 3 场承受伤害决定
+    // 前置状态 2026-07-29 ✅（可 playtest）：
+    //   ✅ 孵化中的胚胎 遗物（event_relic_incubating_embryo）：3 场战斗跨战斗跟踪伤害
+    //   ✅ 共生之种 / 饥饿之种 两遗物已入 relicList.ts（event_relic_symbiote_seed / event_relic_hungry_seed）
+    //   ✅ 寄生 诅咒卡已入 cardList.ts（original_card_parasite）
+    //   剩余(可选): 寄生卡的"被转化/移除时 -3 最大生命"通路（当前 card 触发器系统未验证；卡本身"cannot-play"已生效）
+    {
+        key: "event_hatchery",
+        title: "孵化室",
+        description: "桌上放着一枚微微跳动的透明卵，隐隐能感到心跳。",
+        icon: "🥚",
+        options: [
+            {
+                key: "take_and_parasite",
+                title: "拿走并寄生",
+                description: "获得「孵化中的胚胎」遗物。接下来 3 场战斗每场开始 +2 力量，但每回合末受递增伤害。3 场后按累计承受伤害孵化：≤30 → 共生之种，>30 → 饥饿之种（附带 1 张寄生诅咒）。",
+                icon: "🐣",
+                effects: [
+                    { key: "gainRelic", params: { relicKey: "event_relic_incubating_embryo" } }
+                ]
+            },
+            {
+                key: "crush_egg",
+                title: "碾碎",
+                description: "恢复 10% 最大生命",
+                icon: "💥",
+                effects: [
+                    { key: "healHealth", params: { percent: 10 } }
+                ]
+            }
+        ]
+    },
+
+    // 献祭祭坛：永久属性 tradeoff（离开也要付代价，"不允许空手而归"）
+    // 前置状态 2026-07-29 全部齐 ✅（可 playtest）：
+    //   ✅ 秀色可餐 / 浅尝辄止 两遗物已入 relicList.ts
+    //   ✅ 事件专属池：直接用 pool: ["exclusive"]
+    //   ✅ N 场后禁用通路：沿用无常之神的祝福模板
+    //   ✅ ifAble 语法：新增 organCount() accessor（EntityAccessor.ts）
+    {
+        key: "event_sacrifice_altar",
+        title: "献祭祭坛",
+        description: "一座石制祭坛，中央刻着凹陷的槽。它低语着，不允许你空手而归。",
+        icon: "🗿",
+        options: [
+            {
+                key: "sacrifice_flesh",
+                title: "献祭血肉",
+                description: "永久失去 50% 最大生命，换取遗物「秀色可餐」（永久 +1 能量上限）",
+                icon: "🩸",
+                effects: [
+                    { key: "loseMaxHealthPercent", params: { percent: 50 } },
+                    { key: "gainRelic", params: { relicKey: "original_relic_delectable_feast" } }
+                ]
+            },
+            {
+                key: "sacrifice_organ",
+                title: "献祭器官",
+                description: "自选 1 个已装器官交出（永久失去），换取遗物「浅尝辄止」（下 3 场战斗每回合开始 +1 抽牌数，3 场后禁用）",
+                icon: "🫀",
+                ifAble: "$owner.organCount() >= 1",
+                effects: [
+                    { key: "removeOrgan", params: { count: 1, minCount: 1 } },
+                    { key: "gainRelic", params: { relicKey: "original_relic_shallow_taste" } }
+                ]
+            },
+            {
+                key: "leave_altar",
+                title: "离开",
+                description: "祭坛不允许你空手而归——你失去当前生命值等于最大生命的 10%。",
+                icon: "🚪",
+                effects: [
+                    { key: "loseHealthPercent", params: { percent: 10 } }
                 ]
             }
         ]

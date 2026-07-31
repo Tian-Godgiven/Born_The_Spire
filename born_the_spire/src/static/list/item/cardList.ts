@@ -1122,6 +1122,32 @@ export const cardList:CardMap[] = [{
             ]
         }
     }
+},{
+    label:"寄生",
+    tags:["curse"],
+    pool:["exclusive"],
+    status:{ cost:0, "cannot-play":1 },
+    describe:["无法被打出。被移除时，你失去 3 点最大生命。"],
+    key:"original_card_parasite",
+    interaction:{
+        possess:{
+            target:{key:"owner"},
+            triggers:[
+                {when:"before",how:"via",key:"removeCard",action:"parasiteCurse"}
+            ]
+        }
+    },
+    reaction:{
+        parasiteCurse:[{
+            targetType:"owner",
+            key:"loseMaxHealth",
+            effect:[{
+                key:"addMaxHealthAndHeal",
+                describe:["失去 3 点最大生命"],
+                params:{value:-3}
+            }]
+        }]
+    }
 }]
 
 export async function getCardByKey(key:string){

@@ -167,9 +167,9 @@ export class PoolRoom extends Room {
         // 消耗物质
         reserveModifier.spendReserve("material", materialCost)
 
-        // 回复生命
+        // 回复生命（restHeal：休息治疗，饥饿的怪物≥3陪睡等"仅休息触发"的效果监听此事件）
         await doEvent({
-            key: "heal",
+            key: "restHeal",
             source: nowPlayer,
             medium: nowPlayer,
             target: nowPlayer,
