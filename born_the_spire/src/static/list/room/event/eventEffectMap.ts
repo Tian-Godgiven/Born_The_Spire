@@ -12,6 +12,7 @@ import { showRandomCardShowcase } from "@/ui/hooks/interaction/randomCardShowcas
 import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
 import { getPotionModifier } from "@/core/objects/system/modifier/PotionModifier"
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
+import { createOrgan } from "@/core/factories"
 
 /**
  * 事件效果函数类型
@@ -809,6 +810,96 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
                 }]
             })
         }
+    },
+
+    /**
+     * 胚胎发育：接生器官（写入 evolutionRounds 后装到玩家）
+     * 直接 createOrgan → setOriginalBaseValue 写入进化轮次 → acquireOrgan，
+     * 让器官从出生起就带上正确的 evolutionRounds（reaction 里读的都是 status 值）。
+     */
+    "deliverEmbryo": async (params: { stage: number, evolutionRounds: number }) => {
+        const stage = Math.max(1, Math.min(5, Number(params.stage) || 1))
+        const rounds = Math.max(0, Number(params.evolutionRounds) || 0)
+        const organKey = `organ_embryo_stage${stage}`
+        const organListModule = getLazyModule<any[]>('organList')
+        const organData = organListModule.find((o: any) => o.key === organKey)
+        if (!organData) {
+            console.error(`[deliverEmbryo] 未找到器官: ${organKey}`)
+            return
+        }
+        const organ = await createOrgan(organData)
+        if (rounds > 0) {
+            organ.status["evolutionRounds"]?.setOriginalBaseValue(rounds)
+        }
+        await getOrganModifier(nowPlayer).acquireOrgan(organ, nowPlayer)
+        newLog([nowPlayer, "接生了", organ, rounds > 0 ? `（已进化 ${rounds} 轮）` : ""])
+    },
+
+    /**
+     * 胚胎发育：抽一张代价，返回给 costPreview 展示；玩家接受后走 applyEmbryoCost 结算。
+     * heavy=true 走阶段 5 进化的重代价小池（2 项均分）；
+     * heavy=false 走推进代价常规池（5 类均分，类内均分）。
+     * 资源不足的项（无金/无药水/无器官）从池中剔除，剔空整类的类也剔掉。
+     */
+    "drawEmbryoCost": async (params: { heavy: boolean }): Promise<{ label: string, run: () => Promise<void> } | null> => {
+        type Cost = { label: string, run: () => Promise<void> }
+        const eff = eventEffectMap
+
+        if (params.heavy) {
+            const organCount = getOrganModifier(nowPlayer).getOrgans().length
+            const pool: Cost[] = []
+            if (organCount >= 1) {
+                pool.push({ label: "失去 1 个已装器官", run: async () => { await eff["loseRandomOrgan"]() } })
+            }
+            pool.push({ label: "失去 30% 最大生命", run: async () => { await eff["loseMaxHealthPercent"]({ percent: 30 }) } })
+            return randomChoice(pool, "embryoCost:heavy")
+        }
+
+        const goldNow = getReserveModifier(nowPlayer).getReserve("gold")
+        const potionCount = getPotionModifier(nowPlayer).getPotions().length
+
+        const categories: Cost[][] = []
+
+        categories.push([
+            { label: "失去 15% 当前生命", run: async () => {
+                const cur = Number(nowPlayer.current.health.value)
+                const amount = Math.max(1, Math.floor(cur * 0.15))
+                await eff["loseHealth"]({ amount })
+            }},
+            { label: "失去 10 生命", run: async () => { await eff["loseHealth"]({ amount: 10 }) } },
+        ])
+
+        categories.push([
+            { label: "失去 5 最大生命", run: async () => { await eff["loseMaxHealth"]({ amount: 5 }) } },
+            { label: "失去 8 最大生命", run: async () => { await eff["loseMaxHealth"]({ amount: 8 }) } },
+        ])
+
+        const goldCat: Cost[] = []
+        if (goldNow >= 50) goldCat.push({ label: "失去 50 金", run: async () => { await eff["loseGold"]({ amount: 50 }) } })
+        if (goldNow >= 100) goldCat.push({ label: "失去 100 金", run: async () => { await eff["loseGold"]({ amount: 100 }) } })
+        if (goldCat.length > 0) categories.push(goldCat)
+
+        categories.push([
+            { label: "获得 1 张诅咒", run: async () => { await eff["gainRandomCard"]({ tags: ["curse"] }) } },
+            { label: "牌组随机移除 1 张", run: async () => { await eff["removeRandomCard"]({ count: 1 }) } },
+        ])
+
+        if (potionCount >= 1) {
+            categories.push([
+                { label: "随机失去 1 瓶药水", run: async () => { await eff["loseRandomPotion"]() } },
+            ])
+        }
+
+        const cat = randomChoice(categories, "embryoCost:cat")
+        return randomChoice(cat, "embryoCost:item")
+    },
+
+    /**
+     * 胚胎发育：结算代价（跑 drawEmbryoCost 返回对象里的 run）
+     */
+    "applyEmbryoCost": async (params: { cost: { label: string, run: () => Promise<void> } | null }) => {
+        if (!params.cost) return
+        await params.cost.run()
     },
 
     /**

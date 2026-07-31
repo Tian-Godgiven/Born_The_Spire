@@ -1,8 +1,9 @@
 /**
- * 向指定牌堆添加随机卡牌
+ * 向指定牌堆添加卡牌
  *
  * @params {
  *   count: number              - 添加数量
+ *   cardKey?: string           - 指定卡牌 key；给出时跳过随机筛选，直接加 count 张该卡
  *   tags?: string | string[]   - 筛选标签（如 "skill"）
  *   pool?: string | string[]   - 筛选池（默认 "common"）
  *   cost?: number              - 筛选卡牌费用（按 status.cost.base 精确匹配）
@@ -24,6 +25,7 @@ export const addRandomCardsToPile: EffectFunc = async (event, effect) => {
 
     const {
         count = 1,
+        cardKey,
         tags,
         pool,
         cost,
@@ -37,17 +39,20 @@ export const addRandomCardsToPile: EffectFunc = async (event, effect) => {
     const exclude: string[] = []
 
     for (let i = 0; i < Number(count); i++) {
-        const cardMap = drawItem("card", {
-            tags: tags as string | string[] | undefined,
-            pool: pool as string | string[] | undefined,
-            cost: cost !== undefined ? Number(cost) : undefined,
-            exclude,
-            context: `addRandomCards:${i}`
-        })
+        let resolvedKey: string | undefined = cardKey ? String(cardKey) : undefined
+        if (!resolvedKey) {
+            const cardMap = drawItem("card", {
+                tags: tags as string | string[] | undefined,
+                pool: pool as string | string[] | undefined,
+                cost: cost !== undefined ? Number(cost) : undefined,
+                exclude,
+                context: `addRandomCards:${i}`
+            })
+            if (!cardMap) break
+            resolvedKey = cardMap.key
+        }
 
-        if (!cardMap) break
-
-        const card = await getCardByKey(cardMap.key)
+        const card = await getCardByKey(resolvedKey)
         if (!card) continue
 
         // 通过 function 修饰器覆盖费用，保留原始 base value

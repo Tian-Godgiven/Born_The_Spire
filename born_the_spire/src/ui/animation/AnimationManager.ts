@@ -280,8 +280,7 @@ class AnimationManager {
         } else {
             // 空动画（仅用于 replace/append 模式的组件渲染）
             tl = gsap.timeline({ paused: true })
-            const duration = def.animate?.duration ?? 0.5
-            tl.to(el, { duration })
+            tl.to(el, { duration: 0.5 })
         }
 
         // 注入时间轴回调

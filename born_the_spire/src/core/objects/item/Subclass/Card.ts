@@ -19,6 +19,7 @@ export type CardMap = ItemMap & {
     }
     entry?:string[],
     tags?:string[],  // 卡牌标签（用于分类和筛选）
+    rarity?:string,  // 卡牌稀有度（common / uncommon / rare 等），用于筛选和展示
 
     // 升级配置
     upgradeConfig?: {

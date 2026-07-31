@@ -1999,12 +1999,11 @@ export const organList:OrganMap[] = [
     }
 },
 
-// 阶段 4 · 原肠胚（Gastrula）
+// 阶段 4 · 原肠胚（Gastrula）——战斗开始塞 1 张【分化】直接进手牌（不进牌组，起手可用）
 {
     label: "原肠胚",
     key: "organ_embryo_stage4",
-    // TODO(design): 阶段 4 专属效果方向未拍板；当前占位仅提供分化卡
-    describe: ["（待定专属效果）", "提供 1 张", { "@": 0 }, "到牌组"],
+    describe: ["战斗开始时，将一张【分化】卡塞入手牌（不进牌组）"],
     rarity: OrganRarity.Rare,
     part: OrganPartEnum.Core,
     status: {
@@ -2012,12 +2011,31 @@ export const organList:OrganMap[] = [
         "evolutionRounds": 0
     },
     current: ["mass"],
-    cards: ["card_embryo_differentiation"],
     interaction: {
         possess: {
             target: { key: "self" },
-            effects: []
+            triggers: [{
+                when: "after",
+                how: "take",
+                key: "battleStart",
+                action: "gastrulaSeedHand"
+            }]
         }
+    },
+    reaction: {
+        gastrulaSeedHand: [{
+            key: "addRandomCardsToPile",
+            label: "原肠胚：即时分化",
+            targetType: "owner",
+            effect: [{
+                key: "addRandomCardsToPile",
+                params: {
+                    cardKey: "card_embryo_differentiation",
+                    count: 1,
+                    pileName: "handPile"
+                }
+            }]
+        }]
     }
 },
 

@@ -6,7 +6,7 @@
 import type { EventMap } from "@/core/types/EventMapData"
 import { eventEffectMap } from "./eventEffectMap"
 import { nowPlayer } from "@/core/objects/game/run"
-import { randomChoice } from "@/core/hooks/random"
+import { randomChoice, randomChance } from "@/core/hooks/random"
 
 /**
  * 收藏家 NPC 点名：按稀有度优先（rare > uncommon > common），同层随机。
@@ -556,6 +556,7 @@ export const eventList: EventMap[] = [
                     {
                         key: "haggle_win_done",
                         title: "收下",
+                        description: "收下奖励，与收藏家道别。",
                         icon: "💰",
                         effects: [
                             { key: "gainGold", params: { amount: 400 } },
@@ -573,6 +574,7 @@ export const eventList: EventMap[] = [
                     {
                         key: "haggle_lose_done",
                         title: "目送他离开",
+                        description: "无奈地目送他离开。",
                         icon: "🚪"
                     }
                 ]
