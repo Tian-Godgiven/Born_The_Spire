@@ -189,7 +189,9 @@ export async function useCard(card:Card,fromPile:Card[],source:Player,targets:Ta
         return
     }
 
-    const cardCost = getStatusValue(card,"cost")
+    // cost 为 null 表示这张牌没有费用概念（无费用的诅咒/状态牌）。
+    // 这类牌一律带 cannot-play，上面的 canPlayCard 已经拦住了，走到这里只是兜底
+    const cardCost = getStatusValue(card,"cost") ?? 0
     //支付能量
     const costEffect:EffectUnit = {
         key:"payEnergy",

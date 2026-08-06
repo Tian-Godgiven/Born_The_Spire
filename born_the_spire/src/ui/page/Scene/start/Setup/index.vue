@@ -13,7 +13,7 @@
     <!-- 中间 -->
      <div class="center">
         <div class="left-panel">
-            <Chara v-if="previewPlayer" :target="previewPlayer" side='right' :key="previewPlayer.__id"></Chara>
+            <Chara v-if="previewPlayer" :target="previewPlayer" side='left' :key="previewPlayer.__id"></Chara>
             <button class="deck-btn" @click="showDeckModal = true">查看卡组</button>
         </div>
 
@@ -279,6 +279,8 @@ onMounted(async () => {
 .center{
     display: flex;
     gap: 10px;
+    flex-grow: 1;
+    min-height: 0;
     >*{ flex-grow: 1; }
     .left-panel {
         display: flex;

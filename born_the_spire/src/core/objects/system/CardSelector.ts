@@ -79,7 +79,11 @@ export function selectCards(
         const [min, max] = selector.costRange
         filtered = filtered.filter(card => {
             if (!ifHaveStatus(card, "cost")) return false
-            const cost = Number(getStatusValue(card, "cost"))
+            // cost 为 null 的牌没有费用概念，不落进任何费用区间
+            // （不能直接 Number()，那会把 null 悄悄算成 0 费）
+            const rawCost = getStatusValue(card, "cost")
+            if (rawCost === null) return false
+            const cost = Number(rawCost)
             return cost >= min && cost <= max
         })
     }

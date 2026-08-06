@@ -19,7 +19,7 @@ import { modifierManager } from "@/core/managers/ModifierManager"
 import { showComponent } from "@/core/hooks/componentManager"
 
 import { getCardModifier } from "./CardModifier"
-import { isPlayer } from "@/core/utils/typeGuards"
+import { isPlayer, isEnemy } from "@/core/utils/typeGuards"
 import { nowBattle } from "@/core/objects/game/battle"
 
 
@@ -32,7 +32,6 @@ import { nowBattle } from "@/core/objects/game/battle"
  */
 export class OrganModifier extends ItemModifier {
     public organs = computed(() => {
-        // 直接返回 items，_isDisabled 是 ref，模板中直接使用 _isDisabled 即可
         return this.units.map(u => u.item as unknown as Organ)
     })
 
@@ -60,7 +59,10 @@ export class OrganModifier extends ItemModifier {
     async acquireOrgan(organ: Organ, source: Entity, skipConfirm: boolean = false) {
 
         // 0. 检查部位互斥
-        if (organ.part) {
+        // 部位上限是玩家构筑侧的约束：玩家收集器官时同部位只能带指定数量。
+        // 敌人的器官是设计好的固定配置，同部位多个是合法的（维修无人机就带两个核心），
+        // 更不该在战斗开始时弹出玩家的吞噬确认框
+        if (organ.part && !isEnemy(this.owner)) {
             const maxCount = getPartMaxCount(organ.part)
 
             // 获取相同部位的器官
@@ -443,7 +445,7 @@ export class OrganModifier extends ItemModifier {
         // 恢复质量到最大值（如果有质量系统）
         if (organ.status["max-mass"]) {
             const maxMassValue = organ.status["max-mass"].value
-            const maxMass = typeof maxMassValue === 'string' ? Number(maxMassValue) : maxMassValue
+            const maxMass = typeof maxMassValue === 'number' ? maxMassValue : Number(maxMassValue ?? 0)
             setCurrentValue(organ, "mass", maxMass)
             newLog([organ, `质量完全恢复到 ${maxMass}`])
         }

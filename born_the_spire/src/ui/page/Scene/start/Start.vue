@@ -11,16 +11,23 @@
             {{ item.label }}
         </div>
     </div>
+
+    <SettingsModal v-if="showSettings" @close="showSettings = false" />
 </div>
 </template>
 
 <script setup lang='ts'>
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import SettingsModal from '@/ui/components/interaction/SettingsModal.vue'
 
 const router = useRouter()
 
+const showSettings = ref(false)
+
 const buttonList: { label: string, click: () => void }[] = [
-    { label: "开始游戏", click: () => router.push('/setup') }
+    { label: "开始游戏", click: () => router.push('/setup') },
+    { label: "设置", click: () => showSettings.value = true }
 ]
 </script>
 

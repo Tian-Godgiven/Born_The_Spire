@@ -12,7 +12,7 @@ export const regretCard: CardMap = {
     tags: ["curse"],
     entry: ["card_cannot_play"],
     status: {
-        cost: -1
+        cost: null
     },
     describe: [
         "不能被打出。在手牌中时，回合结束失去等同于手牌数量的生命值。"
@@ -53,7 +53,7 @@ export const injuryCard: CardMap = {
     tags: ["curse"],
     entry: ["card_cannot_play"],
     status: {
-        cost: -1
+        cost: null
     },
     describe: [
         "不能被打出。"
@@ -70,7 +70,7 @@ export const doubtCard: CardMap = {
     tags: ["curse"],
     entry: ["card_cannot_play"],
     status: {
-        cost: -1
+        cost: null
     },
     describe: [
         "不能被打出。在手牌中时，回合结束获得1层虚弱。"

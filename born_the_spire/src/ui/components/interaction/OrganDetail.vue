@@ -57,11 +57,12 @@
             <Teleport to="body">
                 <div
                     v-if="hoveredCard"
-                    ref="cardPopoverRef"
+                    ref="popoverRef"
                     class="card-popover"
-                    :style="cardPopoverStyle"
+                    :style="popoverStyle"
                 >
                     <Card :card="hoveredCard" :hoverTarget="hoverTarget" />
+                    <GlossaryPanel :glossaries="hoveredGlossaries" />
                 </div>
             </Teleport>
         </div>
@@ -70,14 +71,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, nextTick, type PropType, markRaw, shallowRef } from 'vue'
+import { computed, type PropType } from 'vue'
 import { Organ } from '@/core/objects/target/Organ'
 import { getDescribeStructured, getDescribe, type DescribeSegment } from '@/ui/hooks/express/describe'
+import { resolveCardFromSegment, createCardFromKey, findCardInstance } from '@/ui/hooks/express/cardSegment'
+import { useCardPopover } from '@/ui/hooks/interaction/cardPopover'
 import { getStatusValue, ifHaveStatus } from '@/core/objects/system/status/Status'
 import { getPartLabel } from '@/static/list/target/organPart'
 import Card from '@/ui/components/object/Card.vue'
-import type { Card as CardType } from '@/core/objects/item/Subclass/Card'
-import { nowPlayer } from '@/core/objects/game/run'
+import GlossaryPanel from '@/ui/components/display/GlossaryPanel.vue'
 import { entryDefinitions } from '@/core/objects/system/Entry'
 import type { Entity } from '@/core/objects/system/Entity'
 
@@ -90,6 +92,9 @@ const props = defineProps({
 const emit = defineEmits<{
     close: []
 }>()
+
+// 卡牌悬停预览
+const { hoveredCard, hoveredGlossaries, popoverRef, popoverStyle, showAt, showNear, hide } = useCardPopover()
 
 function close() {
     emit('close')
@@ -110,26 +115,6 @@ const playerVersionCard = computed(() => {
     return false
 })
 
-// 卡牌获取函数
-async function getCardFromSegment(segment: DescribeSegment): Promise<CardType | null> {
-    if (!segment.cardRef) return null
-
-    if (segment.cardRefType === 'instance') {
-        // 从牌堆中查找实例
-        if (typeof segment.cardRef === 'string') {
-            return findCardById(segment.cardRef)
-        }
-        // 索引（不应该出现在运行时）
-        console.warn('卡牌索引应该在实例化时被替换为ID')
-        return null
-    } else if (segment.cardRefType === 'key') {
-        // 用key创建临时卡牌实例
-        return await createCardFromKey(segment.cardRef as string)
-    }
-
-    return null
-}
-
 // 显示玩家版本卡牌
 async function showPlayerVersionCard(event: MouseEvent) {
     if (!props.organ.cardsByOwner?.player) return
@@ -139,45 +124,14 @@ async function showPlayerVersionCard(event: MouseEvent) {
         : props.organ.cardsByOwner.player
 
     const card = await createCardFromKey(cardKey)
-    if (card) {
-        hoveredCard.value = card
+    if (!card) return
 
-        nextTick(() => {
-            updateCardPopoverPosition(event.target as HTMLElement)
-        })
-    }
+    await showNear(card, event.currentTarget as HTMLElement)
 }
 
 // 隐藏玩家版本卡牌
 function hidePlayerVersionCard() {
-    hoveredCard.value = null
-}
-
-function findCardById(cardId: string): CardType | null {
-    // 从玩家的所有牌堆中查找卡牌
-    const allCards = [
-        ...nowPlayer.cardPiles.handPile,
-        ...nowPlayer.cardPiles.drawPile,
-        ...nowPlayer.cardPiles.discardPile,
-        ...nowPlayer.cardPiles.exhaustPile
-    ]
-    return allCards.find((card: any) => card.__id === cardId) || null
-}
-
-async function createCardFromKey(cardKey: string): Promise<CardType | null> {
-    // 使用 lazyLoader 获取 cardList
-    try {
-        const { getLazyModule } = await import('@/core/utils/lazyLoader')
-        const cardList = getLazyModule<any[]>('cardList')
-        const cardData = cardList.find((c: any) => c.key === cardKey)
-        if (!cardData) return null
-
-        const { createCard } = await import('@/core/factories')
-        return await createCard(cardData)
-    } catch (error) {
-        console.error('创建临时卡牌失败:', error)
-        return null
-    }
+    hide()
 }
 
 // 结构化描述（需要解析卡牌名称）
@@ -196,7 +150,7 @@ const describeSegments = computed(() => {
             }
             // 对于 instance 类型（字符串ID），尝试从牌堆中同步查找
             if (segment.cardRefType === 'instance' && typeof segment.cardRef === 'string') {
-                const card = findCardById(segment.cardRef)
+                const card = findCardInstance(segment.cardRef, props.organ)
                 if (card) {
                     return {
                         ...segment,
@@ -247,69 +201,18 @@ function getSegmentStyle(segment: DescribeSegment): Record<string, string> | und
     return undefined
 }
 
-// 卡牌悬停显示 - 使用 shallowRef 防止 Card 被深度响应式包装
-const hoveredCard = shallowRef<CardType | null>(null)
-const cardPopoverRef = ref<HTMLElement>()
-const cardPopoverStyle = ref<Record<string, string>>({})
-
 async function handleSegmentHover(segment: DescribeSegment, event: MouseEvent) {
     if (segment.type !== 'card') return
 
     // 异步获取卡牌实例
-    const card = await getCardFromSegment(segment)
+    const card = await resolveCardFromSegment(segment, props.organ)
     if (!card) return
 
-    // 使用 markRaw 防止 Card 对象被 ref 深度包装
-    hoveredCard.value = markRaw(card)
-
-    nextTick(() => {
-        updateCardPopoverPosition(event.target as HTMLElement)
-    })
+    await showAt(card, event.clientX, event.clientY)
 }
 
 function handleSegmentLeave() {
-    hoveredCard.value = null
-}
-
-function updateCardPopoverPosition(triggerElement: HTMLElement) {
-    if (!cardPopoverRef.value) return
-
-    const triggerRect = triggerElement.getBoundingClientRect()
-    const popoverRect = cardPopoverRef.value.getBoundingClientRect()
-
-    // 默认显示在右侧
-    let left = triggerRect.right + 8
-    let top = triggerRect.top
-
-    // 边界检查
-    const viewportWidth = window.innerWidth
-    const viewportHeight = window.innerHeight
-
-    // 如果右侧空间不足，显示在左侧
-    if (left + popoverRect.width > viewportWidth) {
-        left = triggerRect.left - popoverRect.width - 8
-    }
-
-    // 如果左侧也不够，强制显示在右侧但调整位置
-    if (left < 0) {
-        left = triggerRect.right + 8
-        if (left + popoverRect.width > viewportWidth) {
-            left = viewportWidth - popoverRect.width - 8
-        }
-    }
-
-    // 垂直方向边界检查
-    if (top + popoverRect.height > viewportHeight) {
-        top = viewportHeight - popoverRect.height - 8
-    }
-    if (top < 0) top = 8
-
-    cardPopoverStyle.value = {
-        position: 'fixed',
-        top: `${top}px`,
-        left: `${left}px`,
-        zIndex: '10001'
-    }
+    hide()
 }
 </script>
 
@@ -441,9 +344,9 @@ function updateCardPopoverPosition(triggerElement: HTMLElement) {
 }
 
 .card-popover {
-    background: white;
-    border: 2px solid black;
-    padding: 4px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
 }
 
 .player-version-btn {

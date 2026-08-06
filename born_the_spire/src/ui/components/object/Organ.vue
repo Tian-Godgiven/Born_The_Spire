@@ -1,8 +1,9 @@
 <template>
 <div class="organ"
+    ref="rootRef"
     :class="{ 'temporary': organ.isTemporary, 'has-abilities': hasActiveAbilities, 'disabled': disabled }"
-    @mouseenter="hovering = true"
-    @mouseleave="hovering = false"
+    @mouseenter="onHover(true)"
+    @mouseleave="onHover(false)"
     @click="showDetail = true"
     @contextmenu.prevent="handleRightClick">
 
@@ -34,13 +35,7 @@
         </div>
     </template>
 
-    {{ organ.label }}:{{ describe }}
-
-    <!-- 词条显示 -->
-    <EntryDisplay
-        v-if="hovering"
-        :entries="organ.entry"
-        :side="side ?? 'right'" />
+    {{ organ.label }}<template v-if="showDescribe">:{{ describe }}</template>
 
     <!-- 器官详情弹窗 -->
     <OrganDetail
@@ -54,27 +49,39 @@
 <script setup lang='ts'>
     import { getDescribe } from '@/ui/hooks/express/describe';
 import { Organ } from '@/core/objects/target/Organ';
-import { computed, ref } from 'vue';
-import EntryDisplay from '@/ui/components/display/EntryDisplay.vue';
+import { computed, ref, useTemplateRef } from 'vue';
 import OrganDetail from '@/ui/components/interaction/OrganDetail.vue';
+import { settings } from '@/core/persistence/settings';
 import { handleItemRightClick } from '@/core/hooks/activeAbility';
 import { nowPlayer } from '@/core/objects/game/run';
 import { resolveBadges } from '@/core/utils/badgeResolver';
 import { nowBattle } from '@/core/objects/game/battle';
 import type { BadgeRenderData, BadgePosition } from '@/core/types/BadgeConfig';
 
-    const {organ, side, disabled = false} = defineProps<{
+    const {organ, disabled = false} = defineProps<{
         organ: Organ
-        side?: 'left' | 'right'  // 可选，默认右侧
         disabled?: boolean  // 是否被禁用
     }>()
 
-    const hovering = ref(false)
+    // 悬停时由使用方决定把介绍浮层画在哪，这里只负责上报
+    // 带上 DOM 元素是为了让浮层能贴住器官方块本身，而不是贴在整个角色的边上
+    const emit = defineEmits<{
+        hover: [payload: { organ: Organ, element: HTMLElement | null } | null]
+    }>()
+
     const showDetail = ref(false)
+    const rootRef = useTemplateRef<HTMLElement>('rootRef')
+
+    function onHover(entered: boolean) {
+        emit('hover', entered ? { organ, element: rootRef.value } : null)
+    }
 
     const describe = computed(()=>{
         return getDescribe(organ.describe, organ)
     })
+
+    // 是否在器官方块上常驻显示介绍
+    const showDescribe = computed(()=> settings.showOrganDescribe)
 
     const hasActiveAbilities = computed(() => {
         return organ.activeAbilities && organ.activeAbilities.length > 0
@@ -116,7 +123,7 @@ import type { BadgeRenderData, BadgePosition } from '@/core/types/BadgeConfig';
 
 <style scoped lang='scss'>
 .organ{
-    position: relative;  // 为 EntryDisplay 提供定位上下文
+    position: relative;  // 为角标提供定位上下文
     width: 100px;
     border: 2px solid black;
     cursor: pointer;

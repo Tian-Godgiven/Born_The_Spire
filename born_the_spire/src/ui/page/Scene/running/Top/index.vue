@@ -40,13 +40,16 @@
     <div class="relics-bar" v-if="relics.length > 0">
         <Relic v-for="relic in relics" :relic="relic" :key="relic.key" />
     </div>
+
+    <SettingsModal v-if="showSettings" @close="showSettings = false" />
 </div>
 </template>
 
 <script setup lang='ts'>
     import { endRun, nowGameRun, nowPlayer } from '@/core/objects/game/run';
-    import { computed } from 'vue';
+    import { computed, ref } from 'vue';
     import Button from "@/ui/components/global/Button.vue"
+    import SettingsModal from "@/ui/components/interaction/SettingsModal.vue"
     import ReserveDisplay from "@/ui/components/display/ReserveDisplay.vue"
     import PotionVue from "@/ui/components/object/Potion.vue"
     import Relic from "@/ui/components/object/Relic.vue"
@@ -121,10 +124,13 @@
         return list
     })
 
+    const showSettings = ref(false)
+
     const abilities = [
         {label:"地图",click:()=>openMap()},
         {label:"卡组",click:()=>showDeck()},
         {label:"遗物",click:()=>showRelicList()},
+        {label:"设置",click:()=>showSettings.value = true},
         {label:"返回",click:()=>endRun()}
     ]
 

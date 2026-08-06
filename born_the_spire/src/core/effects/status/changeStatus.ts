@@ -95,7 +95,8 @@ export const decrementStatus: EffectFunc = (event, effect) => {
             return
         }
         // 直接设置为当前值减去 amount
-        const baseValueNum = typeof status.baseValue === 'string' ? Number(status.baseValue) : status.baseValue
+        // null（无此概念）参与算术时按 0 处理
+        const baseValueNum = typeof status.baseValue === 'number' ? status.baseValue : Number(status.baseValue ?? 0)
         const newValue = baseValueNum - Number(amount)
         status.setOriginalBaseValue(newValue)
     })
@@ -127,7 +128,8 @@ export const multiplyStatusBase: EffectFunc = (event, effect) => {
             return
         }
 
-        const currentBase = typeof status.baseValue === 'string' ? Number(status.baseValue) : status.baseValue
+        // null（无此概念）参与算术时按 0 处理
+        const currentBase = typeof status.baseValue === 'number' ? status.baseValue : Number(status.baseValue ?? 0)
         const newBase = Math.floor(currentBase * Number(multiplier))
         status.setOriginalBaseValue(newBase)
     })

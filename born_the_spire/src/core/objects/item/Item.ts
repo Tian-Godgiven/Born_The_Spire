@@ -1,6 +1,5 @@
 import type { Describe } from "@/ui/hooks/express/describe";
 import type { EntityMap } from "../system/Entity";
-import { ref, type Ref } from "vue";
 
 import { Entity } from "../system/Entity";
 import type { EffectUnit } from "../system/effect/EffectUnit";
@@ -40,8 +39,10 @@ export class Item extends Entity{
     public readonly key:string;
     public interaction:Interaction[]//交互
     public reaction?: ReactionMap  // 响应配置
-    // isDisabled 用 ref 属性，通过 getter/setter 自动解包访问
-    public readonly _isDisabled = ref(false)
+    // 不能用 ref：Entity 实例外面裹着 reactive，proxy 读取时会把 ref 自动解包成裸值，
+    // 于是 getter 恒为 undefined、setter 变成往 boolean 上写 .value 而抛错。
+    // 实例本身在响应式容器里（牌堆、ItemModifier.units），普通字段照样能驱动 UI
+    public isDisabled:boolean = false // 物品是否失效
     public useInteractions:Interaction[] = [] // 所有的 use 交互
 
     constructor(map:ItemMap){
@@ -99,15 +100,6 @@ export class Item extends Entity{
      */
     getUse(index: number = 0): Interaction | undefined {
         return this.useInteractions[index]
-    }
-
-    // isDisabled 的 getter 和 setter，自动解包 ref
-    get isDisabled(): boolean {
-        return this._isDisabled.value
-    }
-
-    set isDisabled(value: boolean) {
-        this._isDisabled.value = value
     }
 
     //使用item

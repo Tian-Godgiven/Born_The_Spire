@@ -1,17 +1,11 @@
 <template>
-<div class="entry-display-container">
-    <!-- 词条详情弹窗 -->
-    <div
-        v-if="hasEntries"
-        class="entry-popover"
-        :class="side"
-    >
-        <div class="popover-content">
-            <div v-for="entryKey in entries" :key="entryKey" class="entry-item">
-                <div class="entry-label">{{ getEntryLabel(entryKey) }}</div>
-                <div class="entry-description">
-                    {{ getEntryDescription(entryKey) }}
-                </div>
+<!-- 纯展示组件：定位由使用方负责，这样多个浮层能被统一排布成并列的列 -->
+<div class="entry-popover" v-if="hasEntries">
+    <div class="popover-content">
+        <div v-for="entryKey in entries" :key="entryKey" class="entry-item">
+            <div class="entry-label">{{ getEntryLabel(entryKey) }}</div>
+            <div class="entry-description">
+                {{ getEntryDescription(entryKey) }}
             </div>
         </div>
     </div>
@@ -25,7 +19,6 @@ import { getDescribe } from '@/ui/hooks/express/describe'
 
 const props = defineProps<{
     entries: string[]  // 词条 key 数组
-    side: 'left' | 'right'  // 显示在左侧还是右侧
 }>()
 
 // 是否有词条
@@ -50,33 +43,10 @@ function getEntryDescription(entryKey: string): string {
 </script>
 
 <style scoped lang="scss">
-.entry-display-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 0;
-    height: 0;
-    pointer-events: none;  // 不阻止鼠标事件
-}
-
 .entry-popover {
-    position: absolute;
-    top: 0;
-
     min-width: 150px;
     max-width: 220px;
-    z-index: 1000;
-    pointer-events: auto;  // 弹窗本身可以接收事件
-
-    &.left {
-        left: 0;
-        transform: translateX(calc(-100% - 8px));  // 向左移动自身宽度+间距
-    }
-
-    &.right {
-        right: 0;
-        transform: translateX(calc(100% + 8px));  // 向右移动自身宽度+间距
-    }
+    box-sizing: border-box;
 
     .popover-header {
         font-weight: bold;

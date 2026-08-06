@@ -25,6 +25,9 @@ export class Battle {
     public readonly label: string = "Battle"
     public isEnded: boolean = false  // 战斗是否已结束
     public nowTurn: "player" | "enemy" = "player"  // 当前回合归属
+    // 回合交接期间为 true。nowTurn 要等玩家回合结算完才翻面，这段空窗里光看 nowTurn
+    // 拦不住第二次调用，会让两条回合流程并发跑坏抽牌和弃牌
+    public isTurnTransitioning: boolean = false
 
     constructor(
         public turnNumber:number,
@@ -123,62 +126,69 @@ export class Battle {
      */
     async endPlayerTurnAndStartEnemyTurn() {
         if (this.isEnded) return
+        // 第 1 步的结算跑完之前 nowTurn 还是 "player"，光靠它挡不住这段空窗里的重复调用
+        if (this.isTurnTransitioning) return
+        this.isTurnTransitioning = true
 
-        newLog(["===== 玩家回合结束 ====="])
+        try {
+            newLog(["===== 玩家回合结束 ====="])
 
-        // 1. 结束玩家回合
-        await this.endTurn("player")
+            // 1. 结束玩家回合
+            await this.endTurn("player")
 
-        // 2. 检查玩家是否死亡
-        const battleResult = this.checkBattleEnd()
-        if (battleResult === "player_lose") {
-            this.endBattle("player_lose")
-            return
-        }
-
-        // 3. 切换到敌人回合
-        this.nowTurn = "enemy"
-        newLog(["===== 敌人回合开始 ====="])
-        const aliveEnemies = this.getAliveEnemies()
-        const player = this.getAlivePlayers()[0]  // 假设单个玩家
-
-        if (player && aliveEnemies.length > 0) {
-            // 显示"敌人行动"提示（1.5秒），然后等待1.5秒
-            showDisplayMessage("敌人行动", 1500)
-            await new Promise(resolve => setTimeout(resolve, 3000))
-
-            // 按行动顺序排序敌人
-            const sortedEnemies = this.sortEnemiesByActionOrder(aliveEnemies)
-
-            // 执行所有敌人的回合
-            await executeAllEnemiesTurn(sortedEnemies, player, this.turnNumber, this)
-
-            // 4. 检查战斗是否结束
-            const afterEnemyResult = this.checkBattleEnd()
-            if (afterEnemyResult) {
-                this.endBattle(afterEnemyResult)
+            // 2. 检查玩家是否死亡
+            const battleResult = this.checkBattleEnd()
+            if (battleResult === "player_lose") {
+                this.endBattle("player_lose")
                 return
             }
 
-            // 显示"敌人回合结束"提示（1.5秒），然后等待1.5秒
-            showDisplayMessage("敌人回合结束", 1500)
-            await new Promise(resolve => setTimeout(resolve, 3000))
+            // 3. 切换到敌人回合
+            this.nowTurn = "enemy"
+            newLog(["===== 敌人回合开始 ====="])
+            const aliveEnemies = this.getAliveEnemies()
+            const player = this.getAlivePlayers()[0]  // 假设单个玩家
+
+            if (player && aliveEnemies.length > 0) {
+                // 显示"敌人行动"提示（1.5秒），然后等待1.5秒
+                showDisplayMessage("敌人行动", 1500)
+                await new Promise(resolve => setTimeout(resolve, 3000))
+
+                // 按行动顺序排序敌人
+                const sortedEnemies = this.sortEnemiesByActionOrder(aliveEnemies)
+
+                // 执行所有敌人的回合
+                await executeAllEnemiesTurn(sortedEnemies, player, this.turnNumber, this)
+
+                // 4. 检查战斗是否结束
+                const afterEnemyResult = this.checkBattleEnd()
+                if (afterEnemyResult) {
+                    this.endBattle(afterEnemyResult)
+                    return
+                }
+
+                // 显示"敌人回合结束"提示（1.5秒），然后等待1.5秒
+                showDisplayMessage("敌人回合结束", 1500)
+                await new Promise(resolve => setTimeout(resolve, 3000))
+            }
+
+            // 5. 回合数+1
+            this.turnNumber++
+
+            // 6. 准备下回合敌人意图
+            if (player && aliveEnemies.length > 0) {
+                await prepareEnemyIntents(aliveEnemies, player, this.turnNumber)
+            }
+
+            // 7. 切换到玩家回合
+            this.nowTurn = "player"
+            newLog(["===== 玩家回合开始 =====", `回合 ${this.turnNumber}`])
+
+            // 直接开始回合，抽牌动画会自然展示
+            await this.startTurn("player")
+        } finally {
+            this.isTurnTransitioning = false
         }
-
-        // 5. 回合数+1
-        this.turnNumber++
-
-        // 6. 准备下回合敌人意图
-        if (player && aliveEnemies.length > 0) {
-            await prepareEnemyIntents(aliveEnemies, player, this.turnNumber)
-        }
-
-        // 7. 切换到玩家回合
-        this.nowTurn = "player"
-        newLog(["===== 玩家回合开始 =====", `回合 ${this.turnNumber}`])
-
-        // 直接开始回合，抽牌动画会自然展示
-        await this.startTurn("player")
     }
 
     /**

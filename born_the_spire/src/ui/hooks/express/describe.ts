@@ -2,7 +2,7 @@ import { toString } from "lodash";
 import { newError } from "../global/alert";
 import type { Status } from "@/core/objects/system/status/Status";
 import { toRaw } from "vue";
-import { glossaryMap } from "@/static/list/system/glossaryMap";
+import { resolveGlossary } from "./glossaryResolve";
 import { isStatus } from "@/core/utils/typeGuards";
 import { getLazyModule } from "@/core/utils/lazyLoader";
 import { getCardModifier } from "@/core/objects/system/modifier/CardModifier";
@@ -50,7 +50,7 @@ export function getDescribe(describe:Describe|undefined,target?:Object){
             //术语标记
             if("$" in value){
                 const glossaryKey = value.$
-                const glossary = glossaryMap[glossaryKey]
+                const glossary = resolveGlossary(glossaryKey)
                 if(glossary){
                     text += glossary.label
                 }else{
@@ -161,7 +161,7 @@ export function getDescribeStructured(describe:Describe|undefined,target?:Object
             //术语标记
             if("$" in value){
                 const glossaryKey = value.$
-                const glossary = glossaryMap[glossaryKey]
+                const glossary = resolveGlossary(glossaryKey)
                 if(glossary){
                     segments.push({
                         text: glossary.label,

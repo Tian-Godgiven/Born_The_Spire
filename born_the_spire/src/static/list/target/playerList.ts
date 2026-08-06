@@ -59,26 +59,17 @@ export const playerList:Record<string,PlayerMap> = {
             }]
         },
         potion:{
-            now:["original_potion_00001","original_potion_00004"]  // 生命药剂 + 火焰药水
+            now:[]
         },
         organ:[
-            "original_organ_00001",
-            "test_organ_cards_002",  // 狂暴腺体 - 提供消耗打击和肌肉强化
+            "original_organ_00001",  // 心脏 - 基础器官，不可移除
         ],
+        //测试期牌组：只带三张测试卡，方便快速验证机制
         card:[
-                "original_card_00001",
-                "original_card_00014",
-
-                "sts_card_claw",
-                "sts_card_claw",
-                "sts_card_all_for_one",
-                "sts_card_dagger_spray",
-                "sts_card_piercing_wail",
+                "test_card_instant_kill",  // 秒杀 - 对敌方全体999伤害
+                "test_card_immortal",      // 永生 - 回复999生命
+                "test_card_invincible",    // 无敌 - 获得999护甲
             ],
-        relic:[
-            "original_relic_00001",  // 回血石 - 战斗结束时回复生命
-            "original_relic_00005",  // 先手之戒 - 第一回合额外抽2张牌
-            "original_relic_pistol",  // 袖珍手枪 - 战斗中右键射击敌人
-        ]
+        relic:[]
     }
 }

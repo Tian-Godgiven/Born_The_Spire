@@ -10,36 +10,24 @@ export function getMap(key: string) {
 /**
  * 属性注册表
  *
- * 用途：
- *   定义游戏中所有可用的属性（Status）
- *   为开发者提供类型提示和文档
- *   支持 mod 开发者注册自定义属性
+ * 只登记"系统会读取的属性"——核心代码按 key 取值、或需要 notNegative 这类行为配置的。
+ * createStatusFromMap 用 key 查这里拿配置，实体数据里的值再覆盖上去。
+ *
+ * 不登记卡牌/器官上的数值参数（damage / armor / weakStacks 这些）：
+ *   它们是内容数据，每张卡自己定义就够了，没有跨内容复用的语义。
+ *   未登记的 key 照样能创建 Status，只是拿不到 label / notNegative。
  *
  * 分类：
- *   base - 基础属性（生命、能量等）
- *   combat - 战斗属性（力量、护甲等）
+ *   base - 基础属性（生命上限、能量上限等）
  *   card - 卡牌相关属性（费用、抽牌数等）
- *   special - 特殊属性（行动顺序等）
+ *   special - 特殊属性（行动顺序、各类开关与计数器）
  */
 export const statusMapList: Record<string, StatusMap> = {
     // === 基础属性 ===
-    "health": {
-        label: "生命",
-        value: 0,
-        describe: "当前生命值",
-        category: "base"
-    },
     "max-health": {
         label: "最大生命",
         value: 0,
         describe: "生命值上限",
-        category: "base",
-        notNegative: true
-    },
-    "energy": {
-        label: "能量",
-        value: 0,
-        describe: "当前能量值",
         category: "base",
         notNegative: true
     },
@@ -55,48 +43,6 @@ export const statusMapList: Record<string, StatusMap> = {
         value: 0,
         describe: "可携带的药水数量上限",
         category: "base",
-        notNegative: true
-    },
-
-    // === 战斗属性 ===
-    "strength": {
-        label: "力量",
-        value: 0,
-        describe: "增加攻击伤害",
-        category: "combat"
-    },
-    "dexterity": {
-        label: "敏捷",
-        value: 0,
-        describe: "增加格挡值",
-        category: "combat"
-    },
-    "block": {
-        label: "格挡",
-        value: 0,
-        describe: "抵挡伤害的护甲值",
-        category: "combat",
-        notNegative: true
-    },
-    "vulnerable": {
-        label: "易伤",
-        value: 0,
-        describe: "受到的伤害增加50%",
-        category: "combat",
-        notNegative: true
-    },
-    "weak": {
-        label: "虚弱",
-        value: 0,
-        describe: "造成的伤害减少25%",
-        category: "combat",
-        notNegative: true
-    },
-    "frail": {
-        label: "脆弱",
-        value: 0,
-        describe: "获得的格挡减少25%",
-        category: "combat",
         notNegative: true
     },
 

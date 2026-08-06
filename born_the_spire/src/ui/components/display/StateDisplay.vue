@@ -1,28 +1,22 @@
 <template>
-<div class="state-display-container">
-    <!-- 状态详情弹窗 -->
-    <div
-        v-if="hasStates"
-        class="state-popover"
-        :class="side"
-    >
-        <div class="popover-header">
-            状态效果
-        </div>
-        <div class="popover-content">
-            <div v-for="state in states" :key="state.key" class="state-item">
-                <div class="state-header">
-                    <span class="state-label">{{ state.label }}</span>
-                    <span class="state-stack" v-if="hasVisibleStack(state)">
-                        {{ getStackDisplay(state) }}
-                    </span>
-                </div>
-                <div class="state-description">
-                    <template v-for="(part, index) in state.describe" :key="index">
-                        <span v-if="typeof part === 'string'">{{ part }}</span>
-                        <span v-else class="dynamic-value">{{ resolveDynamicValue(part, state) }}</span>
-                    </template>
-                </div>
+<!-- 纯展示组件：定位由使用方负责，这样多个浮层能被统一排布成并列的列 -->
+<div class="state-popover" v-if="hasStates">
+    <div class="popover-header">
+        状态效果
+    </div>
+    <div class="popover-content">
+        <div v-for="state in states" :key="state.key" class="state-item">
+            <div class="state-header">
+                <span class="state-label">{{ state.label }}</span>
+                <span class="state-stack" v-if="hasVisibleStack(state)">
+                    {{ getStackDisplay(state) }}
+                </span>
+            </div>
+            <div class="state-description">
+                <template v-for="(part, index) in state.describe" :key="index">
+                    <span v-if="typeof part === 'string'">{{ part }}</span>
+                    <span v-else class="dynamic-value">{{ resolveDynamicValue(part, state) }}</span>
+                </template>
             </div>
         </div>
     </div>
@@ -37,7 +31,6 @@ import { getStateModifier } from '@/core/objects/system/modifier/StateModifier'
 
 const props = defineProps<{
     target: Target
-    side: 'left' | 'right'  // 显示在左侧还是右侧
 }>()
 
 // 获取 StateModifier 的响应式状态列表
@@ -84,35 +77,13 @@ function resolveDynamicValue(part: any, _state: State): string {
 </script>
 
 <style scoped lang="scss">
-.state-display-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;  // 不阻止鼠标事件
-}
-
 .state-popover {
-    position: absolute;
-    top: 0;
     background: white;
     border: 2px solid black;
     padding: 8px;
     min-width: 180px;
     max-width: 250px;
-    z-index: 1000;
-    pointer-events: auto;  // 弹窗本身可以接收事件
-
-    &.left {
-        left: 0%;
-        transform: translateX(calc(-100% - 8px));  // 向左移动自身宽度+间距
-    }
-
-    &.right {
-        right: 0%;
-        transform: translateX(calc(100% + 8px));  // 向右移动自身宽度+间距
-    }
+    box-sizing: border-box;
 
     .popover-header {
         font-weight: bold;

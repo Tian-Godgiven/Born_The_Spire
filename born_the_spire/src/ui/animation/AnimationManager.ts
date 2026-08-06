@@ -1,4 +1,7 @@
 import gsap from "gsap"
+import { reactive, shallowReactive } from "vue"
+import { settings } from "@/core/persistence/settings"
+import { isAnimationCategoryEnabled } from "./categories"
 import type {
     AnimationDefinition,
     AnimationHandle,
@@ -29,6 +32,25 @@ class AnimationManager {
 
     /** 绑定 ID → channel → 等待队列 */
     private queues = new Map<string, Map<string, Array<() => void>>>()
+
+    /** append 项 id 的自增序号（不能用 Date.now()，同毫秒的连续播放会撞 id） */
+    private appendSeq = 0
+
+    // ==================== 全局开关 ====================
+
+    /**
+     * 全局动画速度倍率
+     * 每次播放时现取，改设置后立刻对新动画生效（已在播的那一条不受影响）
+     */
+    private get speed(): number {
+        const value = Number(settings.animationSpeed)
+        return Number.isFinite(value) && value > 0 ? value : 1
+    }
+
+    /** 是否跳过所有动画 */
+    private get skipped(): boolean {
+        return settings.skipAnimation === true
+    }
 
     // ==================== 注册 ====================
 
@@ -63,11 +85,15 @@ class AnimationManager {
     bind(bindingId: string, el: HTMLElement): void {
         this.elements.set(bindingId, el)
         if (!this.states.has(bindingId)) {
-            this.states.set(bindingId, {
-                activeHandles: new Map(),
-                replaceComponent: null,
-                appendItems: [],
+            // state 必须是响应式的，否则组件里 v-for 渲染的 appendItems 永远不会更新。
+            // 用 shallowReactive 而不是 reactive：activeHandles 里装着 gsap timeline 的闭包，
+            // 深度代理它没有意义还有风险；只有 replaceComponent 的赋值和 appendItems 的增删需要被追踪。
+            const state: AnimationBindingState = shallowReactive({
+                activeHandles: new Map<string, AnimationHandle>(),
+                replaceComponent: null as any,
+                appendItems: reactive([] as AnimationBindingState["appendItems"]),
             })
+            this.states.set(bindingId, state)
         }
     }
 
@@ -111,6 +137,17 @@ class AnimationManager {
         }
 
         const channel = def.channel ?? "default"
+
+        // 跳过动画（总开关）或所属类别被玩家关掉：不建时间轴、不动 DOM，直接走完回调并结束
+        if (this.skipped || !isAnimationCategoryEnabled(def.category)) {
+            return this.playSkipped(def, channel, options)
+        }
+
+        // append 模式天然多实例并存（连击的每个跳字都是独立的一份），不走 channel 互斥：
+        // 否则第二次播放会把第一个还挂在空中的实例 cancel 掉
+        if (def.mode === "append") {
+            return this.playInternal(bindingId, channel, def, el, options)
+        }
 
         // 检查同 channel 冲突
         const channelMap = this.getChannelMap(bindingId)
@@ -195,7 +232,10 @@ class AnimationManager {
         el: HTMLElement,
         options?: AnimationPlayOptions,
     ): AnimationHandle {
+        const speed = this.speed
         const timeline = this.buildTimeline(def, el, options)
+        // 统一按全局倍率缩放，overlay / replace 的 gsap 动画和 append 的计时器都受它控制
+        timeline.timeScale(speed)
         let cancelled = false
         let resolvePromise: () => void
 
@@ -218,24 +258,33 @@ class AnimationManager {
             isPlaying: () => !cancelled && timeline.isActive(),
         }
 
-        // 注册到 channel
-        const channelMap = this.getChannelMap(bindingId)
-        channelMap.set(channel, handle)
+        const isAppend = def.mode === "append"
+
+        // 注册到 channel（append 除外：它要多实例并存，占了 channel 会被后来者 cancel）
+        if (!isAppend) {
+            const channelMap = this.getChannelMap(bindingId)
+            channelMap.set(channel, handle)
+        }
 
         // 注册到状态
         const state = this.states.get(bindingId)
         if (state) {
-            state.activeHandles.set(`${channel}:${def.key}`, handle)
-            if (def.mode === "replace" && def.replaceComponent) {
-                state.replaceComponent = def.replaceComponent
-            }
-            if (def.mode === "append" && def.appendComponent) {
-                const appendId = `${def.key}_${Date.now()}`
+            if (isAppend && def.appendComponent) {
+                const appendId = `${def.key}_${this.appendSeq++}`
+                handle.appendId = appendId
+                state.activeHandles.set(appendId, handle)
                 state.appendItems.push({
                     id: appendId,
                     component: def.appendComponent,
-                    props: options?.params,
+                    // 把实际时长一并交给组件，让它自己的动画和这里的计时器对齐。
+                    // 组件里是 CSS 动画，gsap 的 timeScale 管不到它，所以这里得自己按倍率换算
+                    props: { ...options?.params, duration: this.resolveDuration(def) / speed },
                 })
+            } else {
+                state.activeHandles.set(`${channel}:${def.key}`, handle)
+                if (def.mode === "replace" && def.replaceComponent) {
+                    state.replaceComponent = def.replaceComponent
+                }
             }
         }
 
@@ -264,7 +313,13 @@ class AnimationManager {
     ): gsap.core.Timeline {
         let tl: gsap.core.Timeline
 
-        if (def.build) {
+        if (def.mode === "append") {
+            // append 模式一律不碰宿主元素：视觉全在 appendComponent 内部，
+            // 这里只对一个空对象补间，纯粹当"多久之后把组件摘掉"的计时器。
+            // （旧实现是 tl.to(el, ...)，结果 y: -40 飘走的是角色本体而不是跳字）
+            tl = gsap.timeline({ paused: true })
+            tl.to({}, { duration: this.resolveDuration(def) })
+        } else if (def.build) {
             tl = def.build(el, options?.params)
         } else if (def.animate) {
             tl = gsap.timeline({ paused: true })
@@ -375,17 +430,48 @@ class AnimationManager {
 
         const state = this.states.get(bindingId)
         if (state) {
-            state.activeHandles.delete(`${channel}:${handle.key}`)
+            state.activeHandles.delete(handle.appendId ?? `${channel}:${handle.key}`)
             const def = this.definitions.get(handle.key)
             if (def?.mode === "replace") {
                 state.replaceComponent = null
             }
-            if (def?.mode === "append") {
-                state.appendItems = state.appendItems.filter(
-                    (item) => !item.id.startsWith(handle.key),
-                )
+            if (def?.mode === "append" && handle.appendId) {
+                // 按 appendId 精确摘除：旧实现按 key 前缀过滤，
+                // 连击时第一个跳字播完会把同 key 的其他实例一起抹掉。
+                // 必须原地 splice，重新赋值会把响应式数组换成普通数组
+                const index = state.appendItems.findIndex((item) => item.id === handle.appendId)
+                if (index >= 0) state.appendItems.splice(index, 1)
             }
         }
+    }
+
+    /** append 模式的存活时长（秒）：优先顶层 duration，其次 animate.duration，最后兜底 1 秒 */
+    private resolveDuration(def: AnimationDefinition): number {
+        return def.duration ?? def.animate?.duration ?? 1
+    }
+
+    /**
+     * 跳过动画时的播放路径
+     *
+     * 关键：promise 必须 resolve（createNoopHandle 给的是 Promise.resolve()）。
+     * 死亡演出、卡牌展示这些地方都在 await handle.promise，不 resolve 会永久卡死流程。
+     * 时间轴回调也要就地补触发，否则靠 callbacks 推进的多阶段演出会缺步骤。
+     */
+    private playSkipped(
+        def: AnimationDefinition,
+        channel: string,
+        options?: AnimationPlayOptions,
+    ): AnimationHandle {
+        options?.onStart?.()
+
+        if (def.callbacks && options?.onAction) {
+            for (const cb of def.callbacks) {
+                options.onAction(cb.action, cb.at)
+            }
+        }
+
+        options?.onEnd?.()
+        return this.createNoopHandle(def.key, channel)
     }
 
     private createNoopHandle(key: string, channel: string): AnimationHandle {

@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang='ts'>
-    import { watch, computed, ref } from 'vue'
+    import { watch, computed, ref, onMounted, onBeforeUnmount } from 'vue'
     import { getCurrentValue } from '@/core/objects/system/Current/current'
     import { useAnimation } from '@/ui/animation'
     import type { Chara } from '@/core/objects/target/Target'
@@ -49,6 +49,33 @@
             isDying.value = false
             isDead.value = true
         }
+    })
+
+    // ========== 受击表现 ==========
+    // hit_flash / hit_shake 走各自的 channel（color / position），可以同时播
+    const hitRemovers: Array<() => void> = []
+
+    onMounted(() => {
+        const { remove } = props.target.trigger.appendTrigger({
+            when: "after",
+            how: "take",
+            key: "damage",
+            level: 0,
+            callback: async (event) => {
+                if (event.simulate) return                  // 伤害预览不演出
+                if (isDying.value || isDead.value) return   // 死亡演出期间不再抖
+                // play 是 async，失败会变成 rejected promise，必须用 catch 兜住
+                // （动画未注册或元素还没 bind 时静默降级）
+                play('hit_flash').catch(() => {})
+                play('hit_shake').catch(() => {})
+            }
+        })
+        hitRemovers.push(remove)
+    })
+
+    onBeforeUnmount(() => {
+        hitRemovers.forEach(remove => remove())
+        hitRemovers.length = 0
     })
 
     // 暴露状态和播放方法供父组件使用

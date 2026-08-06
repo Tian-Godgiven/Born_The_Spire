@@ -107,7 +107,8 @@ function readStatus(key: string, entity: Entity): number | string {
     if (status === undefined) {
         throw new Error(`[EntityAccessor] 实体 "${entity.label}" 没有属性 "${key}"`)
     }
-    return status.value
+    // null 表示该属性无此概念，在引用表达式里按 0 参与运算
+    return status.value ?? 0
 }
 
 function readCurrent(key: string, entity: Entity): number {

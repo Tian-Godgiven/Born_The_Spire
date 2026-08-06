@@ -105,7 +105,7 @@ export class Entity implements EventParticipant{
 export type EntityMap<T extends Entity = Entity> = {
     label:string
     key:string,//唯一识别码，决定这个对象是什么对象/哪种对象（同一种对象可以有多个）
-    status?:Record<string,StatusMap|number>;
+    status?:Record<string,StatusMap|number|null>;//值为 null 表示该属性"无此概念"，区别于 0
     trigger?:TriggerMap;
     describe?:Describe;
     current?:any//需要挂载的当前值对象的key及其起始值 - 改用 any 避免导入 CurrentMapData

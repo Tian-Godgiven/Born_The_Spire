@@ -1,6 +1,6 @@
 <template>
 <div class="card" ref="cardRef" :class="{ 'temporary': card.isTemporary, 'disabled': card.isDisabled }">
-    <div class="cost" v-if="cost">{{ cost }}</div>
+    <div class="cost" v-if="cost !== null">{{ cost }}</div>
     <div class="title">{{ card.label }}</div>
     <div class="line"></div>
 
@@ -40,14 +40,7 @@
             class="card-tooltip"
             :style="tooltipStyle"
         >
-            <div
-                v-for="glossaryKey in allGlossaries"
-                :key="glossaryKey"
-                class="tooltip-item"
-            >
-                <div class="tooltip-term">{{ getGlossaryLabel(glossaryKey) }}</div>
-                <div class="tooltip-desc">{{ getGlossaryDescription(glossaryKey) }}</div>
-            </div>
+            <GlossaryPanel :glossaries="allGlossaries" />
         </div>
     </Teleport>
 </div>
@@ -57,10 +50,11 @@
 import type { Card } from '@/core/objects/item/Subclass/Card';
 import type { Entity } from '@/core/objects/system/Entity';
 import { getStatusValue, ifHaveStatus } from '@/core/objects/system/status/Status';
-import { getDescribe, getDescribeStructured, extractGlossaries, type DescribeSegment } from '@/ui/hooks/express/describe';
+import { getDescribeStructured, type DescribeSegment } from '@/ui/hooks/express/describe';
+import { getCardGlossaries } from '@/ui/hooks/express/glossary';
+import GlossaryPanel from '@/ui/components/display/GlossaryPanel.vue';
 import { computed, ref, onMounted, onBeforeUnmount, nextTick, type PropType } from 'vue';
 import { entryDefinitions } from '@/core/objects/system/Entry';
-import { glossaryMap } from '@/static/list/system/glossaryMap';
 import { getEntryModifier } from '@/core/objects/system/modifier/EntryModifier';
 import { nowPlayer } from '@/core/objects/game/run';
 import { previewCardEffects } from '@/core/utils/effectPreview';
@@ -128,12 +122,14 @@ const describeSegments = computed(() => {
     return getDescribeStructured(describeToUse, enhancedCard.value)
 })
 
-const cost = computed(()=>{
-    const ifCost = ifHaveStatus(card,"cost")
-    if(ifCost){
-        return getStatusValue(card,"cost")
+// null 有两种来源，都表示"这张牌没有费用概念"，费用框整个不画：
+// 卡牌数据里显式写 cost: null（无费用的诅咒/状态牌），或者压根没定义 cost 属性。
+// 注意不能用真值判断，否则 0 费牌会被当成无费用
+const cost = computed<number|string|null>(()=>{
+    if(!ifHaveStatus(card,"cost")){
+        return null
     }
-    return false
+    return getStatusValue(card,"cost") ?? null
 })
 
 // 从 EntryModifier 获取词条列表
@@ -164,42 +160,7 @@ function getSegmentStyle(segment: DescribeSegment): Record<string, string> | und
 }
 
 // 收集所有需要显示的术语（词条 + describe中的术语 + 临时效果中的术语）
-const allGlossaries = computed(() => {
-    const glossaries = new Set<string>()
-
-    // 添加词条
-    entries.value.forEach(entryKey => {
-        const entryLabel = entryDefinitions[entryKey]?.label
-        if (entryLabel && glossaryMap[entryLabel]) {
-            glossaries.add(entryLabel)
-        }
-    })
-
-    // 添加describe中的术语
-    const describeGlossaries = extractGlossaries(card.describe)
-    describeGlossaries.forEach(key => glossaries.add(key))
-
-    // 添加临时效果描述中的术语
-    const tempDescribe = getTemporaryEffectDescribe(card)
-    for (const desc of tempDescribe) {
-        const tempGlossaries = extractGlossaries([desc])
-        tempGlossaries.forEach(key => glossaries.add(key))
-    }
-
-    return Array.from(glossaries)
-})
-
-// 获取术语标签
-function getGlossaryLabel(glossaryKey: string): string {
-    return glossaryMap[glossaryKey]?.label || glossaryKey
-}
-
-// 获取术语描述
-function getGlossaryDescription(glossaryKey: string): string {
-    const glossary = glossaryMap[glossaryKey]
-    if (!glossary) return ''
-    return getDescribe(glossary.describe)
-}
+const allGlossaries = computed(() => getCardGlossaries(card))
 
 // 获取临时移除时机的文本
 function getRemoveOnText(): string {
@@ -380,30 +341,6 @@ onBeforeUnmount(() => {
 }
 
 .card-tooltip {
-    background: white;
-    border: 2px solid black;
-    padding: 8px;
-    min-width: 150px;
-    max-width: 250px;
-
-    .tooltip-item {
-        margin-bottom: 8px;
-
-        &:last-child {
-            margin-bottom: 0;
-        }
-
-        .tooltip-term {
-            font-weight: bold;
-            font-size: 13px;
-            margin-bottom: 2px;
-        }
-
-        .tooltip-desc {
-            font-size: 12px;
-            line-height: 1.4;
-            color: #333;
-        }
-    }
+    width: fit-content;
 }
 </style>

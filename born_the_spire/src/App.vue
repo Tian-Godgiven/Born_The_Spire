@@ -55,6 +55,11 @@ body{
   height: 100vh;
   overflow: hidden;
 }
+.router{
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
 
 /* 全局滚动条样式 */
 * {

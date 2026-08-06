@@ -111,7 +111,7 @@ export const cardList:CardMap[] = [{
         poison:3,
         cost:1
     },
-    describe:["使目标获得",{key:["status","poison"]},"层中毒"],
+    describe:["使目标获得",{key:["status","poison"]},"层",{$:"中毒"}],
     key:"original_card_00008",
     interaction:{
         use:{
@@ -287,7 +287,7 @@ export const cardList:CardMap[] = [{
         armor:5,
         cost:1
     },
-    describe:["获得",{key:["status","armor"]},"点护甲"],
+    describe:["获得",{key:["status","armor"]},"点",{$:"护甲"}],
     key:"original_card_00014",
     interaction:{
         use:{
@@ -305,7 +305,7 @@ export const cardList:CardMap[] = [{
         armor:12,
         cost:1
     },
-    describe:["获得",{key:["status","armor"]},"点护甲"],
+    describe:["获得",{key:["status","armor"]},"点",{$:"护甲"}],
     key:"original_card_00015",
     interaction:{
         use:{
@@ -325,11 +325,69 @@ export const cardList:CardMap[] = [{
     },
     describe:["造成",{key:["status","damage"]},"点伤害","（测试用）"],
     key:"test_card_kill",
+    pool:["test"],
     interaction:{
         use:{
             target:{faction:"enemy"},
             effects:[{
                 key:"damage",
+                params:{value:999},
+            }]
+        }
+    }
+},{
+    label:"秒杀",
+    tags:["attack", "test"],
+    status:{
+        damage:999,
+        cost:0
+    },
+    describe:["对敌方全体造成",{key:["status","damage"]},"点伤害","（测试用）"],
+    key:"test_card_instant_kill",
+    pool:["test"],
+    interaction:{
+        use:{
+            target:{faction:"enemy",number:"all"},
+            effects:[{
+                key:"damage",
+                params:{value:999},
+            }]
+        }
+    }
+},{
+    label:"永生",
+    tags:["skill", "test"],
+    status:{
+        heal:999,
+        cost:0
+    },
+    describe:["回复",{key:["status","heal"]},"点生命","（测试用）"],
+    key:"test_card_immortal",
+    pool:["test"],
+    interaction:{
+        use:{
+            target:{key:"self"},
+            effects:[{
+                key:"heal",
+                params:{value:999},
+            }]
+        }
+    }
+},{
+    label:"无敌",
+    tags:["skill", "defence", "test"],
+    status:{
+        armor:999,
+        cost:0
+    },
+    describe:["获得",{key:["status","armor"]},"点",{$:"护甲"},"（测试用）"],
+    key:"test_card_invincible",
+    pool:["test"],
+    interaction:{
+        use:{
+            target:{key:"self"},
+            effects:[{
+                key:"gainArmor",
                 params:{value:999},
             }]
         }
@@ -374,7 +432,7 @@ export const cardList:CardMap[] = [{
     label:"伤口",
     tags:["status"],
     status:{
-        cost:0
+        cost:null
     },
     entry:["card_cannot_play"],
     describe:["状态牌","无法被打出"],
@@ -485,7 +543,7 @@ export const cardList:CardMap[] = [{
         stacks: 3,
         cost: 1
     },
-    describe: ["对目标施加", {key: ["status", "stacks"]}, "层蚀伤"],
+    describe: ["对目标施加", {key: ["status", "stacks"]}, "层", {$:"蚀伤"}],
     key: "enemy_card_acid_bite",
     interaction: {
         use: {
@@ -526,7 +584,7 @@ export const cardList:CardMap[] = [{
     status: {
         cost: 1
     },
-    describe: ["对所有角色施加1层中毒"],
+    describe: ["对所有角色施加1层", {$:"中毒"}],
     key: "enemy_card_toxic_spore",
     interaction: {
         use: {
@@ -546,7 +604,7 @@ export const cardList:CardMap[] = [{
         armor: 6,
         cost: 1
     },
-    describe: ["获得", {key: ["status", "armor"]}, "点护甲"],
+    describe: ["获得", {key: ["status", "armor"]}, "点", {$:"护甲"}],
     key: "enemy_card_harden",
     interaction: {
         use: {
@@ -605,7 +663,7 @@ export const cardList:CardMap[] = [{
     status: {
         cost: 0
     },
-    describe: ["随机获得充能（1%归零/9%空/60%+1/20%+2/10%+3）"],
+    describe: ["随机获得", {$:"充能"}, "（1%归零/9%空/60%+1/20%+2/10%+3）"],
     key: "enemy_card_unstable_charge",
     interaction: {
         use: {
@@ -625,7 +683,7 @@ export const cardList:CardMap[] = [{
         cost: 0,
         damage: 3
     },
-    describe: ["造成", {key: ["status", "damage"]}, "×充能层数点伤害，充能归零"],
+    describe: ["造成", {key: ["status", "damage"]}, "×", {$:"充能"}, "层数点伤害，充能归零"],
     key: "enemy_card_discharge",
     interaction: {
         use: {
@@ -645,7 +703,7 @@ export const cardList:CardMap[] = [{
     label: "指挥连击",
     tags: ["attack", "enemy"],
     status: { cost: 1 },
-    describe: ["所有友军每2层指挥对目标造成1次3点伤害"],
+    describe: ["所有友军每2层", {$:"指挥"}, "对目标造成1次3点伤害"],
     key: "enemy_card_command_strike",
     interaction: {
         use: {
@@ -660,7 +718,7 @@ export const cardList:CardMap[] = [{
     label: "女王蚀咬",
     tags: ["attack", "enemy"],
     status: { cost: 1, damage: 10 },
-    describe: ["造成", {key: ["status", "damage"]}, "点伤害，施加2层易伤"],
+    describe: ["造成", {key: ["status", "damage"]}, "点伤害，施加2层", {$:"易伤"}],
     key: "enemy_card_queen_acid_bite",
     interaction: {
         use: {
@@ -678,7 +736,7 @@ export const cardList:CardMap[] = [{
     label: "指挥嘶鸣",
     tags: ["skill", "enemy"],
     status: { cost: 1 },
-    describe: ["给所有友军施加3层指挥"],
+    describe: ["给所有友军施加3层", {$:"指挥"}],
     key: "enemy_card_command_screech",
     interaction: {
         use: {
@@ -695,7 +753,7 @@ export const cardList:CardMap[] = [{
     label: "热能冲击",
     tags: ["attack", "enemy"],
     status: { cost: 1, damage: 6 },
-    describe: ["造成", {key: ["status", "damage"]}, "+热量层/2点伤害"],
+    describe: ["造成", {key: ["status", "damage"]}, "+", {$:"热量"}, "层/2点伤害"],
     key: "enemy_card_heat_blast",
     interaction: {
         use: {
@@ -712,7 +770,7 @@ export const cardList:CardMap[] = [{
     label: "护甲冲撞",
     tags: ["attack", "enemy"],
     status: { cost: 1 },
-    describe: ["消耗所有护甲，对目标造成等量伤害"],
+    describe: ["消耗所有", {$:"护甲"}, "，对目标造成等量伤害"],
     key: "enemy_card_armor_bash",
     interaction: {
         use: {
@@ -727,7 +785,7 @@ export const cardList:CardMap[] = [{
     label: "铁壁",
     tags: ["skill", "enemy"],
     status: { cost: 1 },
-    describe: ["获得8点护甲"],
+    describe: ["获得8点", {$:"护甲"}],
     key: "enemy_card_steel_wall",
     interaction: {
         use: {
@@ -744,7 +802,7 @@ export const cardList:CardMap[] = [{
     label: "腐蚀爆发",
     tags: ["attack", "enemy"],
     status: { cost: 1, damage: 6 },
-    describe: ["对目标造成", {key: ["status", "damage"]}, "+腐蚀×2伤害，对自身造成2+腐蚀×1伤害；腐蚀+1"],
+    describe: ["对目标造成", {key: ["status", "damage"]}, "+", {$:"腐蚀"}, "×2伤害，对自身造成2+腐蚀×1伤害；腐蚀+1"],
     key: "enemy_card_corrosive_burst",
     interaction: {
         use: {
@@ -760,7 +818,7 @@ export const cardList:CardMap[] = [{
     key: "enemy_card_strength_bite",
     tags: ["attack"],
     status: { cost: 1 },
-    describe: ["造成", { key: ["effect", "base"] }, "+力量×2点伤害"],
+    describe: ["造成", { key: ["effect", "base"] }, "+", {$:"力量"}, "×2点伤害"],
     interaction: {
         use: {
             target: { key: "singleEnemy" },
@@ -777,7 +835,7 @@ export const cardList:CardMap[] = [{
     key: "boss2_card_infection_strike",
     tags: ["attack", "enemy"],
     status: { cost: 1 },
-    describe: ["造成8点伤害，施加2层中毒"],
+    describe: ["造成8点伤害，施加2层", {$:"中毒"}],
     interaction: {
         use: {
             target: { faction: "opponent" },
@@ -811,7 +869,7 @@ export const cardList:CardMap[] = [{
     tags: ["skill"],
     status: { cost: 4 },
     entry: ["card_void"],
-    describe: ["在手牌中时，回合结束施加1层中毒（随后消耗）"],
+    describe: ["在手牌中时，回合结束施加1层", {$:"中毒"}, "（随后消耗）"],
     interaction: {
         use: {
             target: { key: "self" },
@@ -846,7 +904,7 @@ export const cardList:CardMap[] = [{
     key: "boss1_card_iron_might",
     tags: ["power", "enemy"],
     status: { cost: 1, power: 1 },
-    describe: ["获得", { key: ["status", "power"] }, "层力量"],
+    describe: ["获得", { key: ["status", "power"] }, "层", {$:"力量"}],
     interaction: {
         use: {
             target: { key: "self" },
@@ -861,7 +919,7 @@ export const cardList:CardMap[] = [{
     key: "boss1_card_recasting",
     tags: ["skill", "enemy"],
     status: { cost: 0, power: 4 },
-    describe: ["获得", { key: ["status", "power"] }, "层力量，移除自身全部点火"],
+    describe: ["获得", { key: ["status", "power"] }, "层", {$:"力量"}, "，移除自身全部点火"],
     interaction: {
         use: {
             target: { key: "self" },
@@ -911,7 +969,7 @@ export const cardList:CardMap[] = [{
     key: "boss1_card_furnace_wall",
     tags: ["defence", "enemy"],
     status: { cost: 1, armor: 8 },
-    describe: ["获得", { key: ["status", "armor"] }, "点护甲"],
+    describe: ["获得", { key: ["status", "armor"] }, "点", {$:"护甲"}],
     interaction: {
         use: {
             target: { key: "self" },
@@ -928,7 +986,7 @@ export const cardList:CardMap[] = [{
     key: "boss3_card_armor_assembly",
     tags: ["skill", "enemy"],
     status: { cost: 1, armor: 15, vulnerable: 1 },
-    describe: ["获得", { key: ["status", "armor"] }, "点护甲，施加", { key: ["status", "vulnerable"] }, "层易伤"],
+    describe: ["获得", { key: ["status", "armor"] }, "点", {$:"护甲"}, "，施加", { key: ["status", "vulnerable"] }, "层", {$:"易伤"}],
     interaction: {
         use: {
             target: { faction: "opponent" },
@@ -1029,7 +1087,7 @@ export const cardList:CardMap[] = [{
     rarity:"uncommon",
     pool:["exclusive"],
     status:{ cost:0 },
-    describe:["本回合力量 +2"],
+    describe:["本回合", {$:"力量"}, " +2"],
     key:"card_prophecy_power",
     interaction:{
         use:{
@@ -1046,7 +1104,7 @@ export const cardList:CardMap[] = [{
     rarity:"uncommon",
     pool:["exclusive"],
     status:{ cost:0 },
-    describe:["本回合敏捷 +2"],
+    describe:["本回合", {$:"敏捷"}, " +2"],
     key:"card_prophecy_dex",
     interaction:{
         use:{

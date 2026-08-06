@@ -78,6 +78,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    gap: 30px;
     .chooseBox{
         width: 80%;
         height: 80%;

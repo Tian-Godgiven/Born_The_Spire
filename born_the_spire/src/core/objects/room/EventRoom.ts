@@ -351,10 +351,8 @@ export class EventRoom extends Room {
                     const relicReward = rewardRegistry.createReward({
                         type: "relicSelect",
                         title: "选择遗物",
-                        customData: {
-                            relicOptions: [randomRelic],
-                            selectCount: 1
-                        }
+                        relicOptions: [randomRelic],
+                        selectCount: 1
                     })
                     if (relicReward) rewards.push(relicReward)
                 }
@@ -392,14 +390,12 @@ export class EventRoom extends Room {
                 const cardReward = rewardRegistry.createReward({
                     type: "relicSelect",
                     title: "选择卡牌",
-                    customData: {
-                        relicOptions: selected.map((c: any) => ({
-                            key: c.key,
-                            label: c.label,
-                            description: c.describe?.join?.("") || ""
-                        })),
-                        selectCount: rewardConfig.cardPick ?? 1
-                    }
+                    relicOptions: selected.map((c: any) => ({
+                        key: c.key,
+                        label: c.label,
+                        description: c.describe?.join?.("") || ""
+                    })),
+                    selectCount: rewardConfig.cardPick ?? 1
                 })
                 if (cardReward) rewards.push(cardReward)
             }

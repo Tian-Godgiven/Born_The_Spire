@@ -1537,11 +1537,11 @@ export const organList:OrganMap[] = [
     }
 },
 
-// 不稳定毒囊：损坏时对所有玩家施加3层中毒
+// 不稳定毒囊：宿主死亡时对所有玩家施加3层中毒
 {
     label: "不稳定毒囊",
     key: "enemy_organ_volatile_sac",
-    describe: ["损坏时对所有玩家施加3层中毒"],
+    describe: ["宿主死亡时对所有玩家施加3层中毒"],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Gland,
     status: { "max-mass": 25 },
@@ -1549,11 +1549,20 @@ export const organList:OrganMap[] = [
     interaction: {
         possess: {
             target: { key: "self" },
-            effects: []
-        },
-        break: {
-            target: { faction: "player", number: "all" },
-            effects: [{ key: "applyState", params: { stateKey: "poison", stacks: 3 } }]
+            effects: [],
+            // 必须是 before：killTarget 在 isAlive 归零后会清理宿主的全部物品修饰器，
+            // 那次清理是微任务，会赶在 after 周期之前把本触发器一并撤掉，导致毒囊哑火
+            triggers: [{
+                when: "before",
+                how: "take",
+                key: "dead",
+                event: {
+                    key: "volatileSacBurst",
+                    label: "毒囊爆裂",
+                    targetType: "allAllies",
+                    effect: [{ key: "applyState", params: { stateKey: "poison", stacks: 3 } }]
+                }
+            }]
         }
     }
 },

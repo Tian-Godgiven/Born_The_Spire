@@ -16,6 +16,7 @@
                 hover-position="left"
                 :max-width="270"
                 :wait-time="50"
+                :disabled="!isUnlocked(organ.key)"
             >
                 <div
                     class="organ-item"
@@ -147,7 +148,7 @@ function closeOrganDetail() {
     flex-direction: column;
     padding: 15px;
     border: 2px solid black;
-    height: 100%;
+    height: calc(100% - 160px);
 
     .organ-header {
         display: flex;

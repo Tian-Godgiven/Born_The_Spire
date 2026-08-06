@@ -1,5 +1,5 @@
 <template>
-    <div class="organ-popup">
+    <div class="organ-popup" ref="rootRef">
         <div class="popup-header">
             <span class="popup-organ-name">{{ organ.label }}</span>
             <span class="popup-rarity">{{ getRarityLabel(organ.rarity) }}</span>
@@ -28,38 +28,39 @@
         </div>
     </div>
 
-    <!-- 卡牌悬停显示 - 不使用 Teleport，直接渲染 -->
-    <div
-        v-if="hoveredCard"
-        ref="cardPopoverRef"
-        class="card-popover"
-        :style="cardPopoverStyle"
-        @mouseenter="keepCardVisible"
-        @mouseleave="handleCardLeave"
-    >
-        <Card :card="hoveredCard" />
-    </div>
+    <!-- 卡牌悬停显示：外层若是浮层就挂进去，否则挂 body，见 usePopoverHost -->
+    <Teleport :to="host">
+        <div
+            v-if="hoveredCard"
+            ref="popoverRef"
+            class="card-popover"
+            :style="popoverStyle"
+            @mouseenter="cancelHide"
+            @mouseleave="hide()"
+        >
+            <Card :card="hoveredCard" />
+            <GlossaryPanel :glossaries="hoveredGlossaries" />
+        </div>
+    </Teleport>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, markRaw, shallowRef } from 'vue'
+import { computed, useTemplateRef } from 'vue'
 import { Organ } from '@/core/objects/target/Organ'
 import { getDescribeStructured, type DescribeSegment } from '@/ui/hooks/express/describe'
+import { resolveCardFromSegment } from '@/ui/hooks/express/cardSegment'
+import { useCardPopover } from '@/ui/hooks/interaction/cardPopover'
 import Card from '@/ui/components/object/Card.vue'
-import type { Card as CardType } from '@/core/objects/item/Subclass/Card'
+import GlossaryPanel from '@/ui/components/display/GlossaryPanel.vue'
 import { entryDefinitions } from '@/core/objects/system/Entry'
 
 const props = defineProps<{
     organ: Organ
 }>()
 
-// 卡牌悬停状态
-const hoveredCard = shallowRef<CardType | null>(null)
-const cardPopoverRef = ref<HTMLElement>()
-const cardPopoverStyle = ref<Record<string, string>>({})
-let mouseX = 0
-let mouseY = 0
-let hideCardTimeout: NodeJS.Timeout | null = null
+// 卡牌悬停预览
+const rootRef = useTemplateRef<HTMLElement>('rootRef')
+const { hoveredCard, hoveredGlossaries, popoverRef, popoverStyle, host, showAt, hide, cancelHide } = useCardPopover(rootRef)
 
 // 获取词条 label —— 走 entryDefinitions 合并表，避免硬编码字典与词条系统脱节
 function getEntryLabel(entryKey: string): string {
@@ -102,166 +103,19 @@ function getSegmentStyle(segment: DescribeSegment): Record<string, string> | und
     return undefined
 }
 
-// 卡牌获取函数 - 总是通过 key 创建
-async function getCardFromSegment(segment: DescribeSegment): Promise<CardType | null> {
-    if (segment.cardRef === undefined || segment.cardRef === null) {
-        return null
-    }
-
-    let cardKey: string | null = null
-
-    if (segment.cardRefType === 'instance') {
-        // 索引类型 - 先查 cards 数组，再 fallback 到 cardsByOwner.player
-        if (typeof segment.cardRef === 'number') {
-            const index = segment.cardRef
-            const cardsArray = props.organ.cards
-            if (index >= 0 && index < cardsArray.length) {
-                cardKey = cardsArray[index]
-            }
-            if (!cardKey) {
-                const playerCards = props.organ.cardsByOwner?.player
-                if (playerCards) {
-                    const arr = Array.isArray(playerCards) ? playerCards : [playerCards]
-                    cardKey = arr[index] ?? null
-                }
-            }
-        }
-    } else if (segment.cardRefType === 'key') {
-        // 直接是 key
-        cardKey = segment.cardRef as string
-    }
-
-    if (!cardKey) {
-        return null
-    }
-
-    // 通过 key 创建临时卡牌实例
-    return await createCardFromKey(cardKey)
-}
-
-async function createCardFromKey(cardKey: string): Promise<CardType | null> {
-    try {
-        const { getLazyModule } = await import('@/core/utils/lazyLoader')
-        const cardList = getLazyModule<any[]>('cardList')
-        const cardData = cardList.find((c: any) => c.key === cardKey)
-        if (!cardData) {
-            return null
-        }
-
-        const { createCard } = await import('@/core/factories')
-        return await createCard(cardData)
-    } catch (error) {
-        console.error('[OrganPopup] 创建临时卡牌失败:', error)
-        return null
-    }
-}
-
 // 卡牌悬停处理
 async function handleSegmentHover(segment: DescribeSegment, event: MouseEvent) {
     if (segment.type !== 'card') return
 
-    // 清除隐藏定时器
-    if (hideCardTimeout) {
-        clearTimeout(hideCardTimeout)
-        hideCardTimeout = null
-    }
-
-    // 保存鼠标位置（使用普通变量，避免响应式包装）
-    mouseX = event.clientX
-    mouseY = event.clientY
-
-    const card = await getCardFromSegment(segment)
+    const card = await resolveCardFromSegment(segment, props.organ)
     if (!card) return
 
-    // 使用 markRaw 防止 Card 对象被 ref 深度包装
-    hoveredCard.value = markRaw(card)
-
-    nextTick(() => {
-        updateCardPopoverPosition()
-    })
+    await showAt(card, event.clientX, event.clientY)
 }
 
 function handleSegmentLeave() {
     // 延迟隐藏，给用户时间移动到卡牌上
-    hideCardTimeout = setTimeout(() => {
-        hoveredCard.value = null
-    }, 200)
-}
-
-function keepCardVisible() {
-    // 鼠标移到卡牌上时，取消隐藏
-    if (hideCardTimeout) {
-        clearTimeout(hideCardTimeout)
-        hideCardTimeout = null
-    }
-}
-
-function handleCardLeave() {
-    // 鼠标离开卡牌时，立即隐藏
-    hoveredCard.value = null
-}
-
-function updateCardPopoverPosition() {
-    if (!cardPopoverRef.value) return
-
-    const popoverRect = cardPopoverRef.value.getBoundingClientRect()
-    const viewportWidth = window.innerWidth
-    const viewportHeight = window.innerHeight
-    const padding = 8
-
-    let left = 0
-    let top = 0
-
-    // 优先级：右侧 > 左侧 > 下侧 > 上侧
-
-    // 尝试右侧
-    if (mouseX + padding + popoverRect.width <= viewportWidth) {
-        left = mouseX + padding
-        top = mouseY
-    }
-    // 尝试左侧
-    else if (mouseX - padding - popoverRect.width >= 0) {
-        left = mouseX - padding - popoverRect.width
-        top = mouseY
-    }
-    // 尝试下侧
-    else if (mouseY + padding + popoverRect.height <= viewportHeight) {
-        left = mouseX
-        top = mouseY + padding
-    }
-    // 尝试上侧
-    else if (mouseY - padding - popoverRect.height >= 0) {
-        left = mouseX
-        top = mouseY - padding - popoverRect.height
-    }
-    // 都不行，强制显示在右侧
-    else {
-        left = mouseX + padding
-        top = mouseY
-    }
-
-    // 垂直方向边界检查（对于左右侧显示）
-    if (top + popoverRect.height > viewportHeight) {
-        top = viewportHeight - popoverRect.height - padding
-    }
-    if (top < padding) {
-        top = padding
-    }
-
-    // 水平方向边界检查（对于上下侧显示）
-    if (left + popoverRect.width > viewportWidth) {
-        left = viewportWidth - popoverRect.width - padding
-    }
-    if (left < padding) {
-        left = padding
-    }
-
-    cardPopoverStyle.value = {
-        position: 'fixed',
-        top: `${top}px`,
-        left: `${left}px`,
-        zIndex: '10001'
-    }
+    hide(200)
 }
 </script>
 
@@ -343,5 +197,8 @@ function updateCardPopoverPosition() {
 .card-popover {
     pointer-events: auto;
     width: fit-content;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
 }
 </style>

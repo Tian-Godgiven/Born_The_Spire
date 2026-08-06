@@ -1,6 +1,6 @@
-import { ref, onMounted, onBeforeUnmount, computed, type Ref } from "vue"
+import { ref, shallowRef, onMounted, onBeforeUnmount, computed, type Ref } from "vue"
 import { animationManager } from "./AnimationManager"
-import type { AnimationHandle, AnimationPlayOptions } from "./types"
+import type { AnimationHandle, AnimationPlayOptions, AnimationBindingState } from "./types"
 
 /**
  * 动画 composable
@@ -22,14 +22,22 @@ import type { AnimationHandle, AnimationPlayOptions } from "./types"
 export function useAnimation(bindingId: string) {
     const animRef: Ref<HTMLElement | null> = ref(null)
 
+    // state 由 bind() 创建，而 bind 发生在 onMounted，比下面几个 computed 的首次求值晚。
+    // 直接在 computed 里调 getState 的话，首次会拿到 undefined 并且此后再也不会重算
+    // （states 是普通 Map，追踪不到），appendItems / replaceComponent 就永远是空的。
+    // 用 shallowRef 把 state 接出来，bind 之后赋值，computed 才会重新求值。
+    const stateRef = shallowRef<AnimationBindingState | null>(null)
+
     onMounted(() => {
         if (animRef.value) {
             animationManager.bind(bindingId, animRef.value)
+            stateRef.value = animationManager.getState(bindingId) ?? null
         }
     })
 
     onBeforeUnmount(() => {
         animationManager.unbind(bindingId)
+        stateRef.value = null
     })
 
     /**
@@ -56,31 +64,25 @@ export function useAnimation(bindingId: string) {
     /**
      * 当前动画状态（响应式）
      */
-    const state = computed(() => animationManager.getState(bindingId))
+    const state = computed(() => stateRef.value)
 
     /**
      * 是否有任何活跃动画
      */
     const isAnimating = computed(() => {
-        const s = animationManager.getState(bindingId)
+        const s = stateRef.value
         return s ? s.activeHandles.size > 0 : false
     })
 
     /**
      * replace 模式当前组件
      */
-    const replaceComponent = computed(() => {
-        const s = animationManager.getState(bindingId)
-        return s?.replaceComponent ?? null
-    })
+    const replaceComponent = computed(() => stateRef.value?.replaceComponent ?? null)
 
     /**
      * append 模式附加项列表
      */
-    const appendItems = computed(() => {
-        const s = animationManager.getState(bindingId)
-        return s?.appendItems ?? []
-    })
+    const appendItems = computed(() => stateRef.value?.appendItems ?? [])
 
     return {
         animRef,

@@ -74,7 +74,9 @@
         return nowPlayer.getEnergy()
     })
     const isPlayerTurn = computed(() => {
-        return nowBattle.value?.nowTurn === "player" && !handCardSelectorActive.value
+        return nowBattle.value?.nowTurn === "player"
+            && !nowBattle.value?.isTurnTransitioning   // 回合交接期间按钮立刻置灰，不等 nowTurn 翻面
+            && !handCardSelectorActive.value
     })
     const drawNum = computed(()=>{
         return nowPlayer.cardPiles.drawPile.length

@@ -6,16 +6,18 @@
             </div>
 
             <div class="modal-content">
-                <div class="card-grid">
-                    <Card
-                        v-for="card in cards"
-                        :key="card.__id"
-                        :card="card"
-                    />
-                </div>
+                <div class="card-container">
+                    <div class="card-grid" v-if="cards.length > 0">
+                        <Card
+                            v-for="card in cards"
+                            :key="card.__id"
+                            :card="card"
+                        />
+                    </div>
 
-                <div v-if="cards.length === 0" class="empty-state">
-                    暂无卡牌
+                    <div v-else class="empty-state">
+                        暂无卡牌
+                    </div>
                 </div>
             </div>
 
@@ -60,9 +62,10 @@ function close() {
 
 .deck-modal {
     position: relative;
-    background: transparent;
+    background: #fff;
+    border: 2px solid #000;
     width: 900px;
-    max-height: 80vh;
+    height: 80vh;
     display: flex;
     flex-direction: column;
 }
@@ -73,13 +76,13 @@ function close() {
     h2 {
         margin: 0;
         font-size: 24px;
-        color: white;
+        color: #000;
 
         .deck-count {
             font-size: 16px;
             font-weight: normal;
             margin-left: 10px;
-            opacity: 0.8;
+            color: #666;
         }
     }
 }
@@ -103,8 +106,17 @@ function close() {
 
 .modal-content {
     padding: 0 20px 20px;
-    overflow-y: auto;
     flex: 1;
+    display: flex;
+    min-height: 0;
+}
+
+.card-container {
+    flex: 1;
+    background: #fff;
+    border: 2px solid #000;
+    padding: 20px;
+    overflow-y: auto;
 }
 
 .card-grid {
@@ -117,7 +129,7 @@ function close() {
 .empty-state {
     text-align: center;
     padding: 40px;
-    color: #fff;
+    color: #666;
     font-size: 16px;
 }
 </style>

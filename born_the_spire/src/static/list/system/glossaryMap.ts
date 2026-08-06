@@ -19,57 +19,9 @@ export type GlossaryEntry = {
  * 包含游戏中所有需要解释的术语（状态、效果、词条等）
  */
 export const glossaryMap: Record<string, GlossaryEntry> = {
-    // ========== 词条 ==========
-    "消耗": {
-        label: "消耗",
-        describe: ["使用后，将其移入消耗堆，而非弃牌堆"],
-        style: {
-            color: "#d97706",
-            fontWeight: "bold"
-        }
-    },
-    "虚无": {
-        label: "虚无",
-        describe: ["若回合结束时仍在手牌中，会移入消耗堆而非弃牌堆"],
-        style: {
-            color: "#7c3aed",
-            fontWeight: "bold"
-        }
-    },
-    "固有": {
-        label: "固有",
-        describe: ["战斗开始时，必定会抽到此卡片"],
-        style: {
-            color: "#059669",
-            fontWeight: "bold"
-        }
-    },
-
-    // ========== 状态 ==========
-    "力量": {
-        label: "力量",
-        describe: ["提升你从卡牌造成的伤害"],
-        style: {
-            color: "#dc2626",
-            fontWeight: "bold"
-        }
-    },
-    "易伤": {
-        label: "易伤",
-        describe: ["受到的伤害增加50%"],
-        style: {
-            color: "#ea580c",
-            fontWeight: "bold"
-        }
-    },
-    "虚弱": {
-        label: "虚弱",
-        describe: ["造成的伤害减少25%"],
-        style: {
-            color: "#6b7280",
-            fontWeight: "bold"
-        }
-    },
+    // 这里只放没有其他注册表承载的规则性名词。
+    // 状态说明写在 stateList.ts，词条说明写在 entry/CardEntry.ts、entry/OrganEntry.ts，
+    // describe 里的 {$:"xxx"} 会自动去那些注册表查，不要在这里抄第二份。
     "护甲": {
         label: "护甲",
         describe: ["抵挡伤害，回合结束时不会消失"],

@@ -526,10 +526,8 @@ export class BattleRoom extends Room {
             type: "relicSelect",
             title: title || "选择遗物",
             description: `从 ${selectedRelics.length} 个遗物中选择 ${selectCount} 个`,
-            customData: {
-                relicOptions: selectedRelics,
-                selectCount
-            }
+            relicOptions: selectedRelics,
+            selectCount
         })
     }
 

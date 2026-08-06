@@ -48,6 +48,12 @@ export interface AnimationDefinition {
     /** 效果模式 */
     mode: AnimationMode
 
+    /**
+     * 所属类别，对应动画类别注册表里的 key（如 "hit" / "hitText" / "death"）
+     * 玩家可以在设置里按类别关掉某一类演出。不填视为不受类别开关管辖，始终播放
+     */
+    category?: string
+
     /** 同 channel 互斥，不同 channel 并行。默认 "default" */
     channel?: string
     /** 同 channel 内高优先级打断低优先级。默认 0 */
@@ -81,6 +87,15 @@ export interface AnimationDefinition {
      * append 模式专用：用于附加到 DOM 上的 Vue 组件
      */
     appendComponent?: any
+
+    /**
+     * append 模式专用：附加组件的存活时长（秒）
+     *
+     * append 模式下 AnimationManager 不碰任何 DOM，视觉完全由 appendComponent 自己实现，
+     * timeline 只当计时器用：时间到了就把组件从 appendItems 里摘掉。
+     * 组件可以从 props.duration 拿到这个值（已按全局动画速度换算），用它设自己的动画时长。
+     */
+    duration?: number
 }
 
 /**
@@ -113,6 +128,11 @@ export interface AnimationHandle {
     cancel(): void
     /** 是否正在播放 */
     isPlaying(): boolean
+    /**
+     * append 模式专用：这次播放往 appendItems 里塞的那一项的 id
+     * 结束时按它精确摘除，避免误伤同 key 的其他实例（连击飘字会同时存在多个）
+     */
+    appendId?: string
 }
 
 /**

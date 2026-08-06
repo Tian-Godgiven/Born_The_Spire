@@ -66,14 +66,17 @@ export class Trigger{
         //同时移除关键触发器和默认触发器的信息
         if(obj.importantKey){
             const index1 = this._importantTrigger.findIndex(i=>i.id == unit.id)
-            this._importantTrigger.slice(index1)
+            if(index1>=0){
+                this._importantTrigger.splice(index1,1)
+            }
         }
         //移除触发器本身
         const {when,how,key} = obj
         const triggerArr = this[how][when][key]
         const index = triggerArr.indexOf(unit)
         if(index>=0){
-            triggerArr.splice(index)
+            //必须带删除个数：splice(index) 会把该位置之后的触发器一并清空
+            triggerArr.splice(index,1)
         }
 
     }

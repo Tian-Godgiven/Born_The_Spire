@@ -1,6 +1,8 @@
 import gsap from "gsap"
 import type { AnimationDefinition } from "./types"
 import { animationManager } from "./AnimationManager"
+import { registerAnimationCategories, presetAnimationCategories } from "./categories"
+import HitTextItem from "./components/HitTextItem.vue"
 
 /**
  * 内置预设动画
@@ -9,6 +11,7 @@ export const presetAnimations: AnimationDefinition[] = [
     // ==================== 死亡 ====================
     {
         key: "death_fadeout",
+        category: "death",
         mode: "overlay",
         channel: "death",
         priority: 999,
@@ -23,6 +26,7 @@ export const presetAnimations: AnimationDefinition[] = [
     // ==================== 受伤 ====================
     {
         key: "hit_flash",
+        category: "hit",
         mode: "overlay",
         channel: "color",
         build: (el) => {
@@ -34,21 +38,35 @@ export const presetAnimations: AnimationDefinition[] = [
 
     {
         key: "hit_shake",
+        category: "hit",
         mode: "overlay",
         channel: "position",
         build: (el) => {
             return gsap.timeline({ paused: true })
-                .to(el, { x: -6, duration: 0.04 })
-                .to(el, { x: 6, duration: 0.04 })
-                .to(el, { x: -4, duration: 0.04 })
-                .to(el, { x: 4, duration: 0.04 })
-                .to(el, { x: 0, duration: 0.04 })
+                .to(el, { x: -3, duration: 0.05 })
+                .to(el, { x: 3, duration: 0.05 })
+                .to(el, { x: -2, duration: 0.05 })
+                .to(el, { x: 1, duration: 0.05 })
+                .to(el, { x: 0, duration: 0.05 })
         },
+    },
+
+    // ==================== 受击跳字 ====================
+    // append 模式：视觉在 HitTextItem 内部，这里的 duration 只决定组件挂多久。
+    // 不设 channel 互斥语义——append 模式本来就多实例并存，连击的每个数字都是独立一份。
+    {
+        key: "hit_text",
+        category: "hitText",
+        mode: "append",
+        channel: "hit_text",
+        appendComponent: HitTextItem,
+        duration: 1.8,
     },
 
     // ==================== 治疗 ====================
     {
         key: "heal_glow",
+        category: "heal",
         mode: "overlay",
         channel: "color",
         build: (el) => {
@@ -61,6 +79,7 @@ export const presetAnimations: AnimationDefinition[] = [
     // ==================== 通用 ====================
     {
         key: "fade_in",
+        category: "ui",
         mode: "overlay",
         channel: "visibility",
         animate: {
@@ -73,6 +92,7 @@ export const presetAnimations: AnimationDefinition[] = [
 
     {
         key: "fade_out",
+        category: "ui",
         mode: "overlay",
         channel: "visibility",
         animate: {
@@ -84,6 +104,7 @@ export const presetAnimations: AnimationDefinition[] = [
 
     {
         key: "scale_in",
+        category: "ui",
         mode: "overlay",
         channel: "visibility",
         animate: {
@@ -96,6 +117,7 @@ export const presetAnimations: AnimationDefinition[] = [
 
     {
         key: "pulse",
+        category: "ui",
         mode: "overlay",
         channel: "emphasis",
         build: (el) => {
@@ -108,6 +130,7 @@ export const presetAnimations: AnimationDefinition[] = [
     // ==================== 卡牌展示（事件用） ====================
     {
         key: "card_appear",
+        category: "card",
         mode: "overlay",
         channel: "visibility",
         animate: {
@@ -120,6 +143,7 @@ export const presetAnimations: AnimationDefinition[] = [
 
     {
         key: "card_ascend_fadeout",
+        category: "card",
         mode: "overlay",
         channel: "visibility",
         interruptible: false,
@@ -132,6 +156,7 @@ export const presetAnimations: AnimationDefinition[] = [
 
     {
         key: "card_duplicate_fadeout",
+        category: "card",
         mode: "overlay",
         channel: "visibility",
         interruptible: false,
@@ -145,8 +170,9 @@ export const presetAnimations: AnimationDefinition[] = [
 ]
 
 /**
- * 注册所有预设动画
+ * 注册所有预设动画（含它们所属的内置类别）
  */
 export function registerPresetAnimations(): void {
+    registerAnimationCategories(presetAnimationCategories)
     animationManager.registerAll(presetAnimations)
 }
