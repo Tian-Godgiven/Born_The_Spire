@@ -1,5 +1,6 @@
 import type { Describe } from "@/ui/hooks/express/describe"
 import type { Target } from "../target/Target"
+import type { Entity } from "./Entity"
 import { newError } from "@/ui/hooks/global/alert"
 import type { EffectUnit } from "./effect/EffectUnit"
 import type { TriggerMap, ReactionMap } from "@/core/types/object/trigger"
@@ -192,6 +193,41 @@ export function getStateStack(target: Target, stateKey: string, stackKey: string
         }
     }
     return false
+}
+
+/**
+ * 给目标叠加状态层数，目标还没有该状态时自动创建
+ *
+ * StateModifier.changeStack 只能修改已存在的状态，目标身上没有该状态时会静默返回 false，
+ * 所以"从无到有获得状态"不能直接用它，必须走这里（或 applyState 效果）。
+ * 只操作 default 层；需要指定其它层数、或希望被拦截型触发器捕获时，改用 applyState 效果。
+ *
+ * @param source 状态来源（一般是提供该状态的器官/卡牌），默认为目标自身
+ */
+export function gainStateStack(
+    target: Target,
+    stateKey: string,
+    delta: number,
+    source?: Entity
+): boolean {
+    const stateModifier = getStateModifier(target)
+
+    if (stateModifier.hasState(stateKey)) {
+        stateModifier.changeStack(stateKey, "default", delta)
+        return true
+    }
+
+    // 尚未拥有该状态，只有正向叠加才需要创建
+    if (delta <= 0) return false
+
+    const stateData = stateList.find(state => state.key === stateKey)
+    if (!stateData) {
+        newError(["没有在状态数据表中找到指定的状态", stateKey])
+        return false
+    }
+
+    stateModifier.addState(stateData, delta, source ?? target)
+    return true
 }
 
 /**

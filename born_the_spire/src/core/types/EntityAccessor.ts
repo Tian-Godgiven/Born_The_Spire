@@ -37,8 +37,9 @@ export type AccessorResult = number | string | boolean
  * readEntityValue("current(energy)", player)  // → 3
  * readEntityValue("hasOrgan(heart)", player)  // → true
  * readEntityValue("state(poison)", player)    // → State 对象
- * readEntityValue("stateStack()", player)     // → 0 (默认 default stack)
- * readEntityValue("stateStack(poison)", player) // → 3
+ * readEntityValue("stateStack()", player)     // → 0 (entity 本身是 State 时读它的第一个 stack)
+ * readEntityValue("stateStack(poison)", player) // → 3 (poison 状态的 default 层)
+ * readEntityValue("stateStack(poison.duration)", player) // → 2 (poison 状态的 duration 层)
  */
 export function readEntityValue(accessor: string, entity: Entity): AccessorResult {
     // 解析函数调用格式：funcName(arg)
@@ -141,18 +142,24 @@ function state(key: string, entity: Entity): any {
 
 /**
  * 读取 State 的层数（stack）
- * stateStack() 默认读取 "default" stack
- * stateStack(key) 读取指定 key 的 stack
+ *
+ * stateStack()                    entity 本身就是 State（如 reaction 里 $source 是状态自己），读第一个 stack
+ * stateStack(stateKey)            读 entity 身上该状态的 default 层
+ * stateStack(stateKey.stackKey)   读该状态的指定层
+ *
+ * 括号里的第一段永远是「状态 key」而不是「层 key」，不要拿它去 stacks 里匹配 —— 那样
+ * stateStack(charge) 会在 charge 状态的 stacks 里找 key === "charge" 的层，永远找不到而返回 0
  */
 function stateStack(key: string, entity: Entity): number {
-    const stateObj = state(key, entity)
+    const [stateKey, stackKey = "default"] = key.split(".")
+    const stateObj = state(stateKey, entity)
     if (!stateObj) return 0
     const stacks = (stateObj as any).stacks || []
     if (key === "") {
         // 没有指定 key，读取第一个 stack
         return stacks[0]?.stack ?? 0
     }
-    const stack = stacks.find((s: any) => s.key === key)
+    const stack = stacks.find((s: any) => s.key === stackKey)
     return stack?.stack ?? 0
 }
 

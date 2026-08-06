@@ -1,6 +1,7 @@
 import { ActionEvent, handleEventEntity } from "@/core/objects/system/ActionEvent"
 import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import { getStateModifier } from "@/core/objects/system/modifier/StateModifier"
+import { gainStateStack } from "@/core/objects/system/State"
 import { isEntity } from "@/core/utils/typeGuards"
 import { newError } from "@/ui/hooks/global/alert"
 import { stateList } from "@/static/list/target/stateList"
@@ -111,8 +112,10 @@ export const changeStateStack: EffectFunc = (event: ActionEvent, effect) => {
             return
         }
 
-        const stateModifier = getStateModifier(t as any)
-        const changed = stateModifier.changeStack(stateKey, stackKey, delta)
+        // default 层走 gainStateStack：目标还没有该状态时自动创建，避免静默失效
+        const changed = stackKey === "default"
+            ? gainStateStack(t as any, stateKey, delta, event.source as any)
+            : getStateModifier(t as any).changeStack(stateKey, stackKey, delta)
         if (changed !== false) {
             success = true
         }

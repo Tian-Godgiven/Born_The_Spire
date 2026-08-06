@@ -233,6 +233,15 @@ export const stateList: StateData[] = [
         showType: "number",
         repeate: "stack",
     },
+    // 毒素护甲已触发：毒素护甲器官每回合首次受击时添加，回合开始时由器官移除，用于限制每回合只触发一次
+    {
+        label: "毒素护甲已触发",
+        key: "poisonArmorUsed",
+        category: "neutral",
+        describe: ["本回合已获得毒素护甲"],
+        showType: "bool",
+        repeate: "none",
+    },
     // 热量：由不稳定电池器官每回合50%概率+1，超过3层时爆炸逻辑由器官的heatTick效果函数处理
     {
         label: "热量",

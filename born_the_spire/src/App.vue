@@ -11,6 +11,8 @@
     <DevourConfirmModal />
     <!-- 器官选择弹窗 -->
     <OrganChoice />
+    <!-- 战斗失败弹窗 -->
+    <BattleDefeatModal />
     <!-- 开发者控制台 -->
     <DevConsole />
   </main>
@@ -34,6 +36,9 @@ const DevourConfirmModal = defineAsyncComponent(() =>
 );
 const OrganChoice = defineAsyncComponent(() =>
   import('./ui/components/interaction/OrganChoice.vue')
+);
+const BattleDefeatModal = defineAsyncComponent(() =>
+  import('./ui/components/interaction/BattleDefeatModal.vue')
 );
 const DevConsole = defineAsyncComponent(() =>
   import('./ui/page/tool/console/DevConsole.vue')

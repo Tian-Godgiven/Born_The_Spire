@@ -8,6 +8,7 @@ import { randomChoice, getContextRandom } from "@/core/hooks/random"
 import { newLog } from "@/ui/hooks/global/log"
 import { doEvent } from "@/core/objects/system/ActionEvent"
 import { getStateModifier } from "@/core/objects/system/modifier/StateModifier"
+import { gainStateStack } from "@/core/objects/system/State"
 
 /**
  * 余热回收：检查牌堆是否有指定标签的卡牌，若有则消耗一张并获得额外护甲
@@ -105,15 +106,15 @@ export const card_unstableCharge: EffectFunc = (event, _effect) => {
         newLog(["不稳定充能：什么都没发生"])
     } else if (roll < 70) {
         // 60%：+1
-        stateModifier.changeStack("charge", "default", 1)
+        gainStateStack(target as any, "charge", 1, event.medium as any)
         newLog(["不稳定充能：+1 充能"])
     } else if (roll < 90) {
         // 20%：+2
-        stateModifier.changeStack("charge", "default", 2)
+        gainStateStack(target as any, "charge", 2, event.medium as any)
         newLog(["不稳定充能：+2 充能"])
     } else {
         // 10%：+3
-        stateModifier.changeStack("charge", "default", 3)
+        gainStateStack(target as any, "charge", 3, event.medium as any)
         newLog(["不稳定充能：+3 充能"])
     }
 
@@ -125,13 +126,13 @@ export const card_unstableCharge: EffectFunc = (event, _effect) => {
  * params:
  *   stacks: number - 指挥层数 (default: 3)
  */
-export const card_commandScreech: EffectFunc = (_event, effect) => {
+export const card_commandScreech: EffectFunc = (event, effect) => {
     const battle = nowBattle.value
     if (!battle) return false
 
     const stacks = Number(effect.params?.stacks ?? 3)
     for (const ally of battle.getAliveEnemies()) {
-        getStateModifier(ally).changeStack("command", "default", stacks)
+        gainStateStack(ally, "command", stacks, event.medium as any)
     }
     newLog([`指挥嘶鸣：所有友军 +${stacks} 指挥层`])
     return true
@@ -229,7 +230,7 @@ export const card_corrosiveBurst: EffectFunc = (event, effect) => {
         effectUnits: [{ key: "damage", params: { value: baseSelf + corrosion } }]
     })
 
-    getStateModifier(source as any).changeStack("corrosion", "default", 1)
+    gainStateStack(source as any, "corrosion", 1, event.medium as any)
     newLog([source, `腐蚀度 +1（当前 ${corrosion + 1} 层）`])
     return true
 }

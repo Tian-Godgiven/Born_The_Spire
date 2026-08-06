@@ -8,6 +8,7 @@ import { changeCurrentValue, getCurrentValue } from "@/core/objects/system/Curre
 import { Organ } from "@/core/objects/target/Organ"
 import { nowBattle } from "@/core/objects/game/battle"
 import { stateList } from "@/static/list/target/stateList"
+import { gainStateStack } from "@/core/objects/system/State"
 
 /**
  * 热量计时：不稳定电池器官每回合触发
@@ -21,7 +22,7 @@ export const organ_heatTick: EffectFunc = (event, _effect) => {
     const rng = getContextRandom("heatTick")
 
     if (rng.nextFloatRange(0, 1) < 0.5) {
-        stateModifier.changeStack("heat", "default", 1)
+        gainStateStack(target as any, "heat", 1, event.medium as any)
         newLog([target, "热量 +1"])
     }
 
@@ -30,9 +31,10 @@ export const organ_heatTick: EffectFunc = (event, _effect) => {
     if (heatStacks > 3) {
         newLog([target, `热量达到 ${heatStacks} 层，引发爆炸！`])
         stateModifier.removeState("heat")
+        // 自伤：source 是被炸的实体自己，器官只作 medium（与 organ_heatAccumulate 保持一致）
         doEvent({
             key: "damage",
-            source: event.medium,
+            source: target,
             medium: event.medium,
             target,
             effectUnits: [{ key: "damage", params: { value: 50 } }]
@@ -120,13 +122,13 @@ export const organ_emergencyBattery: EffectFunc = (event, effect) => {
  * params:
  *   stacks: number - 每回合指挥层数 (default: 1)
  */
-export const organ_pheromoneGland: EffectFunc = (_event, effect) => {
+export const organ_pheromoneGland: EffectFunc = (event, effect) => {
     const battle = nowBattle.value
     if (!battle) return false
 
     const stacks = Number(effect.params?.stacks ?? 1)
     for (const ally of battle.getAliveEnemies()) {
-        getStateModifier(ally).changeStack("command", "default", stacks)
+        gainStateStack(ally, "command", stacks, event.medium as any)
     }
     newLog([`信息素扩散：所有友军 +${stacks} 指挥层`])
     return true
@@ -176,7 +178,7 @@ export const organ_heatAccumulate: EffectFunc = (event, effect) => {
     const selfDamage = Number(effect.params?.selfDamage ?? 15)
 
     const stateModifier = getStateModifier(target as any)
-    stateModifier.changeStack("heat", "default", add)
+    gainStateStack(target as any, "heat", add, event.medium as any)
     newLog([target, `热量 +${add}`])
 
     const heatStacks = stateModifier.getState("heat")?.stacks.find(s => s.key === "default")?.stack ?? 0
@@ -222,7 +224,7 @@ export const organ_poisonArmor: EffectFunc = (event, effect) => {
     const usedStacks = stateModifier.getState("poisonArmorUsed")?.stacks.find(s => s.key === "default")?.stack ?? 0
     if (usedStacks > 0) return false
 
-    stateModifier.changeStack("poisonArmorUsed", "default", 1)
+    gainStateStack(target as any, "poisonArmorUsed", 1, event.medium as any)
     const armorAmount = Number(effect.params?.value ?? 3)
     doEvent({
         key: "gainArmor",

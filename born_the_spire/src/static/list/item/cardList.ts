@@ -690,7 +690,8 @@ export const cardList:CardMap[] = [{
             target: { faction: "opponent" },
             effects: [
                 { key: "damage", params: { value: 3, multiplier: "$source.stateStack(charge)" } },
-                { key: "removeState", params: { stateKey: "charge" } }
+                // 卡牌 target 是对手，但充能在使用者自己身上，要用 target: "source" 把清除打回自己
+                { key: "removeState", params: { stateKey: "charge" }, target: "source" }
             ]
         }
     }

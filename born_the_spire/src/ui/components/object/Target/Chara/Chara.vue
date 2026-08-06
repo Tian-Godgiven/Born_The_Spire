@@ -167,7 +167,6 @@
     // 获取敌人意图对象
     const enemyIntent = computed(() => {
         if (props.target instanceof Enemy && props.target.intent) {
-            console.log('[Chara] intent:', props.target.intent.type, 'visibility:', props.target.intent.visibility, 'actions:', props.target.intent.actions.map(c => c.label))
             return props.target.intent
         }
         return null
