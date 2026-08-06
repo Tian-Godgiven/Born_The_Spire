@@ -259,7 +259,7 @@ await completeAndGoNext()   // 完成当前房间，显示地图让玩家选择�
 - **`遗物实现场景手册.md`** — 12 场景，累计触发/解锁行动/主动能力/获得时选择存id/池分配/每回合触发
 - **`敌人实现场景手册.md`** — 10 场景，多阶段 Boss（血量阈值）、weighted/loop mode
 - **`词条实现场景手册.md`** — 3 场景横切手册：方法覆盖类 / 触发器挂载类 / status 语法糖类，含决策流程与常见坑
-- **`触发器实现场景手册.md`** — 10 场景横切手册：when/how/key 三维、跨方引用、condition 语法坑、accumulateAndTrigger/triggerTarget、UI 组件里挂触发器做表现层（simulate 跳过、快照取数、level 与护甲 priority）
+- **`触发器实现场景手册.md`** — 10 场景横切手册：when/how/key 三维、跨方引用、condition 语法坑、accumulateAndTrigger/triggerTarget、UI 组件里挂触发器做表现层；附录 B 讲触发顺序三层规则（when → how → level）、TriggerLevel 档位表、赋值型效果为什么必须抢占端点
 - **`效果实现场景手册.md`** — 10 场景横切手册：EffectUnit 数组、`$` 引用表达式、影响牌堆/status/state、拦截修改参数、新建 EffectFunc
 - **`事件实现场景手册.md`** — 10 场景：单幕/多幕/ifAble/rewards/互斥组/选择界面/saveData+ifShow/嵌入战斗/customCallback/新增 event effect；含 eventEffectMap 速查与 8 个常见坑
 - **`动画实现场景手册.md`** — 13 场景 + AnimationManager 内部机制 + 13 个常见坑：复用/注册 preset、useAnimation 组件接入、多阶段演出、watch 驱动、channel/priority/repeat/interruptible 决策、append 跳字（已实证）、注册动画类别与全局跳过/调速；replace 模式仍未实测

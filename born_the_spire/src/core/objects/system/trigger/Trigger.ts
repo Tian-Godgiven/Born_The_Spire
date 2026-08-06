@@ -11,6 +11,7 @@ import { newError } from "@/ui/hooks/global/alert";
 import { getCurrentTransaction } from "../../game/transaction";
 
 export { resolveTriggerEventTarget } from "./resolveTriggerEventTarget";
+export { TriggerLevel } from "./triggerLevel";
 
 // 触发器是基于事件总线的，一系列在个体上的响应器
 // 触发器的实现原理是：在某一个时刻(trigger_key)执行对应时刻的回调函数

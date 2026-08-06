@@ -31,19 +31,11 @@ export async function endCharaTurn(chara:Chara,battle:Battle){
 
 //玩家开始回合
 export async function startPlayerTurn(player:Player,battle:Battle){
-    // 回合开始时的效果
-    const turnStartEffects: EffectUnit[] = [
-        // 恢复能量到最大值
-        {
-            key: "refillEnergy",
-            describe: ["恢复能量"],
-            params: {}
-        }
-        // 注意：抽牌通过玩家的默认触发器实现（playerList.ts 中定义）
-        // 这样可以被其他效果修改（如遗物、器官等）
-    ]
-
-    await startTurn(player, battle, turnStartEffects)
+    // 这里不写任何回合开始效果：
+    //   恢复能量 → 能量系统自己管（currents/energy.ts 的 turnStart 触发器）
+    //   抽牌     → 玩家的默认触发器（playerList.ts）
+    // 都走触发器才能被遗物、器官等改写，硬编码在这里的效果谁也拦不住
+    await startTurn(player, battle)
 }
 //结束玩家的回合
 export async function endPlayerTurn(player:Player,battle:Battle){
