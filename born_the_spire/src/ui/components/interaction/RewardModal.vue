@@ -137,18 +137,16 @@
         <div class="choice-title">选择遗物</div>
         <div class="choice-description">{{ currentChoiceReward?.getDisplayDescription() }}</div>
 
-        <div class="choice-grid">
+        <div class="choice-grid single-column">
           <div
-            v-for="relic in currentChoiceReward?.relicOptions"
+            v-for="relic in relicInstances"
             :key="relic.key"
-            class="choice-card"
+            class="choice-card relic-choice-card"
             :class="{ selected: selectedRelicKey === relic.key }"
             @click="selectedRelicKey = relic.key"
           >
-            <div class="choice-name">{{ relic.label }}</div>
-            <div v-if="relic.description" class="choice-description">
-              {{ relic.description }}
-            </div>
+            <!-- preview 模式：隐藏角标、禁用点击/右键，只保留悬浮详情 -->
+            <Relic :relic="relic" preview />
           </div>
         </div>
 
@@ -171,18 +169,15 @@
         <div class="choice-title">选择卡牌</div>
         <div class="choice-description">{{ currentChoiceReward?.getDisplayDescription() }}</div>
 
-        <div class="choice-grid">
+        <div class="choice-cards-row">
           <div
-            v-for="card in currentChoiceReward?.cardOptions"
+            v-for="card in cardInstances"
             :key="card.key"
-            class="choice-card"
+            class="choice-card card-choice-card"
             :class="{ selected: selectedCardKey === card.key }"
             @click="selectedCardKey = card.key"
           >
-            <div class="choice-name">{{ card.label }}</div>
-            <div v-if="card.description" class="choice-description">
-              {{ card.description }}
-            </div>
+            <Card :card="card" />
           </div>
         </div>
 
@@ -212,6 +207,8 @@ import type { OrganMap } from '@/core/objects/target/Organ'
 import type { OrganRewardAction } from '@/core/types/organRewardAction'
 import Card from '@/ui/components/object/Card.vue'
 import type { Card as CardType } from '@/core/objects/item/Subclass/Card'
+import Relic from '@/ui/components/object/Relic.vue'
+import type { Relic as RelicType } from '@/core/objects/item/Subclass/Relic'
 import { getLazyModule } from '@/core/utils/lazyLoader'
 
 const visible = computed(() => showRewardUI.value)
@@ -340,17 +337,28 @@ const currentChoiceReward = ref<any>(null)
 // 遗物选择弹窗
 const showRelicChoice = ref(false)
 const selectedRelicKey = ref<string | null>(null)
+// 预览用的 Relic 实例：relicOptions 是纯数据（RelicMap），
+// 而 Relic.vue 的悬浮详情要靠实例才能解析 describe 里的 {key:["status",...]} 动态值
+const relicInstances = shallowRef<RelicType[]>([])
 
-function openRelicChoice(reward: any) {
+async function openRelicChoice(reward: any) {
   currentChoiceReward.value = reward
   selectedRelicKey.value = null
+  relicInstances.value = []
   showRelicChoice.value = true
+
+  const { createRelic } = await import('@/core/factories')
+  const options = reward?.relicOptions ?? []
+  const instances = await Promise.all(options.map((map: any) => createRelic(map)))
+  // markRaw 防止 Vue 深度包装破坏 Status 内部的 ref
+  relicInstances.value = instances.map(relic => markRaw(relic as RelicType))
 }
 
 function closeRelicChoice() {
   showRelicChoice.value = false
   currentChoiceReward.value = null
   selectedRelicKey.value = null
+  relicInstances.value = []
 }
 
 async function confirmRelicChoice() {
@@ -366,17 +374,26 @@ async function confirmRelicChoice() {
 // 卡牌选择弹窗
 const showCardChoice = ref(false)
 const selectedCardKey = ref<string | null>(null)
+// 同遗物：cardOptions 是纯数据（CardMap），Card.vue 要实例才能渲染完整卡面
+const cardInstances = shallowRef<CardType[]>([])
 
-function openCardChoice(reward: any) {
+async function openCardChoice(reward: any) {
   currentChoiceReward.value = reward
   selectedCardKey.value = null
+  cardInstances.value = []
   showCardChoice.value = true
+
+  const { createCard } = await import('@/core/factories')
+  const options = reward?.cardOptions ?? []
+  const instances = await Promise.all(options.map((map: any) => createCard(map)))
+  cardInstances.value = instances.map(card => markRaw(card as CardType))
 }
 
 function closeCardChoice() {
   showCardChoice.value = false
   currentChoiceReward.value = null
   selectedCardKey.value = null
+  cardInstances.value = []
 }
 
 async function confirmCardChoice() {
@@ -751,6 +768,27 @@ async function handleProceed() {
   overflow-y: auto;
 }
 
+// 遗物选择：一列铺开，详情走遗物自身的悬浮框，不需要并排比较
+.choice-grid.single-column {
+  grid-template-columns: 1fr;
+}
+
+// 卡牌选择：卡面是固定尺寸的卡片，横排居中，不走网格
+.choice-cards-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+// 遗物/卡牌本身已有黑边，外层只负责选中指示，收紧内边距避免双层框太厚
+.relic-choice-card,
+.card-choice-card {
+  padding: 6px;
+}
+
 .choice-card {
   padding: 15px;
   border: 2px solid #ccc;
@@ -767,13 +805,6 @@ async function handleProceed() {
     border-color: #2d5016;
     background: #e8f5e9;
   }
-}
-
-.choice-name {
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 8px;
-  color: #333;
 }
 
 .choice-actions {
