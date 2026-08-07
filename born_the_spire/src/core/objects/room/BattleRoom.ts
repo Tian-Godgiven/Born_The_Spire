@@ -15,6 +15,7 @@ import { doEvent } from "@/core/objects/system/ActionEvent"
 import { beginTransaction, endTransaction } from "@/core/objects/game/transaction"
 import { gainMark } from "@/core/hooks/mark"
 import { goToNextStep } from "@/core/hooks/step"
+import { randomChoices } from "@/core/hooks/random"
 import { FloorSelectRoom } from "./FloorSelectRoom"
 
 /**
@@ -457,21 +458,22 @@ export class BattleRoom extends Room {
      * 收集所有敌人的器官
      */
     private collectEnemyOrgans(): string[] {
-        const allOrganKeys: string[] = []
+        // 用 Set 去重：同类敌人带的是同一套器官，三只蚁兵会让【蚁颚】进池子三次，
+        // 抽出来就是三个一模一样的选项
+        const allOrganKeys = new Set<string>()
 
         for (const enemy of this.enemies) {
             const organModifier = getOrganModifier(enemy)
             const organs = organModifier.getOrgans()
 
-            // 收集器官的 key
             organs.forEach(organ => {
                 if (organ.key) {
-                    allOrganKeys.push(organ.key)
+                    allOrganKeys.add(organ.key)
                 }
             })
         }
 
-        return allOrganKeys
+        return [...allOrganKeys]
     }
 
     /**
@@ -482,9 +484,7 @@ export class BattleRoom extends Room {
             return [...organKeys]
         }
 
-        // 随机打乱并选择前 count 个
-        const shuffled = [...organKeys].sort(() => Math.random() - 0.5)
-        return shuffled.slice(0, count)
+        return randomChoices(organKeys, count, "battleOrganReward")
     }
 
     /**

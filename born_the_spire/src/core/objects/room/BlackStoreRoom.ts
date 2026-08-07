@@ -456,20 +456,20 @@ export class BlackStoreRoom extends Room {
             return false
         }
 
-        newLog([`购买了 ${item.name}，花费 ${item.price} 金钱`])
+        // 先交货再收钱：器官可能因部位冲突弹出确认框，玩家点取消就等于没买成，
+        // 这时候钱不能扣、商品也不能标记为已售出
+        let delivered = true
 
-        // 扣除金钱
-        reserveModifier.spendReserve("gold", item.price)
-
-        // 给予商品
         switch (item.type) {
             case "organ": {
                 const organData = item.data as OrganMap
                 // 使用 getOrganByKey 创建 Organ 实例
                 const organ = await getOrganByKey(organData.key)
                 const organModifier = getOrganModifier(nowPlayer)
-                organModifier.acquireOrgan(organ, nowPlayer)
-                newLog([`获得器官: ${item.name}`])
+                delivered = await organModifier.acquireOrgan(organ, nowPlayer)
+                if (delivered) {
+                    newLog([`获得器官: ${item.name}`])
+                }
                 break
             }
             case "relic": {
@@ -503,6 +503,15 @@ export class BlackStoreRoom extends Room {
                 break
             }
         }
+
+        // 玩家在确认框里点了取消：什么都没发生，商品还挂在货架上
+        if (!delivered) {
+            newLog([`取消购买 ${item.name}`])
+            return false
+        }
+
+        reserveModifier.spendReserve("gold", item.price)
+        newLog([`购买了 ${item.name}，花费 ${item.price} 金钱`])
 
         item.isPurchased = true
         return true

@@ -55,8 +55,10 @@ export class OrganModifier extends ItemModifier {
      * @param organ 要获得的器官
      * @param source 器官来源
      * @param skipConfirm 是否跳过部位冲突确认弹窗（默认 false）
+     * @returns 是否真的获得了器官。玩家在部位冲突弹窗里点取消时返回 false，
+     *          调用方（如黑市）要据此撤销自己的后续动作，别把钱扣了却没给货
      */
-    async acquireOrgan(organ: Organ, source: Entity, skipConfirm: boolean = false) {
+    async acquireOrgan(organ: Organ, source: Entity, skipConfirm: boolean = false): Promise<boolean> {
 
         // 0. 检查部位互斥
         // 部位上限是玩家构筑侧的约束：玩家收集器官时同部位只能带指定数量。
@@ -88,7 +90,7 @@ export class OrganModifier extends ItemModifier {
                     // 如果用户取消，直接返回
                     if (!confirmed) {
                         newLog(["取消获取器官", organ.label])
-                        return
+                        return false
                     }
                 }
 
@@ -218,6 +220,8 @@ export class OrganModifier extends ItemModifier {
                 }
             }
         }
+
+        return true
     }
 
     /**
