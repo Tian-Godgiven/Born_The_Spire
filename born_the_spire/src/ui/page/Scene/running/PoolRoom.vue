@@ -16,7 +16,6 @@
             <ChoiceContainer
                 v-if="choiceGroup"
                 :choice-group="choiceGroup"
-                @completed="onPoolCompleted"
             />
         </div>
     </div>
@@ -52,12 +51,7 @@ const choiceGroup = computed(() => {
     return currentRoom.value?.getChoiceGroup()
 })
 
-// 水池完成回调（选择行动后自动触发）
-async function onPoolCompleted() {
-    await completeAndGoNext()
-}
-
-// 离开水池（不选择任何行动直接离开）
+// 离开水池：行动想做几个做几个，只有这里才结束房间
 async function leavePool() {
     await completeAndGoNext()
 }

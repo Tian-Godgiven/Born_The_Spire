@@ -39,7 +39,7 @@
                 <div v-else class="option-content">
                     <div class="option-title">{{ choice.title }}</div>
                     <div v-if="choice.description" class="option-description">
-                        {{ choice.description }}
+                        {{ choice.getDescription() }}
                     </div>
                 </div>
             </div>

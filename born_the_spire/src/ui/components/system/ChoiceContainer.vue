@@ -32,7 +32,7 @@
                     <div v-if="choice.icon" class="choice-icon">{{ choice.icon }}</div>
                     <div class="choice-info">
                         <div class="choice-name">{{ choice.title }}</div>
-                        <div v-if="choice.description" class="choice-desc">{{ choice.description }}</div>
+                        <div v-if="choice.description" class="choice-desc">{{ choice.getDescription() }}</div>
                     </div>
                     <div v-if="choice.isSelected()" class="choice-selected-badge">✓</div>
                 </div>
@@ -87,7 +87,8 @@ async function handleChoiceClick(choice: Choice) {
         emit('choiceSelected', choice)
 
         // 如果是单选模式，自动触发完成事件
-        if (props.choiceGroup.maxSelect === 1) {
+        // repeatable 选项只是执行一次行动，不代表玩家做完了选择
+        if (props.choiceGroup.maxSelect === 1 && !choice.repeatable) {
             emit('completed', props.choiceGroup.getSelectedChoices())
         }
     } catch (error) {

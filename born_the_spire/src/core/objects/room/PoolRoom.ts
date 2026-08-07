@@ -50,16 +50,14 @@ export class PoolRoom extends Room {
         // 创建选项
         const choices = this.createChoices()
 
-        // 创建选项组（单选）
+        // 行动菜单而非选择题：所有选项都是 repeatable，玩家想做几个做几个，
+        // 房间只由「离开」按钮结束，所以这里不需要 onComplete
+        // title 交给 PoolRoom.vue 的房间标题渲染，这里再给一个会重复显示
         this.choiceGroup = new ChoiceGroup({
-            title: "水池",
             description: "选择一个行为",
             choices,
-            minSelect: 1,
-            maxSelect: 1,
-            onComplete: async () => {
-                await this.complete()
-            }
+            minSelect: 0,
+            maxSelect: 1
         })
     }
 
@@ -69,24 +67,25 @@ export class PoolRoom extends Room {
     private createChoices(): Choice[] {
         const choices: Choice[] = []
 
-        // 获取玩家当前物质
-        const reserveModifier = getReserveModifier(nowPlayer)
-        const currentMaterial = reserveModifier.getReserve("material")
-
-        // 计算饮用可回复的生命值
-        const healAmount = Math.floor(currentMaterial / this.drinkRate)
-        const currentHealth = getCurrentValue(nowPlayer, "health")
-        const maxHealth = (nowPlayer.status["max-health"]?.value ?? 0) as number
-        const missingHealth = maxHealth - currentHealth
-        const actualHeal = Math.min(healAmount, missingHealth)
-
         // 选项1：饮用
+        // 描述用函数：行动可反复执行，物质和生命每次都在变，写死会显示上一次的旧值
         choices.push(new Choice({
             title: "饮用",
-            description: currentMaterial > 0
-                ? `消耗物质，回复生命（当前物质: ${currentMaterial}，可回复: ${actualHeal}）`
-                : "没有物质可以消耗",
+            description: () => {
+                const currentMaterial = getReserveModifier(nowPlayer).getReserve("material")
+                if (currentMaterial <= 0) return "没有物质可以消耗"
+
+                const currentHealth = getCurrentValue(nowPlayer, "health")
+                const maxHealth = (nowPlayer.status["max-health"]?.value ?? 0) as number
+                const actualHeal = Math.min(
+                    Math.floor(currentMaterial / this.drinkRate),
+                    maxHealth - currentHealth
+                )
+                if (actualHeal <= 0) return "生命值已满"
+                return `消耗物质，回复生命（当前物质: ${currentMaterial}，可回复: ${actualHeal}）`
+            },
             icon: "💧",
+            repeatable: true,
             onSelect: async () => {
                 await this.onDrink()
             }
@@ -95,8 +94,11 @@ export class PoolRoom extends Room {
         // 选项2：洗涤
         choices.push(new Choice({
             title: "洗涤",
-            description: "消耗物质升级器官（首次免额外代价）",
+            description: () => this.hasCleansed
+                ? `消耗物质升级器官（本水池已洗涤过，额外消耗 ${this.cleanseMaxHpCost} 最大生命）`
+                : "消耗物质升级器官（首次免额外代价）",
             icon: "✨",
+            repeatable: true,
             onSelect: async () => {
                 await this.onCleanse()
             }
@@ -125,7 +127,9 @@ export class PoolRoom extends Room {
      * 完成水池房间
      */
     async complete(): Promise<void> {
-        this.state = "completed"
+        // 注意：不要在这里设置 state = "completed"
+        // 让 GameRun.completeCurrentRoom() 来设置，否则它的防重复检查会提前 return，
+        // 导致 completeCurrentNode() 不执行、下一层节点解锁不了
         newLog(["===== 离开水池 ====="])
     }
 

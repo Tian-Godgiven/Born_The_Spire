@@ -13,12 +13,14 @@ export type ChoiceState = "available" | "selected" | "locked" | "disabled"
 export interface ChoiceConfig {
     key?: string                    // 选项唯一标识（可选，自动生成）
     title: string                   // 选项标题
-    description?: string            // 选项描述
+    // 选项描述。传函数则每次渲染时求值，用于描述里含会变的数值（如水池里的当前物质）
+    description?: string | (() => string)
     icon?: string                   // 选项图标
     component?: Component | string  // 自定义 Vue 组件（可选）
     onSelect?: () => void | Promise<void>  // 选择时的回调
     customData?: Record<string, any> // 自定义数据
     mutuallyExclusiveWith?: string[]  // 互斥的选项 key 列表（选择此选项后，这些选项将被禁用）
+    repeatable?: boolean            // 可反复执行：执行完立刻恢复可选，不占用选择名额、不触发选择组完成
 }
 
 /**
@@ -28,11 +30,12 @@ export interface ChoiceConfig {
 export class Choice {
     public readonly __key: string
     public readonly title: string
-    public readonly description?: string
+    public readonly description?: string | (() => string)
     public readonly icon?: string
     public readonly component?: Component | string
     public readonly customData?: Record<string, any>
     public readonly mutuallyExclusiveWith?: string[]  // 互斥的选项 key 列表
+    public readonly repeatable: boolean
     public state: ChoiceState
     private onSelectCallback?: () => void | Promise<void>
 
@@ -44,6 +47,7 @@ export class Choice {
         this.component = config.component
         this.customData = config.customData
         this.mutuallyExclusiveWith = config.mutuallyExclusiveWith
+        this.repeatable = config.repeatable ?? false
         this.onSelectCallback = config.onSelect
         this.state = "available"
 
@@ -66,6 +70,19 @@ export class Choice {
         if (this.onSelectCallback) {
             await this.onSelectCallback()
         }
+
+        // 可反复执行的选项：执行完就恢复可选，否则第二次点不动
+        if (this.repeatable) {
+            this.state = "available"
+        }
+    }
+
+    /**
+     * 取得描述文本。description 传的是函数时在这里求值，
+     * 模板里调用即可随依赖的数据自动更新
+     */
+    getDescription(): string {
+        return typeof this.description === "function" ? this.description() : (this.description ?? "")
     }
 
     /**
@@ -175,6 +192,13 @@ export class ChoiceGroup {
     async selectChoice(choice: Choice): Promise<void> {
         if (!choice.isAvailable()) {
             console.warn("[ChoiceGroup] 选项不可选择")
+            return
+        }
+
+        // 可反复执行的选项只是"执行一次"，不算做出了选择：
+        // 不占用选择名额，也就不会把选择组推向完成（水池的行动菜单靠这个）
+        if (choice.repeatable) {
+            await choice.select()
             return
         }
 
