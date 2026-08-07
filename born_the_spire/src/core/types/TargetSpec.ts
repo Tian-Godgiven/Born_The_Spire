@@ -12,7 +12,7 @@ import type { EventParticipant } from "@/core/types/event/EventParticipant"
 import type { TriggerMapItem } from "@/core/types/object/trigger"
 import { nowBattle } from "@/core/objects/game/battle"
 import { randomChoice } from "@/core/hooks/random"
-import { isEntity, isEffect } from "@/core/utils/typeGuards"
+import { isEntity, isEffect, isEnemy } from "@/core/utils/typeGuards"
 
 // ==================== TargetContext 定义 ====================
 
@@ -62,6 +62,7 @@ export type TargetTypeString =
     | "eventTriggerSource" | "eventTriggerOwner"
     | "battle" | "player"
     | "enemy" | "allEnemies" | "allAllies" | "allEntities"
+    | "allOpponents" | "allTeammates"   // 相对持有者阵营
     | "turnNumber"
     | "triggerEffect"  // 触发效果 (Effect 类型)
     | `allCardsByKey(${string})`  // 从所有牌堆中查找指定 key 的卡牌
@@ -89,6 +90,8 @@ type TargetTypeMap = {
     "allEnemies": Entity[]
     "allAllies": Entity[]
     "allEntities": Entity[]
+    "allOpponents": Entity[]
+    "allTeammates": Entity[]
 
     // 事件相关
     "eventSource": Entity
@@ -250,6 +253,21 @@ export function getTargetValue(
         case "allAllies":
             if (!context.battle) throw new Error("[resolveTarget] battle 不存在，无法获取 allAllies")
             return context.battle.getTeam("player") || []
+
+        // 相对持有者阵营的目标：同一份数据装在玩家或敌人身上，行为一致（器官对称原则）
+        // allEnemies/allAllies 是写死的玩家视角，只适合确定站在玩家一侧的内容
+        case "allOpponents": {
+            if (!context.battle) throw new Error("[resolveTarget] battle 不存在，无法获取 allOpponents")
+            const holder = context.owner ?? context.triggerOwner
+            if (!holder) throw new Error("[resolveTarget] context 中没有 owner/triggerOwner，无法判断 allOpponents 的阵营")
+            return isEnemy(holder) ? context.battle.getAlivePlayers() : context.battle.getAliveEnemies()
+        }
+        case "allTeammates": {
+            if (!context.battle) throw new Error("[resolveTarget] battle 不存在，无法获取 allTeammates")
+            const holder = context.owner ?? context.triggerOwner
+            if (!holder) throw new Error("[resolveTarget] context 中没有 owner/triggerOwner，无法判断 allTeammates 的阵营")
+            return isEnemy(holder) ? context.battle.getAliveEnemies() : context.battle.getAlivePlayers()
+        }
         case "allEntities":
             if (!context.battle) throw new Error("[resolveTarget] battle 不存在，无法获取 allEntities")
             return [...context.battle.getTeam("player"), ...context.battle.getAliveEnemies()]

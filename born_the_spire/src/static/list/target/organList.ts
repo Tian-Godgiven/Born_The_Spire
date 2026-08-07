@@ -764,7 +764,7 @@ export const organList:OrganMap[] = [
 {
     label: "毒腺",
     key: "enemy_organ_poison_gland",
-    describe: ["回合开始时对所有敌人施加1层中毒"],
+    describe: ["回合开始时对所有对手施加1层中毒"],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Gland,
     status: {
@@ -787,7 +787,7 @@ export const organList:OrganMap[] = [
         poisonOnTurnStart: [{
             key: "poison",
             label: "毒腺：回合开始施毒",
-            targetType: "allAllies",
+            targetType: "allOpponents",
             effect: [{
                 key: "applyState",
                 params: { stateKey: "poison", stacks: 1 }
@@ -1541,7 +1541,7 @@ export const organList:OrganMap[] = [
 {
     label: "不稳定毒囊",
     key: "enemy_organ_volatile_sac",
-    describe: ["宿主死亡时对所有玩家施加3层中毒"],
+    describe: ["宿主死亡时对所有对手施加3层中毒"],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Gland,
     status: { "max-mass": 25 },
@@ -1559,7 +1559,7 @@ export const organList:OrganMap[] = [
                 event: {
                     key: "volatileSacBurst",
                     label: "毒囊爆裂",
-                    targetType: "allAllies",
+                    targetType: "allOpponents",
                     effect: [{ key: "applyState", params: { stateKey: "poison", stacks: 3 } }]
                 }
             }]
