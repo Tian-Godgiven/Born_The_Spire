@@ -3,7 +3,7 @@ import type { Enemy } from "@/core/objects/target/Enemy"
 import type { Player } from "@/core/objects/target/Player"
 import { selectAction } from "@/core/objects/system/EnemyBehavior"
 import { newLog } from "@/ui/hooks/global/log"
-import { endCharaTurn } from "@/core/effects/turn"
+import { startCharaTurn, endCharaTurn } from "@/core/effects/turn"
 
 /**
  * 敌人回合管理
@@ -26,6 +26,15 @@ export async function executeEnemyTurn(
     battle: Battle
 ) {
     newLog(["===== 敌人回合开始 =====", enemy.label])
+
+    // 护甲清零、中毒结算、器官的回合开始效果都挂在 turnStart 上
+    await startCharaTurn(enemy, battle)
+
+    // 回合开始的结算（中毒扣血等）可能当场打死敌人，死了就不该再行动、也不该走回合结束
+    if (enemy.current.isAlive?.value !== 1) {
+        newLog([`${enemy.label} 在回合开始时死亡，跳过行动`])
+        return
+    }
 
     if (enemy.hand.length === 0) {
         newLog([`${enemy.label} 手牌为空，跳过回合`])

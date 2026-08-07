@@ -10,6 +10,7 @@ import { Current } from "@/core/objects/system/Current/current"
 import { Status, appendStatus } from "@/core/objects/system/status/Status"
 import { newLog } from "@/ui/hooks/global/log"
 import { doEvent } from "@/core/objects/system/ActionEvent"
+import { TriggerLevel } from "@/core/objects/system/trigger/triggerLevel"
 
 /**
  * 机制投票
@@ -278,6 +279,9 @@ function generateTriggersForMechanism(
                 when: "after",
                 how: "make",
                 key: "turnStart",
+                // 赋值型系统效果（把值直接设为 0），必须站在最前面，
+                // 否则排在它前面的增益会被抹掉。中毒结算靠 HIGH 紧跟其后
+                level: TriggerLevel.FIRST,
                 callback: async () => {
                     if (!entity.current[storageKey]?.value) return
                     if (config.key === "armor") {

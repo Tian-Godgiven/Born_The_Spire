@@ -1,4 +1,5 @@
 import type { StateData } from "@/core/objects/system/State"
+import { TriggerLevel } from "@/core/objects/system/trigger/triggerLevel"
 
 export const stateList: StateData[] = [
     // 力量：造成伤害时，伤害增加（允许负数，负数时减少伤害）
@@ -32,23 +33,36 @@ export const stateList: StateData[] = [
             }
         }
     },
-    // 中毒：回合结束时受到伤害，然后层数-1
+    // 中毒：回合开始时受到伤害，然后层数-1
+    //
+    // 扣血夹在两件事中间，三层顺序缺一不可：
+    //   [make, FIRST] 护甲清零      赋值型系统效果，必须最先
+    //   [make, HIGH]  中毒扣血      护甲已是 0，全额掉血
+    //   [make, 0]     内容效果      如【蚁甲壳】回合开始 +3 护甲，只能排在扣血之后
+    // 挂 make 而不是 take，是因为 take 整批在 make 之后，会被回合开始加护甲的内容抢先。
+    // turnStart 的 source/medium/target 都是角色自己，挂哪个列表都能触发。
+    // 中毒是普通伤害，不走无视护甲——它躲开护甲全靠这个顺序。
+    // 新增「回合开始获得护甲」类内容时，level 保持默认 0 即可，别往 HIGH 以上写。
     {
         label: "中毒",
         key: "poison",
         category: "debuff",
-        describe: ["回合结束时受到伤害"],
+        describe: ["回合开始时受到伤害"],
         showType: "number",
         repeate: "stack",
+        // 衰减挂 after/take，take 整批在 make 之后，天然排在上面的扣血之后。
+        // 不能用默认的 before——before 整批先于 after，会变成先掉层再结算，
+        // 在自己回合里被挂上的毒（如毒皮反伤）会一次都没结算就白掉一层
         stackChange: [
-            { timing: "turnEnd", delta: -1 }
+            { timing: "turnStart", delta: -1, when: "after", level: TriggerLevel.LOW }
         ],
         interaction: {
             possess: {
                 triggers: [{
-                    when: "before",
-                    how: "take",
-                    key: "turnEnd",
+                    when: "after",
+                    how: "make",
+                    key: "turnStart",
+                    level: TriggerLevel.HIGH,
                     action: "poisonDamage"
                 }],
                 reaction: {

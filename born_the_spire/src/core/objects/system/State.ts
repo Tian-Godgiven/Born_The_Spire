@@ -33,6 +33,13 @@ export type StackChangeRule = {
     stackKey?: string                // 要修改的层数key，默认 "default"
     delta: number | "all"            // 变化量（可正可负），"all" 表示清空（设为0）
     condition?: string               // 可选条件表达式（如 "turn % 2 === 1"）
+
+    // 衰减排在哪个触发周期。默认 "before"：赶在业务触发器（after）之前衰减，
+    // 让它们读到衰减后的层数。
+    // 需要业务触发器先按衰减前的层数结算时改成 "after"，并配合 level 排到它后面
+    // （例：中毒在回合开始先按当前层数扣血，再 -1）
+    when?: "before" | "after"
+    level?: number                   // 同一周期内的执行优先级，默认 -1（越大越先执行）
 }
 
 /**

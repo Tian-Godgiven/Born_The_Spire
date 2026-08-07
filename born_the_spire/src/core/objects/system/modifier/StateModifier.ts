@@ -367,13 +367,17 @@ export class StateModifier {
             const stackKey = rule.stackKey ?? "default"
             const delta = rule.delta
             const timing = rule.timing
+            // 默认 before/-1：赶在业务触发器（after）之前衰减，让它们看到衰减后的层数。
+            // 状态可以覆盖成 after + 更低的 level，把衰减排到业务触发器之后
+            const when = rule.when ?? "before"
+            const level = rule.level ?? -1
 
             // 创建触发器
             const triggerRemover = this.owner.appendTrigger({
-                when: "before", // 在 before 阶段执行，确保业务触发器（after）看到衰减后的状态
+                when,
                 how: "take",    // 承受时间事件（监听 turnStart, turnEnd 等）
                 key: timing,    // 监听的事件 key
-                level: -1,      // 低于默认优先级，允许其他 before 触发器在衰减前读取状态值
+                level,
                 callback: (_event, _effect, _triggerLevel) => {
                     // 构建 effect
                     const effectUnits = []
