@@ -32,6 +32,10 @@ export default defineConfig(async () => ({
     watch: {
       // 3. tell vite to ignore watching `src-tauri`
       ignored: ["**/src-tauri/**"],
+      // 代码目录通过 sshfs 挂载时，inotify 收不到任何文件事件，HMR 会彻底失效
+      // （表现为改了代码页面毫无反应，必须重启 dev server）。轮询是唯一可行的方式
+      usePolling: true,
+      interval: 300,
     },
   },
   resolve: {

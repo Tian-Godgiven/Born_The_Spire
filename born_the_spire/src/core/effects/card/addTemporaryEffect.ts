@@ -100,7 +100,6 @@ export const addTemporaryEffect: EffectFunc = (event, effectObj) => {
       duration,
       mutuallyExclusive,
     }
-    console.log(`[addTemporaryEffect] 替换卡牌临时效果: ${card.label} -> ${effectKey}`)
   } else {
     // 添加新效果
     card._temporaryEffects.push({
@@ -116,7 +115,6 @@ export const addTemporaryEffect: EffectFunc = (event, effectObj) => {
       duration,
       mutuallyExclusive,
     })
-    console.log(`[addTemporaryEffect] 添加卡牌临时效果: ${card.label} -> ${effectKey}`)
   }
 
   // 绑定临时效果触发器
@@ -200,7 +198,6 @@ export function clearTemporaryEffects(card: Card, duration?: "battle") {
     ;(card as any)._temporaryEffectCleanups = []
   }
 
-  console.log(`[clearTemporaryEffects] 清除卡牌临时效果: ${card.label}`)
 }
 
 /**

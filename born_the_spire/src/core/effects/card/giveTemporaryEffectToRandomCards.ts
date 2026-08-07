@@ -93,7 +93,6 @@ export function giveTemporaryEffectToRandomCardsForPlayer(
       if (existing.effect[0]?.params) {
         existing.effect[0].params.value = existing.stackValue
       }
-      console.log(`[giveTemporaryEffectToRandomCards] 叠加卡牌临时效果: ${(card as Card).label}, stackValue: ${existing.stackValue}`)
     } else {
       // 新增效果
       // 深拷贝 effectUnits 避免共享引用
@@ -123,7 +122,6 @@ export function giveTemporaryEffectToRandomCardsForPlayer(
         ;(card as any)._temporaryEffectCleanups.push(removeTriggers)
       }
 
-      console.log(`[giveTemporaryEffectToRandomCards] 添加卡牌临时效果: ${(card as Card).label}, stackValue: ${config.stackValue}`)
     }
   }
 }

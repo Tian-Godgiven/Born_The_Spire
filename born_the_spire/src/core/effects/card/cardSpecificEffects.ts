@@ -26,14 +26,11 @@ export const card_wasteHeatRecovery: EffectFunc = (event, effect) => {
     const targetType = String(params.targetType ?? "self")
     const bonusArmor = Number(params.bonusArmor ?? 0)
 
-    console.log("[card_wasteHeatRecovery] params:", { pileName, hasTag, targetType, bonusArmor })
-    console.log("[card_wasteHeatRecovery] event.target:", event.target)
 
     let player: any | null = null
 
     if (targetType === "player") {
         const playerTeam = nowBattle.value?.getTeam("player")
-        console.log("[card_wasteHeatRecovery] playerTeam:", playerTeam)
         const candidate = playerTeam?.[0]
         if (candidate && isPlayer(candidate)) {
             player = candidate
@@ -46,25 +43,19 @@ export const card_wasteHeatRecovery: EffectFunc = (event, effect) => {
         }
     }
 
-    console.log("[card_wasteHeatRecovery] player found:", player)
     if (!player) {
-        console.log("[card_wasteHeatRecovery] no player found, returning early")
         return
     }
 
     const pile = player.cardPiles[pileName] as Card[]
-    console.log("[card_wasteHeatRecovery] pile:", pileName, "length:", pile?.length, "cards:", pile?.map((c:Card) => `${c.label}[${c.tags}]`))
     const matching = pile.filter((card: Card) => card.tags?.includes(hasTag))
-    console.log("[card_wasteHeatRecovery] matching cards:", matching.map((c:Card) => c.label))
 
     if (matching.length === 0) {
-        console.log("[card_wasteHeatRecovery] no matching cards, returning early")
         return
     }
 
     // 随机选择一张匹配的卡牌
     const card = randomChoice(matching, "wasteHeatRecovery")
-    console.log("[card_wasteHeatRecovery] exhausting card:", card.label)
 
     // 消耗卡牌
     cardMove(pile, card, player.cardPiles.exhaustPile, {handPile:player.cardPiles.handPile, owner:player})

@@ -29,15 +29,6 @@ export const reduceDamageFor:EffectFunc = (event,effect)=>{
     const value = Number(effect.params.value)
     const target = event.target
 
-    // 调试日志
-    console.log('[reduceDamageFor] 调试信息:', {
-        eventKey: event.key,
-        targetType: Array.isArray(target) ? 'array' : target.participantType,
-        targetLabel: Array.isArray(target) ? target.map(t => t.label) : target.label,
-        effectsCount: event.effects.length,
-        effects: event.effects.map(e => ({ key: e.key, label: e.label })),
-        triggerContext: event.triggerContext
-    })
 
     // 验证 target 是 Effect 类型
     if (Array.isArray(target)) {

@@ -121,12 +121,6 @@ export function createTriggerByTriggerMap(source:Entity,target:Entity, item:Trig
     const {when ="before", how, key, level} = item
 
     const callback:TriggerFunc = async(triggerEvent,triggerEffect,_triggerLevel)=>{
-        // 命运之轮专属调试
-        const isWheelOfFate = (source as any).key === "original_relic_wheel"
-        if (isWheelOfFate) {
-            console.log('[Wheel Debug] 触发器被触发:', { when, how, key, item: ('action' in item ? item.action : 'toggleMode') })
-        }
-
         // 动态导入 executeItemReaction，避免循环依赖
         const { executeItemReaction } = await import("../modifier/ItemModifier")
 
