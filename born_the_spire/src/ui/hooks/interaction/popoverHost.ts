@@ -3,9 +3,26 @@ import { ref, onMounted, type Ref } from "vue"
 /**
  * 浮层根元素的标记类名
  *
- * 浮层靠它认出「我现在处在哪个浮层里面」，见 usePopoverHost。
+ * 浮层靠它认出「我现在处在哪个浮层里面」，见 usePopoverHost / findPopoverLayer。
  */
 export const POPOVER_LAYER_CLASS = "popover-layer"
+
+/**
+ * 所有浮层共用的层级
+ *
+ * 取值高于全部模态框（现有模态最高 9999）：模态里同样会弹卡面、术语这类浮层，
+ * 层级低于模态的话浮层会被自己所在的模态盖住。
+ * 嵌套浮层是外层浮层的 DOM 子节点，同值即可自然叠在外层之上，不需要逐层加码。
+ */
+export const POPOVER_Z_INDEX = 10000
+
+/**
+ * 找出元素所处的浮层根节点，不在任何浮层里则返回 null
+ */
+export function findPopoverLayer(element: HTMLElement | null | undefined): HTMLElement | null {
+    const layer = element?.closest(`.${POPOVER_LAYER_CLASS}`)
+    return layer instanceof HTMLElement ? layer : null
+}
 
 /**
  * 决定浮层挂到 DOM 的哪个位置
@@ -21,10 +38,8 @@ export function usePopoverHost(anchor: Ref<HTMLElement | null | undefined>) {
     const host = ref<HTMLElement | string>("body")
 
     onMounted(() => {
-        const layer = anchor.value?.closest(`.${POPOVER_LAYER_CLASS}`)
-        if (layer instanceof HTMLElement) {
-            host.value = layer
-        }
+        const layer = findPopoverLayer(anchor.value)
+        if (layer) host.value = layer
     })
 
     return host

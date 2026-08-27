@@ -97,13 +97,7 @@
               <span v-for="entry in organ.entry" :key="entry" class="entry-tag">【{{ entry }}】</span>
             </div>
             <div class="organ-card-desc">
-                <span
-                    v-for="(seg, si) in getOrganDescribeSegments(organ)"
-                    :key="si"
-                    :class="seg.type === 'card' ? 'card-term' : ''"
-                    @mouseenter="seg.type === 'card' ? handleOrganCardHover(organ, seg, $event) : undefined"
-                    @mouseleave="seg.type === 'card' ? hideOrganCardPopover() : undefined"
-                >{{ seg.text }}</span>
+                <DescribeText :describe="organ.describe" :target="organ" prefer-player-cards />
               </div>
           </div>
         </div>
@@ -123,13 +117,6 @@
         </div>
       </div>
     </div>
-
-    <!-- 器官预览卡牌弹窗 -->
-    <Teleport to="body">
-      <div v-if="organHoveredCard" ref="organCardPopoverRef" class="organ-card-popover" :style="organCardPopoverStyle">
-        <Card :card="organHoveredCard" />
-      </div>
-    </Teleport>
 
     <!-- 遗物选择弹窗 -->
     <div v-if="showRelicChoice" class="choice-overlay" @click.self="closeRelicChoice">
@@ -197,20 +184,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, markRaw, shallowRef } from 'vue'
+import { ref, computed, markRaw, shallowRef } from 'vue'
 import { currentRewards, showRewardUI, confirmRewards, navigateOnProceed, handleExclusiveGroup, canProceed, requireAllRewards } from '@/ui/hooks/interaction/rewardDisplay'
 import { organRewardActionRegistry } from '@/static/registry/organRewardActionRegistry'
 import { nowPlayer } from '@/core/objects/game/run'
-import { getDescribe, getDescribeStructured, type DescribeSegment } from '@/ui/hooks/express/describe'
+import { getDescribe } from '@/ui/hooks/express/describe'
 import { getPartLabel } from '@/static/list/target/organPart'
 import type { OrganMap } from '@/core/objects/target/Organ'
 import type { OrganRewardAction } from '@/core/types/organRewardAction'
 import Card from '@/ui/components/object/Card.vue'
+import DescribeText from '@/ui/components/display/DescribeText.vue'
 import type { Card as CardType } from '@/core/objects/item/Subclass/Card'
 import Relic from '@/ui/components/object/Relic.vue'
 import type { Relic as RelicType } from '@/core/objects/item/Subclass/Relic'
-import { getLazyModule } from '@/core/utils/lazyLoader'
-
 const visible = computed(() => showRewardUI.value)
 const rewards = computed(() => currentRewards.value)
 
@@ -262,69 +248,6 @@ async function executeOrganAction(actionKey: string) {
 
 function getOrganDescribe(organ: OrganMap): string {
   return getDescribe(organ.describe, organ)
-}
-
-// 器官卡牌预览相关
-const organHoveredCard = shallowRef<CardType | null>(null)
-const organCardPopoverRef = ref<HTMLElement | null>(null)
-const organCardPopoverStyle = ref<Record<string, string>>({})
-
-function getOrganDescribeSegments(organ: OrganMap): DescribeSegment[] {
-  return getDescribeStructured(organ.describe, organ)
-}
-
-async function handleOrganCardHover(organ: OrganMap, segment: DescribeSegment, event: MouseEvent) {
-  if (segment.type !== 'card' || segment.cardRef == null) return
-
-  let cardKey: string | undefined
-  if (typeof segment.cardRef === 'number') {
-    const playerCards = organ.cardsByOwner?.player
-    cardKey = (Array.isArray(playerCards) ? playerCards[segment.cardRef] : playerCards)
-      ?? organ.cards?.[segment.cardRef]
-  }
-
-  if (!cardKey) return
-
-  const card = await createOrganCardFromKey(cardKey)
-  if (card) {
-    // 使用 markRaw 防止 Card 对象被 ref 深度包装
-    organHoveredCard.value = markRaw(card)
-    nextTick(() => updateOrganCardPopoverPosition(event.target as HTMLElement))
-  }
-}
-
-function hideOrganCardPopover() {
-  organHoveredCard.value = null
-}
-
-async function createOrganCardFromKey(cardKey: string): Promise<CardType | null> {
-  try {
-    const cardList = getLazyModule<any[]>('cardList')
-    const cardData = cardList.find((c: any) => c.key === cardKey)
-    if (!cardData) return null
-    const { createCard } = await import('@/core/factories')
-    return await createCard(cardData)
-  } catch {
-    return null
-  }
-}
-
-function updateOrganCardPopoverPosition(triggerElement: HTMLElement) {
-  if (!organCardPopoverRef.value) return
-
-  const triggerRect = triggerElement.getBoundingClientRect()
-  const popoverRect = organCardPopoverRef.value.getBoundingClientRect()
-  let left = triggerRect.right + 8
-  let top = triggerRect.top
-  const vw = window.innerWidth
-  const vh = window.innerHeight
-
-  if (left + popoverRect.width > vw) left = triggerRect.left - popoverRect.width - 8
-  if (left < 0) left = Math.max(8, vw - popoverRect.width - 8)
-  if (top + popoverRect.height > vh) top = vh - popoverRect.height - 8
-  if (top < 0) top = 8
-
-  organCardPopoverStyle.value = { position: 'fixed', top: `${top}px`, left: `${left}px`, zIndex: '10001' }
 }
 
 function getRarityLabel(rarity: string): string {
@@ -681,17 +604,6 @@ async function handleProceed() {
   color: #555;
   line-height: 1.5;
   flex: 1;
-
-  .card-term {
-    color: #2563eb;
-    font-weight: bold;
-    cursor: pointer;
-    text-decoration: underline;
-
-    &:hover {
-      color: #1d4ed8;
-    }
-  }
 }
 
 .organ-reward-footer {
@@ -815,9 +727,4 @@ async function handleProceed() {
   border-top: 2px solid #ddd;
 }
 
-.organ-card-popover {
-  background: white;
-  border: 2px solid black;
-  padding: 4px;
-}
 </style>

@@ -2,8 +2,6 @@
 <div class="relic"
     :class="{ 'has-abilities': hasActiveAbilities, 'is-disabled': relic.isDisabled || isUsedUp }"
     ref="relicRef"
-    @mouseenter="handleMouseEnter"
-    @mouseleave="handleMouseLeave"
     @click="handleClick"
     @contextmenu.prevent="handleRightClick">
 
@@ -30,14 +28,16 @@
 
     <div>{{ relic.label }}</div>
 
-    <!-- 遗物详情悬浮框 -->
-    <Teleport to="body">
-        <div
-            v-if="showDetail"
-            ref="tooltipRef"
-            class="relic-tooltip"
-            :style="tooltipStyle"
-        >
+    <!-- 遗物详情悬浮框：触发区是遗物本体，这里只声明浮层 -->
+    <Popover
+        ref="detailPopover"
+        inline
+        :trigger-element="relicRef"
+        placement="bottom"
+        align="start"
+    >
+        <template #content>
+        <div class="relic-tooltip">
             <div class="tooltip-header">
                 <span class="relic-name">{{ relic.label }}</span>
                 <span class="relic-rarity" v-if="relic.rarity">[{{ rarityText }}]</span>
@@ -55,13 +55,15 @@
                 </div>
             </div>
         </div>
-    </Teleport>
+        </template>
+    </Popover>
 </div>
 </template>
 
 <script setup lang='ts'>
     import { Relic } from '@/core/objects/item/Subclass/Relic';
-    import { computed, ref, nextTick } from 'vue';
+    import { computed, ref, useTemplateRef } from 'vue';
+    import Popover from '@/ui/components/global/Popover.vue';
     import { handleItemRightClick } from '@/core/hooks/activeAbility';
     import { nowPlayer } from '@/core/objects/game/run';
     import { getDescribe } from '@/ui/hooks/express/describe';
@@ -78,9 +80,7 @@
     const { relic } = props
 
     const relicRef = ref<HTMLElement>()
-    const tooltipRef = ref<HTMLElement>()
-    const showDetail = ref(false)
-    const tooltipStyle = ref<Record<string, string>>({})
+    const detailPopover = useTemplateRef<InstanceType<typeof Popover>>('detailPopover')
 
     const hasActiveAbilities = computed(() => {
         return relic.activeAbilities && relic.activeAbilities.length > 0
@@ -124,62 +124,6 @@
         return rarityMap[relic.rarity || 'common']
     })
 
-    function handleMouseEnter() {
-        showDetail.value = true
-        nextTick(() => {
-            updateTooltipPosition()
-        })
-    }
-
-    function handleMouseLeave() {
-        showDetail.value = false
-    }
-
-    function updateTooltipPosition() {
-        if (!relicRef.value || !tooltipRef.value) return
-
-        const relicRect = relicRef.value.getBoundingClientRect()
-        const tooltipRect = tooltipRef.value.getBoundingClientRect()
-
-        // 默认显示在下方
-        let left = relicRect.left
-        let top = relicRect.bottom + 8
-
-        // 边界检查
-        const viewportWidth = window.innerWidth
-        const viewportHeight = window.innerHeight
-
-        // 如果右侧空间不足，向左对齐
-        if (left + tooltipRect.width > viewportWidth) {
-            left = relicRect.right - tooltipRect.width
-        }
-
-        // 如果左侧也不够，强制调整
-        if (left < 0) {
-            left = 8
-        }
-
-        // 如果下方空间不足，显示在上方
-        if (top + tooltipRect.height > viewportHeight) {
-            top = relicRect.top - tooltipRect.height - 8
-        }
-
-        // 如果上方也不够，强制显示在下方
-        if (top < 0) {
-            top = relicRect.bottom + 8
-            if (top + tooltipRect.height > viewportHeight) {
-                top = viewportHeight - tooltipRect.height - 8
-            }
-        }
-
-        tooltipStyle.value = {
-            position: 'fixed',
-            top: `${top}px`,
-            left: `${left}px`,
-            zIndex: '10000'
-        }
-    }
-
     function handleClick() {
         if (props.preview) return
         showRelicList(relic)
@@ -190,7 +134,7 @@
         if (!hasActiveAbilities.value) return
 
         // 隐藏介绍弹窗，避免遮挡操作
-        showDetail.value = false
+        detailPopover.value?.close()
 
         try {
             // 如果只有一个能力，直接执行；否则显示菜单
@@ -335,7 +279,6 @@
     border: 2px solid black;
     min-width: 200px;
     max-width: 350px;
-    pointer-events: none;
 
     .tooltip-header {
         padding: 8px 12px;

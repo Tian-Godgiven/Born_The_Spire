@@ -1,7 +1,7 @@
 <template>
 <!-- 纯展示组件：定位由使用方负责，这样多个浮层能被统一排布成并列的列 -->
-<div class="state-popover" v-if="hasStates">
-    <div class="popover-header">
+<div class="state-popover" :class="{ embedded }" v-if="hasStates">
+    <div class="popover-header" v-if="!embedded">
         状态效果
     </div>
     <div class="popover-content">
@@ -25,22 +25,23 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Target } from '@/core/objects/target/Target'
+import type { Entity } from '@/core/objects/system/Entity'
 import type { State } from '@/core/objects/system/State'
 import { getStateModifier } from '@/core/objects/system/modifier/StateModifier'
 
+// target 放宽到 Entity：器官、卡牌也能挂状态（器官内部计数），不只角色
 const props = defineProps<{
-    target: Target
+    target: Entity
+    // 嵌进别的面板时去掉自己的边框和标题，避免套成盒中盒
+    embedded?: boolean
 }>()
 
-// 获取 StateModifier 的响应式状态列表
 const stateModifier = computed(() => getStateModifier(props.target))
-const states = computed(() => stateModifier.value.states.value)
 
-// 是否有状态
-const hasStates = computed(() => {
-    return states.value.length > 0
-})
+// hidden 的是纯记账计数（如判定次数），对玩家没有决策价值，不显示
+const states = computed(() => stateModifier.value.states.value.filter(state => !state.hidden))
+
+const hasStates = computed(() => states.value.length > 0)
 
 // 检查状态是否有可见的层数
 function hasVisibleStack(state: State): boolean {
@@ -84,6 +85,14 @@ function resolveDynamicValue(part: any, _state: State): string {
     min-width: 180px;
     max-width: 250px;
     box-sizing: border-box;
+
+    &.embedded {
+        background: rgba(0, 0, 0, 0.02);
+        border: none;
+        min-width: 0;
+        max-width: none;
+        padding: 8px;
+    }
 
     .popover-header {
         font-weight: bold;

@@ -1,5 +1,5 @@
 <template>
-<div class="intent-display" v-if="intent">
+<Popover v-if="intent" placement="bottom" align="center" :max-width="600">
     <!-- 意图图标和值 -->
     <div class="intent-main" :class="intentTypeClass">
         <!-- 意图类型图标 -->
@@ -19,7 +19,7 @@
     </div>
 
     <!-- 悬停显示详情 -->
-    <div class="intent-tooltip">
+    <template #content>
         <div class="tooltip-content">
             <!-- 显示值的描述（非 card 模式） -->
             <div v-if="intent.value !== undefined && intent.visibility !== 'card'">
@@ -38,14 +38,15 @@
                 {{ visibilityHint }}
             </div>
         </div>
-    </div>
-</div>
+    </template>
+</Popover>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Intent } from '@/core/objects/system/Intent'
 import Card from '@/ui/components/object/Card.vue'
+import Popover from '@/ui/components/global/Popover.vue'
 
 const props = defineProps<{
     intent?: Intent
@@ -165,15 +166,6 @@ const visibilityHint = computed(() => {
 </script>
 
 <style scoped lang="scss">
-.intent-display {
-    position: relative;
-    display: inline-block;
-
-    &:hover .intent-tooltip {
-        display: block;
-    }
-}
-
 .intent-main {
     display: flex;
     align-items: center;
@@ -269,35 +261,30 @@ const visibilityHint = computed(() => {
     animation: intent-change 0.6s ease;
 }
 
-// 工具提示
-.intent-tooltip {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
-    pointer-events: auto;
+// 浮层挂在 Chara 的意图容器下，那个容器为了小徽章设了 12px + nowrap，
+// 这里必须重置回正常排版，否则浮层里的卡牌字会变小且不换行
+.tooltip-content {
+    font-size: 16px;
+    white-space: normal;
 
-    .tooltip-content {
-        // card 模式下的卡牌列表
-        .tooltip-card-list {
-            display: flex;
-            gap: 8px;
-        }
+    // card 模式下的卡牌列表
+    .tooltip-card-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
 
-        .tooltip-count {
-            margin-top: 4px;
-            color: #666;
-            font-size: 13px;
-        }
+    .tooltip-count {
+        margin-top: 4px;
+        color: #666;
+        font-size: 13px;
+    }
 
-        .tooltip-visibility {
-            margin-top: 4px;
-            font-size: 11px;
-            color: #999;
-            font-style: italic;
-        }
+    .tooltip-visibility {
+        margin-top: 4px;
+        font-size: 11px;
+        color: #999;
+        font-style: italic;
     }
 }
 </style>

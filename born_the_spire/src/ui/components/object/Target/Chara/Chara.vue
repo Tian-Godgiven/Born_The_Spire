@@ -4,17 +4,18 @@
 <div class="chara-wrapper">
 <CharaAnimator ref="animator" :target="target" class="chara-body">
     <!-- 意图显示（仅敌人，死亡后隐藏）
-         必须放在 HoverShow 之外：它自己已经带了悬停详情，落在触发区里的话，
+         必须放在 Popover 触发区之外：它自己已经带了悬停详情，落在触发区里的话，
          鼠标划到意图上会连带把角色状态浮层也弹出来 -->
     <div v-if="isEnemy && enemyIntent && !isDeadOrDying" class="intent-display">
         <IntentDisplay :intent="enemyIntent" />
     </div>
 
-    <HoverShow
+    <Popover
         class="chara-popover"
-        :hover-position="popupSide"
+        :placement="popupSide"
         :anchor="hoveredOrganElement"
         :max-width="600"
+        :offset="12"
         :disabled="!hasPopoverContent"
         @update:show="onPopoverShow"
     >
@@ -47,7 +48,7 @@
 
         <!-- 两个浮层并排放在同一个容器里，整体朝屏幕中间弹 -->
         <!-- 器官介绍在内侧（紧挨着触发它的器官方块），角色状态排到外侧 -->
-        <template #hover>
+        <template #content>
             <div class="popover-stack" :class="popupSide">
                 <template v-if="hoveredOrgan">
                     <EntryDisplay
@@ -59,7 +60,7 @@
                 <StateDisplay v-if="stateList.length > 0" :target="target" />
             </div>
         </template>
-    </HoverShow>
+    </Popover>
 </CharaAnimator>
 
 <HitText :target="target" />
@@ -79,7 +80,7 @@
     import StateDisplay from '@/ui/components/display/StateDisplay.vue';
     import EntryDisplay from '@/ui/components/display/EntryDisplay.vue';
     import OrganPopup from '@/ui/components/interaction/OrganPopup.vue';
-    import HoverShow from '@/ui/components/global/HoverShow.vue';
+    import Popover from '@/ui/components/global/Popover.vue';
     import { settings } from '@/core/persistence/settings';
     import MechanismDisplay from '@/ui/components/display/MechanismDisplay.vue';
     import IntentDisplay from '@/ui/components/display/IntentDisplay.vue';
@@ -187,7 +188,7 @@
     height: 100%;
 }
 
-// HoverShow 的 wrapper 夹在动画容器和 Target 之间，得把尺寸透传下去
+// Popover 的触发区包裹层夹在动画容器和 Target 之间，得把尺寸透传下去
 .chara-popover {
     width: 100%;
     height: 100%;
@@ -205,7 +206,7 @@
     overflow: visible;
 }
 
-// 浮层列：器官介绍与角色状态并排成一行，整体由 HoverShow 摆到屏幕中间那侧
+// 浮层列：器官介绍与角色状态并排成一行，整体由 Popover 摆到屏幕中间那侧
 // 内侧（靠近触发它的器官方块）放器官介绍，外侧放角色状态
 .popover-stack {
     display: flex;

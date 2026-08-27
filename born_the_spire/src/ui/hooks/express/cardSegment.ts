@@ -53,23 +53,27 @@ export function findCardInstance(cardId: string, organ?: Organ): CardType | null
 }
 
 /**
- * 按索引取器官提供的卡牌 key，先查 cards 数组，再退回 cardsByOwner.player
+ * 按索引取器官提供的卡牌 key
+ *
+ * 默认先查 cards 数组再退回 cardsByOwner.player；奖励界面这类「这器官装到我身上会给什么」的
+ * 场景传 preferPlayerCards，优先给玩家版本
  */
-function getCardKeyByIndex(index: number, organ?: Organ): string | null {
+function getCardKeyByIndex(index: number, organ?: Organ, preferPlayerCards = false): string | null {
     if (!organ) return null
+
+    const playerCards = organ.cardsByOwner?.player
+    const playerKey = playerCards
+        ? (Array.isArray(playerCards) ? playerCards[index] : playerCards)
+        : undefined
+
+    if (preferPlayerCards && playerKey) return playerKey
 
     const cards = organ.cards
     if (Array.isArray(cards) && cards[index]) {
         return cards[index]
     }
 
-    const playerCards = organ.cardsByOwner?.player
-    if (playerCards) {
-        const arr = Array.isArray(playerCards) ? playerCards : [playerCards]
-        return arr[index] ?? null
-    }
-
-    return null
+    return playerKey ?? null
 }
 
 /**
@@ -81,7 +85,8 @@ function getCardKeyByIndex(index: number, organ?: Organ): string | null {
  */
 export async function resolveCardFromSegment(
     segment: DescribeSegment,
-    organ?: Organ
+    organ?: Organ,
+    options?: { preferPlayerCards?: boolean }
 ): Promise<CardType | null> {
     if (segment.type !== "card") return null
 
@@ -97,6 +102,6 @@ export async function resolveCardFromSegment(
         return findCardInstance(ref, organ)
     }
 
-    const cardKey = getCardKeyByIndex(ref, organ)
+    const cardKey = getCardKeyByIndex(ref, organ, options?.preferPlayerCards)
     return cardKey ? await createCardFromKey(cardKey) : null
 }

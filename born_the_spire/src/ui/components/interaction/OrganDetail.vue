@@ -31,56 +31,50 @@
 
             <!-- 描述区域（可滚动） -->
             <div class="content">
-                <span
-                    v-for="(segment, index) in describeSegments"
-                    :key="index"
-                    :class="getSegmentClass(segment)"
-                    :style="getSegmentStyle(segment)"
-                    @mouseenter="handleSegmentHover(segment, $event)"
-                    @mouseleave="handleSegmentLeave"
-                >
-                    {{ segment.text }}
-                </span>
+                <DescribeText
+                    :describe="organ.describe"
+                    :target="organ"
+                    bracket-cards
+                    :hoverTarget="hoverTarget"
+                />
             </div>
+
+            <!-- 器官自身的状态：内部计数标记（损耗、充能、预算等）都挂在器官上 -->
+            <StateDisplay class="states" :target="organ" embedded />
 
             <!-- 玩家版本卡牌悬浮按钮 -->
-            <div
-                v-if="playerVersionCard"
-                class="player-version-btn"
-                @mouseenter="showPlayerVersionCard"
-                @mouseleave="hidePlayerVersionCard"
-            >
-                显示玩家版本
-            </div>
+            <div class="player-version-anchor" v-if="hasPlayerVersion">
+                <Popover placement="right" @update:show="handlePlayerVersionShow">
+                    <div class="player-version-btn">显示玩家版本</div>
 
-            <!-- 卡牌悬停显示 -->
-            <Teleport to="body">
-                <div
-                    v-if="hoveredCard"
-                    ref="popoverRef"
-                    class="card-popover"
-                    :style="popoverStyle"
-                >
-                    <Card :card="hoveredCard" :hoverTarget="hoverTarget" />
-                    <GlossaryPanel :glossaries="hoveredGlossaries" />
-                </div>
-            </Teleport>
+                    <template #content>
+                        <div class="card-preview" v-if="playerCard">
+                            <Card :card="playerCard" :hoverTarget="hoverTarget" />
+                            <GlossaryPanel :glossaries="playerCardGlossaries" />
+                        </div>
+                    </template>
+                </Popover>
+            </div>
         </div>
     </div>
 </Teleport>
 </template>
 
 <script setup lang="ts">
-import { computed, type PropType } from 'vue'
+import { computed, shallowRef, markRaw, type PropType } from 'vue'
 import { Organ } from '@/core/objects/target/Organ'
-import { getDescribeStructured, getDescribe, type DescribeSegment } from '@/ui/hooks/express/describe'
-import { resolveCardFromSegment, createCardFromKey, findCardInstance } from '@/ui/hooks/express/cardSegment'
-import { useCardPopover } from '@/ui/hooks/interaction/cardPopover'
+import { getDescribe } from '@/ui/hooks/express/describe'
+import { createCardFromKey } from '@/ui/hooks/express/cardSegment'
+import { getCardGlossaries } from '@/ui/hooks/express/glossary'
 import { getStatusValue, ifHaveStatus } from '@/core/objects/system/status/Status'
 import { getPartLabel } from '@/static/list/target/organPart'
 import Card from '@/ui/components/object/Card.vue'
 import GlossaryPanel from '@/ui/components/display/GlossaryPanel.vue'
+import DescribeText from '@/ui/components/display/DescribeText.vue'
+import StateDisplay from '@/ui/components/display/StateDisplay.vue'
+import Popover from '@/ui/components/global/Popover.vue'
 import { entryDefinitions } from '@/core/objects/system/Entry'
+import type { Card as CardType } from '@/core/objects/item/Subclass/Card'
 import type { Entity } from '@/core/objects/system/Entity'
 
 const props = defineProps({
@@ -93,9 +87,6 @@ const emit = defineEmits<{
     close: []
 }>()
 
-// 卡牌悬停预览
-const { hoveredCard, hoveredGlossaries, popoverRef, popoverStyle, showAt, showNear, hide } = useCardPopover()
-
 function close() {
     emit('close')
 }
@@ -107,66 +98,22 @@ function getEntryDescription(entryKey: string): string {
     return getDescribe(entryDef.describe)
 }
 
-// 检查器官是否有玩家版本的卡牌
-const playerVersionCard = computed(() => {
-    if (props.organ.cardsByOwner?.player) {
-        return true
-    }
-    return false
-})
+// 玩家版本卡牌：同一器官装在玩家身上时提供的另一张牌，悬停按钮时才建实例
+const hasPlayerVersion = computed(() => !!props.organ.cardsByOwner?.player)
 
-// 显示玩家版本卡牌
-async function showPlayerVersionCard(event: MouseEvent) {
-    if (!props.organ.cardsByOwner?.player) return
+const playerCard = shallowRef<CardType | null>(null)
+const playerCardGlossaries = computed(() => playerCard.value ? getCardGlossaries(playerCard.value) : [])
 
-    const cardKey = Array.isArray(props.organ.cardsByOwner.player)
-        ? props.organ.cardsByOwner.player[0]
-        : props.organ.cardsByOwner.player
+async function handlePlayerVersionShow(shown: boolean) {
+    if (!shown || playerCard.value) return
 
+    const playerCards = props.organ.cardsByOwner?.player
+    if (!playerCards) return
+
+    const cardKey = Array.isArray(playerCards) ? playerCards[0] : playerCards
     const card = await createCardFromKey(cardKey)
-    if (!card) return
-
-    await showNear(card, event.currentTarget as HTMLElement)
+    if (card) playerCard.value = markRaw(card)
 }
-
-// 隐藏玩家版本卡牌
-function hidePlayerVersionCard() {
-    hide()
-}
-
-// 结构化描述（需要解析卡牌名称）
-const describeSegments = computed(() => {
-    const segments = getDescribeStructured(props.organ.describe, props.organ)
-
-    // 更新卡牌片段的显示文本
-    return segments.map(segment => {
-        if (segment.type === 'card' && segment.cardRef) {
-            // 如果 describe.ts 已经成功解析出卡牌名称，直接用括号包裹
-            if (segment.text && segment.text !== '[卡牌]') {
-                return {
-                    ...segment,
-                    text: `【${segment.text}】`
-                }
-            }
-            // 对于 instance 类型（字符串ID），尝试从牌堆中同步查找
-            if (segment.cardRefType === 'instance' && typeof segment.cardRef === 'string') {
-                const card = findCardInstance(segment.cardRef, props.organ)
-                if (card) {
-                    return {
-                        ...segment,
-                        text: `【${card.label}】`
-                    }
-                }
-            }
-            // 兜底：显示占位符
-            return {
-                ...segment,
-                text: `【卡牌】`
-            }
-        }
-        return segment
-    })
-})
 
 // 质量信息
 const hasQuality = computed(() => {
@@ -182,38 +129,6 @@ const currentMass = computed(() => {
     return props.organ.current.mass?.value || 0
 })
 
-// 获取片段的CSS类
-function getSegmentClass(segment: DescribeSegment): string {
-    if (segment.type === 'glossary') {
-        return 'glossary-term'
-    }
-    if (segment.type === 'card') {
-        return 'card-term'
-    }
-    return ''
-}
-
-// 获取片段的样式
-function getSegmentStyle(segment: DescribeSegment): Record<string, string> | undefined {
-    if (segment.type === 'glossary' && segment.style) {
-        return segment.style
-    }
-    return undefined
-}
-
-async function handleSegmentHover(segment: DescribeSegment, event: MouseEvent) {
-    if (segment.type !== 'card') return
-
-    // 异步获取卡牌实例
-    const card = await resolveCardFromSegment(segment, props.organ)
-    if (!card) return
-
-    await showAt(card, event.clientX, event.clientY)
-}
-
-function handleSegmentLeave() {
-    hide()
-}
 </script>
 
 <style scoped lang="scss">
@@ -301,23 +216,6 @@ function handleSegmentLeave() {
     overflow-y: auto;
     flex: 1;
     line-height: 1.6;
-
-    .glossary-term {
-        text-decoration: underline;
-        font-weight: bold;
-        cursor: pointer;
-    }
-
-    .card-term {
-        color: #2563eb;
-        font-weight: bold;
-        cursor: pointer;
-        text-decoration: underline;
-
-        &:hover {
-            color: #1d4ed8;
-        }
-    }
 }
 
 .entries {
@@ -343,24 +241,31 @@ function handleSegmentLeave() {
     }
 }
 
-.card-popover {
+.card-preview {
     display: flex;
     align-items: flex-start;
     gap: 8px;
 }
 
-.player-version-btn {
+// 定位交给外层容器，按钮本身保持静态，免得和 Popover 触发区的 position: relative 打架
+.states {
+    margin: 0 16px 16px;
+}
+
+.player-version-anchor {
     position: absolute;
     right: -2px;
     top: 50%;
     transform: translate(100%, -50%);
+}
+
+.player-version-btn {
     background: white;
     border: 2px solid black;
     padding: 4px 8px;
     font-size: 12px;
     cursor: pointer;
     white-space: nowrap;
-    z-index: 10000;
 
     &:hover {
         background: rgba(0, 0, 0, 0.05);

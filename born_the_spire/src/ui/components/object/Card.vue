@@ -22,27 +22,20 @@
 
     <!-- 结构化描述渲染 -->
     <div class="describe">
-        <span
-            v-for="(segment, index) in describeSegments"
-            :key="index"
-            :class="getSegmentClass(segment)"
-            :style="getSegmentStyle(segment)"
-        >
-            {{ segment.text }}
-        </span>
+        <DescribeText :describe="describeToShow" :target="enhancedCard" />
     </div>
 
-    <!-- 整卡Tooltip -->
-    <Teleport to="body">
-        <div
-            v-if="showTooltip"
-            ref="tooltipRef"
-            class="card-tooltip"
-            :style="tooltipStyle"
-        >
+    <!-- 整卡术语说明：触发区是卡牌自身，这里只声明浮层 -->
+    <Popover
+        inline
+        :trigger-element="cardRef"
+        :disabled="card.isDisabled || allGlossaries.length === 0"
+        placement="right"
+    >
+        <template #content>
             <GlossaryPanel :glossaries="allGlossaries" />
-        </div>
-    </Teleport>
+        </template>
+    </Popover>
 </div>
 </template>
 
@@ -50,10 +43,11 @@
 import type { Card } from '@/core/objects/item/Subclass/Card';
 import type { Entity } from '@/core/objects/system/Entity';
 import { getStatusValue, ifHaveStatus } from '@/core/objects/system/status/Status';
-import { getDescribeStructured, type DescribeSegment } from '@/ui/hooks/express/describe';
 import { getCardGlossaries } from '@/ui/hooks/express/glossary';
 import GlossaryPanel from '@/ui/components/display/GlossaryPanel.vue';
-import { computed, ref, onMounted, onBeforeUnmount, nextTick, type PropType } from 'vue';
+import DescribeText from '@/ui/components/display/DescribeText.vue';
+import Popover from '@/ui/components/global/Popover.vue';
+import { computed, ref, type PropType } from 'vue';
 import { entryDefinitions } from '@/core/objects/system/Entry';
 import { getEntryModifier } from '@/core/objects/system/modifier/EntryModifier';
 import { nowPlayer } from '@/core/objects/game/run';
@@ -109,17 +103,12 @@ const enhancedCard = computed(() => {
     })
 })
 
-// 结构化描述（合并临时效果描述）
-const describeSegments = computed(() => {
-    // 获取临时效果描述
+// 卡牌描述 + 临时效果描述
+const describeToShow = computed(() => {
     const tempDescribe = getTemporaryEffectDescribe(card)
-
-    // 如果有临时效果，将它们添加到卡牌描述后
-    const describeToUse = tempDescribe.length > 0
+    return tempDescribe.length > 0
         ? [...card.describe, ...tempDescribe]
         : card.describe
-
-    return getDescribeStructured(describeToUse, enhancedCard.value)
 })
 
 // null 有两种来源，都表示"这张牌没有费用概念"，费用框整个不画：
@@ -143,22 +132,6 @@ function getEntryLabel(entryKey: string): string {
     return entryDefinitions[entryKey]?.label || entryKey
 }
 
-// 获取片段的CSS类
-function getSegmentClass(segment: DescribeSegment): string {
-    if (segment.type === 'glossary') {
-        return 'glossary-term'
-    }
-    return ''
-}
-
-// 获取片段的样式（如果有自定义样式则使用，否则使用默认）
-function getSegmentStyle(segment: DescribeSegment): Record<string, string> | undefined {
-    if (segment.type === 'glossary' && segment.style) {
-        return segment.style
-    }
-    return undefined
-}
-
 // 收集所有需要显示的术语（词条 + describe中的术语 + 临时效果中的术语）
 const allGlossaries = computed(() => getCardGlossaries(card))
 
@@ -178,80 +151,8 @@ function getRemoveOnText(): string {
     }
 }
 
-// Tooltip显示控制
+// 术语浮层的触发区就是卡牌根元素，交给 Popover 挂监听
 const cardRef = ref<HTMLElement>()
-const tooltipRef = ref<HTMLElement>()
-const showTooltip = ref(false)
-const tooltipStyle = ref<Record<string, string>>({})
-
-function handleMouseEnter() {
-    // 禁用卡牌不显示 tooltip
-    if (card.isDisabled) return
-    if (allGlossaries.value.length === 0) return
-    showTooltip.value = true
-    nextTick(() => {
-        updateTooltipPosition()
-    })
-}
-
-function handleMouseLeave() {
-    showTooltip.value = false
-}
-
-function updateTooltipPosition() {
-    if (!cardRef.value || !tooltipRef.value) return
-
-    const cardRect = cardRef.value.getBoundingClientRect()
-    const tooltipRect = tooltipRef.value.getBoundingClientRect()
-
-    // 默认显示在右侧
-    let left = cardRect.right + 8
-    let top = cardRect.top
-
-    // 边界检查
-    const viewportWidth = window.innerWidth
-    const viewportHeight = window.innerHeight
-
-    // 如果右侧空间不足，显示在左侧
-    if (left + tooltipRect.width > viewportWidth) {
-        left = cardRect.left - tooltipRect.width - 8
-    }
-
-    // 如果左侧也不够，强制显示在右侧但调整位置
-    if (left < 0) {
-        left = cardRect.right + 8
-        if (left + tooltipRect.width > viewportWidth) {
-            left = viewportWidth - tooltipRect.width - 8
-        }
-    }
-
-    // 垂直方向边界检查
-    if (top + tooltipRect.height > viewportHeight) {
-        top = viewportHeight - tooltipRect.height - 8
-    }
-    if (top < 0) top = 8
-
-    tooltipStyle.value = {
-        position: 'fixed',
-        top: `${top}px`,
-        left: `${left}px`,
-        zIndex: '10000'
-    }
-}
-
-onMounted(() => {
-    if (cardRef.value) {
-        cardRef.value.addEventListener('mouseenter', handleMouseEnter)
-        cardRef.value.addEventListener('mouseleave', handleMouseLeave)
-    }
-})
-
-onBeforeUnmount(() => {
-    if (cardRef.value) {
-        cardRef.value.removeEventListener('mouseenter', handleMouseEnter)
-        cardRef.value.removeEventListener('mouseleave', handleMouseLeave)
-    }
-})
 
 </script>
 
@@ -279,23 +180,29 @@ onBeforeUnmount(() => {
     }
 
     .cost{
-        font-size: 20px;
+        font-size: 15px;
         display: flex;
         justify-content: center;
         align-items: center;
         border: 2px solid black;
         border-radius: 50%;
-        width: 30px;
-        height: 30px;
+        width: 22px;
+        height: 22px;
         position: absolute;
         left: -7px;
         top: -7px;
         background-color: white;
     }
+    // 费用圆圈右边缘落在 x=19，左右各留 20px 才能保持标题在整卡居中且不被压住。
+    // 剩余 90px 够放 5 个 18px 汉字；更长的卡名截断，绝不换行也绝不压到费用上
     .title{
         text-align: center;
-        font-size: 20px;
+        font-size: 18px;
         font-weight: bold;
+        padding: 0 20px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     .line{
         box-sizing: border-box;
@@ -332,15 +239,7 @@ onBeforeUnmount(() => {
         text-wrap: wrap;
         padding:0 5px;
         overflow-y: auto;
-
-        .glossary-term {
-            text-decoration: underline;
-            font-weight: bold;
-        }
     }
 }
 
-.card-tooltip {
-    width: fit-content;
-}
 </style>

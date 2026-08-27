@@ -10,12 +10,12 @@
 
         <!-- 器官网格 -->
         <div class="organ-grid">
-            <HoverShow
+            <Popover
                 v-for="organ in organs"
                 :key="organ.key"
-                hover-position="left"
+                placement="left"
                 :max-width="270"
-                :wait-time="50"
+                :close-delay="50"
                 :disabled="!isUnlocked(organ.key)"
             >
                 <div
@@ -38,10 +38,10 @@
                 </div>
 
                 <!-- Hover 显示的器官详情 -->
-                <template #hover>
+                <template #content>
                     <OrganPopup :organ="organ" />
                 </template>
-            </HoverShow>
+            </Popover>
         </div>
 
         <!-- 器官详情弹窗 -->
@@ -64,7 +64,7 @@ import {
 } from '@/core/persistence/metaProgress'
 import { getPartLabel } from '@/static/list/target/organPart'
 import OrganDetail from '@/ui/components/interaction/OrganDetail.vue'
-import HoverShow from '@/ui/components/global/HoverShow.vue'
+import Popover from '@/ui/components/global/Popover.vue'
 import OrganPopup from '@/ui/components/interaction/OrganPopup.vue'
 
 const HEART_KEY = 'original_organ_00001'

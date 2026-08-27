@@ -22,31 +22,39 @@
     <div v-else class="potion-display empty">[空]</div>
 
     <!-- 描述弹窗 -->
-    <div v-if="potion && showDescPopover" class="potion-popover description">
-        <div class="potion-name">{{ potion.label }}</div>
-        <div class="potion-desc">{{ description }}</div>
-    </div>
+    <Popover v-if="potion" inline trigger="manual" :show="showDescPopover" :anchor="wrapperRef" placement="bottom" align="start">
+        <template #content>
+            <div class="potion-popover description">
+                <div class="potion-name">{{ potion.label }}</div>
+                <div class="potion-desc">{{ description }}</div>
+            </div>
+        </template>
+    </Popover>
 
     <!-- 右键功能菜单 -->
-    <div v-if="potion && showMenuPopover" class="potion-popover menu">
-        <!-- 使用选项 -->
-        <div
-            v-for="(use, index) in potion.useInteractions"
-            :key="index"
-            class="menu-item"
-            @click="handleUse(index)"
-        >
-            {{ use.label || '使用' }}
-        </div>
-        <!-- 丢弃选项 -->
-        <div
-            v-if="potion.canDrop"
-            class="menu-item"
-            @click="handleDiscard"
-        >
-            丢弃
-        </div>
-    </div>
+    <Popover v-if="potion" inline trigger="manual" :show="showMenuPopover" :anchor="wrapperRef" placement="bottom" align="start">
+        <template #content>
+            <div class="potion-popover menu">
+                <!-- 使用选项 -->
+                <div
+                    v-for="(use, index) in potion.useInteractions"
+                    :key="index"
+                    class="menu-item"
+                    @click="handleUse(index)"
+                >
+                    {{ use.label || '使用' }}
+                </div>
+                <!-- 丢弃选项 -->
+                <div
+                    v-if="potion.canDrop"
+                    class="menu-item"
+                    @click="handleDiscard"
+                >
+                    丢弃
+                </div>
+            </div>
+        </template>
+    </Popover>
 </div>
 </template>
 
@@ -58,6 +66,7 @@ import { nowPlayer } from '@/core/objects/game/run'
 import type { Target } from '@/core/objects/target/Target'
 import { getDescribe } from '@/ui/hooks/express/describe'
 import ChooseSource from '@/ui/components/interaction/chooseTarget/ChooseSource.vue'
+import Popover from '@/ui/components/global/Popover.vue'
 
 const props = defineProps<{
     potion: Potion | null
@@ -204,14 +213,11 @@ onBeforeUnmount(() => {
     }
 }
 
+// 摆放交给 Popover，这里只管长相
 .potion-popover {
-    position: absolute;
-    top: calc(100% + 8px);
-    left: 0;
     background: white;
     border: 2px solid black;
     padding: 8px;
-    z-index: 9999;
     min-width: 200px;
 
     &.description {

@@ -164,13 +164,20 @@
         </div>
     </div>
 
-    <!-- 商品详情悬浮框 -->
-    <Teleport to="body">
+    <!-- 商品详情悬浮框：一个浮层被四组商品共用，靠 anchor 跟着当前悬停的那件走 -->
+    <Popover
+        inline
+        trigger="manual"
+        :show="tooltipVisible && !!tooltipItem"
+        :anchor="tooltipAnchor"
+        placement="bottom"
+        align="start"
+        :max-width="600"
+    >
+        <template #content>
         <div
-            v-if="tooltipVisible && tooltipItem"
-            ref="tooltipRef"
+            v-if="tooltipItem"
             class="store-tooltip"
-            :style="tooltipStyle"
             @mouseenter="cancelHideTooltip"
             @mouseleave="startHideTooltip"
         >
@@ -224,7 +231,8 @@
                 <div class="potion-tooltip-desc">{{ getPotionDesc(tooltipItem.id) }}</div>
             </div>
         </div>
-    </Teleport>
+        </template>
+    </Popover>
 
     <!-- 离开按钮 -->
     <LeaveButton @leave="handleLeave">离开黑市</LeaveButton>
@@ -253,7 +261,7 @@
 </template>
 
 <script setup lang='ts'>
-import { computed, ref, nextTick } from 'vue'
+import { computed, ref } from 'vue'
 import { nowGameRun, nowPlayer } from '@/core/objects/game/run'
 import { BlackStoreRoom } from '@/core/objects/room/BlackStoreRoom'
 import type { StoreItem } from '@/core/objects/room/BlackStoreRoom'
@@ -268,6 +276,7 @@ import { getDescribe } from '@/ui/hooks/express/describe'
 import LeaveButton from '@/ui/components/global/LeaveButton.vue'
 import OrganPopup from '@/ui/components/interaction/OrganPopup.vue'
 import Card from '@/ui/components/object/Card.vue'
+import Popover from '@/ui/components/global/Popover.vue'
 
 // 金钱类型显示名映射
 const RESERVE_LABELS: Record<string, string> = {
@@ -348,9 +357,7 @@ const showSellOrganModal = ref(false)
 // === 商品详情 tooltip ===
 const tooltipVisible = ref(false)
 const tooltipItem = ref<StoreItem | null>(null)
-const tooltipRef = ref<HTMLElement>()
-const tooltipStyle = ref<Record<string, string>>({})
-let tooltipTriggerEl: HTMLElement | null = null
+const tooltipAnchor = ref<HTMLElement | null>(null)
 let hideTimeout: ReturnType<typeof setTimeout> | null = null
 
 function getPreview(itemId: string): any {
@@ -385,16 +392,15 @@ function showItemTooltip(item: StoreItem, event: MouseEvent) {
     }
 
     tooltipItem.value = item
-    tooltipTriggerEl = event.currentTarget as HTMLElement
+    tooltipAnchor.value = event.currentTarget as HTMLElement
     tooltipVisible.value = true
-    nextTick(updateTooltipPosition)
 }
 
 function startHideTooltip() {
     hideTimeout = setTimeout(() => {
         tooltipVisible.value = false
         tooltipItem.value = null
-        tooltipTriggerEl = null
+        tooltipAnchor.value = null
     }, 200)
 }
 
@@ -402,43 +408,6 @@ function cancelHideTooltip() {
     if (hideTimeout) {
         clearTimeout(hideTimeout)
         hideTimeout = null
-    }
-}
-
-function updateTooltipPosition() {
-    if (!tooltipTriggerEl || !tooltipRef.value) return
-
-    const triggerRect = tooltipTriggerEl.getBoundingClientRect()
-    const tooltipRect = tooltipRef.value.getBoundingClientRect()
-    const vh = window.innerHeight
-    const vw = window.innerWidth
-    const gap = 8
-
-    // 显示在下方
-    let left = triggerRect.left
-    let top = triggerRect.bottom + gap
-
-    // 如果下方空间不足，显示在上方
-    if (top + tooltipRect.height > vh) {
-        top = triggerRect.top - tooltipRect.height - gap
-    }
-
-    // 如果上方也不够，强制下方并截断
-    if (top < gap) {
-        top = triggerRect.bottom + gap
-    }
-
-    // 水平边界
-    if (left + tooltipRect.width > vw) {
-        left = vw - tooltipRect.width - gap
-    }
-    if (left < gap) left = gap
-
-    tooltipStyle.value = {
-        position: 'fixed',
-        top: `${top}px`,
-        left: `${left}px`,
-        zIndex: '10000'
     }
 }
 
