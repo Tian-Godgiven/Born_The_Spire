@@ -573,6 +573,42 @@ export const stateList: StateData[] = [
         }
     }
 },
+// 飞行：受到攻击伤害减半，每次被攻击消耗1层，不自动衰减
+{
+    label: "飞行",
+    key: "flight",
+    category: "buff",
+    describe: ["受到的攻击伤害减半，每次受到攻击后失去1层"],
+    showType: "number",
+    repeate: "stack",
+    interaction: {
+        possess: {
+            triggers: [{
+                when: "before",
+                how: "take",
+                key: "damage",
+                action: "flightEvade",
+                condition: "$triggerCard.hasTag(attack)"
+            }],
+            reaction: {
+                flightEvade: [
+                    {
+                        key: "flight_halve",
+                        label: "飞行：伤害减半",
+                        targetType: "triggerEffect",
+                        effect: [{ key: "modifyDamageByPercent", params: { percent: -0.5 } }]
+                    },
+                    {
+                        key: "flight_consume",
+                        label: "飞行：消耗层数",
+                        targetType: "triggerOwner",
+                        effect: [{ key: "changeStateStack", params: { stateKey: "flight", delta: -1 } }]
+                    }
+                ]
+            }
+        }
+    }
+},
 // 力场护盾：每层免疫下一次攻击牌伤害，被打消耗1层，不自动衰减（充能次数型防御）
 {
     label: "力场护盾",
@@ -617,6 +653,27 @@ export const stateList: StateData[] = [
     describe: ["液压双管本回合首次攻击已释放"],
     showType: "bool",
     repeate: "refresh",
+    stackChange: [{ timing: "turnEnd", delta: "all" }]
+},
+// 隔板损耗：过期隔板器官的内部计数，每成功抵消一次 +1 层，回合结束清空
+{
+    label: "隔板损耗",
+    key: "separatorWear",
+    category: "debuff",
+    describe: ["本回合每抵消一次伤害，过期隔板的抵消概率降低"],
+    showType: "number",
+    repeate: "stack",
+    stackChange: [{ timing: "turnEnd", delta: "all" }]
+},
+// 隔板检定：过期隔板本回合已判定的次数，只用来让同回合内每次判定互相独立，回合结束清空
+{
+    label: "隔板检定",
+    key: "separatorRoll",
+    category: "neutral",
+    describe: ["本回合过期隔板已判定的次数"],
+    showType: "number",
+    repeate: "stack",
+    hidden: true,
     stackChange: [{ timing: "turnEnd", delta: "all" }]
 },
 // 钢铁意志充能：致命保命器官的内部标记，战斗开始时附加，触发后消耗

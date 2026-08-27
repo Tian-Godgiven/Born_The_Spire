@@ -292,6 +292,83 @@ export const relicList: RelicMap[] = [
         }
     },
     {
+        label: "祸福轮",
+        describe: [
+            "每3回合，回合开始时",
+            "对场上随机一个目标造成", { key: ["status", "damage"] }, "点伤害，",
+            "对另一个随机目标回复", { key: ["status", "heal"] }, "点生命"
+        ],
+        key: "original_relic_weal_and_woe",
+        rarity: "uncommon",
+        pool: ["common"],
+        status: {
+            "cooldown": 3,
+            "maxCooldown": 3,
+            "damage": 3,
+            "heal": 3
+        },
+        badges: [
+            { type: "cooldown", status: "cooldown" }
+        ],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                triggers: [
+                    {
+                        when: "after",
+                        how: "make",
+                        key: "turnStart",
+                        level: 1,
+                        action: "decrementCooldown"
+                    },
+                    {
+                        when: "after",
+                        how: "make",
+                        key: "turnStart",
+                        condition: "$source.status(cooldown) <= 0",
+                        action: "harmAndHeal"
+                    }
+                ]
+            }
+        },
+        reaction: {
+            decrementCooldown: [{
+                targetType: "triggerSource",
+                key: "decrementCooldown",
+                effect: [{
+                    key: "decrementStatus",
+                    params: { statusKey: "cooldown", amount: 1 }
+                }]
+            }],
+            harmAndHeal: [
+                {
+                    targetType: "allEntities.random",
+                    key: "damage",
+                    effect: [{
+                        key: "damage",
+                        params: { value: "$item.status(damage)" }
+                    }]
+                },
+                {
+                    targetType: "allEntities.except(pickedTargets).random",
+                    key: "heal",
+                    effect: [{
+                        key: "heal",
+                        params: { value: "$item.status(heal)" }
+                    }]
+                },
+                {
+                    targetType: "triggerSource",
+                    key: "resetCooldown",
+                    effect: [{
+                        key: "resetCooldown",
+                        params: {}
+                    }]
+                }
+            ]
+        }
+    },
+    {
         label: "吸血徽章",
         describe: ["每累积", { key: ["status", "point"] }, "/", { key: ["status", "maxPoint"] }, "点伤害", "回复1生命"],
         key: "original_relic_vampiric_badge",

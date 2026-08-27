@@ -330,6 +330,16 @@ export const enemyList:EnemyMap[] = [
         ]
     },
 
+    {
+        label: "寄血蜱",
+        key: "enemy_blood_tick",
+        status: { "max-health": 18 },
+        organ: [
+            "enemy_organ_blood_proboscis",
+            "enemy_organ_thin_wings"
+        ]
+    },
+
     // ========== 第一层：机械 ==========
 
     {

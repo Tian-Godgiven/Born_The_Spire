@@ -555,6 +555,35 @@ export const cardList:CardMap[] = [{
     }
 },
 
+// 叮咬：寄血蜱的血口器，伤害同时给使用者回血、给目标虚弱
+{
+    label: "叮咬",
+    tags: ["attack", "enemy"],
+    status: {
+        damage: 6,
+        heal: 2,
+        weakStacks: 1,
+        cost: 2
+    },
+    describe: [
+        "造成", {key: ["status", "damage"]}, "点伤害，",
+        "回复", {key: ["status", "heal"]}, "点生命，",
+        "并施加", {key: ["status", "weakStacks"]}, "层", {$:"虚弱"}
+    ],
+    key: "enemy_card_blood_bite",
+    pool: ["exclusive"],
+    interaction: {
+        use: {
+            target: {faction: "opponent"},
+            effects: [
+                { key: "damage", params: { value: "$owner.status(damage)" } },
+                { key: "heal", params: { value: "$owner.status(heal)" }, target: "source" },
+                { key: "applyState", params: { stateKey: "weak", stacks: "$owner.status(weakStacks)" } }
+            ]
+        }
+    }
+},
+
 // 猛扑：蚁卫的蚁颚高等级，3段攻击
 {
     label: "猛扑",

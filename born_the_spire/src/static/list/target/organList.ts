@@ -760,6 +760,58 @@ export const organList:OrganMap[] = [
         }]
     }
 },
+// ========== 血口器 ==========
+{
+    label: "血口器",
+    key: "enemy_organ_blood_proboscis",
+    describe: ["提供1张", {"@": 0}, "卡牌"],
+    rarity: OrganRarity.Common,
+    part: OrganPartEnum.Muscle,
+    status: {
+        "max-mass": 15
+    },
+    current: ["mass"],
+    cards: ["enemy_card_blood_bite"],
+    interaction: {
+        possess: {
+            target: { key: "self" },
+            effects: []
+        }
+    }
+},
+// ========== 薄翅 ==========
+{
+    label: "薄翅",
+    key: "enemy_organ_thin_wings",
+    describe: ["战斗开始时获得3层飞行"],
+    rarity: OrganRarity.Uncommon,
+    part: OrganPartEnum.Skin,
+    status: {
+        "max-mass": 15,
+        "flightStacks": 3
+    },
+    current: ["mass"],
+    interaction: {
+        possess: {
+            target: { key: "self" },
+            effects: [],
+            triggers: [{
+                when: "after",
+                how: "make",
+                key: "battleStart",
+                action: "openingFlight"
+            }]
+        }
+    },
+    reaction: {
+        openingFlight: [{
+            key: "openingFlight",
+            label: "薄翅：开局飞行",
+            targetType: "triggerOwner",
+            effect: [{ key: "applyState", params: { stateKey: "flight", stacks: "$item.status(flightStacks)" } }]
+        }]
+    }
+},
 // ========== 毒腺 ==========
 {
     label: "毒腺",
@@ -957,13 +1009,20 @@ export const organList:OrganMap[] = [
 {
     label: "过期隔板",
     key: "enemy_organ_rusty_separator",
-    describe: ["受到伤害时：30%完全抵消，20%护甲崩裂，50%正常"],
+    describe: ["受到伤害时：30%完全抵消（本回合每抵消一次，概率-10%），20%护甲崩裂"],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Bone,
     status: {
         "max-mass": 25
     },
     current: ["mass"],
+    // 损耗层数只在本回合抵消过伤害时才冒出来，平时方块保持干净
+    badges: [{
+        type: "counter",
+        value: "$item.stateStack(separatorWear)",
+        showWhen: "$item.stateStack(separatorWear) > 0",
+        style: { backgroundColor: "#dc2626" }
+    }],
     interaction: {
         work: {
             target: { key: "self" },
@@ -984,7 +1043,11 @@ export const organList:OrganMap[] = [
             sourceTargetType: "triggerOwner",
             effect: [{
                 key: "organ_rustySeparator",
-                params: {}
+                params: {
+                    blockChance: 0.3,
+                    blockDecay: 0.1,
+                    breakChance: 0.2
+                }
             }]
         }]
     }

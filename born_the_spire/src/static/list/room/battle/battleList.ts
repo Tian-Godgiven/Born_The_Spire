@@ -68,6 +68,27 @@ export const battleList: BattleRoomConfig[] = [
         ]
     },
 
+    // 1b. 寄血蜱×1 — 飞行减伤 + 吸血虚弱
+    {
+        key: "battle_f1_blood_tick",
+        name: "血雾",
+        description: "一只寄血蜱在血雾中盘旋",
+        battleType: "normal",
+        enemyConfigs: [
+            {
+                key: "enemy_blood_tick",
+                behavior: {
+                    patterns: [],
+                    fallback: {
+                        intent: "attack",
+                        action: { selector: { key: "enemy_card_blood_bite" }, mode: "random" },
+                        describe: "叮咬"
+                    }
+                }
+            }
+        ]
+    },
+
     // 2. 装甲哨卫×1 — 入门：充能节奏
     {
         key: "battle_f1_sentry",
