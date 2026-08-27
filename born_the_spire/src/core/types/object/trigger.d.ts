@@ -51,6 +51,7 @@ export interface TriggerEventConfig{
     targetType://事件目标是参与触发事件的哪个对象
         | TargetTypeString  // 使用统一的 targetType 字符串
         | Entity            // 某个指定的对象
+    as?: string  // 把解析结果写入本次 reaction 的 context，供后续 targetType / except(名字) 引用
     sourceTargetType?: TargetTypeString  // 事件的 source 来源（可选），使用统一的 targetType 格式
     mediumTargetType?: TargetTypeString  // 事件的 medium 来源（可选），使用统一的 targetType 格式
     effect:EffectUnit[]

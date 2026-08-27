@@ -75,7 +75,8 @@ export type StateData = {
     repeate?: "stack" | "refresh" | "none"  // 重复获得时的行为
     stacks?: Stack[] | number         // 层数对象（可简写为数字）
     allowNegative?: boolean           // 允许层数为负数时仍然存在（默认 false）
-    checkExist?: (getter: Target, state: State) => boolean  // 检查状态是否还存在
+    hidden?: boolean                  // 纯记账用的内部计数，不在状态浮层里显示（默认 false）
+    checkExist?: (getter: Entity, state: State) => boolean  // 检查状态是否还存在
     stackChange?: StackChangeRule[]   // 层数自动变化规则
     interaction?: StateInteractionData  // 状态交互
 }
@@ -105,7 +106,8 @@ export class State implements EventParticipant {
     public stacks: Stack[]  // 层数对象数组
     public repeate: "stack" | "refresh" | "none" = "stack"
     public allowNegative: boolean = false
-    public checkExist: (getter: Target, state: State) => boolean
+    public hidden: boolean = false
+    public checkExist: (getter: Entity, state: State) => boolean
     public stackChange?: StackChangeRule[]  // 层数自动变化规则
     public interaction: StateInteractionData
 
@@ -119,6 +121,7 @@ export class State implements EventParticipant {
         this.showType = map.showType ?? "number"
         this.repeate = map.repeate ?? "stack"
         this.allowNegative = map.allowNegative ?? false
+        this.hidden = map.hidden ?? false
         this.checkExist = map.checkExist ?? defaultCheckExist
         this.stackChange = map.stackChange
         this.interaction = map.interaction ?? {}
@@ -157,7 +160,7 @@ export class State implements EventParticipant {
 /**
  * 默认的存在性检查：default 层数 !== 0（allowNegative 时）或 > 0
  */
-const defaultCheckExist = (_getter: Target, state: State): boolean => {
+const defaultCheckExist = (_getter: Entity, state: State): boolean => {
     const stack = state.stacks.find(s => s.key === "default")
     if (!stack) return false
     if (state.allowNegative) return stack.stack !== 0

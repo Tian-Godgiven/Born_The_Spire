@@ -18,6 +18,7 @@ import type { ActionEvent } from "../ActionEvent"
 import type { Effect } from "../effect/Effect"
 
 import type { TriggerEventConfig, TriggerMapItemWithAction, ImportantTriggerMapItem, TriggerCondition, TriggerMapItem } from "@/core/types/object/trigger"
+import type { TargetContext } from "@/core/types/TargetSpec"
 import { modifierManager } from "@/core/managers/ModifierManager"
 
 /**
@@ -98,30 +99,40 @@ export function executeItemReaction(params: {
     // 条件检查（新格式字符串/数组/ConditionGroup）
     if (condition && !evaluateCondition(condition, item, owner, triggerEvent, triggerEffect)) return
 
+    const bindings: TargetContext = { pickedTargets: [] }
+
     for (const eventConfig of reactionEvents) {
         if (eventConfig.targetType === "triggerEffect" && !triggerEffect) continue
 
         // 通用条件检查（新格式）
         if (eventConfig.condition && !evaluateCondition(eventConfig.condition, item, owner, triggerEvent, triggerEffect)) continue
 
+        const resolveOpts = { allowNull: true, bindings }
+
         // 解析 source
         const source = eventConfig.sourceTargetType
-            ? resolveTriggerEventTarget(eventConfig.sourceTargetType, triggerEvent, triggerEffect, item, owner, { allowNull: true })
+            ? resolveTriggerEventTarget(eventConfig.sourceTargetType, triggerEvent, triggerEffect, item, owner, resolveOpts)
             : item
 
         // 解析 medium
         const medium = eventConfig.mediumTargetType
-            ? resolveTriggerEventTarget(eventConfig.mediumTargetType, triggerEvent, triggerEffect, item, owner, { allowNull: true })
+            ? resolveTriggerEventTarget(eventConfig.mediumTargetType, triggerEvent, triggerEffect, item, owner, resolveOpts)
             : item
 
         // 解析 target
-        const target = resolveTriggerEventTarget(eventConfig.targetType, triggerEvent, triggerEffect, item, owner, { allowNull: true })
+        const target = resolveTriggerEventTarget(eventConfig.targetType, triggerEvent, triggerEffect, item, owner, resolveOpts)
+
+        if (eventConfig.as && target != null) {
+            bindings[eventConfig.as] = target
+        }
+
+        if (target == null) continue
 
         const newEvent = doEvent({
             key: eventConfig.key,
             source: (source ?? item) as any,
             medium: (medium ?? item) as any,
-            target: (target ?? item) as any,
+            target: target as any,
             info: eventConfig.info || {},
             effectUnits: eventConfig.effect ?? []
         })

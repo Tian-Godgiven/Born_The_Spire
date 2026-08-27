@@ -1,5 +1,4 @@
 import type { Entity } from "../Entity"
-import type { Target } from "../../target/Target"
 import type { StateData } from "../State"
 import type { LogUnit } from "@/ui/hooks/global/log"
 import type { TriggerEventConfig } from "@/core/types/object/trigger"
@@ -53,15 +52,16 @@ class StateModifierUnit {
 /**
  * StateModifier - 状态管理器
  *
- * 管理 Target 身上的所有状态及其副作用
+ * 管理实体身上的所有状态及其副作用
+ * owner 是 Entity 而不是 Target：器官、卡牌这类附属实体也会挂内部计数状态
  */
 export class StateModifier {
-    public owner: Target
+    public owner: Entity
     private units: StateModifierUnit[] = reactive([])  // 响应式，用于触发 UI 更新
     // 状态变化回调列表（添加/移除/层数变化时调用）
     private _onStateChangedCallbacks: Array<(stateKey: string) => void> = []
 
-    constructor(owner: Target) {
+    constructor(owner: Entity) {
         this.owner = owner
     }
 
@@ -372,8 +372,13 @@ export class StateModifier {
             const when = rule.when ?? "before"
             const level = rule.level ?? -1
 
-            // 创建触发器
-            const triggerRemover = this.owner.appendTrigger({
+            // 时间事件（turnStart/turnEnd/…）的 source/medium/target 都是角色本身，
+            // 状态挂在器官、卡牌这类附属实体上时，触发器要挂到它们的持有者身上才收得到；
+            // 衰减事件的 target 仍是附属实体自己，所以每件各算各的层数
+            const holder = this.owner as any
+            const mountTarget: Entity = holder?.owner ?? this.owner
+
+            const triggerRemover = mountTarget.appendTrigger({
                 when,
                 how: "take",    // 承受时间事件（监听 turnStart, turnEnd 等）
                 key: timing,    // 监听的事件 key
@@ -515,9 +520,9 @@ export class StateModifier {
 }
 
 /**
- * 为 Target 初始化状态管理器
+ * 为实体初始化状态管理器
  */
-export function initStateModifier(target: Target): StateModifier {
+export function initStateModifier(target: Entity): StateModifier {
     const modifier = new StateModifier(target)
 
     // 同步注册到全局 ModifierManager
@@ -527,9 +532,9 @@ export function initStateModifier(target: Target): StateModifier {
 }
 
 /**
- * 获取 Target 的状态管理器
+ * 获取实体的状态管理器
  */
-export function getStateModifier(target: Target): StateModifier {
+export function getStateModifier(target: Entity): StateModifier {
     // 先尝试从 ModifierManager 获取
     let modifier: StateModifier | undefined
 

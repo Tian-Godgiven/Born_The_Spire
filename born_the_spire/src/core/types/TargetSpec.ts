@@ -46,7 +46,10 @@ export interface TargetContext {
     // 战斗相关
     battle?: any
 
-    // 其他自定义字段
+    // 同一次 reaction 数组里，.random 抽中的实体（未写 as 时的默认袋）
+    pickedTargets?: Entity[]
+
+    // as 绑定和其他自定义键
     [key: string]: any
 }
 
@@ -65,8 +68,9 @@ export type TargetTypeString =
     | "allOpponents" | "allTeammates"   // 相对持有者阵营
     | "turnNumber"
     | "triggerEffect"  // 触发效果 (Effect 类型)
-    | `allCardsByKey(${string})`  // 从所有牌堆中查找指定 key 的卡牌
-    | string  // 允许自定义键（支持点语法修饰符，如 "allEnemies.random"）
+    | "pickedTargets"
+    | `allCardsByKey(${string})`
+    | string  // 自定义键；管道如 "allEntities.except(pickedTargets).random"
 
 /**
  * 目标类型映射 - 根据 targetType 返回不同的类型
@@ -171,17 +175,59 @@ export function resolveTarget(
  * - undefined 表示 context 中没有该键
  * - null 表示找到但没有目标（如空数组的第一个元素）
  */
+type TargetModifier = { name: string, arg?: string }
+
+function splitDotsOutsideParens(value: string): string[] {
+    const parts: string[] = []
+    let buf = ""
+    let depth = 0
+    for (const ch of value) {
+        if (ch === "(") depth++
+        else if (ch === ")") depth = Math.max(0, depth - 1)
+        if (ch === "." && depth === 0) {
+            parts.push(buf)
+            buf = ""
+        } else {
+            buf += ch
+        }
+    }
+    if (buf) parts.push(buf)
+    return parts
+}
+
+function parseTargetModifier(token: string): TargetModifier {
+    const matched = token.match(/^([A-Za-z_]\w*)\((.*)\)$/)
+    if (matched) return { name: matched[1], arg: matched[2] }
+    return { name: token }
+}
+
+function parseTargetPipeline(targetType: string): { base: string, modifiers: TargetModifier[] } {
+    const parts = splitDotsOutsideParens(targetType)
+    return {
+        base: parts[0] ?? targetType,
+        modifiers: parts.slice(1).map(parseTargetModifier)
+    }
+}
+
+function toEntityList(value: unknown): Entity[] {
+    if (value == null) return []
+    if (Array.isArray(value)) return value.filter((item): item is Entity => Boolean((item as Entity)?.__id))
+    if ((value as Entity).__id) return [value as Entity]
+    return []
+}
+
 export function getTargetValue(
     targetType: string,
     context: TargetContext
 ): any {
-    // 支持点语法修饰符，如 "allEnemies.random"、"allEnemies.first"
-    if (targetType.includes(".")) {
-        const dotIndex = targetType.indexOf(".")
-        const base = targetType.slice(0, dotIndex)
-        const modifier = targetType.slice(dotIndex + 1)
-        const baseValue = getTargetValue(base, context)
-        return applyModifier(baseValue, modifier, base)
+    const { base, modifiers } = parseTargetPipeline(targetType)
+    if (modifiers.length > 0) {
+        let value = getTargetValue(base, context)
+        for (const modifier of modifiers) {
+            value = applyModifier(value, modifier, context, base)
+            if (value === null || value === undefined) return value
+        }
+        return value
     }
 
     // 卡牌查询：allCardsByKey(cardKey) — 从所有牌堆中查找匹配的卡牌
@@ -272,56 +318,69 @@ export function getTargetValue(
             if (!context.battle) throw new Error("[resolveTarget] battle 不存在，无法获取 allEntities")
             return [...context.battle.getTeam("player"), ...context.battle.getAliveEnemies()]
 
-        // 默认：直接从 context 中获取（允许自定义键）
+        case "pickedTargets":
+            return context.pickedTargets ?? []
+
+        // 默认：直接从 context 中获取（允许自定义键，含 as 绑定）
         default:
             return context[targetType]
     }
 }
 
-// ==================== 修饰符处理函数 ====================
-
-/**
- * 应用修饰符到目标值
- *
- * 支持的修饰符：
- * - .random   从数组中随机选一个
- * - .first    数组第一个元素
- * - .last     数组最后一个元素
- *
- * @param baseValue - 基础目标值（数组或单个对象）
- * @param modifier - 修饰符字符串
- * @param baseName - 基础目标名（用于错误信息）
- * @returns 修饰后的目标值
- */
 function applyModifier(
     baseValue: Entity | Entity[],
-    modifier: string,
+    modifier: TargetModifier,
+    context: TargetContext,
     baseName: string
-): Entity | undefined | null {
+): Entity | Entity[] | null {
+    const label = modifier.arg ? `${modifier.name}(${modifier.arg})` : modifier.name
+
+    if (modifier.name === "except") {
+        if (!Array.isArray(baseValue)) {
+            throw new Error(
+                `[TargetSpec] 修饰符 ".${label}" 只能应用于数组目标，` +
+                `"${baseName}" 不是数组: ${typeof baseValue}`
+            )
+        }
+        const excluded = toEntityList(
+            modifier.arg ? getTargetValue(modifier.arg, context) : undefined
+        )
+        const excludedIds = new Set(excluded.map(entity => entity.__id))
+        return baseValue.filter(entity => !excludedIds.has(entity.__id))
+    }
+
     if (!Array.isArray(baseValue)) {
         throw new Error(
-            `[TargetSpec] 修饰符 ".${modifier}" 只能应用于数组目标，` +
+            `[TargetSpec] 修饰符 ".${label}" 只能应用于数组目标，` +
             `"${baseName}" 不是数组: ${typeof baseValue}`
         )
     }
 
     if (baseValue.length === 0) {
+        if (modifier.name === "random") return null
         throw new Error(
-            `[TargetSpec] 无法对空数组应用修饰符 ".${modifier}": ${baseName}`
+            `[TargetSpec] 无法对空数组应用修饰符 ".${label}": ${baseName}`
         )
     }
 
-    switch (modifier) {
-        case "random":
-            return randomChoice(baseValue, `${baseName}.${modifier}`)
+    switch (modifier.name) {
+        case "random": {
+            if (!context.pickedTargets) context.pickedTargets = []
+            const picked = randomChoice(
+                baseValue,
+                `${baseName}.random.${context.pickedTargets.length}`
+            )
+            context.pickedTargets.push(picked)
+            return picked
+        }
         case "first":
             return baseValue[0]
         case "last":
             return baseValue[baseValue.length - 1]
         default:
             throw new Error(
-                `[TargetSpec] 未知的修饰符 ".${modifier}" for target "${baseName}". ` +
-                `支持的修饰符: .random, .first, .last`
+                `[TargetSpec] 未知的修饰符 ".${label}" for target "${baseName}". ` +
+                `支持的修饰符: .except(T), .random, .first, .last`
             )
     }
 }

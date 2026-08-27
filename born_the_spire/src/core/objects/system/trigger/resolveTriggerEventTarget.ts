@@ -17,7 +17,7 @@ import { nowBattle } from "@/core/objects/game/battle"
  * @param triggerEffect - 触发效果对象（可能为 null）
  * @param item - 物品自身（器官/遗物）
  * @param owner - 物品持有者（玩家/敌人）
- * @param options - 额外选项
+ * @param options.bindings - 同一次 reaction 数组共用的 context（pickedTargets / as 绑定）
  * @returns 解析后的目标（Entity 或 Entity[]），找不到返回 null
  */
 export function resolveTriggerEventTarget(
@@ -26,7 +26,7 @@ export function resolveTriggerEventTarget(
     triggerEffect: Effect | null,
     item: Item,
     owner: Entity,
-    options?: { allowNull?: boolean }
+    options?: { allowNull?: boolean, bindings?: TargetContext }
 ): Entity | Entity[] | null {
     // 如果 targetType 直接就是一个 Entity，直接返回
     if (targetType && typeof targetType === "object" && (targetType as any).participantType) {
@@ -34,8 +34,12 @@ export function resolveTriggerEventTarget(
     }
 
     const battle = nowBattle.value
+    const bindings = options?.bindings
+    const pickedTargets = bindings?.pickedTargets ?? []
+    if (bindings) bindings.pickedTargets = pickedTargets
 
     const context: TargetContext = {
+        ...(bindings ?? {}),
         item: item as Entity,
         owner,
         source: triggerEvent.source as Entity,
@@ -47,6 +51,7 @@ export function resolveTriggerEventTarget(
         eventTriggerSource: (triggerEvent as any).triggerContext?.source,
         eventTriggerOwner: (triggerEvent as any).triggerContext?.owner,
         battle: battle ?? undefined,
+        pickedTargets,
     }
 
     const result = resolveTargetOptional(targetType as string, context)

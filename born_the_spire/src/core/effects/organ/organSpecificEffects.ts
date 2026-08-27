@@ -46,26 +46,51 @@ export const organ_heatTick: EffectFunc = (event, _effect) => {
 
 /**
  * 过期隔板：受到伤害时掷骰
- * 30% 将伤害值设为 0（完全抵消）
- * 20% 清零宿主护甲（装甲崩裂）
- * 50% 正常
+ * 抵消概率 = blockChance - 本回合已抵消次数 × blockDecay，落在其后的 breakChance 区间则装甲崩裂
  *
- * 在 before take damage 的 reaction 里触发，event.target 是 damage Effect
+ * 在 before take damage 的 reaction 里触发，event.target 是 damage Effect，event.medium 是器官
+ *
+ * params:
+ *   blockChance: number - 基础完全抵消概率 (default: 0.3)
+ *   blockDecay: number  - 每抵消一次降低的概率 (default: 0.1)
+ *   breakChance: number - 装甲崩裂概率 (default: 0.2)
  */
-export const organ_rustySeparator: EffectFunc = (event, _effect) => {
+export const organ_rustySeparator: EffectFunc = (event, effect) => {
     const damageEffect = Array.isArray(event.target) ? event.target[0] : event.target
     if (!isEffect(damageEffect)) return false
 
     const host = event.source
     if (!isEntity(host)) return false
 
-    const rng = getContextRandom("rustySeparator")
+    const organ = event.medium
+    if (!(organ instanceof Organ)) return false
+
+    const blockChance = Number(effect.params.blockChance ?? 0.3)
+    const blockDecay = Number(effect.params.blockDecay ?? 0.1)
+    const breakChance = Number(effect.params.breakChance ?? 0.2)
+
+    // 两个计数都记在器官自己身上，同时装两块隔板时各算各的
+    const stateModifier = getStateModifier(organ as any)
+    const readStack = (stateKey: string) =>
+        stateModifier.getState(stateKey)?.stacks.find(s => s.key === "default")?.stack ?? 0
+
+    const wear = readStack("separatorWear")
+    const chance = Math.max(0, blockChance - wear * blockDecay)
+
+    // 上下文种子只到「回合」这一级，同一回合内反复掷骰会拿到同一个点数。
+    // 用本回合已判定次数把每次判定错开，等于把序列往前推一格；不能拿伤害值或血量来错开，
+    // 那会让结果由伤害量决定而不是独立抽样
+    const rolls = readStack("separatorRoll")
+    gainStateStack(organ as any, "separatorRoll", 1, organ as any)
+
+    const rng = getContextRandom(`rustySeparator:${rolls}`)
     const roll = rng.nextFloatRange(0, 1)
 
-    if (roll < 0.3) {
+    if (roll < chance) {
         damageEffect.params.value = 0
-        newLog([host, "过期隔板：完全抵消伤害"])
-    } else if (roll < 0.5) {
+        gainStateStack(organ as any, "separatorWear", 1, organ as any)
+        newLog([host, `过期隔板：完全抵消伤害（本回合抵消概率降至 ${Math.round(Math.max(0, chance - blockDecay) * 100)}%）`])
+    } else if (roll < chance + breakChance) {
         const currentArmor = getCurrentValue(host as any, "armor")
         if (currentArmor > 0) {
             changeCurrentValue(host as any, "armor", 0, event)
