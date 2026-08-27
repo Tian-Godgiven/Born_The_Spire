@@ -21,6 +21,8 @@ export interface ChoiceConfig {
     customData?: Record<string, any> // 自定义数据
     mutuallyExclusiveWith?: string[]  // 互斥的选项 key 列表（选择此选项后，这些选项将被禁用）
     repeatable?: boolean            // 可反复执行：执行完立刻恢复可选，不占用选择名额、不触发选择组完成
+    // 每次渲染/点击时求值。false 时选项置灰不可点（水池饮用：满血或没物质）
+    ifAble?: () => boolean
 }
 
 /**
@@ -36,6 +38,7 @@ export class Choice {
     public readonly customData?: Record<string, any>
     public readonly mutuallyExclusiveWith?: string[]  // 互斥的选项 key 列表
     public readonly repeatable: boolean
+    public readonly ifAble?: () => boolean
     public state: ChoiceState
     private onSelectCallback?: () => void | Promise<void>
 
@@ -48,6 +51,7 @@ export class Choice {
         this.customData = config.customData
         this.mutuallyExclusiveWith = config.mutuallyExclusiveWith
         this.repeatable = config.repeatable ?? false
+        this.ifAble = config.ifAble
         this.onSelectCallback = config.onSelect
         this.state = "available"
 
@@ -89,7 +93,9 @@ export class Choice {
      * 判断选项是否可选择
      */
     isAvailable(): boolean {
-        return this.state === "available"
+        if (this.state !== "available") return false
+        if (this.ifAble && !this.ifAble()) return false
+        return true
     }
 
     /**
@@ -110,7 +116,8 @@ export class Choice {
      * 判断选项是否被禁用
      */
     isDisabled(): boolean {
-        return this.state === "disabled"
+        if (this.state === "disabled") return true
+        return this.state === "available" && !!this.ifAble && !this.ifAble()
     }
 
     /**

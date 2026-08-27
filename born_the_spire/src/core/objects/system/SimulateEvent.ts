@@ -65,8 +65,8 @@ export async function simulateEffect(
     mockTransaction.simulate = true
     ;(mockEvent as any)._transaction = mockTransaction
 
-    // 创建模拟效果对象
-    const mockEffect = createEffectByUnit(mockEvent, mockEffectUnit)
+    // 和真事件一样：owner 取 medium（卡牌/器官），这样 $owner.status(hits) 才能解析
+    const mockEffect = createEffectByUnit(mockEvent, mockEffectUnit, isEntity(medium) ? medium : undefined)
 
     // 设置 currentExecutingEvent 为 mockEvent
     // 这样触发器 callback 中的 doEvent 能通过 currentExecutingEvent._transaction 找到 mockTransaction

@@ -72,20 +72,14 @@ export class PoolRoom extends Room {
         choices.push(new Choice({
             title: "饮用",
             description: () => {
-                const currentMaterial = getReserveModifier(nowPlayer).getReserve("material")
-                if (currentMaterial <= 0) return "没有物质可以消耗"
-
-                const currentHealth = getCurrentValue(nowPlayer, "health")
-                const maxHealth = (nowPlayer.status["max-health"]?.value ?? 0) as number
-                const actualHeal = Math.min(
-                    Math.floor(currentMaterial / this.drinkRate),
-                    maxHealth - currentHealth
-                )
-                if (actualHeal <= 0) return "生命值已满"
-                return `消耗物质，回复生命（当前物质: ${currentMaterial}，可回复: ${actualHeal}）`
+                const preview = this.previewDrink()
+                if (preview.reason === "noMaterial") return "没有物质可以消耗"
+                if (preview.reason === "fullHealth") return "生命值已满"
+                return `消耗物质，回复生命（当前物质: ${preview.material}，可回复: ${preview.heal}）`
             },
             icon: "💧",
             repeatable: true,
+            ifAble: () => this.previewDrink().heal > 0,
             onSelect: async () => {
                 await this.onDrink()
             }
@@ -105,6 +99,16 @@ export class PoolRoom extends Room {
         }))
 
         return choices
+    }
+
+    private previewDrink(): { material: number, heal: number, reason?: "noMaterial" | "fullHealth" } {
+        const material = getReserveModifier(nowPlayer).getReserve("material")
+        const currentHealth = getCurrentValue(nowPlayer, "health")
+        const maxHealth = (nowPlayer.status["max-health"]?.value ?? 0) as number
+        const missing = maxHealth - currentHealth
+        if (material <= 0) return { material, heal: 0, reason: "noMaterial" }
+        if (missing <= 0) return { material, heal: 0, reason: "fullHealth" }
+        return { material, heal: Math.min(Math.floor(material / this.drinkRate), missing) }
     }
 
     /**

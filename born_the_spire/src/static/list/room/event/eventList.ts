@@ -11,6 +11,8 @@ import { getCardModifier } from "@/core/objects/system/modifier/CardModifier"
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
 import { isOrgan } from "@/core/utils/typeGuards"
 import { showTransplantSelect } from "@/ui/hooks/interaction/transplantSelect"
+import { doEvent } from "@/core/objects/system/ActionEvent"
+import { upgradeCard } from "@/core/effects/card/cardUpgrade"
 import type { Organ } from "@/core/objects/target/Organ"
 import type { Card } from "@/core/objects/item/Subclass/Card"
 
@@ -29,6 +31,84 @@ function pickCollectorTarget(organs: any[]): any {
                 : buckets.uncommon.length ? buckets.uncommon
                 : buckets.common
     return randomChoice(bucket, "collectorPick")
+}
+
+async function lakeOfferCard(data: any): Promise<boolean> {
+    const { showCardChoice } = await import("@/ui/hooks/interaction/cardChoice")
+    const selected = await showCardChoice({
+        title: "投入湖中",
+        description: "选择一张卡牌投入湖中",
+        cards: nowPlayer.getCardGroup(),
+        minSelect: 1,
+        maxSelect: 1,
+        cancelable: false
+    })
+    const card = selected[0]
+    if (!card) return false
+    data.itemType = "card"
+    data.cardKey = card.key
+    data.cardLevel = card.level ?? 0
+    await doEvent({
+        key: "removeCard",
+        source: nowPlayer,
+        medium: card,
+        target: nowPlayer,
+        effectUnits: [{ key: "removeCard", params: { card } }]
+    })
+    return true
+}
+
+async function lakeOfferOrgan(data: any): Promise<boolean> {
+    const organs = getOrganModifier(nowPlayer).getOrgans()
+    if (organs.length === 0) return false
+    const { showOrganChoice } = await import("@/ui/hooks/interaction/organChoice")
+    const result = await showOrganChoice({
+        title: "投入湖中",
+        description: "选择一个器官投入湖中",
+        organKeys: organs.map(o => o.key),
+        minSelect: 1,
+        maxSelect: 1,
+        cancelable: false
+    })
+    const organKey = result.selectedKeys[0]
+    const organ = organs.find(o => o.key === organKey)
+    if (!organ) return false
+    data.itemType = "organ"
+    data.organKey = organ.key
+    data.organLevel = organ.level ?? 1
+    await doEvent({
+        key: "removeOrgan",
+        source: nowPlayer,
+        medium: organ,
+        target: nowPlayer,
+        effectUnits: [{ key: "removeOrgan", params: { organ } }]
+    })
+    return true
+}
+
+async function lakeReturnOffered(data: any, extraUpgrade: boolean) {
+    if (data.itemType === "card" && data.cardKey) {
+        await eventEffectMap.gainCard({ cardKey: data.cardKey })
+        const cards = nowPlayer.getCardGroup().filter((c: Card) => c.key === data.cardKey)
+        const card = cards[cards.length - 1]
+        if (!card) return
+        const targetLevel = (Number(data.cardLevel) || 0) + (extraUpgrade ? 1 : 0)
+        while (card.level < targetLevel) {
+            if (!upgradeCard(card)) break
+        }
+        return
+    }
+    if (data.itemType === "organ" && data.organKey) {
+        await eventEffectMap.gainOrgan({ organKey: data.organKey })
+        const organs = getOrganModifier(nowPlayer).getOrgans()
+        const organ = [...organs].reverse().find(o => o.key === data.organKey)
+        if (!organ) return
+        const targetLevel = (Number(data.organLevel) || 1) + (extraUpgrade ? 1 : 0)
+        const organModifier = getOrganModifier(nowPlayer)
+        while (organ.level < targetLevel) {
+            if (!await organModifier.upgradeOrgan(organ, { skipCost: true })) break
+        }
+    }
 }
 
 /**
@@ -160,29 +240,27 @@ export const eventList: EventMap[] = [
         scenes: [
             {
                 key: "scene1",
-                title: "第一幕：平静的湖面",
+                title: "平静的湖面",
                 description: "一座平静的湖面倒映着天空，湖中央似乎有什么东西在闪烁...",
                 options: [
                     {
                         title: "丢入一张卡牌",
                         description: "将一张卡牌投入湖中",
                         icon: "🃏",
+                        ifAble: "$owner.cardCount() >= 1",
                         nextScene: "scene2",
-                        saveData: async (data) => {
-                            data.itemType = 'card'
-                            data.itemName = '攻击卡'  // 实际应该打开卡牌选择界面
-                            data.itemValue = 10
+                        customCallback: async (data) => {
+                            if (!await lakeOfferCard(data)) return "scene1"
                         }
                     },
                     {
                         title: "丢入一个器官",
                         description: "将一个器官投入湖中",
                         icon: "🫀",
+                        ifAble: "$owner.organCount() >= 1",
                         nextScene: "scene2",
-                        saveData: async (data) => {
-                            data.itemType = 'organ'
-                            data.itemName = '心脏'  // 实际应该打开器官选择界面
-                            data.itemValue = 20
+                        customCallback: async (data) => {
+                            if (!await lakeOfferOrgan(data)) return "scene1"
                         }
                     },
                     {
@@ -195,7 +273,7 @@ export const eventList: EventMap[] = [
             },
             {
                 key: "scene2",
-                title: "第二幕：透明的幻影",
+                title: "透明的幻影",
                 description: "湖面泛起涟漪，一个透明的幻影浮现出来，手中拿着两样东西...",
                 options: [
                     {
@@ -238,37 +316,38 @@ export const eventList: EventMap[] = [
             },
             {
                 key: "scene3_honest",
-                title: "第三幕：诚实的奖励",
+                title: "诚实的奖励",
                 description: "精灵微笑着点了点头：'你很诚实，这是你应得的奖励。'",
                 options: [
                     {
                         title: "接受奖励",
-                        description: "获得升级后的物品和额外奖励",
+                        description: "拿回升级后的物品，并获得 200 物质和 30 生命",
                         icon: "✨",
                         effects: [
                             { key: "gainMaterial", params: { amount: 200 } },
                             { key: "healHealth", params: { amount: 30 } }
                         ],
                         customCallback: async (data) => {
-                            //todo
+                            await lakeReturnOffered(data, true)
                         }
                     }
                 ]
             },
             {
                 key: "scene3_lie",
-                title: "第三幕：说谎的惩罚",
+                title: "说谎的惩罚",
                 description: "精灵的表情变得严肃：'你说谎了，接受惩罚吧。'",
                 options: [
                     {
                         title: "接受惩罚",
-                        description: "获得原物品和一张诅咒",
+                        description: "失去 20 生命，拿回原物品，并获得一张诅咒",
                         icon: "💀",
                         effects: [
-                            { key: "loseHealth", params: { amount: 20 } }
+                            { key: "loseHealth", params: { amount: 20 } },
+                            { key: "gainRandomCard", params: { tags: ["curse"] } }
                         ],
                         customCallback: async (data) => {
-                            //todo
+                            await lakeReturnOffered(data, false)
                         }
                     }
                 ]

@@ -712,7 +712,7 @@ export const cardList:CardMap[] = [{
         cost: 0,
         damage: 3
     },
-    describe: ["造成", {key: ["status", "damage"]}, "×", {$:"充能"}, "层数点伤害，充能归零"],
+    describe: ["造成", {key: ["status", "damage"]}, "×", {$:"充能"}, "层数点伤害，", {$:"充能"}, "归零"],
     key: "enemy_card_discharge",
     interaction: {
         use: {

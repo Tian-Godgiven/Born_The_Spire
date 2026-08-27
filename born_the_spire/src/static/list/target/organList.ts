@@ -889,7 +889,7 @@ export const organList:OrganMap[] = [
 {
     label: "不稳定电池",
     key: "enemy_organ_unstable_battery",
-    describe: ["回合开始获得1点能量", "50%概率热量+1，热量>3时爆炸造成50点伤害"],
+    describe: ["回合开始获得1点能量", "50%概率", {$:"热量"}, "+1，", {$:"热量"}, ">3时对自身造成50点伤害"],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Core,
     status: {

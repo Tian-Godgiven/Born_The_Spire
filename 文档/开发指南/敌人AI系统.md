@@ -272,8 +272,13 @@ Mod 通过 `registerIntentValueSource(intentType, effectKeys)` 扩展或覆盖�
   source 端 Buff（力量、虚弱等）→ 影响输出
   target 端 Buff（易伤、减伤等）→ 影响接收
   护甲吸收 → **不扣减**（意图显示的是"打出多少伤害"，护甲是独立展示的资源）
+  `multiplier` → 乘进单段数值（放电 `value: 3, multiplier: "$source.stateStack(charge)"`，2 层充能显示 6，不是 3）
+  `repeatEffects` → 展开成段数，同值多段显示 `n × m`（群咬 3 点打 2 次显示 `3 × 2`）
+  模拟时 medium 必须是卡牌本身，`$owner.status(hits)` 才能解析
 
 技术实现：`event.simulate = true`，护甲相关触发器在 `simulate` 模式下自动跳过。
+
+自定义 EffectFunc（如 `card_commandStrike`）在数据里看不到 `damage` 单元，意图仍然读不到；能用 `damage` + `multiplier` / `repeatEffects` 表达的不要写成专属效果。
 
 未指定 target 时，用 `intentDummyTarget`（无触发器的空实体）替代，避免触发 target 端机制。
 

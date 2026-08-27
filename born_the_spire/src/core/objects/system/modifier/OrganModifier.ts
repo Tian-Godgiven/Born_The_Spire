@@ -588,9 +588,10 @@ export class OrganModifier extends ItemModifier {
     /**
      * 升级器官
      * @param organ 要升级的器官
+     * @param options.skipCost 事件奖励等场合免费升级，不扣物质/生命
      * @returns 是否成功升级
      */
-    async upgradeOrgan(organ: Organ): Promise<boolean> {
+    async upgradeOrgan(organ: Organ, options?: { skipCost?: boolean }): Promise<boolean> {
         // 检查是否拥有该器官
         if (!this.units.some(u => u.item === (organ as unknown as Item))) {
             newLog([this.owner, "未拥有器官", organ])
@@ -610,6 +611,7 @@ export class OrganModifier extends ItemModifier {
             return false
         }
 
+        if (!options?.skipCost) {
         // 计算升级成本
         let upgradeCost: number
 
@@ -660,6 +662,7 @@ export class OrganModifier extends ItemModifier {
                     }
                 }]
             })
+        }
         }
 
         // 提升器官等级

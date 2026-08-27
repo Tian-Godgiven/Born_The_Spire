@@ -15,6 +15,7 @@
  *   hasTag(key)     → 实体（通常是卡牌）的 tags 中是否含指定 tag
  *   pileCount(pile) → 牌堆卡牌数量（hand/draw/discard/exhaust）
  *   organCount()           → 已装器官数量
+ *   cardCount()            → 牌组卡牌数量（非战斗牌堆）
  *   organsWithCardsCount() → 已装器官中挂了卡的数量
  */
 
@@ -64,7 +65,7 @@ function callAccessorFunction(funcName: string, arg: string, entity: Entity): Ac
     if (!fn) {
         throw new Error(
             `[EntityAccessor] 未知的访问器: "${funcName}"。` +
-            `内置访问器: status, current, hasStatus, hasState, hasOrgan, hasRelic, hasCard, hasTag, state, stateStack, pileCount, reserve, itemType, isTemporary, stateCategory, organCount, organsWithCardsCount`
+            `内置访问器: status, current, hasStatus, hasState, hasOrgan, hasRelic, hasCard, hasTag, state, stateStack, pileCount, reserve, itemType, isTemporary, stateCategory, organCount, cardCount, organsWithCardsCount`
         )
     }
     return fn(arg, entity)
@@ -98,6 +99,7 @@ const builtinAccessors = new Map<string, AccessorFunction>([
         return data?.category ?? ""
     }],
     ["organCount",           (_arg, entity) => organCount(entity)],
+    ["cardCount",            (_arg, entity) => cardCount(entity)],
     ["organsWithCardsCount", (_arg, entity) => organsWithCardsCount(entity)],
 ])
 
@@ -214,6 +216,13 @@ function reserve(key: string, entity: Entity): number {
 function organCount(entity: Entity): number {
     const organs = (entity as any).organs
     return Array.isArray(organs) ? organs.length : 0
+}
+
+function cardCount(entity: Entity): number {
+    const getCardGroup = (entity as any).getCardGroup
+    if (typeof getCardGroup !== "function") return 0
+    const cards = getCardGroup.call(entity)
+    return Array.isArray(cards) ? cards.length : 0
 }
 
 /**

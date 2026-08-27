@@ -1,6 +1,7 @@
 import { Card } from "@/core/objects/item/Subclass/Card"
 import { simulateEffect } from "./SimulateEvent"
 import { Entity } from "./Entity"
+import type { EffectUnit } from "./effect/EffectUnit"
 import type { EventParticipant } from "@/core/types/event/EventParticipant"
 import { nanoid } from "nanoid"
 
@@ -165,6 +166,7 @@ function inferIntentFromTags(card: Card): IntentType {
  * 意图类型优先使用 BehaviorPattern 声明的 intentType，
  * 未声明时从卡牌 tag 推导。
  * 意图数值从卡牌效果的 params.value 读取，通过事件模拟系统计算 Buff 影响。
+ * multiplier 会乘进单段数值（放电 3×充能层）；repeatEffects 会展开成段数（群咬 3×2）。
  *
  * @param cards 要执行的卡牌列表
  * @param owner 卡牌持有者（用于计算 Buff 影响）
@@ -192,33 +194,43 @@ export async function cardsToIntent(
     let intentCount: number | undefined = undefined
 
     if (effectKeys && effectKeys.length > 0) {
-        let totalValue = 0
-        let hitCount = 0
+        const hits: number[] = []
+        const simTarget = target ?? intentDummyTarget
 
-        for (const card of cards) {
-            const useInteraction = card.getInteraction("use")
-            if (!useInteraction || !useInteraction.effects) continue
-
-            for (const effect of useInteraction.effects) {
-                if (effectKeys.includes(effect.key) && effect.params?.value != null) {
-                    const baseValue = Number(effect.params.value)
-                    // 模拟 Buff 影响（力量、虚弱、易伤等）
-                    // 有 target 时用真实目标（触发易伤/减伤），无 target 时用虚拟实体
-                    // 护甲等机制在模拟模式下自动跳过（检查 event.simulate）
-                    const simulated = await simulateEffect(
-                        { key: effect.key, params: { value: baseValue } },
-                        owner, owner, target ?? intentDummyTarget
-                    )
-                    totalValue += Number(simulated.params.value)
-                    hitCount++
+        const collectHits = async (units: EffectUnit[] | undefined, card: Card, repeats: number) => {
+            if (!units || repeats <= 0) return
+            for (const unit of units) {
+                if (unit.key === "repeatEffects") {
+                    const resolved = await simulateEffect(unit, owner, card, simTarget)
+                    const times = Number(resolved.params.times)
+                    const inner = resolved.params.effects
+                    if (!Number.isFinite(times) || times <= 0 || !Array.isArray(inner)) continue
+                    await collectHits(inner as EffectUnit[], card, repeats * times)
+                    continue
                 }
+                if (!effectKeys.includes(unit.key) || unit.params?.value == null) continue
+                const simulated = await simulateEffect(unit, owner, card, simTarget)
+                const base = Number(simulated.params.value)
+                const rawMul = simulated.params.multiplier
+                const mul = rawMul === undefined ? 1 : Number(rawMul)
+                const perHit = base * (Number.isFinite(mul) ? mul : 1)
+                if (!Number.isFinite(perHit)) continue
+                for (let i = 0; i < repeats; i++) hits.push(perHit)
             }
         }
 
-        if (hitCount > 0) {
-            intentValue = totalValue
-            if (hitCount > 1) {
-                intentCount = hitCount
+        for (const card of cards) {
+            await collectHits(card.getInteraction("use")?.effects, card, 1)
+        }
+
+        if (hits.length > 0) {
+            const first = hits[0]
+            const allSame = hits.every(value => value === first)
+            if (allSame) {
+                intentValue = first
+                if (hits.length > 1) intentCount = hits.length
+            } else {
+                intentValue = hits.reduce((sum, value) => sum + value, 0)
             }
         }
     }

@@ -238,12 +238,12 @@ export const stateList: StateData[] = [
         showType: "number",
         repeate: "stack",
     },
-    // 充能：由不稳定充能卡随机积累，放电卡消耗全部层数并按倍数造成伤害
+    // 充能：通用层数资源。谁消耗、怎么结算，写在那张卡自己的 describe 里
     {
         label: "充能",
         key: "charge",
         category: "buff",
-        describe: ["放电时消耗全部层数，伤害×层数"],
+        describe: ["填充能量，可被其他效果消耗"],
         showType: "number",
         repeate: "stack",
     },

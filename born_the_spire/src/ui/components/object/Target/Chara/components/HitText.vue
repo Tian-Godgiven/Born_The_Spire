@@ -70,16 +70,18 @@
     }
 
     // ========== 数值采样 ==========
-    // 不读 effect.params.value，而是对 health / armor 取前后快照做差：
-    // 这样减伤、护甲吸收、生命上限截断全都自动算进去，显示的永远是真正发生的变化量。
-    const snapshots = new WeakMap<Effect, { health: number, armor: number }>()
+    // 结算量用 health / armor 前后快照做差，不读 after 时的 params.value：
+    // 减伤、护甲吸收、生命上限截断都会让参数和实际对不上。
+    // incoming 是 before 里当时的 params.value：完全抵消时血甲都不变，只能靠它判断「本来有伤害」。
+    const snapshots = new WeakMap<Effect, { health: number, armor: number, incoming: number }>()
 
     function takeSnapshot(effect: Effect | null) {
         // effect 为 null 说明这是事件级触发（event.key 命中），效果级那次才是我们要的
         if (!effect) return
         snapshots.set(effect, {
             health: getCurrentValue(props.target, "health", 0),
-            armor: getCurrentValue(props.target, "armor", 0)
+            armor: getCurrentValue(props.target, "armor", 0),
+            incoming: Number(effect.params.value) || 0
         })
     }
 
@@ -120,6 +122,7 @@
 
                 if (absorbed > 0) pushText(`格挡-${absorbed}`, 'block', event)
                 if (lost > 0) pushText(`-${lost}`, 'damage', event)
+                else if (absorbed === 0 && before.incoming > 0) pushText('抵消', 'block', event)
             }
         }).remove)
 
