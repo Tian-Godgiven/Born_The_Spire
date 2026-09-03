@@ -198,10 +198,11 @@ export const previewValue = (_event: any, effect: any): number => {
 export const previewModifyValue = (targetEffectKey: string) =>
     (event: any, effect: any): number | null => {
         const delta = Number(effect.params.delta)
+        const multiplier = effect.params.multiplier !== undefined ? Number(effect.params.multiplier) : 1
         const targetEffect = event.effects[0]
         if (targetEffect && targetEffect.key === targetEffectKey) {
             const oldValue = Number(targetEffect.params.value)
-            const newValue = Math.max(0, oldValue + delta)
+            const newValue = Math.max(0, oldValue + delta * multiplier)
             targetEffect.params.value = newValue
             return newValue
         }

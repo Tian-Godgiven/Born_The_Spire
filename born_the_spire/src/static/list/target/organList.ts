@@ -388,14 +388,41 @@ export const organList:OrganMap[] = [
 {
     label:"腐蚀腺",
     key:"organ_series_weaken_002",
-    describe:["提供1张",{"@": 0},"到牌组","对拥有虚弱的敌人造成伤害时，额外造成等同于虚弱层数的伤害"],
+    describe:[
+        "提供1张",{"@": 0},"到牌组",
+        "对拥有虚弱的敌人造成伤害时，每层虚弱额外造成",{key:["status","weak-bonus"]},"点伤害"
+    ],
     rarity: OrganRarity.Uncommon,
     part: OrganPartEnum.Gland,
     status: {
-        "max-mass": 30
+        "max-mass": 30,
+        "weak-bonus": 1
     },
     current: ["mass"],
     cards:["organ_card_erode"],
+    upgrade: {
+        maxLevel: 4,
+        milestones: [
+            {
+                level: 2,
+                describe: ["升级侵蚀"],
+                effects: [{ key: "upgradeOrganCards" }]
+            },
+            {
+                level: 3,
+                describe: ["无"]
+            },
+            {
+                level: 4,
+                describe: ["每层额外伤害改为 2"],
+                effects: [{
+                    key: "setBaseStatus",
+                    params: { statusKey: "weak-bonus", value: 2 },
+                    target: "eventMedium"
+                }]
+            }
+        ]
+    },
     interaction:{
         possess:{
             target:{"key":"self"},
@@ -415,7 +442,10 @@ export const organList:OrganMap[] = [
             targetType:"triggerEffect",
             effect:[{
                 key:"modifyDamageValue",
-                params:{ delta:"$triggerEffect.target.stateStack(weak)" }
+                params:{
+                    delta:"$triggerEffect.target.stateStack(weak)",
+                    multiplier:"$owner.status(weak-bonus)"
+                }
             }]
         }]
     }
@@ -425,13 +455,32 @@ export const organList:OrganMap[] = [
 {
     label: "蓄力腺",
     key: "enemy_organ_ant_charge_gland",
-    describe: ["回合结束时获得1层蓄势"],
+    describe: ["回合结束时获得", { key: ["status", "momentum-gain"] }, "层蓄势"],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Gland,
     status: {
-        "max-mass": 15
+        "max-mass": 15,
+        "momentum-gain": 1
     },
     current: ["mass"],
+    upgrade: {
+        maxLevel: 3,
+        milestones: [
+            {
+                level: 2,
+                describe: ["无"]
+            },
+            {
+                level: 3,
+                describe: ["改为获得 2 层蓄势"],
+                effects: [{
+                    key: "setBaseStatus",
+                    params: { statusKey: "momentum-gain", value: 2 },
+                    target: "eventMedium"
+                }]
+            }
+        ]
+    },
     interaction: {
         work: {
             target: { key: "self" },
@@ -451,7 +500,7 @@ export const organList:OrganMap[] = [
             targetType: "triggerOwner",
             effect: [{
                 key: "applyState",
-                params: { stateKey: "momentum", stacks: 1 }
+                params: { stateKey: "momentum", stacks: "$owner.status(momentum-gain)" }
             }]
         }]
     }
@@ -460,13 +509,37 @@ export const organList:OrganMap[] = [
 {
     label: "节甲",
     key: "enemy_organ_ant_carapace",
-    describe: ["回合开始时获得3点护甲"],
+    describe: ["回合开始时获得", { key: ["status", "armor-gain"] }, "点护甲"],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Skin,
     status: {
-        "max-mass": 30
+        "max-mass": 30,
+        "armor-gain": 3
     },
     current: ["mass"],
+    upgrade: {
+        maxLevel: 3,
+        milestones: [
+            {
+                level: 2,
+                describe: ["改为获得 4 点护甲"],
+                effects: [{
+                    key: "setBaseStatus",
+                    params: { statusKey: "armor-gain", value: 4 },
+                    target: "eventMedium"
+                }]
+            },
+            {
+                level: 3,
+                describe: ["改为获得 5 点护甲"],
+                effects: [{
+                    key: "setBaseStatus",
+                    params: { statusKey: "armor-gain", value: 5 },
+                    target: "eventMedium"
+                }]
+            }
+        ]
+    },
     interaction: {
         work: {
             target: { key: "self" },
@@ -486,7 +559,7 @@ export const organList:OrganMap[] = [
             targetType: "triggerOwner",
             effect: [{
                 key: "gainArmor",
-                params: { value: 3 }
+                params: { value: "$owner.status(armor-gain)" }
             }]
         }]
     }
@@ -495,24 +568,47 @@ export const organList:OrganMap[] = [
 {
     label: "孢子囊",
     key: "enemy_organ_spore_sac",
-    describe: ["提供1张", {"@": 0}, "卡牌", "损坏时对所有敌人施加3层中毒"],
+    describe: [
+        "提供1张", {"@": 0}, "卡牌",
+        "损坏时对所有敌人施加", { key: ["status", "break-poison"] }, "层中毒"
+    ],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Gland,
     status: {
-        "max-mass": 20
+        "max-mass": 20,
+        "break-poison": 3
     },
     current: ["mass"],
     cards: ["enemy_card_toxic_spore"],
+    upgrade: {
+        maxLevel: 3,
+        milestones: [
+            {
+                level: 2,
+                describe: ["升级毒孢"],
+                effects: [{ key: "upgradeOrganCards" }]
+            },
+            {
+                level: 3,
+                describe: ["损坏时中毒改为 5 层"],
+                effects: [{
+                    key: "setBaseStatus",
+                    params: { statusKey: "break-poison", value: 5 },
+                    target: "eventMedium"
+                }]
+            }
+        ]
+    },
     interaction: {
         possess: {
             target: { key: "self" },
             effects: []
         },
         break: {
-            target: { faction: "player", number: "all" },
+            target: { faction: "opponent", number: "all" },
             effects: [{
                 key: "applyState",
-                params: { stateKey: "poison", stacks: 3 }
+                params: { stateKey: "poison", stacks: "$owner.status(break-poison)" }
             }]
         }
     }
@@ -521,13 +617,26 @@ export const organList:OrganMap[] = [
 {
     label: "菌盖",
     key: "enemy_organ_fungal_cap",
-    describe: ["回合开始时获得3点护甲"],
+    describe: [
+        "提供1张", {"@": 0}, "卡牌",
+        "回合开始时获得", { key: ["status", "armor-gain"] }, "点护甲"
+    ],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Skin,
     status: {
-        "max-mass": 25
+        "max-mass": 25,
+        "armor-gain": 3
     },
     current: ["mass"],
+    cards: ["enemy_card_harden"],
+    upgrade: {
+        maxLevel: 2,
+        milestones: [{
+            level: 2,
+            describe: ["升级硬化"],
+            effects: [{ key: "upgradeOrganCards" }]
+        }]
+    },
     interaction: {
         work: {
             target: { key: "self" },
@@ -547,7 +656,7 @@ export const organList:OrganMap[] = [
             targetType: "triggerOwner",
             effect: [{
                 key: "gainArmor",
-                params: { value: 3 }
+                params: { value: "$owner.status(armor-gain)" }
             }]
         }]
     }
@@ -564,6 +673,14 @@ export const organList:OrganMap[] = [
     },
     current: ["mass"],
     cards: ["original_card_00011"],
+    upgrade: {
+        maxLevel: 2,
+        milestones: [{
+            level: 2,
+            describe: ["升级易伤打击"],
+            effects: [{ key: "upgradeOrganCards" }]
+        }]
+    },
     interaction: {
         possess: {
             target: { key: "self" },
@@ -575,13 +692,36 @@ export const organList:OrganMap[] = [
 {
     label: "毒皮",
     key: "enemy_organ_poison_skin",
-    describe: ["受到伤害时对伤害来源施加2层中毒"],
+    describe: ["受到伤害时对伤害来源施加", { key: ["status", "poison-reflect"] }, "层中毒"],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Skin,
     status: {
-        "max-mass": 20
+        "max-mass": 20,
+        "poison-reflect": 2
     },
     current: ["mass"],
+    upgrade: {
+        maxLevel: 4,
+        milestones: [
+            {
+                level: 2,
+                describe: ["无"]
+            },
+            {
+                level: 3,
+                describe: ["改为施加 3 层中毒"],
+                effects: [{
+                    key: "setBaseStatus",
+                    params: { statusKey: "poison-reflect", value: 3 },
+                    target: "eventMedium"
+                }]
+            },
+            {
+                level: 4,
+                describe: ["无"]
+            }
+        ]
+    },
     interaction: {
         work: {
             target: { key: "self" },
@@ -601,7 +741,7 @@ export const organList:OrganMap[] = [
             targetType: "eventSource",
             effect: [{
                 key: "applyState",
-                params: { stateKey: "poison", stacks: 2 }
+                params: { stateKey: "poison", stacks: "$owner.status(poison-reflect)" }
             }]
         }]
     }
@@ -618,6 +758,14 @@ export const organList:OrganMap[] = [
     },
     current: ["mass"],
     cards: ["enemy_card_blood_bite"],
+    upgrade: {
+        maxLevel: 2,
+        milestones: [{
+            level: 2,
+            describe: ["升级叮咬"],
+            effects: [{ key: "upgradeOrganCards" }]
+        }]
+    },
     interaction: {
         possess: {
             target: { key: "self" },
@@ -629,7 +777,7 @@ export const organList:OrganMap[] = [
 {
     label: "薄翅",
     key: "enemy_organ_thin_wings",
-    describe: ["战斗开始时获得3层飞行"],
+    describe: ["战斗开始时获得", { key: ["status", "flightStacks"] }, "层飞行"],
     rarity: OrganRarity.Uncommon,
     part: OrganPartEnum.Skin,
     status: {
@@ -637,8 +785,26 @@ export const organList:OrganMap[] = [
         "flightStacks": 3
     },
     current: ["mass"],
+    upgrade: {
+        maxLevel: 3,
+        milestones: [
+            {
+                level: 2,
+                describe: ["无"]
+            },
+            {
+                level: 3,
+                describe: ["改为获得 4 层飞行"],
+                effects: [{
+                    key: "setBaseStatus",
+                    params: { statusKey: "flightStacks", value: 4 },
+                    target: "eventMedium"
+                }]
+            }
+        ]
+    },
     interaction: {
-        possess: {
+        work: {
             target: { key: "self" },
             effects: [],
             triggers: [{
@@ -654,7 +820,7 @@ export const organList:OrganMap[] = [
             key: "openingFlight",
             label: "薄翅：开局飞行",
             targetType: "triggerOwner",
-            effect: [{ key: "applyState", params: { stateKey: "flight", stacks: "$item.status(flightStacks)" } }]
+            effect: [{ key: "applyState", params: { stateKey: "flight", stacks: "$owner.status(flightStacks)" } }]
         }]
     }
 },
@@ -662,13 +828,32 @@ export const organList:OrganMap[] = [
 {
     label: "毒腺",
     key: "enemy_organ_poison_gland",
-    describe: ["回合开始时对所有对手施加1层中毒"],
+    describe: ["回合开始时对所有对手施加", { key: ["status", "poison-gain"] }, "层中毒"],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Gland,
     status: {
-        "max-mass": 15
+        "max-mass": 15,
+        "poison-gain": 1
     },
     current: ["mass"],
+    upgrade: {
+        maxLevel: 3,
+        milestones: [
+            {
+                level: 2,
+                describe: ["无"]
+            },
+            {
+                level: 3,
+                describe: ["改为施加 2 层中毒"],
+                effects: [{
+                    key: "setBaseStatus",
+                    params: { statusKey: "poison-gain", value: 2 },
+                    target: "eventMedium"
+                }]
+            }
+        ]
+    },
     interaction: {
         work: {
             target: { key: "self" },
@@ -688,7 +873,7 @@ export const organList:OrganMap[] = [
             targetType: "allOpponents",
             effect: [{
                 key: "applyState",
-                params: { stateKey: "poison", stacks: 1 }
+                params: { stateKey: "poison", stacks: "$owner.status(poison-gain)" }
             }]
         }]
     }
@@ -705,6 +890,14 @@ export const organList:OrganMap[] = [
     },
     current: ["mass"],
     cards: ["enemy_card_acid_bite"],
+    upgrade: {
+        maxLevel: 2,
+        milestones: [{
+            level: 2,
+            describe: ["升级蚀咬"],
+            effects: [{ key: "upgradeOrganCards" }]
+        }]
+    },
     interaction: {
         possess: {
             target: { key: "self" },
@@ -724,10 +917,30 @@ export const organList:OrganMap[] = [
     },
     current: ["mass"],
     cards: ["enemy_card_heavy_strike"],
+    upgrade: {
+        maxLevel: 3,
+        milestones: [
+            {
+                level: 2,
+                describe: ["升级重击"],
+                effects: [{ key: "upgradeOrganCards" }]
+            },
+            {
+                level: 3,
+                describe: ["生效时力量 +2"]
+            }
+        ]
+    },
     interaction: {
         possess: {
             target: { key: "self" },
             effects: []
+        },
+        work: {
+            target: { key: "self" },
+            grantStates: [
+                { stateKey: "power", stacks: 2, fromLevel: 3 }
+            ]
         }
     }
 },
@@ -781,14 +994,36 @@ export const organList:OrganMap[] = [
 {
     label: "急救电池",
     key: "enemy_organ_emergency_battery",
-    describe: ["生命低于30%时自动回血20，限用2次"],
+    describe: [
+        "生命低于30%时自动回血", { key: ["status", "heal-amount"] }, "点",
+        "，限用", { key: ["status", "charges"] }, "次"
+    ],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Core,
     status: {
         "max-mass": 20,
-        "charges": 2
+        "charges": 2,
+        "heal-amount": 20
     },
     current: ["mass"],
+    upgrade: {
+        maxLevel: 3,
+        milestones: [
+            {
+                level: 2,
+                describe: ["无"]
+            },
+            {
+                level: 3,
+                describe: ["回血改为 35"],
+                effects: [{
+                    key: "setBaseStatus",
+                    params: { statusKey: "heal-amount", value: 35 },
+                    target: "eventMedium"
+                }]
+            }
+        ]
+    },
     interaction: {
         work: {
             target: { key: "self" },
@@ -808,7 +1043,7 @@ export const organList:OrganMap[] = [
             targetType: "triggerOwner",
             effect: [{
                 key: "organ_emergencyBattery",
-                params: { threshold: 0.3, value: 20 }
+                params: { threshold: 0.3, value: "$owner.status(heal-amount)" }
             }]
         }]
     }
@@ -825,6 +1060,14 @@ export const organList:OrganMap[] = [
     },
     current: ["mass"],
     cards: ["enemy_card_repair"],
+    upgrade: {
+        maxLevel: 2,
+        milestones: [{
+            level: 2,
+            describe: ["升级修复"],
+            effects: [{ key: "upgradeOrganCards" }]
+        }]
+    },
     interaction: {
         possess: {
             target: { key: "self" },
@@ -935,12 +1178,41 @@ export const organList:OrganMap[] = [
 {
     label: "信息素腺体",
     key: "enemy_organ_pheromone_gland",
-    describe: ["提供1张", {"@": 0}, "卡牌", "每回合给所有友军+1指挥层"],
+    describe: [
+        "提供1张", {"@": 0}, "卡牌",
+        "每回合给所有友军+", { key: ["status", "command-gain"] }, "指挥层"
+    ],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Gland,
-    status: { "max-mass": 30 },
+    status: {
+        "max-mass": 30,
+        "command-gain": 1
+    },
     current: ["mass"],
     cards: ["enemy_card_command_strike"],
+    upgrade: {
+        maxLevel: 4,
+        milestones: [
+            {
+                level: 2,
+                describe: ["升级指挥连击"],
+                effects: [{ key: "upgradeOrganCards" }]
+            },
+            {
+                level: 3,
+                describe: ["无"]
+            },
+            {
+                level: 4,
+                describe: ["每回合改为 +2 指挥"],
+                effects: [{
+                    key: "setBaseStatus",
+                    params: { statusKey: "command-gain", value: 2 },
+                    target: "eventMedium"
+                }]
+            }
+        ]
+    },
     interaction: {
         work: {
             target: { key: "self" },
@@ -958,7 +1230,10 @@ export const organList:OrganMap[] = [
             key: "pheromoneSpread",
             label: "信息素腺体：扩散指挥",
             targetType: "triggerOwner",
-            effect: [{ key: "organ_pheromoneGland", params: { stacks: 1 } }]
+            effect: [{
+                key: "organ_pheromoneGland",
+                params: { stacks: "$owner.status(command-gain)" }
+            }]
         }]
     }
 },
@@ -1021,13 +1296,87 @@ export const organList:OrganMap[] = [
     describe: ["护甲不在回合开始时消失"],
     rarity: OrganRarity.Uncommon,
     part: OrganPartEnum.Skin,
-    status: { "max-mass": 40 },
+    status: {
+        "max-mass": 40,
+        "armor-gain": 0,
+        "opening-armor": 0
+    },
     current: ["mass"],
+    upgrade: {
+        maxLevel: 4,
+        milestones: [
+            {
+                level: 2,
+                describe: ["回合开始获得 1 点护甲"],
+                effects: [{
+                    key: "setBaseStatus",
+                    params: { statusKey: "armor-gain", value: 1 },
+                    target: "eventMedium"
+                }]
+            },
+            {
+                level: 3,
+                describe: ["回合开始改为 3 点护甲"],
+                effects: [{
+                    key: "setBaseStatus",
+                    params: { statusKey: "armor-gain", value: 3 },
+                    target: "eventMedium"
+                }]
+            },
+            {
+                level: 4,
+                describe: ["战斗开始获得 10 点护甲"],
+                effects: [{
+                    key: "setBaseStatus",
+                    params: { statusKey: "opening-armor", value: 10 },
+                    target: "eventMedium"
+                }]
+            }
+        ]
+    },
     interaction: {
-        possess: {
+        work: {
             target: { key: "self" },
-            effects: [{ key: "applyState", params: { stateKey: "barricade", stacks: 1 } }]
+            grantStates: [
+                { stateKey: "barricade", stacks: 1 }
+            ],
+            triggers: [
+                {
+                    when: "after",
+                    how: "make",
+                    key: "turnStart",
+                    action: "gainArmorOnTurnStart",
+                    condition: "$item.status(armor-gain) > 0"
+                },
+                {
+                    when: "after",
+                    how: "make",
+                    key: "battleStart",
+                    action: "openingArmor",
+                    condition: "$item.status(opening-armor) > 0"
+                }
+            ]
         }
+    },
+    reaction: {
+        gainArmorOnTurnStart: [{
+            key: "gainArmor",
+            label: "壁垒甲壳：回合开始护甲",
+            targetType: "triggerOwner",
+            effect: [{
+                key: "gainArmor",
+                params: { value: "$owner.status(armor-gain)" }
+            }]
+        }],
+        openingArmor: [{
+            key: "gainArmor",
+            label: "壁垒甲壳：开局护甲",
+            targetType: "triggerOwner",
+            effect: [{
+                key: "gainArmor",
+                params: { value: "$owner.status(opening-armor)" }
+            }]
+        }]
     }
 },
 
@@ -1041,10 +1390,26 @@ export const organList:OrganMap[] = [
     status: { "max-mass": 40 },
     current: ["mass"],
     cards: ["enemy_card_armor_bash"],
+    upgrade: {
+        maxLevel: 3,
+        milestones: [
+            {
+                level: 2,
+                describe: ["无"]
+            },
+            {
+                level: 3,
+                describe: ["升级护甲冲撞"],
+                effects: [{ key: "upgradeOrganCards" }]
+            }
+        ]
+    },
     interaction: {
-        possess: {
+        work: {
             target: { key: "self" },
-            effects: [{ key: "applyState", params: { stateKey: "metallicize", stacks: 3 } }]
+            grantStates: [
+                { stateKey: "metallicize", stacks: 3 }
+            ]
         }
     }
 },
@@ -1056,14 +1421,54 @@ export const organList:OrganMap[] = [
     describe: ["提供1张", {"@": 0}, "卡牌"],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Core,
-    status: { "max-mass": 30 },
+    status: {
+        "max-mass": 30,
+        "armor-gain": 0
+    },
     current: ["mass"],
     cards: ["enemy_card_steel_wall"],
+    upgrade: {
+        maxLevel: 3,
+        milestones: [
+            {
+                level: 2,
+                describe: ["升级铁壁"],
+                effects: [{ key: "upgradeOrganCards" }]
+            },
+            {
+                level: 3,
+                describe: ["回合开始获得 3 点护甲"],
+                effects: [{
+                    key: "setBaseStatus",
+                    params: { statusKey: "armor-gain", value: 3 },
+                    target: "eventMedium"
+                }]
+            }
+        ]
+    },
     interaction: {
-        possess: {
+        work: {
             target: { key: "self" },
-            effects: []
+            effects: [],
+            triggers: [{
+                when: "after",
+                how: "make",
+                key: "turnStart",
+                action: "gainArmorOnTurnStart",
+                condition: "$item.status(armor-gain) > 0"
+            }]
         }
+    },
+    reaction: {
+        gainArmorOnTurnStart: [{
+            key: "gainArmor",
+            label: "防御模块：回合开始护甲",
+            targetType: "triggerOwner",
+            effect: [{
+                key: "gainArmor",
+                params: { value: "$owner.status(armor-gain)" }
+            }]
+        }]
     }
 },
 
@@ -1071,15 +1476,31 @@ export const organList:OrganMap[] = [
 {
     label: "柔韧甲片",
     key: "enemy_organ_malleable_plating",
-    describe: ["受到攻击时获得3护甲"],
+    describe: ["受到攻击时获得等同柔韧层数的护甲"],
     rarity: OrganRarity.Uncommon,
     part: OrganPartEnum.Skin,
     status: { "max-mass": 35 },
     current: ["mass"],
+    upgrade: {
+        maxLevel: 3,
+        milestones: [
+            {
+                level: 2,
+                describe: ["无"]
+            },
+            {
+                level: 3,
+                describe: ["柔韧改为 4 层"]
+            }
+        ]
+    },
     interaction: {
-        possess: {
+        work: {
             target: { key: "self" },
-            effects: [{ key: "applyState", params: { stateKey: "malleable", stacks: 3 } }]
+            grantStates: [
+                { stateKey: "malleable", stacks: 3 },
+                { stateKey: "malleable", stacks: 1, fromLevel: 3 }
+            ]
         }
     }
 },

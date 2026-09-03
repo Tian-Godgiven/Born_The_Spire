@@ -151,8 +151,14 @@ export const organ_pheromoneGland: EffectFunc = (event, effect) => {
     const battle = nowBattle.value
     if (!battle) return false
 
+    const holder = Array.isArray(event.target) ? event.target[0] : event.target
+    if (!isEntity(holder)) return false
+
     const stacks = Number(effect.params?.stacks ?? 1)
-    for (const ally of battle.getAliveEnemies()) {
+    const allies = isEnemy(holder)
+        ? battle.getAliveEnemies()
+        : (battle.getAlivePlayers() || [])
+    for (const ally of allies) {
         gainStateStack(ally, "command", stacks, event.medium as any)
     }
     newLog([`信息素扩散：所有友军 +${stacks} 指挥层`])
@@ -296,17 +302,25 @@ export const organ_toxicPulse: EffectFunc = (event, effect) => {
 }
 
 /**
- * 护甲冲撞：消耗施法者当前所有护甲，对目标造成等量伤害
+ * 护甲冲撞：对目标造成等同于当前护甲的伤害，再按比例消耗护甲
+ *
+ * params:
+ *   consumePercent: number - 消耗当前护甲的百分比，缺省 100（全消耗）
  */
-export const organ_armorBash: EffectFunc = (event, _effect) => {
+export const organ_armorBash: EffectFunc = (event, effect) => {
     const source = event.source
     if (!isEntity(source)) return false
 
     const armorAmount = getCurrentValue(source as any, "armor")
     if (armorAmount <= 0) return false
 
-    changeCurrentValue(source as any, "armor", 0, event)
-    newLog([source, `消耗 ${armorAmount} 护甲发动护甲冲撞`])
+    const consumePercent = effect.params.consumePercent !== undefined
+        ? Number(effect.params.consumePercent)
+        : 100
+    const consumed = Math.min(armorAmount, Math.floor(armorAmount * consumePercent / 100))
+    const remaining = armorAmount - consumed
+    changeCurrentValue(source as any, "armor", remaining, event)
+    newLog([source, `消耗 ${consumed} 护甲发动护甲冲撞（剩余 ${remaining}）`])
 
     doEvent({
         key: "damage",

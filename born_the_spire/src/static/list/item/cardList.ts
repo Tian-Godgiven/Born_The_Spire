@@ -192,11 +192,17 @@ export const cardList:CardMap[] = [{
             target:{faction:"enemy"},
             effects:[{
                 key:"damage",
-                params:{value:8},
+                params:{value:"$medium.status(damage)"},
             },{
                 key:"applyState",
-                params:{stateKey:"vulnerable",stacks:2},
+                params:{stateKey:"vulnerable",stacks:"$medium.status(vulnerable)"},
             }]
+        }
+    },
+    upgradeConfig:{
+        maxLevel:1,
+        levelConfigs:{
+            1:{ status:{ damage:10, vulnerable:3 } }
         }
     }
 },{
@@ -530,8 +536,14 @@ export const cardList:CardMap[] = [{
             target:{faction:"enemy"},
             effects:[{
                 key:"applyState",
-                params:{stateKey:"weak", stacks:2}
+                params:{stateKey:"weak", stacks:"$medium.status(stacks)"}
             }]
+        }
+    },
+    upgradeConfig:{
+        maxLevel:1,
+        levelConfigs:{
+            1:{ status:{ stacks:3 } }
         }
     }
 },
@@ -573,8 +585,14 @@ export const cardList:CardMap[] = [{
         use: {
             target: {faction: "opponent"},
             effects: [
-                { key: "applyState", params: { stateKey: "acidWound", stacks: 3 } }
+                { key: "applyState", params: { stateKey: "acidWound", stacks: "$medium.status(stacks)" } }
             ]
+        }
+    },
+    upgradeConfig: {
+        maxLevel: 1,
+        levelConfigs: {
+            1: { status: { stacks: 4 } }
         }
     }
 },
@@ -605,6 +623,12 @@ export const cardList:CardMap[] = [{
                 { key: "applyState", params: { stateKey: "weak", stacks: "$owner.status(weakStacks)" } }
             ]
         }
+    },
+    upgradeConfig: {
+        maxLevel: 1,
+        levelConfigs: {
+            1: { status: { heal: 3, weakStacks: 2 } }
+        }
     }
 },
 
@@ -630,21 +654,28 @@ export const cardList:CardMap[] = [{
     }
 },
 
-// 毒孢：孢子菌的孢子囊，对所有角色施加1层中毒（包括自身）
+// 毒孢：孢子菌的孢子囊，对所有角色施加中毒（包括自身）
 {
     label: "毒孢",
     tags: ["skill", "enemy"],
     status: {
+        stacks: 1,
         cost: 1
     },
-    describe: ["对所有角色施加1层", {$:"中毒"}],
+    describe: ["对所有角色施加", {key: ["status", "stacks"]}, "层", {$:"中毒"}],
     key: "enemy_card_toxic_spore",
     interaction: {
         use: {
             target: {faction: "all"},
             effects: [
-                { key: "applyState", params: { stateKey: "poison", stacks: 1 } }
+                { key: "applyState", params: { stateKey: "poison", stacks: "$medium.status(stacks)" } }
             ]
+        }
+    },
+    upgradeConfig: {
+        maxLevel: 1,
+        levelConfigs: {
+            1: { status: { stacks: 2 } }
         }
     }
 },
@@ -663,8 +694,14 @@ export const cardList:CardMap[] = [{
         use: {
             target: {key: "self"},
             effects: [
-                { key: "gainArmor", params: { value: 6 } }
+                { key: "gainArmor", params: { value: "$medium.status(armor)" } }
             ]
+        }
+    },
+    upgradeConfig: {
+        maxLevel: 1,
+        levelConfigs: {
+            1: { status: { armor: 8 } }
         }
     }
 },
@@ -683,8 +720,14 @@ export const cardList:CardMap[] = [{
         use: {
             target: {key: "self"},
             effects: [
-                { key: "repairOrgan", params: { value: 8 } }
+                { key: "repairOrgan", params: { value: "$medium.status(heal)" } }
             ]
+        }
+    },
+    upgradeConfig: {
+        maxLevel: 1,
+        levelConfigs: {
+            1: { status: { heal: 12 } }
         }
     }
 },
@@ -703,8 +746,14 @@ export const cardList:CardMap[] = [{
         use: {
             target: {faction: "opponent"},
             effects: [
-                { key: "damage", params: { value: 14 } }
+                { key: "damage", params: { value: "$medium.status(damage)" } }
             ]
+        }
+    },
+    upgradeConfig: {
+        maxLevel: 1,
+        levelConfigs: {
+            1: { status: { damage: 18 } }
         }
     }
 },
@@ -756,13 +805,19 @@ export const cardList:CardMap[] = [{
 {
     label: "指挥连击",
     tags: ["attack", "enemy"],
-    status: { cost: 1 },
-    describe: ["所有友军每2层", {$:"指挥"}, "对目标造成1次3点伤害"],
+    status: { cost: 1, damage: 3 },
+    describe: ["所有友军每2层", {$:"指挥"}, "对目标造成1次", {key: ["status", "damage"]}, "点伤害"],
     key: "enemy_card_command_strike",
     interaction: {
         use: {
             target: { faction: "opponent" },
-            effects: [{ key: "card_commandStrike", params: { n: 2, damage: 3 } }]
+            effects: [{ key: "card_commandStrike", params: { n: 2, damage: "$medium.status(damage)" } }]
+        }
+    },
+    upgradeConfig: {
+        maxLevel: 1,
+        levelConfigs: {
+            1: { status: { damage: 4 } }
         }
     }
 },
@@ -823,13 +878,25 @@ export const cardList:CardMap[] = [{
 {
     label: "护甲冲撞",
     tags: ["attack", "enemy"],
-    status: { cost: 1 },
-    describe: ["消耗所有", {$:"护甲"}, "，对目标造成等量伤害"],
+    status: { cost: 1, "consume-percent": 100 },
+    describe: [
+        "对目标造成等同于当前护甲的伤害，消耗",
+        { key: ["status", "consume-percent"] }, "% 护甲"
+    ],
     key: "enemy_card_armor_bash",
     interaction: {
         use: {
             target: { faction: "opponent" },
-            effects: [{ key: "organ_armorBash", params: {} }]
+            effects: [{
+                key: "organ_armorBash",
+                params: { consumePercent: "$medium.status(consume-percent)" }
+            }]
+        }
+    },
+    upgradeConfig: {
+        maxLevel: 1,
+        levelConfigs: {
+            1: { status: { "consume-percent": 50 } }
         }
     }
 },
@@ -838,13 +905,19 @@ export const cardList:CardMap[] = [{
 {
     label: "铁壁",
     tags: ["skill", "enemy"],
-    status: { cost: 1 },
-    describe: ["获得8点", {$:"护甲"}],
+    status: { cost: 1, armor: 8 },
+    describe: ["获得", {key: ["status", "armor"]}, "点", {$:"护甲"}],
     key: "enemy_card_steel_wall",
     interaction: {
         use: {
             target: { key: "self" },
-            effects: [{ key: "gainArmor", params: { value: 8 } }]
+            effects: [{ key: "gainArmor", params: { value: "$medium.status(armor)" } }]
+        }
+    },
+    upgradeConfig: {
+        maxLevel: 1,
+        levelConfigs: {
+            1: { status: { armor: 12 } }
         }
     }
 },

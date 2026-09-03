@@ -1,5 +1,5 @@
 import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
-import { isPlayer, isEntity } from "@/core/utils/typeGuards"
+import { isPlayer, isEntity, isEnemy } from "@/core/utils/typeGuards"
 import type { CardPiles } from "@/core/objects/target/Player"
 import type { Card } from "@/core/objects/item/Subclass/Card"
 import { nowBattle } from "@/core/objects/game/battle"
@@ -144,7 +144,13 @@ export const card_commandStrike: EffectFunc = (event, effect) => {
     const target = Array.isArray(event.target) ? event.target[0] : event.target
     if (!isEntity(target)) return false
 
-    for (const ally of battle.getAliveEnemies()) {
+    const holder = event.source
+    if (!isEntity(holder)) return false
+    const allies = isEnemy(holder)
+        ? battle.getAliveEnemies()
+        : (battle.getAlivePlayers() || [])
+
+    for (const ally of allies) {
         const stacks = getStateModifier(ally).getState("command")?.stacks.find(s => s.key === "default")?.stack ?? 0
         const hits = Math.floor(stacks / n)
         for (let i = 0; i < hits; i++) {

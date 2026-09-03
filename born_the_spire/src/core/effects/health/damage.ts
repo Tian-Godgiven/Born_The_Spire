@@ -60,11 +60,14 @@ export const reduceDamageFor:EffectFunc = (event,effect)=>{
  *
  * params:
  * - delta: number - 变化量（正数增加，负数减少）
+ * - multiplier: number - 乘在 delta 上，缺省 1。实际加值 = delta × multiplier
  *
  * 用于 reaction 系统：event.target 是 damage Effect
  */
 export const modifyDamageValue: EffectFunc = (event, effect) => {
     const delta = Number(effect.params.delta)
+    const multiplier = effect.params.multiplier !== undefined ? Number(effect.params.multiplier) : 1
+    const applied = delta * multiplier
     const target = event.target
 
     // 验证 target 是 Effect 类型
@@ -86,7 +89,7 @@ export const modifyDamageValue: EffectFunc = (event, effect) => {
 
     // 修改伤害值
     const oldValue = Number(target.params.value)
-    const newValue = Math.max(0, oldValue + delta)  // 伤害不能为负
+    const newValue = Math.max(0, oldValue + applied)  // 伤害不能为负
     target.params.value = newValue
 
     return true
