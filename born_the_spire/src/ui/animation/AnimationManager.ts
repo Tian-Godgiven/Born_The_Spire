@@ -218,7 +218,7 @@ class AnimationManager {
      * 取消全局所有动画（场景切换时使用）
      */
     cancelGlobal(): void {
-        for (const bindingId of this.activeByChannel.keys()) {
+        for (const bindingId of [...this.activeByChannel.keys()]) {
             this.cancelAll(bindingId)
         }
     }

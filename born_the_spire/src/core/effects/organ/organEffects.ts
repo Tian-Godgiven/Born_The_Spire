@@ -16,6 +16,7 @@ import { createOrgan } from "@/core/factories"
 import { doEvent } from "@/core/objects/system/ActionEvent"
 import { getCardModifier } from "@/core/objects/system/modifier/CardModifier"
 import type { Chara } from "@/core/objects/target/Target"
+import { upgradeCard } from "@/core/effects/card/cardUpgrade"
 
 /**
  * 替换器官效果
@@ -295,8 +296,37 @@ export const modifyOrganCardStatus: EffectFunc = (event, effect) => {
         }
         const current = typeof status.baseValue === "string" ? Number(status.baseValue) : Number(status.baseValue)
         status.setOriginalBaseValue(current + delta)
-        newLog([card, `${statusKey} ${delta > 0 ? "+" : ""}${delta} → ${current + delta}`])
+    return true
+}
+
+/**
+ * 把本器官提供的卡牌锻造一档（牌通常只能升一次）
+ * 用于器官升级里程碑。medium 必须是器官。
+ * params.cardKey 可选：只锻这张；不填则本器官提供的牌各锻一档。
+ */
+export const upgradeOrganCards: EffectFunc = (event, effect) => {
+    const { medium, target } = event
+    if (!(medium instanceof Organ)) {
+        newLog(["upgradeOrganCards: medium 必须是器官"])
+        return false
     }
 
-    return true
+    const owner = Array.isArray(target) ? target[0] : target
+    if (!isEntity(owner)) return false
+
+    const cardKey = effect.params.cardKey as string | undefined
+    let cards = getCardModifier(owner as Chara).getCardsFromSource(medium)
+    if (cardKey) {
+        cards = cards.filter(c => c.key === cardKey)
+    }
+    if (cards.length === 0) {
+        newLog([medium, "没有可升级的提供卡牌"])
+        return false
+    }
+
+    let any = false
+    for (const card of cards) {
+        if (upgradeCard(card)) any = true
+    }
+    return any
 }

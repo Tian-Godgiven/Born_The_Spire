@@ -40,7 +40,7 @@
         <div class="relic-tooltip">
             <div class="tooltip-header">
                 <span class="relic-name">{{ relic.label }}</span>
-                <span class="relic-rarity" v-if="relic.rarity">[{{ rarityText }}]</span>
+                <span class="relic-rarity" v-if="relic.rarity" :style="{ color: getRarityColor(relic.rarity) }">[{{ rarityText }}]</span>
             </div>
             <div class="tooltip-body">
                 <div class="relic-description">
@@ -71,6 +71,7 @@
     import { resolveBadges } from '@/core/utils/badgeResolver';
     import { nowBattle } from '@/core/objects/game/battle';
     import type { BadgeRenderData, BadgePosition } from '@/core/types/BadgeConfig';
+    import { getRarityColor, getRarityLabel } from '@/static/list/system/rarityPalette';
 
     const props = defineProps<{
         relic: Relic,
@@ -115,14 +116,7 @@
         return groups
     })
 
-    const rarityText = computed(() => {
-        const rarityMap = {
-            'common': '普通',
-            'uncommon': '稀有',
-            'rare': '史诗'
-        }
-        return rarityMap[relic.rarity || 'common']
-    })
+    const rarityText = computed(() => getRarityLabel(relic.rarity))
 
     function handleClick() {
         if (props.preview) return
@@ -294,7 +288,6 @@
 
         .relic-rarity {
             font-size: 12px;
-            color: #666;
         }
     }
 

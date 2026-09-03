@@ -14,6 +14,8 @@ import { showComponent } from "@/core/hooks/componentManager"
 import { doEvent } from "@/core/objects/system/ActionEvent"
 import { getCurrentValue } from "@/core/objects/system/Current/current"
 import { gainMark, hasMark } from "@/core/hooks/mark"
+import { canContinueOrganUpgrade } from "@/static/list/target/organQuality"
+import type { Organ } from "@/core/objects/target/Organ"
 
 /**
  * 水池房间配置
@@ -21,14 +23,10 @@ import { gainMark, hasMark } from "@/core/hooks/mark"
 export interface PoolRoomConfig extends RoomConfig {
     type: "pool"
     drinkRate?: number          // 饮用兑换率：X物质 = 1生命（默认 1）
-    cleanseMaterialCost?: number // 洗涤物质消耗（默认根据器官计算）
-    cleanseMaxHpCost?: number   // 洗涤额外最大生命消耗（非首次，默认 5）
 }
 
 /** 饮用默认兑换率：1物质 = 1生命 */
 const DEFAULT_DRINK_RATE = 1
-/** 洗涤非首次额外扣除最大生命 */
-const DEFAULT_CLEANSE_MAX_HP_COST = 5
 
 /**
  * 水池房间类
@@ -36,16 +34,12 @@ const DEFAULT_CLEANSE_MAX_HP_COST = 5
  */
 export class PoolRoom extends Room {
     public readonly drinkRate: number
-    public readonly cleanseMaxHpCost: number
     public readonly choiceGroup: ChoiceGroup
-    /** 本水池是否已使用过洗涤（首次免费） */
-    private hasCleansed: boolean = false
 
     constructor(config: PoolRoomConfig) {
         super(config)
 
         this.drinkRate = config.drinkRate ?? DEFAULT_DRINK_RATE
-        this.cleanseMaxHpCost = config.cleanseMaxHpCost ?? DEFAULT_CLEANSE_MAX_HP_COST
 
         // 创建选项
         const choices = this.createChoices()
@@ -88,11 +82,12 @@ export class PoolRoom extends Room {
         // 选项2：洗涤
         choices.push(new Choice({
             title: "洗涤",
-            description: () => this.hasCleansed
-                ? `消耗物质升级器官（本水池已洗涤过，额外消耗 ${this.cleanseMaxHpCost} 最大生命）`
-                : "消耗物质升级器官（首次免额外代价）",
+            description: () => this.getUpgradableOrgans().length === 0
+                ? "没有可以升级的器官"
+                : "消耗物质升级器官",
             icon: "✨",
             repeatable: true,
+            ifAble: () => this.getUpgradableOrgans().length > 0,
             onSelect: async () => {
                 await this.onCleanse()
             }
@@ -190,62 +185,43 @@ export class PoolRoom extends Room {
         newLog([`饮用水池，消耗 ${materialCost} 物质，回复 ${actualHeal} 生命`])
     }
 
+    private getUpgradableOrgans(): Organ[] {
+        return getOrganModifier(nowPlayer).getOrgans().filter(canContinueOrganUpgrade)
+    }
+
     /**
      * 洗涤：消耗物质升级器官
-     * 每个水池首次免费（不扣最大生命），之后每次额外扣最大生命
+     * 打开列表时为每个器官锁死一次费用；超过最后一档或没有里程碑的不出现
      */
     private async onCleanse(): Promise<void> {
-        const organModifier = getOrganModifier(nowPlayer)
-        const organs = organModifier.getOrgans()
+        const organs = this.getUpgradableOrgans()
 
         if (organs.length === 0) {
-            newLog(["你没有可以升级的器官"])
+            newLog(["没有可以升级的器官"])
             return
         }
 
-        // 显示器官选择界面
         try {
-            const selectedOrgan = await showComponent({
+            const selected = await showComponent({
                 component: "OrganUpgradeChoice",
                 data: {
                     organs: organs,
                     player: nowPlayer
                 },
                 layout: "modal"
-            })
+            }) as { organ: Organ, cost: number } | null
 
-            if (selectedOrgan) {
-                // 非首次洗涤，额外扣除最大生命
-                if (this.hasCleansed) {
-                    const maxHpCost = this.cleanseMaxHpCost
-                    newLog([`非首次洗涤，额外消耗 ${maxHpCost} 最大生命`])
-
-                    await doEvent({
-                        key: "cleanseCost",
-                        source: nowPlayer,
-                        medium: nowPlayer,
-                        target: nowPlayer,
-                        effectUnits: [{
-                            key: "addStatusBaseCurrentValue",
-                            params: {
-                                value: -maxHpCost,
-                                statusKey: "max-health",
-                                currentKey: "health"
-                            }
-                        }]
-                    })
-                }
-
-                // 升级器官（内部会消耗物质或生命值）
-                const success = await organModifier.upgradeOrgan(selectedOrgan)
+            if (selected?.organ) {
+                const organModifier = getOrganModifier(nowPlayer)
+                const success = await organModifier.upgradeOrgan(selected.organ, {
+                    lockedCost: selected.cost
+                })
 
                 if (success) {
-                    this.hasCleansed = true
-                    newLog([`${selectedOrgan.label} 升级成功！`])
+                    newLog([`${selected.organ.label} 升级成功！`])
                 }
             }
         } catch (error) {
-            // 用户取消
             newLog(["取消洗涤"])
         }
     }

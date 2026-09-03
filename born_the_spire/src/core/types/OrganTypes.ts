@@ -55,7 +55,7 @@ export type RarityConfig = {
     color: string               // 颜色代码（用于 UI 显示）
     baseAbsorbValue: number     // 基础吞噬获取量
     upgradeCostMultiplier: number   // 升级成本倍率（相对于吞噬获取量）
-    upgradeVariance?: number    // 升级成本波动范围（可选，默认 ±10%）
+    upgradeVariance?: number        // 升级成本波动；打开升级列表时掷一次并锁死
     repairCostMultiplier: number    // 修复成本倍率
     assimilateCostMultiplier: number // 同化成本倍率
     blackStorePrice: number     // 黑市基础价格

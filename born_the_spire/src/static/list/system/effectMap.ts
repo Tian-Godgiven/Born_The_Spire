@@ -15,7 +15,7 @@ import { addStatusBase, addStatusCurrent, multiplyStatusBase, setCurrentToMax, s
 import { addCurrent, addStatusBaseCurrentValue } from "@/core/effects/current/changeCurrent"
 import { gainReserve, spendReserve } from "@/core/effects/reserve/reserve"
 import { killTarget, reviveTarget, loseHp } from "@/core/effects/life/lifeControl"
-import { replaceOrgan, chooseOrganRemove, damageOrgan, healOrgan, modifyOrganCardStatus, repairOrgan } from "@/core/effects/organ/organEffects"
+import { replaceOrgan, chooseOrganRemove, damageOrgan, healOrgan, modifyOrganCardStatus, repairOrgan, upgradeOrganCards } from "@/core/effects/organ/organEffects"
 import { removeOrganEffect } from "@/core/effects/organ/organRemoveEffect"
 import { upgradeCardEffect } from "@/core/effects/card/cardUpgradeEffect"
 import { removeCardEffect } from "@/core/effects/card/cardRemoveEffect"
@@ -397,6 +397,10 @@ export const effectMap:EffectData[] = [
     label:"修改器官卡牌属性",
     key:"modifyOrganCardStatus",
     effect:modifyOrganCardStatus
+},{
+    label:"升级器官提供的卡牌",
+    key:"upgradeOrganCards",
+    effect:upgradeOrganCards
 },{
     label:"热量计时",
     key:"organ_heatTick",

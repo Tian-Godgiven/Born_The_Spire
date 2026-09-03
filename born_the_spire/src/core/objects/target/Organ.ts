@@ -14,12 +14,16 @@ import type { ActiveAbility } from "@/core/types/ActiveAbility";
 import type { BadgeConfig } from "@/core/types/BadgeConfig";
 import { isEntity } from "@/core/utils/typeGuards";
 import { resolveTriggerMountTargets } from "@/core/utils/resolveTriggerMountTargets";
+import { nowBattle } from "../game/battle";
+import { doEvent } from "../system/ActionEvent";
+import { getStateModifier } from "../system/modifier/StateModifier";
 
 /**
  * 器官升级里程碑配置
  */
 export interface OrganUpgradeMilestone {
     level: number                   // 达到此等级时触发
+    describe?: Describe             // 升级页路线上这一档的说明
     effects?: EffectUnit[]          // 效果列表
     component?: string | Component  // 自定义组件
     componentData?: any             // 传递给组件的数据
@@ -107,6 +111,8 @@ export class Organ extends Entity{
     // 内部管理的触发器移除函数
     workTriggerRemovers: Array<()=>void> = []
     brokenTriggerRemovers: Array<()=>void> = []
+    private workGrantOwner?: Entity
+    private workStateGranted: Record<string, number> = {}
 
     constructor(map:OrganMap){
         super(map)
@@ -153,9 +159,32 @@ export class Organ extends Entity{
      */
     activateWorkTriggers(owner: Entity) {
         this.removeWorkTriggers()
+        this.workGrantOwner = owner
         const workInteraction = this.getInteraction("work")
-        if(workInteraction && workInteraction.triggers) {
-            this.workTriggerRemovers = this.addTriggersFromInteraction(workInteraction, owner)
+        if(!workInteraction) {
+            return
+        }
+
+        const removers: Array<()=>void> = []
+        if(workInteraction.triggers) {
+            removers.push(...this.addTriggersFromInteraction(workInteraction, owner))
+        }
+        if(workInteraction.grantStates?.length) {
+            removers.push(...this.mountGrantStateLifecycleTriggers(owner))
+            this.refreshWorkStateGrants()
+        }
+        this.workTriggerRemovers = removers
+        if(workInteraction.effects?.length) {
+            doEvent({
+                key: "workOrgan",
+                source: this,
+                medium: this,
+                target: owner,
+                effectUnits: workInteraction.effects,
+                onComplete: (event) => {
+                    this.workTriggerRemovers.push(...event.getSideEffects())
+                }
+            })
         }
     }
 
@@ -167,6 +196,16 @@ export class Organ extends Entity{
             remover()
         }
         this.workTriggerRemovers = []
+        this.syncWorkStateGrants({})
+        this.workGrantOwner = undefined
+    }
+
+    /**
+     * 按当前等级 / 是否在战斗中，把 work.grantStates 对齐到持有者身上。
+     * 升级后由 OrganModifier 调用，让 fromLevel 立刻生效。
+     */
+    refreshWorkStateGrants() {
+        this.syncWorkStateGrants(this.getDesiredWorkStateGrants())
     }
 
     /**
@@ -188,6 +227,114 @@ export class Organ extends Entity{
             remover()
         }
         this.brokenTriggerRemovers = []
+    }
+
+    private mountGrantStateLifecycleTriggers(owner: Entity): Array<()=>void> {
+        const removers: Array<()=>void> = []
+        const { remove: removeStart } = owner.appendTrigger({
+            when: "after",
+            how: "take",
+            key: "battleStart",
+            callback: () => {
+                this.workStateGranted = {}
+                this.refreshWorkStateGrants()
+            }
+        })
+        removers.push(removeStart)
+        const { remove: removeEnd } = owner.appendTrigger({
+            when: "after",
+            how: "take",
+            key: "battleEnd",
+            callback: () => this.refreshWorkStateGrants()
+        })
+        removers.push(removeEnd)
+        return removers
+    }
+
+    private getDesiredWorkStateGrants(): Record<string, number> {
+        const desired: Record<string, number> = {}
+        if(this.isDisabled) {
+            return desired
+        }
+        const battle = nowBattle.value
+        if(!battle || battle.isEnded) {
+            return desired
+        }
+        const workInteraction = this.getInteraction("work")
+        if(!workInteraction || !workInteraction.grantStates) {
+            return desired
+        }
+        for(const grant of workInteraction.grantStates) {
+            const fromLevel = grant.fromLevel ?? 1
+            if(this.level < fromLevel) {
+                continue
+            }
+            const stacks = grant.stacks ?? 1
+            if(stacks <= 0) {
+                continue
+            }
+            desired[grant.stateKey] = (desired[grant.stateKey] ?? 0) + stacks
+        }
+        return desired
+    }
+
+    private syncWorkStateGrants(desired: Record<string, number>) {
+        const owner = this.workGrantOwner ?? this.owner
+        if(!owner || !isEntity(owner)) {
+            this.workStateGranted = {}
+            return
+        }
+
+        const keys = new Set([
+            ...Object.keys(this.workStateGranted),
+            ...Object.keys(desired)
+        ])
+        for(const stateKey of keys) {
+            const want = desired[stateKey] ?? 0
+            const have = this.workStateGranted[stateKey] ?? 0
+            const delta = want - have
+            if(delta > 0) {
+                doEvent({
+                    key: "applyState",
+                    source: this,
+                    medium: this,
+                    target: owner,
+                    effectUnits: [{
+                        key: "applyState",
+                        params: { stateKey, stacks: delta }
+                    }]
+                })
+                this.workStateGranted[stateKey] = want
+            } else if(delta < 0) {
+                const removable = this.clampWorkStateRevoke(owner, stateKey, -delta)
+                if(removable > 0) {
+                    doEvent({
+                        key: "changeStateStack",
+                        source: this,
+                        medium: this,
+                        target: owner,
+                        effectUnits: [{
+                            key: "changeStateStack",
+                            params: { stateKey, delta: -removable }
+                        }]
+                    })
+                }
+                if(want > 0) {
+                    this.workStateGranted[stateKey] = want
+                } else {
+                    delete this.workStateGranted[stateKey]
+                }
+            }
+        }
+    }
+
+    private clampWorkStateRevoke(owner: Entity, stateKey: string, amount: number): number {
+        const state = getStateModifier(owner).getState(stateKey)
+        if(!state) {
+            return 0
+        }
+        const current = state.stacks.find(s => s.key === "default")?.stack ?? 0
+        return Math.max(0, Math.min(amount, Math.max(0, current)))
     }
 
     /**

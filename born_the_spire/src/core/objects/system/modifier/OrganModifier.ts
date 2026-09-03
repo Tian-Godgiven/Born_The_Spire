@@ -14,7 +14,7 @@ import { getCurrentValue, setCurrentValue } from "@/core/objects/system/Current/
 import { resolveTriggerEventTarget } from "../trigger/Trigger"
 import { getPartMaxCount } from "@/static/list/target/organPart"
 import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
-import { getQualityConfig, calculateUpgradeCost, calculateBlackStorePrice, calculateRepairCost } from "@/static/list/target/organQuality"
+import { getQualityConfig, calculateBlackStorePrice, calculateRepairCost, resolveOrganUpgradeCost, getOrganUpgradeCap } from "@/static/list/target/organQuality"
 import { modifierManager } from "@/core/managers/ModifierManager"
 import { showComponent } from "@/core/hooks/componentManager"
 
@@ -588,10 +588,11 @@ export class OrganModifier extends ItemModifier {
     /**
      * 升级器官
      * @param organ 要升级的器官
-     * @param options.skipCost 事件奖励等场合免费升级，不扣物质/生命
+     * @param options.skipCost 事件奖励等场合免费升级，不扣物质
+     * @param options.lockedCost 水池打开升级列表时锁死的价格，预览和实扣必须同一笔
      * @returns 是否成功升级
      */
-    async upgradeOrgan(organ: Organ, options?: { skipCost?: boolean }): Promise<boolean> {
+    async upgradeOrgan(organ: Organ, options?: { skipCost?: boolean, lockedCost?: number }): Promise<boolean> {
         // 检查是否拥有该器官
         if (!this.units.some(u => u.item === (organ as unknown as Item))) {
             newLog([this.owner, "未拥有器官", organ])
@@ -604,65 +605,30 @@ export class OrganModifier extends ItemModifier {
             return false
         }
 
-        // 检查是否达到最大等级
-        const maxLevel = organ.upgradeConfig?.maxLevel
-        if (maxLevel !== undefined && organ.level >= maxLevel) {
-            newLog([organ, `已达到最大等级 ${maxLevel}`])
-            return false
-        }
-
         if (!options?.skipCost) {
-        // 计算升级成本
-        let upgradeCost: number
-
-        if (organ.upgradeConfig?.cost !== undefined) {
-            // 使用自定义成本
-            if (typeof organ.upgradeConfig.cost === "function") {
-                upgradeCost = organ.upgradeConfig.cost(organ)
-            } else {
-                upgradeCost = organ.upgradeConfig.cost
-            }
-        } else {
-            // 使用稀有度默认成本（带随机波动）
-            upgradeCost = calculateUpgradeCost(organ.rarity, organ.absorbValue, true)
-        }
-
-        // 获取储备管理器
-        const reserveModifier = getReserveModifier(this.owner)
-        const currentMaterial = reserveModifier.getReserve("material")
-
-        // 优先消耗物质
-        if (currentMaterial >= upgradeCost) {
-            // 物质足够，消耗物质
-            reserveModifier.spendReserve("material", upgradeCost)
-            newLog([this.owner, "升级器官", organ, `消耗 ${upgradeCost} 物质`])
-        } else {
-            // 物质不足，消耗生命值
-            const currentHealth = getCurrentValue(this.owner, "health")
-
-            if (currentHealth <= upgradeCost) {
-                newLog(["生命值不足，无法升级", `需要 ${upgradeCost}，当前 ${currentHealth}`])
+            const cap = getOrganUpgradeCap(organ)
+            if (cap === null || organ.level >= cap) {
+                newLog([organ, "没有下一档可升级"])
                 return false
             }
 
-            newLog([this.owner, "升级器官", organ, `消耗 ${upgradeCost} 生命值（物质不足）`])
+            const upgradeCost = options?.lockedCost ?? resolveOrganUpgradeCost(organ)
+            const reserveModifier = getReserveModifier(this.owner)
+            const currentMaterial = reserveModifier.getReserve("material")
 
-            // 扣除生命值（当前值 + 最大值）
-            doEvent({
-                key: "upgradeOrgan",
-                source: this.owner,
-                medium: organ,
-                target: this.owner,
-                effectUnits: [{
-                    key: "addStatusBaseCurrentValue",
-                    params: {
-                        value: -upgradeCost,
-                        statusKey: "max-health",
-                        currentKey: "health"
-                    }
-                }]
-            })
-        }
+            if (currentMaterial < upgradeCost) {
+                newLog(["物质不足，无法升级", `需要 ${upgradeCost}，当前 ${currentMaterial}`])
+                return false
+            }
+
+            reserveModifier.spendReserve("material", upgradeCost)
+            newLog([this.owner, "升级器官", organ, `消耗 ${upgradeCost} 物质`])
+        } else {
+            const maxLevel = organ.upgradeConfig?.maxLevel
+            if (maxLevel !== undefined && organ.level >= maxLevel) {
+                newLog([organ, `已达到最大等级 ${maxLevel}`])
+                return false
+            }
         }
 
         // 提升器官等级
@@ -715,6 +681,7 @@ export class OrganModifier extends ItemModifier {
             }
         }
 
+        organ.refreshWorkStateGrants()
         return true
     }
 }

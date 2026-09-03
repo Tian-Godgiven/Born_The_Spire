@@ -285,7 +285,7 @@ export class StateModifier {
                     how,
                     key,
                     level,
-                    callback: (event, effect, _triggerLevel) => {
+                    callback: async (event, effect, _triggerLevel) => {
                         // 防御性检查：状态已被移除则跳过
                         if (!this.getState(state.key)) return
 
@@ -331,7 +331,7 @@ export class StateModifier {
                             )
 
                             // 使用 doEvent 创建事件，source 设置为状态本身！
-                            const newEvent = doEvent({
+                            const newEvent = await doEvent({
                                 key: eventKey,
                                 source: state as any,  // 关键：source 是状态，这样 $source.stateStack() 才能工作
                                 medium: isEntity(eventMedium) ? eventMedium : (state as any),

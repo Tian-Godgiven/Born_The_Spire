@@ -9,6 +9,7 @@ import { Entity } from "./Entity"
 import { applyTriggerMap } from "../system/trigger/Trigger"
 import { doEvent } from "./ActionEvent"
 import { nowPlayer } from "../game/run"
+import { animationManager } from "@/ui/animation"
 
 /**
  * 玩家状态快照
@@ -72,6 +73,7 @@ export class GameRun{
             } catch (e) {
                 console.warn("[GameRun] 退出旧房间时出错:", e)
             }
+            animationManager.cancelGlobal()
         }
 
         this.currentRoom = room
@@ -132,6 +134,8 @@ export class GameRun{
 
         await room.exit()
 
+        animationManager.cancelGlobal()
+
         // 清除快照（房间完成后不再需要）
         this.playerSnapshot = null
     }
@@ -146,6 +150,7 @@ export class GameRun{
         }
 
         await room.exit()
+        animationManager.cancelGlobal()
         this.currentRoom = null
     }
 

@@ -5,7 +5,7 @@ import type { EffectUnit } from "../objects/system/effect/EffectUnit";
 import { isPlayer } from "../utils/typeGuards";
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier";
 import { getRelicModifier } from "@/core/objects/system/modifier/RelicModifier";
-import { doEventAndWait } from "@/core/objects/system/ActionEvent";
+import { doEvent } from "@/core/objects/system/ActionEvent";
 import { handleTurnStart, handleTurnEnd } from "@/core/hooks/activeAbility";
 
 
@@ -49,7 +49,7 @@ export async function startTurn(chara:Chara,battle:Battle,effectUnits:EffectUnit
     await handleActiveAbilitiesTurnStart(chara)
 
     // 必须等结算完：不等的话调用方（如敌人出牌）会插进护甲清零和中毒结算中间
-    await doEventAndWait({
+    await doEvent({
         key:"turnStart",
         source:chara,
         medium:chara,
@@ -61,7 +61,7 @@ export async function startTurn(chara:Chara,battle:Battle,effectUnits:EffectUnit
 }
 //结束回合行为
 export async function endTurn(chara:Chara,battle:Battle,effectUnits:EffectUnit[]=[],doWhat?:()=>void){
-    await doEventAndWait({
+    await doEvent({
         key:"turnEnd",
         source:chara,
         medium:chara,

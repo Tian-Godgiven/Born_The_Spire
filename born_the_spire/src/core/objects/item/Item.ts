@@ -14,6 +14,13 @@ export type ItemModifierDef = {
     label?: string
 } & Partial<ModifierOptions>
 
+/** work 生效期间赠予持有者的状态。目前只有器官的 work 会读取。 */
+export type WorkStateGrantDef = {
+    stateKey: string
+    stacks?: number
+    fromLevel?: number
+}
+
 // 物品交互
 export type InteractionData = {
     label?: string//交互的显示名称（如"饮用"、"投掷"、"激活"）
@@ -21,6 +28,7 @@ export type InteractionData = {
     effects?: EffectUnit[]//交互将会造成的即时效果（可选，用于纯触发器场景）
     triggers?: TriggerMap//交互将会添加的触发器
     modifiers?: ItemModifierDef[]//交互将会添加的修饰器
+    grantStates?: WorkStateGrantDef[]
 }
 
 export type ItemMap = EntityMap & {

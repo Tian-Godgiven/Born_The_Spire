@@ -89,7 +89,7 @@
           >
             <div class="organ-card-name">{{ organ.label }}</div>
             <div class="organ-card-meta">
-              <span class="organ-rarity" :class="organ.rarity">{{ getRarityLabel(organ.rarity) }}</span>
+              <span class="organ-rarity" :style="{ color: getRarityColor(organ.rarity) }">{{ getRarityLabel(organ.rarity) }}</span>
               <span v-if="organ.part" class="organ-part">{{ getPartLabel(organ.part) }}</span>
             </div>
             <div class="organ-card-divider"></div>
@@ -190,6 +190,7 @@ import { organRewardActionRegistry } from '@/static/registry/organRewardActionRe
 import { nowPlayer } from '@/core/objects/game/run'
 import { getDescribe } from '@/ui/hooks/express/describe'
 import { getPartLabel } from '@/static/list/target/organPart'
+import { getRarityColor, getRarityLabel } from '@/static/list/system/rarityPalette'
 import type { OrganMap } from '@/core/objects/target/Organ'
 import type { OrganRewardAction } from '@/core/types/organRewardAction'
 import Card from '@/ui/components/object/Card.vue'
@@ -248,11 +249,6 @@ async function executeOrganAction(actionKey: string) {
 
 function getOrganDescribe(organ: OrganMap): string {
   return getDescribe(organ.describe, organ)
-}
-
-function getRarityLabel(rarity: string): string {
-  const map: Record<string, string> = { common: '普通', uncommon: '罕见', rare: '稀有' }
-  return map[rarity] ?? rarity
 }
 
 const currentChoiceReward = ref<any>(null)
@@ -577,9 +573,7 @@ async function handleProceed() {
 }
 
 .organ-rarity {
-  &.common { color: #666; }
-  &.uncommon { color: #2d5016; }
-  &.rare { color: #1a3a6b; }
+  font-weight: bold;
 }
 
 .organ-card-divider {

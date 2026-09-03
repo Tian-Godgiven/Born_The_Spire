@@ -12,7 +12,7 @@
 import { Chara } from '@/core/objects/target/Target';
 import gsap from 'gsap';
 import { toNumber } from 'lodash';
-import { computed, useTemplateRef, watch, onMounted } from 'vue';
+import { computed, useTemplateRef, watch, onMounted, onBeforeUnmount } from 'vue';
     const {target} = defineProps<{target:Chara}>()
 
     const blackRef = useTemplateRef("blackRef")
@@ -35,11 +35,17 @@ import { computed, useTemplateRef, watch, onMounted } from 'vue';
 
     watch(percent, (val) => {
         if (!blackRef.value) return
+        gsap.killTweensOf(blackRef.value)
         gsap.to(blackRef.value, {
             width: val + "%",
             duration: 0.8,
-            ease: 'power1.inOut'
+            ease: 'power1.inOut',
+            overwrite: true,
         })
+    })
+
+    onBeforeUnmount(() => {
+        if (blackRef.value) gsap.killTweensOf(blackRef.value)
     })
 </script>
 

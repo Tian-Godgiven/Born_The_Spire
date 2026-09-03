@@ -5,56 +5,74 @@
       <button class="close-btn" @click="handleCancel">返回</button>
     </div>
 
-    <div class="organ-list">
-      <div
+    <div v-if="organs.length === 0" class="empty">
+      没有可以升级的器官
+    </div>
+
+    <div v-else class="organ-list">
+      <Popover
         v-for="organ in organs"
         :key="organ.key"
-        class="organ-item"
-        :class="{ disabled: !canUpgrade(organ) }"
-        @click="handleSelectOrgan(organ)"
+        placement="right"
+        align="start"
+        :max-width="280"
       >
-        <div class="organ-header">
-          <span class="organ-name" :style="{ color: getQualityColor(organ.rarity) }">
-            {{ organ.label }}
-          </span>
-          <span class="organ-level">Lv.{{ organ.level }}</span>
+        <div
+          class="organ-item"
+          :class="{ disabled: !canUpgrade(organ) }"
+          @click="handleSelectOrgan(organ)"
+        >
+          <div class="organ-header">
+            <span class="organ-name" :style="{ color: getRarityColor(organ.rarity) }">
+              {{ organ.label }}
+            </span>
+            <span class="organ-level">Lv.{{ organ.level }}</span>
+          </div>
+
+          <div class="organ-info">
+            <div class="organ-part" v-if="organ.part">
+              部位: {{ getPartLabel(organ.part) }}
+            </div>
+            <div class="organ-quality">
+              稀有度: {{ getRarityLabel(organ.rarity) }}
+            </div>
+            <div class="organ-mass" v-if="hasMaxMass(organ)">
+              质量: {{ getCurrentMass(organ) }} / {{ getMaxMass(organ) }}
+            </div>
+          </div>
+
+          <div class="upgrade-cost">
+            <span v-if="canUpgrade(organ)">
+              升级消耗: {{ getUpgradeCost(organ) }} 物质
+            </span>
+            <span v-else class="error">
+              {{ getUpgradeError(organ) }}
+            </span>
+          </div>
         </div>
 
-        <div class="organ-info">
-          <div class="organ-part" v-if="organ.part">
-            部位: {{ getPartLabel(organ.part) }}
+        <template #content>
+          <div class="milestone-track">
+            <div class="track-title">里程碑</div>
+            <div
+              v-for="row in getMilestoneRows(organ)"
+              :key="row.level"
+              class="milestone-row"
+              :class="row.state"
+            >
+              <div class="milestone-lv">
+                Lv.{{ row.level }}<span v-if="row.state === 'next'"> 下一档</span>
+              </div>
+              <DescribeText :describe="row.describe" :target="organ" />
+            </div>
           </div>
-          <div class="organ-quality">
-            稀有度: {{ getQualityLabel(organ.rarity) }}
-          </div>
-          <div class="organ-mass" v-if="hasMaxMass(organ)">
-            质量: {{ getCurrentMass(organ) }} / {{ getMaxMass(organ) }}
-          </div>
-        </div>
-
-        <div class="upgrade-cost">
-          <span v-if="canUpgrade(organ)">
-            升级消耗: {{ getUpgradeCost(organ) }} 生命值
-          </span>
-          <span v-else class="error">
-            {{ getUpgradeError(organ) }}
-          </span>
-        </div>
-
-        <div class="upgrade-effects" v-if="organ.upgradeConfig">
-          <div v-if="organ.upgradeConfig.perLevel">
-            每级效果: 通用提升
-          </div>
-          <div v-if="getNextMilestone(organ)" class="milestone">
-            下个里程碑: Lv.{{ getNextMilestone(organ)!.level }}
-          </div>
-        </div>
-      </div>
+        </template>
+      </Popover>
     </div>
 
     <div class="player-info">
       <div class="health-info">
-        当前生命值: {{ currentHealth }} / {{ maxHealth }}
+        当前物质: {{ currentMaterial }}
       </div>
     </div>
   </div>
@@ -64,62 +82,53 @@
 import { computed } from 'vue'
 import { Organ } from '@/core/objects/target/Organ'
 import { Player } from '@/core/objects/target/Player'
-import { getQualityColor, getQualityLabel, calculateUpgradeCost } from '@/static/list/target/organQuality'
+import {
+  resolveOrganUpgradeCost,
+  canContinueOrganUpgrade,
+  getOrganMilestones
+} from '@/static/list/target/organQuality'
+import { getRarityColor, getRarityLabel } from '@/static/list/system/rarityPalette'
 import { getPartLabel } from '@/static/list/target/organPart'
 import { getCurrentValue } from '@/core/objects/system/Current/current'
 import { getStatusValue } from '@/core/objects/system/status/Status'
+import { getReserveModifier } from '@/core/objects/system/modifier/ReserveModifier'
+import Popover from '@/ui/components/global/Popover.vue'
+import DescribeText from '@/ui/components/display/DescribeText.vue'
+import type { Describe } from '@/ui/hooks/express/describe'
 
-// Props
 const props = defineProps<{
   organs: Organ[]
   player: Player
 }>()
 
-// Emits
 const emit = defineEmits<{
-  complete: [organ: Organ | null]
+  complete: [result: { organ: Organ, cost: number } | null]
   cancel: []
 }>()
 
-// 计算当前生命值
-const currentHealth = computed(() => getCurrentValue(props.player, 'health'))
-const maxHealth = computed(() => getStatusValue(props.player, 'max-health'))
+const currentMaterial = computed(() => getReserveModifier(props.player).getReserve('material'))
 
-/**
- * 获取器官的升级成本
- */
+const lockedCosts = new Map<Organ, number>()
+for (const organ of props.organs) {
+  lockedCosts.set(organ, resolveOrganUpgradeCost(organ, { rollVariance: true }))
+}
+
 function getUpgradeCost(organ: Organ): number {
-  if (organ.upgradeConfig?.cost !== undefined) {
-    if (typeof organ.upgradeConfig.cost === 'function') {
-      return organ.upgradeConfig.cost(organ)
-    }
-    return organ.upgradeConfig.cost
-  }
-  return calculateUpgradeCost(organ.rarity, organ.absorbValue, false)
+  return lockedCosts.get(organ) ?? resolveOrganUpgradeCost(organ)
 }
 
-/**
- * 检查是否可以升级
- */
 function canUpgrade(organ: Organ): boolean {
-  if (organ.isDisabled) return false
-  const cost = getUpgradeCost(organ)
-  return currentHealth.value > cost
+  if (!canContinueOrganUpgrade(organ)) return false
+  return currentMaterial.value >= getUpgradeCost(organ)
 }
 
-/**
- * 获取升级错误信息
- */
 function getUpgradeError(organ: Organ): string {
   if (organ.isDisabled) return '器官已损坏'
-  const cost = getUpgradeCost(organ)
-  if (currentHealth.value <= cost) return '生命值不足'
+  if (!canContinueOrganUpgrade(organ)) return '没有下一档'
+  if (currentMaterial.value < getUpgradeCost(organ)) return '物质不足'
   return ''
 }
 
-/**
- * 检查器官是否有质量属性
- */
 function hasMaxMass(organ: Organ): boolean {
   try {
     return Number(getStatusValue(organ, 'max-mass')) > 0
@@ -128,9 +137,6 @@ function hasMaxMass(organ: Organ): boolean {
   }
 }
 
-/**
- * 获取当前质量
- */
 function getCurrentMass(organ: Organ): number {
   try {
     return getCurrentValue(organ, 'mass')
@@ -139,9 +145,6 @@ function getCurrentMass(organ: Organ): number {
   }
 }
 
-/**
- * 获取最大质量
- */
 function getMaxMass(organ: Organ): number {
   try {
     return Number(getStatusValue(organ, 'max-mass'))
@@ -150,25 +153,29 @@ function getMaxMass(organ: Organ): number {
   }
 }
 
-/**
- * 获取下一个里程碑
- */
-function getNextMilestone(organ: Organ) {
-  if (!organ.upgradeConfig?.milestones) return null
-  return organ.upgradeConfig.milestones.find(m => m.level > organ.level)
+type MilestoneRowState = 'reached' | 'next' | 'later'
+
+function getMilestoneRows(organ: Organ): { level: number, describe: Describe, state: MilestoneRowState }[] {
+  const milestones = getOrganMilestones(organ)
+  const next = milestones.find(m => m.level > organ.level)
+  return milestones.map(m => {
+    const described = (m as { describe?: Describe }).describe
+    let state: MilestoneRowState = 'later'
+    if (m.level <= organ.level) state = 'reached'
+    else if (next && m.level === next.level) state = 'next'
+    return {
+      level: m.level,
+      describe: described && described.length > 0 ? described : ['效果'],
+      state
+    }
+  })
 }
 
-/**
- * 选择器官
- */
 function handleSelectOrgan(organ: Organ) {
   if (!canUpgrade(organ)) return
-  emit('complete', organ)
+  emit('complete', { organ, cost: getUpgradeCost(organ) })
 }
 
-/**
- * 取消
- */
 function handleCancel() {
   emit('complete', null)
 }
@@ -207,6 +214,12 @@ function handleCancel() {
     }
   }
 
+  .empty {
+    margin-bottom: 20px;
+    padding: 16px;
+    border: 2px solid black;
+  }
+
   .organ-list {
     display: flex;
     flex-direction: column;
@@ -215,11 +228,14 @@ function handleCancel() {
     max-height: 500px;
     overflow-y: auto;
 
+    :deep(.popover-trigger) {
+      display: block;
+    }
+
     .organ-item {
       padding: 16px;
       border: 2px solid black;
       cursor: pointer;
-      transition: background 0.2s;
 
       &:hover:not(.disabled) {
         background: rgba(0, 0, 0, 0.05);
@@ -243,7 +259,6 @@ function handleCancel() {
 
         .organ-level {
           font-size: 16px;
-          color: #666;
         }
       }
 
@@ -252,25 +267,13 @@ function handleCancel() {
         gap: 16px;
         margin-bottom: 8px;
         font-size: 14px;
-        color: #666;
       }
 
       .upgrade-cost {
-        margin-bottom: 8px;
         font-size: 14px;
 
         .error {
           color: red;
-        }
-      }
-
-      .upgrade-effects {
-        font-size: 12px;
-        color: #888;
-
-        .milestone {
-          color: #0070DD;
-          font-weight: bold;
         }
       }
     }
@@ -284,6 +287,50 @@ function handleCancel() {
     .health-info {
       font-size: 16px;
       font-weight: bold;
+    }
+  }
+}
+
+.milestone-track {
+  font-size: 14px;
+  white-space: normal;
+  background: white;
+  border: 2px solid black;
+  padding: 10px;
+  box-sizing: border-box;
+
+  .track-title {
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+
+  .milestone-row {
+    border: 2px solid black;
+    padding: 8px;
+    margin-bottom: 8px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .milestone-lv {
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    &.reached {
+      background: black;
+      color: white;
+
+      :deep(.describe-text) {
+        color: white;
+      }
+    }
+
+    &.next,
+    &.later {
+      background: white;
+      color: black;
     }
   }
 }

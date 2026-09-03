@@ -39,8 +39,6 @@ export class ActionEvent<
     public simulate:boolean = false
     //所属事务
     public _transaction?: any  // Transaction 类型，避免循环依赖
-    //事件自建事务时的完成信号，供 doEventAndWait 等待；挂进外层事务时为 undefined
-    public settled?: Promise<void>
     //是否已取消（用于复活等机制）
     private _cancelled:boolean = false
     //触发器上下文（保存触发器执行时的上下文信息）
@@ -195,10 +193,10 @@ type DoEventOptions = {
     position?: number | "top" | "bottom"  // 插入位置，默认 "top"
 }
 
-export function doEvent(
+export async function doEvent(
     {key,source,medium,target,info={},effectUnits=[],doWhat=()=>{},onComplete}:DoEventType,
     options?: DoEventOptions
-): ActionEvent {
+): Promise<ActionEvent> {
     //创建行为事件
     const event = new ActionEvent(key,source,medium,target,info,effectUnits)
     if(onComplete){
@@ -221,35 +219,15 @@ export function doEvent(
         (txFromEvent && !txFromEvent.completed) ? txFromEvent : getCurrentTransaction()
 
     if (currentTransaction && !currentTransaction.completed) {
-        // 当前在事务上下文里（效果函数 / 触发器回调），统一交给事务自己决定塞主队列还是收集器
+        // 当前在事务上下文里（效果函数 / 触发器回调），只入队，由外层事务保证顺序
         currentTransaction.enqueue(event, options?.position ?? "top")
-    } else {
-        // 没有当前事务，创建新事务并通过队列执行
-        const tx = beginTransaction()
-        tx.add(event)
-        // 事务处理是异步的，这里不阻塞调用方；需要等它跑完的用 doEventAndWait
-        event.settled = endTransaction()
+        return event
     }
 
-    return event
-}
-
-/**
- * 派发事件并等待它连同级联事件全部执行完毕
- *
- * 调用方已经在事务上下文里（效果函数 / 触发器回调）时，事件会挂进外层事务，
- * 由外层保证顺序，这里直接返回。
- *
- * 什么时候必须用它：派发之后紧接着要读取事件造成的结果，或者后续代码会产生
- * 新事件、不能和本事件的结算交错。回合开始/结束就属于后者——不等的话敌人出牌
- * 会插进 turnStart 的护甲清零和中毒结算中间。
- */
-export async function doEventAndWait(
-    config: DoEventType,
-    options?: DoEventOptions
-): Promise<ActionEvent> {
-    const event = doEvent(config, options)
-    await event.settled
+    // 没有当前事务：自己开事务，await 等到本事件和级联全部结算完
+    const tx = beginTransaction()
+    tx.add(event)
+    await endTransaction()
     return event
 }
 

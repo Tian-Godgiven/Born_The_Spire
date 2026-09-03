@@ -18,8 +18,14 @@ export const cardList:CardMap[] = [{
             target:{faction:"opponent"},  // 攻击敌对阵营
             effects:[{
                 key:"damage",
-                params:{value:5},
+                params:{value:"$medium.status(damage)"},
             }]
+        }
+    },
+    upgradeConfig:{
+        maxLevel:1,
+        levelConfigs:{
+            1:{ status:{ damage:8 } }
         }
     }
 },{
@@ -39,8 +45,14 @@ export const cardList:CardMap[] = [{
             target:{faction:"enemy"},
             effects:[{
                 key:"damage",
-                params:{value:15},
+                params:{value:"$medium.status(damage)"},
             }]
+        }
+    },
+    upgradeConfig:{
+        maxLevel:1,
+        levelConfigs:{
+            1:{ status:{ damage:20 } }
         }
     }
 },{
@@ -100,8 +112,14 @@ export const cardList:CardMap[] = [{
             target:{faction:"player",key:"self"},
             effects:[{
                 key:"applyState",
-                params:{stateKey:"power",stacks:1},
+                params:{stateKey:"power",stacks:"$medium.status(power)"},
             }]
+        }
+    },
+    upgradeConfig:{
+        maxLevel:1,
+        levelConfigs:{
+            1:{ status:{ power:2 } }
         }
     }
 },{
@@ -195,8 +213,14 @@ export const cardList:CardMap[] = [{
             target:{number:"all"},//阵营默认为敌人
             effects:[{
                 key:"damage",
-                params:{value:3},
+                params:{value:"$medium.status(damage)"},
             }]
+        }
+    },
+    upgradeConfig:{
+        maxLevel:1,
+        levelConfigs:{
+            1:{ status:{ damage:5 } }
         }
     }
 },{

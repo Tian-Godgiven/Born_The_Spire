@@ -4,6 +4,11 @@ import { ref } from "vue";
 
 export const logList = ref<LogUnit[]>([])
 
+/** 顶层日志最多留多少条，再旧的丢掉 */
+export const LOG_STORE_LIMIT = 500
+/** 日志栏打开时默认渲染最近多少条 */
+export const LOG_RENDER_LIMIT = 200
+
 export type LogUnit = {
     text:string,//直接在日志栏中输出的内容
     detail:string,//在日志栏中作为上述内容的折叠内容，点一下才会显示(再点一下收起)
@@ -47,6 +52,9 @@ export function newLog(logData:LogData|any[], parent?:LogUnit):LogUnit{
         // 作为顶层日志添加到列表
         logList.value.push(logUnit)
         logUnit.level = 0
+        if (logList.value.length > LOG_STORE_LIMIT) {
+            logList.value.splice(0, logList.value.length - LOG_STORE_LIMIT)
+        }
     }
 
     return logUnit  // 返回日志单元，供后续添加子日志

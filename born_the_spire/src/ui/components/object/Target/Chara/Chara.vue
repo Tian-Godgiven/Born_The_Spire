@@ -197,9 +197,10 @@
 // 意图挂在 .chara-wrapper 上而不是 .chara-content 里，两者同尺寸所以位置不变
 .intent-display {
     position: absolute;
-    top: -30px;
+    bottom: 100%;
     left: 50%;
     transform: translateX(-50%);
+    margin-bottom: 8px;
     font-size: 12px;
     white-space: nowrap;
     z-index: 10;
@@ -230,6 +231,11 @@
 
     .organs{
         flex-grow: 1;
+
+        :deep(.organ) {
+            width: 100%;
+            box-sizing: border-box;
+        }
     }
     .bottom{
         .name{
@@ -248,11 +254,15 @@
     }
     .states {
         position: absolute;
-        bottom: -26px;
-        left: 0;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 240px;
         display: flex;
         flex-wrap: wrap;
+        justify-content: center;
         gap: 2px;
+        margin-top: 2px;
     }
 }
 </style>

@@ -31,9 +31,6 @@
                 <Card v-for="card in intent.actions" :key="card.key" :card="card" />
             </div>
 
-            <div v-if="intent.count && intent.count > 1" class="tooltip-count">
-                攻击 {{ intent.count }} 次
-            </div>
             <div class="tooltip-visibility" v-if="intent.visibility !== 'exact' && intent.visibility !== 'card'">
                 {{ visibilityHint }}
             </div>
@@ -272,12 +269,6 @@ const visibilityHint = computed(() => {
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
-    }
-
-    .tooltip-count {
-        margin-top: 4px;
-        color: #666;
-        font-size: 13px;
     }
 
     .tooltip-visibility {

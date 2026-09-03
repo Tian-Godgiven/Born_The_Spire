@@ -80,7 +80,8 @@ export const countAndTrigger: EffectFunc = (event, effect) => {
 
     if (!params.onTrigger || !(params.onTrigger as any).key) return
 
-    const onTriggerTarget = event.triggerContext?.owner ?? event.target
+    const itemOwner = (source as any)?.owner ?? (medium as any)?.owner
+    const onTriggerTarget = event.triggerContext?.owner ?? itemOwner ?? event.target
     const onTriggerKey = String((params.onTrigger as any).key)
     const onTriggerInfo = (params.onTrigger as any).info ?? {}
     const onTriggerEffect = (params.onTrigger as any).effect ?? []

@@ -2,7 +2,7 @@
 <div class="organ-popup">
     <div class="popup-header">
         <span class="popup-organ-name">{{ organ.label }}</span>
-        <span class="popup-rarity">{{ getRarityLabel(organ.rarity) }}</span>
+        <span class="popup-rarity" :style="{ color: getRarityColor(organ.rarity) }">{{ getRarityLabel(organ.rarity) }}</span>
     </div>
 
     <!-- 词条区域 -->
@@ -28,6 +28,7 @@ import { Organ } from '@/core/objects/target/Organ'
 import DescribeText from '@/ui/components/display/DescribeText.vue'
 import StateDisplay from '@/ui/components/display/StateDisplay.vue'
 import { entryDefinitions } from '@/core/objects/system/Entry'
+import { getRarityColor, getRarityLabel } from '@/static/list/system/rarityPalette'
 
 defineProps<{
     organ: Organ
@@ -38,17 +39,6 @@ function getEntryLabel(entryKey: string): string {
     return entryDefinitions[entryKey]?.label || entryKey
 }
 
-// 获取稀有度标签
-function getRarityLabel(rarity: string): string {
-    const rarityMap: Record<string, string> = {
-        'common': '普通',
-        'uncommon': '罕见',
-        'rare': '稀有',
-        'epic': '史诗',
-        'legendary': '传说'
-    }
-    return rarityMap[rarity] || rarity
-}
 </script>
 
 <style scoped lang='scss'>
@@ -72,7 +62,6 @@ function getRarityLabel(rarity: string): string {
 
         .popup-rarity {
             font-size: 12px;
-            color: #666;
         }
     }
 

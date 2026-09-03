@@ -79,7 +79,7 @@ function evaluateCondition(
  * @param triggerEffect - 触发该 reaction 的效果对象（可能为 null）
  * @param options - 额外选项（条件检查、disableUntil 等）
  */
-export function executeItemReaction(params: {
+export async function executeItemReaction(params: {
     item: Item,
     reactionEvents: TriggerEventConfig[],
     triggerEvent: ActionEvent,
@@ -90,7 +90,7 @@ export function executeItemReaction(params: {
     unit?: ItemModifierUnit,
     triggerMountTarget?: Entity,
     triggerDefKey?: string,
-}): void {
+}): Promise<void> {
     const { item, reactionEvents, triggerEvent, owner, triggerEffect, condition, disableUntil, unit, triggerMountTarget, triggerDefKey } = params
 
     // 检查物品是否被禁用
@@ -128,7 +128,7 @@ export function executeItemReaction(params: {
 
         if (target == null) continue
 
-        const newEvent = doEvent({
+        const newEvent = await doEvent({
             key: eventConfig.key,
             source: (source ?? item) as any,
             medium: (medium ?? item) as any,
@@ -308,12 +308,12 @@ export class ItemModifier {
             how,
             key,
             level,
-            callback: (event, _effect, _triggerLevel) => {
+            callback: async (event, _effect, _triggerLevel) => {
                 // 检查物品是否被禁用（器官损坏等情况）
                 if (item.isDisabled) return
 
                 // 执行反应事件（统一的方法，在 executeItemReaction 中检查所有条件）
-                executeItemReaction({
+                await executeItemReaction({
                     item,
                     reactionEvents,
                     triggerEvent: event,

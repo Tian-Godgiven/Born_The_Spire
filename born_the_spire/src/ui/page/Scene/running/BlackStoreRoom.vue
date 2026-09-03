@@ -193,8 +193,12 @@
             >
                 <div class="tooltip-header">
                     <span class="relic-name">{{ getPreview(tooltipItem.id).label }}</span>
-                    <span class="relic-rarity" v-if="getPreview(tooltipItem.id).rarity">
-                        [{{ getRarityText(getPreview(tooltipItem.id).rarity) }}]
+                    <span
+                        class="relic-rarity"
+                        v-if="getPreview(tooltipItem.id).rarity"
+                        :style="{ color: getRarityColor(getPreview(tooltipItem.id).rarity) }"
+                    >
+                        [{{ getRarityLabel(getPreview(tooltipItem.id).rarity) }}]
                     </span>
                 </div>
                 <div class="tooltip-body">
@@ -273,6 +277,7 @@ import { getCurrentValue } from '@/core/objects/system/Current/current'
 import { getStatusValue } from '@/core/objects/system/status/Status'
 import { goToNextStep } from '@/core/hooks/step'
 import { getDescribe } from '@/ui/hooks/express/describe'
+import { getRarityColor, getRarityLabel } from '@/static/list/system/rarityPalette'
 import LeaveButton from '@/ui/components/global/LeaveButton.vue'
 import OrganPopup from '@/ui/components/interaction/OrganPopup.vue'
 import Card from '@/ui/components/object/Card.vue'
@@ -285,17 +290,6 @@ const RESERVE_LABELS: Record<string, string> = {
 
 function reserveLabel(key: string): string {
     return RESERVE_LABELS[key] ?? key
-}
-
-// 遗物稀有度显示
-const RARITY_MAP: Record<string, string> = {
-    common: '普通',
-    uncommon: '稀有',
-    rare: '史诗',
-}
-
-function getRarityText(rarity: string): string {
-    return RARITY_MAP[rarity] || rarity
 }
 
 // 获取当前房间
@@ -793,7 +787,6 @@ async function handleLeave() {
 
             .relic-rarity {
                 font-size: 12px;
-                color: #666;
             }
         }
 

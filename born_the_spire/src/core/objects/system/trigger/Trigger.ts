@@ -127,7 +127,7 @@ export function createTriggerByTriggerMap(source:Entity,target:Entity, item:Trig
         // 支持旧格式：直接定义事件
         if ((item as any).event) {
             const eventConfigs = Array.isArray((item as any).event) ? (item as any).event : [(item as any).event]
-            executeItemReaction({
+            await executeItemReaction({
                 item: source as Item,
                 reactionEvents: eventConfigs,
                 triggerEvent,
@@ -158,7 +158,7 @@ export function createTriggerByTriggerMap(source:Entity,target:Entity, item:Trig
             ])
             return
         }
-        executeItemReaction({
+        await executeItemReaction({
             item: source as Item,
             reactionEvents,
             triggerEvent,

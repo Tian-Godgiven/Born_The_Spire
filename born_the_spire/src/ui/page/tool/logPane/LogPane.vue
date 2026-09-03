@@ -12,8 +12,16 @@
         
     </div>
     <div class="logContainer">
-        <template v-for="log in logList">
-            <LogUnit :log :showTime></LogUnit>
+        <template v-if="nowState">
+            <div v-if="logList.length > LOG_RENDER_LIMIT" class="log-hint">
+                仅显示最近 {{ LOG_RENDER_LIMIT }} 条
+            </div>
+            <LogUnit
+                v-for="(log, index) in visibleLogs"
+                :key="log.time + '-' + index"
+                :log="log"
+                :showTime="showTime"
+            />
         </template>
     </div>
     
@@ -21,9 +29,9 @@
 </template>
 
 <script setup lang="ts">
-import { logList } from '@/ui/hooks/global/log';
+import { computed, onMounted, ref, useTemplateRef } from 'vue';
+import { logList, LOG_RENDER_LIMIT } from '@/ui/hooks/global/log';
 import gsap from 'gsap';
-import { onMounted, ref, useTemplateRef } from 'vue';
 import LogUnit from './LogUnit.vue';
 
 const logPaneRef = useTemplateRef("logPaneRef")
@@ -51,6 +59,12 @@ function switchShow(){
 
 //显示日志打印时间
 const showTime = ref(false)
+
+const visibleLogs = computed(() => {
+    const list = logList.value
+    if (list.length <= LOG_RENDER_LIMIT) return list
+    return list.slice(-LOG_RENDER_LIMIT)
+})
 
 function clear(){
     logList.value = []
@@ -86,6 +100,11 @@ function clear(){
     .logContainer{
         overflow-y: auto;
         flex-grow: 1;
+    }
+    .log-hint{
+        font-size: 12px;
+        color: #888;
+        margin-bottom: 6px;
     }
 }
 </style>

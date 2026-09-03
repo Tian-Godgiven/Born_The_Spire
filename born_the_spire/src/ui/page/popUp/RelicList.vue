@@ -10,7 +10,7 @@
             <div v-for="relic in relics" :key="relic.key" class="relic-item">
                 <div class="relic-header">
                     <span class="relic-name">{{ relic.label }}</span>
-                    <span class="relic-rarity" v-if="relic.rarity">[{{ getRarityText(relic.rarity) }}]</span>
+                    <span class="relic-rarity" v-if="relic.rarity" :style="{ color: getRarityColor(relic.rarity) }">[{{ getRarityLabel(relic.rarity) }}]</span>
                     <span class="ability-badge" v-if="hasActiveAbilities(relic)">⚡</span>
                 </div>
                 <div class="relic-description">
@@ -36,21 +36,13 @@
     import type { PopUp } from '@/ui/hooks/global/popUp'
     import Mask from '@/ui/components/global/Mask.vue'
     import { getDescribe } from '@/ui/hooks/express/describe'
+    import { getRarityColor, getRarityLabel } from '@/static/list/system/rarityPalette'
 
     const { popUp, props } = defineProps<{
         popUp: PopUp
         props: { relics: Relic[] }
     }>()
     const { relics } = props
-
-    function getRarityText(rarity: string): string {
-        const rarityMap: Record<string, string> = {
-            'common': '普通',
-            'uncommon': '稀有',
-            'rare': '史诗'
-        }
-        return rarityMap[rarity] || rarity
-    }
 
     function hasActiveAbilities(relic: Relic): boolean {
         return !!(relic.activeAbilities && relic.activeAbilities.length > 0)
@@ -122,7 +114,6 @@
 
                     .relic-rarity {
                         font-size: 12px;
-                        color: #666;
                     }
 
                     .ability-badge {

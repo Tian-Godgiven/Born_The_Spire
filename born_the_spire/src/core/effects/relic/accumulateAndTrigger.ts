@@ -18,11 +18,12 @@ import { resolveTriggerMountTargets } from "@/core/utils/resolveTriggerMountTarg
  * - pointKey:   计数器使用的 status key（需在物品 status 中声明，默认 "point"）
  * - on:         触发时机 { when?, how?, key }
  * - gain:       每次累积多少（数字，或 "$triggerEffect.params(value)" 读取触发效果的值）
- * - threshold:  触发阈值（默认 10）
+ * - threshold:  触发阈值（默认 10）。挂载时定死；要随升级变，改用 thresholdKey
+ * - thresholdKey: 每次累计时从物品 status 再读阈值（可选）
  * - effects:    达到阈值时触发的效果数组
  *
  * === 调节参数（可选）===
- * - consume:    触发时消耗的点数（默认 1，或 "all" 清空所有点数）
+ * - consume:    触发时消耗的点数（默认 1，或 "all" 清空，或 "threshold" 消耗当前阈值）
  * - minGain:    gain 的最小值，低于此值不累积（可选）
  * - repeat:     是否在单次事件内循环触发直到低于阈值（默认 true）
  * - maxRepeat:  单次事件最多触发次数（默认不限）
@@ -45,6 +46,7 @@ export const accumulateAndTrigger: EffectFunc = (event, effect) => {
     const on = params.on as { when?: "before"|"after", how?: "take"|"make"|"via", key: string }
     const gain = params.gain
     const threshold = Number(params.threshold ?? 10)
+    const thresholdKey = params.thresholdKey !== undefined ? String(params.thresholdKey) : undefined
     const effects = (params.effects as EffectUnit[]) ?? []
 
     // 调节参数
@@ -102,9 +104,18 @@ export const accumulateAndTrigger: EffectFunc = (event, effect) => {
         if (!pointStatus) return
         pointStatus.setOriginalBaseValue(pointStatus.value + gainAmount)
 
+        const currentThreshold = thresholdKey && item.status?.[thresholdKey]
+            ? Number(item.status[thresholdKey].value)
+            : threshold
+        if (!currentThreshold || currentThreshold <= 0) return
+
         let count = 0
-        while (pointStatus.value >= threshold && (repeat || count === 0) && count < maxRepeat) {
-            const consumeAmount = consumeParam === "all" ? pointStatus.value : Number(consumeParam)
+        while (pointStatus.value >= currentThreshold && (repeat || count === 0) && count < maxRepeat) {
+            const consumeAmount = consumeParam === "all"
+                ? pointStatus.value
+                : consumeParam === "threshold"
+                    ? currentThreshold
+                    : Number(consumeParam)
             pointStatus.setOriginalBaseValue(Math.max(0, pointStatus.value - consumeAmount))
             count++
 
