@@ -46,7 +46,7 @@ export const potionList:PotionMap[] = [
                     label: "投掷",
                     target: {faction: "enemy"},
                     effects: [{
-                        key: "damage",
+                        key: "attack",
                         params: {value: 15}
                     }]
                 }
@@ -93,7 +93,7 @@ export const potionList:PotionMap[] = [
                 label: "投掷",
                 target: {faction: "enemy"},
                 effects: [{
-                    key: "damage",
+                    key: "attack",
                     params: {value: 20}
                 }]
             }

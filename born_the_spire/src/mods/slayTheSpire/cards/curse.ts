@@ -35,7 +35,7 @@ export const regretCard: CardMap = {
             label: "悔恨：失去生命",
             targetType: "owner",
             effect: [{
-                key: "damage",
+                key: "loseHealth",
                 params: { value: "$target.pileCount(hand)" }
             }]
         }]

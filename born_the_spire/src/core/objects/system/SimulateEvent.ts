@@ -252,7 +252,7 @@ export async function simulateDamage(
 ): Promise<number> {
     const result = await simulateEffect(
         {
-            key: "damage",
+            key: "attack",
             params: { value: baseDamage }
         },
         source,

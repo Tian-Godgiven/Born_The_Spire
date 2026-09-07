@@ -79,7 +79,7 @@ export const venomspineOrgan: OrganMap = {
             triggers: [{
                 when: 'before',
                 how: 'take',
-                key: 'damage',
+                key: 'attack',
                 condition: '$eventSource.hasState(vulnerable)',
                 action: 'reduceVulnDamage'
             }]

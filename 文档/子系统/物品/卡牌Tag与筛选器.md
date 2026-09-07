@@ -49,7 +49,7 @@ custom   Mod 追加的标签
 ### 已注册标签
 
 ```
-attack   type     造成伤害的卡牌
+attack   type     打人的卡牌（效果用 key: "attack"，不是 "damage"）
 skill    type     提供格挡、抽牌等效果的卡牌
 power    type     提供持续效果的卡牌
 

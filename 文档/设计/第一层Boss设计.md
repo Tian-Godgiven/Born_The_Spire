@@ -246,7 +246,7 @@ key: enemy_iron_war_machine
 
 新状态：
   forceFieldShield（力场护盾）— 每层免疫 1 次攻击卡伤害，被打消耗层数，不自动衰减
-    实现：before take damage trigger + `condition: "$triggerCard.hasTag(attack)"` + nullifyDamageValue + changeStateStack -1
+    实现：before take `key: "attack"` + nullifyDamageValue + changeStateStack -1
   hydraulicUsed（液压已释放）— 器官内部标记；turnEnd 自动清零
   lethalGuardReady（钢铁意志充能）— 器官内部标记；refresh 型 bool 状态
 

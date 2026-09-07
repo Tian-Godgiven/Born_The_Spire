@@ -23,7 +23,7 @@ export const allForOneCard: CardMap = {
         use: {
             target: { faction: "enemy" },
             effects: [{
-                key: "damage",
+                key: "attack",
                 params: { value: 10 }
             }, {
                 key: "retrieveCardsToHand",
@@ -53,7 +53,7 @@ export const clawCard: CardMap = {
         use: {
             target: { faction: "enemy" },
             effects: [{
-                key: "damage",
+                key: "attack",
                 params: { value: "$medium.status(damage)" }
             }, {
                 key: "addStatusCurrent",
@@ -84,10 +84,10 @@ export const daggerSprayCard: CardMap = {
         use: {
             target: { faction: "enemy", number: "all" },
             effects: [{
-                key: "damage",
+                key: "attack",
                 params: { value: 4 }
             }, {
-                key: "damage",
+                key: "attack",
                 params: { value: 4 }
             }]
         }
@@ -101,10 +101,10 @@ export const daggerSprayCard: CardMap = {
                     use: {
                         target: { faction: "enemy", number: "all" },
                         effects: [{
-                            key: "damage",
+                            key: "attack",
                             params: { value: 6 }
                         }, {
-                            key: "damage",
+                            key: "attack",
                             params: { value: 6 }
                         }]
                     }

@@ -56,7 +56,7 @@ export const organList:OrganMap[] = [
     },{
         label:"石肤",
         key:"original_organ_00003",
-        describe:["受到的伤害值 -", { key: ["status", "damage-reduction"] }],
+        describe:["受到的攻击伤害 -", { key: ["status", "damage-reduction"] }],
         rarity: OrganRarity.Uncommon,
         part: OrganPartEnum.Skin,
         status: {
@@ -100,7 +100,7 @@ export const organList:OrganMap[] = [
                 triggers:[{
                     when:"before",
                     how:"take",
-                    key:"damage",
+                    key:"attack",
                     action:"reduceDamage1"
                 }]
             }
@@ -369,7 +369,7 @@ export const organList:OrganMap[] = [
                     key: "accumulateAndTrigger",
                     params: {
                         pointKey: "damage-taken",
-                        on: { when: "after", how: "take", key: "damage" },
+                        on: { when: "after", how: "take", key: ["attack", "damage"] },
                         gain: "$triggerEffect.params(value)",
                         thresholdKey: "hurt-threshold",
                         consume: "threshold",
@@ -430,7 +430,7 @@ export const organList:OrganMap[] = [
             triggers:[{
                 when:"before",
                 how:"make",
-                key:"damage",
+                key:"attack",
                 action:"bonusDamageVsWeak"
             }]
         }
@@ -729,7 +729,7 @@ export const organList:OrganMap[] = [
             triggers: [{
                 when: "after",
                 how: "take",
-                key: "damage",
+                key: "attack",
                 action: "poisonAttacker"
             }]
         }
@@ -1031,7 +1031,7 @@ export const organList:OrganMap[] = [
             triggers: [{
                 when: "after",
                 how: "take",
-                key: "damage",
+                key: ["attack", "damage"],
                 action: "emergencyHeal"
             }]
         }
@@ -1098,7 +1098,7 @@ export const organList:OrganMap[] = [
 {
     label: "过期隔板",
     key: "enemy_organ_rusty_separator",
-    describe: ["受到伤害时：30%完全抵消（本回合每抵消一次，概率-10%），20%护甲崩裂"],
+        describe: ["受到攻击时：30%完全抵消（本回合每抵消一次，概率-10%），20%失去所有格挡"],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Bone,
     status: {
@@ -1119,7 +1119,7 @@ export const organList:OrganMap[] = [
             triggers: [{
                 when: "before",
                 how: "take",
-                key: "damage",
+                key: "attack",
                 action: "rustySeparatorRoll"
             }]
         }
@@ -1698,7 +1698,7 @@ export const organList:OrganMap[] = [
                 {
                     when: "after",
                     how: "take",
-                    key: "damage",
+                    key: ["attack", "damage"],
                     action: "poisonArmorGain"
                 },
                 {
@@ -1762,7 +1762,7 @@ export const organList:OrganMap[] = [
                 key: "accumulateAndTrigger",
                 params: {
                     pointKey: "lifeDrainAccum",
-                    on: { when: "after", how: "take", key: "damage" },
+                    on: { when: "after", how: "take", key: ["attack", "damage"] },
                     triggerTarget: "allOpponents",
                     gain: "$triggerEffect.params(value)",
                     threshold: 8,
@@ -1982,7 +1982,7 @@ export const organList:OrganMap[] = [
             triggers: [{
                 when: "before",
                 how: "make",
-                key: "damage",
+                key: "attack",
                 action: "multiHitBonus"
             }]
         }
@@ -2112,14 +2112,9 @@ export const organList:OrganMap[] = [
             triggers: [{
                 when: "before",
                 how: "make",
-                key: "damage",
+                key: "attack",
                 action: "hydraulicBoost",
-                condition: {
-                    and: [
-                        "$triggerCard.hasTag(attack)",
-                        { not: "$item.hasState(hydraulicUsed)" }
-                    ]
-                }
+                condition: { not: "$item.hasState(hydraulicUsed)" }
             }]
         }
     },
@@ -2161,7 +2156,7 @@ export const organList:OrganMap[] = [
                     action: "lethalGuardCharge"
                 },
                 {
-                    when: "before", how: "take", key: "damage",
+                    when: "before", how: "take", key: ["attack", "damage"],
                     level: -100,
                     action: "lethalGuardTrigger",
                     condition: "$item.hasState(lethalGuardReady)"

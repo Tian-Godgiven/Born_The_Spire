@@ -241,7 +241,7 @@ function generateTriggersForMechanism(
         const { remove } = entity.trigger.appendTrigger({
             when: "before",
             how: "take",
-            key: "damage",
+            key: "attack",
             level: logic.absorbDamage.priority || 0,
             callback: async (event, effect) => {
                 if (!effect) return  // 添加 null 检查
@@ -336,7 +336,7 @@ function generateTriggersForMechanism(
             const { remove } = entity.trigger.appendTrigger({
                 when: "after",
                 how: "take",
-                key: "damage",
+                key: ["attack", "damage"],
                 callback: async () => {
                     if (entity.current[storageKey]) {
                         entity.current[storageKey].value = 0

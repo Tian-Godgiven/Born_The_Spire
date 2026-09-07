@@ -1,5 +1,6 @@
 import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import { isEntity, isEffect, isEnemy } from "@/core/utils/typeGuards"
+import { isHurtEffectKey } from "@/core/effects/health/damage"
 import { getStateModifier } from "@/core/objects/system/modifier/StateModifier"
 import { getContextRandom } from "@/core/hooks/random"
 import { doEvent } from "@/core/objects/system/ActionEvent"
@@ -46,14 +47,14 @@ export const organ_heatTick: EffectFunc = (event, _effect) => {
 
 /**
  * 过期隔板：受到伤害时掷骰
- * 抵消概率 = blockChance - 本回合已抵消次数 × blockDecay，落在其后的 breakChance 区间则装甲崩裂
+ * 抵消概率 = blockChance - 本回合已抵消次数 × blockDecay，落在其后的 breakChance 区间则失去所有格挡
  *
  * 在 before take damage 的 reaction 里触发，event.target 是 damage Effect，event.medium 是器官
  *
  * params:
  *   blockChance: number - 基础完全抵消概率 (default: 0.3)
  *   blockDecay: number  - 每抵消一次降低的概率 (default: 0.1)
- *   breakChance: number - 装甲崩裂概率 (default: 0.2)
+ *   breakChance: number - 失去所有格挡的概率 (default: 0.2)
  */
 export const organ_rustySeparator: EffectFunc = (event, effect) => {
     const damageEffect = Array.isArray(event.target) ? event.target[0] : event.target
@@ -94,7 +95,7 @@ export const organ_rustySeparator: EffectFunc = (event, effect) => {
         const currentArmor = getCurrentValue(host as any, "armor")
         if (currentArmor > 0) {
             changeCurrentValue(host as any, "armor", 0, event)
-            newLog([host, "过期隔板：装甲崩裂，护甲清零"])
+            newLog([host, "过期隔板：失去所有格挡"])
         }
     }
 
@@ -220,13 +221,13 @@ export const organ_heatAccumulate: EffectFunc = (event, effect) => {
         const battle = nowBattle.value
         if (battle) {
             for (const player of battle.getAlivePlayers()) {
-                doEvent({
-                    key: "damage",
-                    source: target,
-                    medium: event.medium,
-                    target: player,
-                    effectUnits: [{ key: "damage", params: { value: overloadDamage } }]
-                })
+            doEvent({
+                key: "attack",
+                source: target,
+                medium: event.medium,
+                target: player,
+                effectUnits: [{ key: "attack", params: { value: overloadDamage } }]
+            })
             }
         }
 
@@ -323,11 +324,11 @@ export const organ_armorBash: EffectFunc = (event, effect) => {
     newLog([source, `消耗 ${consumed} 护甲发动护甲冲撞（剩余 ${remaining}）`])
 
     doEvent({
-        key: "damage",
+        key: "attack",
         source: event.source,
         medium: event.medium,
         target: event.target,
-        effectUnits: [{ key: "damage", params: { value: armorAmount } }]
+        effectUnits: [{ key: "attack", params: { value: armorAmount } }]
     })
 
     return true
@@ -342,7 +343,7 @@ export const state_hardenAbsorb: EffectFunc = (event, effect) => {
     if (stacks <= 0) return false
 
     const target = event.target
-    if (Array.isArray(target) || !isEffect(target) || target.key !== "damage") return false
+    if (Array.isArray(target) || !isEffect(target) || !isHurtEffectKey(target.key)) return false
 
     const oldValue = Number(target.params.value)
     const reduction = Math.min(stacks * 0.1, 1)
@@ -366,11 +367,11 @@ export const card_strengthBite: EffectFunc = (event, effect) => {
     const totalDamage = base + strengthStacks * mult
 
     doEvent({
-        key: "damage",
+        key: "attack",
         source: event.source,
         medium: event.medium,
         target: event.target,
-        effectUnits: [{ key: "damage", params: { value: totalDamage } }]
+        effectUnits: [{ key: "attack", params: { value: totalDamage } }]
     })
 
     return true
@@ -487,14 +488,14 @@ export const organ_mycelialSpread: EffectFunc = (event, effect) => {
 }
 
 /**
- * 六棱腺：拦截 damage Effect，若来源攻击牌带 multiHit 标签则 value + bonus
- * targetType: triggerEffect（event.target 是 damage Effect 对象）
+ * 六棱腺：拦截 attack Effect，若来源攻击牌带 multiHit 标签则 value + bonus
+ * targetType: triggerEffect（event.target 是 attack Effect 对象）
  * params: { bonus }（默认 1）
  */
 export const organ_multiHitBonus: EffectFunc = (event, effect) => {
     const target = Array.isArray(event.target) ? event.target[0] : event.target
     if (!isEffect(target)) return false
-    if (target.key !== "damage") return false
+    if (!isHurtEffectKey(target.key)) return false
 
     const medium = target.actionEvent?.medium
     const cardTags = (medium as any)?.tags

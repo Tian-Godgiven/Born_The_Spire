@@ -35,7 +35,7 @@ export type TriggerObj<
 > = {
     when:"before"|"after",
     how:"take"|"make"|"via",
-    key:string,
+    key:string | string[],
     level?:number,
     callback:TriggerFunc<s,m,t>,
     importantKey?:string,
@@ -91,7 +91,7 @@ export interface TriggerCondition {
 export interface TriggerMapItemWithEvent {
     when: "before" | "after";
     how: "make" | "via" | "take";
-    key: string;
+    key: string | string[];
     level?: number;
     event: TriggerEventConfig | TriggerEventConfig[];  // 直接定义事件
     info?: string;
@@ -102,7 +102,7 @@ export interface TriggerMapItemWithEvent {
 export interface TriggerMapItemWithAction {
     when: "before" | "after";
     how: "make" | "via" | "take";
-    key: string;
+    key: string | string[];
     level?: number;
     action: string;  // 指定响应名称（与 event 互斥）
     info?: string;
@@ -124,7 +124,7 @@ export interface TriggerMapItemWithAction {
 export interface TriggerMapItemWithCancelEvent {
     when: "before" | "after";
     how: "make" | "via" | "take";
-    key: string;
+    key: string | string[];
     level?: number;
     cancelEvent: true;
     importantKey?: string;
@@ -139,7 +139,7 @@ export type TriggerMapItem = TriggerMapItemWithEvent | TriggerMapItemWithAction 
 export interface ImportantTriggerMapItem {
     when: "before" | "after";
     how: "make" | "via" | "take";
-    key: string;
+    key: string | string[];
     level?: number;
     action: string;
     importantKey: string;

@@ -34,13 +34,15 @@ export type EffectParams = {
  */
 export function resolveEffectParams(param: EffectParams[string], event: ActionEvent, effect: Effect, owner?: EventParticipant) {
     // 构建解析上下文
-    // owner：定义该 EffectUnit 的物品（卡牌/器官/遗物），由 createEffectByUnit 的调用方显式传入
-    // $self 表达式解析为 owner，与 event.medium 解耦
+    // owner / item：定义该 EffectUnit 的物品（卡牌/器官/遗物）。效果参数里 $item 与 $owner 都指向它。
+    // 条件表达式里的 $owner 仍是持有者，由 Trigger 另建 context，不走这里。
+    const definingItem = isEntity(owner) ? owner : undefined
     const context = {
         source: event.source,
         medium: event.medium,
         target: event.target,
-        owner: isEntity(owner) ? owner : undefined,
+        owner: definingItem,
+        item: definingItem,
         event,
         triggerEffect: effect,
         lazyResolve: true,  // 效果构造时，$triggerEffect.params() 延迟解析

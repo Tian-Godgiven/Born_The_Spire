@@ -245,6 +245,7 @@ const currentMass = computed(() => {
     display: flex;
     align-items: flex-start;
     gap: 8px;
+    white-space: normal;
 }
 
 // 定位交给外层容器，按钮本身保持静态，免得和 Popover 触发区的 position: relative 打架

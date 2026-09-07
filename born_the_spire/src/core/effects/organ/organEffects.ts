@@ -296,6 +296,7 @@ export const modifyOrganCardStatus: EffectFunc = (event, effect) => {
         }
         const current = typeof status.baseValue === "string" ? Number(status.baseValue) : Number(status.baseValue)
         status.setOriginalBaseValue(current + delta)
+    }
     return true
 }
 

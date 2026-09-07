@@ -70,5 +70,6 @@
     display: flex;
     align-items: flex-start;
     gap: 8px;
+    white-space: normal;
 }
 </style>

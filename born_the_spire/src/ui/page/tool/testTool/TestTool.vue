@@ -98,12 +98,12 @@
         text:"玩家受到10点伤害",
         click:()=>{
             doEvent({
-                key: "damage",
+                key: "attack",
                 source: nowPlayer,
                 medium: nowPlayer,
                 target: nowPlayer,
                 effectUnits: [{
-                    key: "damage",
+                    key: "attack",
                     params: { value: 10 }
                 }]
             })

@@ -84,6 +84,12 @@ export const effectMap:EffectData[] = [
     effect:damageTo,
     preview: previewValue
 },
+{
+    label:"攻击",
+    key:"attack",
+    effect:damageTo,
+    preview: previewValue
+},
 //减少伤害值
 {
     label:"减少伤害值",
@@ -132,7 +138,7 @@ export const effectMap:EffectData[] = [
                 e.appendTrigger({
                     when:"before",
                     how:"take",
-                    key:"damage",
+                    key:"attack",
                     callback:async (event:ActionEvent)=>{
                         reduceDamageFor(event,effect)
                     }

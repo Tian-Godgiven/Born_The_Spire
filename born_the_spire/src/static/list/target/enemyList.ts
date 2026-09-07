@@ -454,7 +454,7 @@ export const enemyList:EnemyMap[] = [
         trigger: [{
             when: "after",
             how: "take",
-            key: "damage",
+            key: ["attack", "damage"],
             action: "checkPhaseShift"
         }],
         reaction: {

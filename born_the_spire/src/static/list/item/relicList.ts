@@ -57,7 +57,7 @@ export const relicList: RelicMap[] = [
             },
             disableAfterUse: true,
             effects: [{
-                key: "damage",
+                key: "attack",
                 params: { value: 10 }
             }]
         }],
@@ -148,7 +148,7 @@ export const relicList: RelicMap[] = [
             },
 
             effects: [{
-                key: "damage",
+                key: "attack",
                 params: { value: 10 }
             }]
         }],
@@ -220,7 +220,7 @@ export const relicList: RelicMap[] = [
                 targetType: "allEnemies.random",
                 key: "damage",
                 effect: [{
-                    key: "damage",
+                    key: "attack",
                     params: { value: 5 }
                 }]
             }]
@@ -276,7 +276,7 @@ export const relicList: RelicMap[] = [
                     targetType: "allEnemies.random",
                     key: "damage",
                     effect: [{
-                        key: "damage",
+                        key: "attack",
                         params: { value: 8 }
                     }]
                 },
@@ -345,7 +345,7 @@ export const relicList: RelicMap[] = [
                     targetType: "allEntities.random",
                     key: "damage",
                     effect: [{
-                        key: "damage",
+                        key: "attack",
                         params: { value: "$item.status(damage)" }
                     }]
                 },
@@ -388,7 +388,7 @@ export const relicList: RelicMap[] = [
                     key: "accumulateAndTrigger",
                     params: {
                         pointKey: "point",
-                        on: { when: "after", how: "take", key: "damage" },
+                        on: { when: "after", how: "take", key: ["attack", "damage"] },
                         gain: "$triggerEffect.params(value)",
                         threshold: 10,
                         consume: 10,
@@ -423,7 +423,7 @@ export const relicList: RelicMap[] = [
                     params: {
                         pointKey: "point",
                         usedKey: "used",
-                        on: { when: "after", how: "take", key: "damage" },
+                        on: { when: "after", how: "take", key: ["attack", "damage"] },
                         gain: "$triggerEffect.params(value)",
                         minGain: 10,
                         threshold: 1,
@@ -480,7 +480,7 @@ export const relicList: RelicMap[] = [
                 triggers: [{
                     when: "after",
                     how: "take",
-                    key: "damage",
+                    key: ["attack", "damage"],
                     action: "gainPowerOnDamage"
                 }]
             }
@@ -669,7 +669,7 @@ export const relicList: RelicMap[] = [
                 targetType: "target",
                 key: "damage",
                 effect: [{
-                    key: "damage",
+                    key: "attack",
                     params: { value: 5 }
                 }]
             }]
@@ -1243,7 +1243,7 @@ export const relicList: RelicMap[] = [
                     key: "accumulateAndTrigger",
                     params: {
                         pointKey: "point",
-                        on: { when: "after", how: "take", key: "damage" },
+                        on: { when: "after", how: "take", key: ["attack", "damage"] },
                         gain: "$triggerEffect.params(value)",
                         threshold: 8,
                         consume: "all",
@@ -1322,11 +1322,8 @@ export const relicList: RelicMap[] = [
                     {
                         when: "before",
                         how: "make",
-                        key: "damage",
-                        condition: [
-                            "$item.status(used) == 0",
-                            "$triggerCard.hasTag(attack)"
-                        ],
+                        key: "attack",
+                        condition: "$item.status(used) == 0",
                         action: "firstAttackBoost"
                     }
                 ]
@@ -1506,7 +1503,7 @@ export const relicList: RelicMap[] = [
                     key: "accumulateAndTrigger",
                     params: {
                         pointKey: "damage-taken",
-                        on: { when: "after", how: "take", key: "damage" },
+                        on: { when: "after", how: "take", key: ["attack", "damage"] },
                         gain: "$triggerEffect.params(value)",
                         threshold: 999999,
                         effects: []
@@ -1872,7 +1869,7 @@ export const relicList: RelicMap[] = [
             coFightStrike: [{
                 targetType: "allEnemies.random",
                 key: "damage",
-                effect: [{ key: "damage", params: { value: 5 } }]
+                effect: [{ key: "attack", params: { value: 5 } }]
             }],
             petBlock: [
                 { targetType: "owner", key: "cancelDeath", effect: [{ key: "cancelCurrentEvent" }] },

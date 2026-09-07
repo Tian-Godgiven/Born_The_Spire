@@ -59,7 +59,7 @@
         const { remove } = props.target.trigger.appendTrigger({
             when: "after",
             how: "take",
-            key: "damage",
+            key: ["attack", "damage"],
             level: 0,
             callback: async (event) => {
                 if (event.simulate) return                  // 伤害预览不演出

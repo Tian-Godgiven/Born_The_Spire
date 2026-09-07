@@ -34,21 +34,25 @@ export class Trigger{
     //获得新的触发器，返回销毁该触发器的方法与相关设置
     appendTrigger(obj:TriggerObj,info?:string){
         const {when,how,key} = obj
-
-        if(!this[how][when][key]){
-            this[how][when][key] = []
-        }
-        //获得触发器单元，分配随机key并返回
+        const keys = Array.isArray(key) ? key : [key]
         const id = nanoid()
         const unit:TriggerUnit = {
             callback: obj.callback,
             id,
             level:obj?.level??0
         }
-        this[how][when][key].push(unit)
-        const remove = ()=>this.removeTrigger(obj,unit)
+        for (const k of keys) {
+            if(!this[how][when][k]){
+                this[how][when][k] = []
+            }
+            this[how][when][k].push(unit)
+        }
+        const remove = ()=>{
+            for (const k of keys) {
+                this.removeTrigger({ ...obj, key: k }, unit)
+            }
+        }
 
-        //是关键触发器，则还要添加触发器信息
         if(obj.importantKey){
             appendImportantTrigger(this,obj as TriggerObj&{importantKey:string},{id,remove,info})
         }
@@ -73,7 +77,8 @@ export class Trigger{
         }
         //移除触发器本身
         const {when,how,key} = obj
-        const triggerArr = this[how][when][key]
+        const triggerArr = this[how][when][key as string]
+        if (!triggerArr) return
         const index = triggerArr.indexOf(unit)
         if(index>=0){
             //必须带删除个数：splice(index) 会把该位置之后的触发器一并清空

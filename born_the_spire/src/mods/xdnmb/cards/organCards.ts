@@ -27,7 +27,7 @@ export const venomspinePierceCard: CardMap = {
                 params: {
                     times: 3,
                     effects: [{
-                        key: "damage",
+                        key: "attack",
                         params: { value: 2 }
                     }, {
                         key: "applyState",

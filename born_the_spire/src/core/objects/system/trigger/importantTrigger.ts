@@ -30,7 +30,7 @@ export function appendImportantTrigger(trigger:Trigger,triggerObj:TriggerObj&{im
     const importantTrigger:ImportantTrigger = {
         importantKey,
         onlyKey,
-        triggerWay:`${triggerObj.when}_${triggerObj.how}_${triggerObj.key}`,
+        triggerWay:`${triggerObj.when}_${triggerObj.how}_${Array.isArray(triggerObj.key) ? triggerObj.key.join("|") : triggerObj.key}`,
         ...option
     }
     

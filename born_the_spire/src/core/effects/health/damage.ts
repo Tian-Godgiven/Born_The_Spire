@@ -5,6 +5,11 @@ import { getStateModifier } from "@/core/objects/system/modifier/StateModifier";
 import { isEntity, isEffect } from "@/core/utils/typeGuards";
 import { newError } from "@/ui/hooks/global/alert";
 
+/** 扣血但仍走受伤流水线：attack 挨打，damage 中毒等非攻击受伤 */
+export function isHurtEffectKey(key: string): boolean {
+    return key === "damage" || key === "attack"
+}
+
 //对单个目标造成伤害
 export const damageTo:EffectFunc = (event:ActionEvent,effect)=>{
     const baseValue = Number(effect.params.value)
@@ -41,9 +46,8 @@ export const reduceDamageFor:EffectFunc = (event,effect)=>{
         return false
     }
 
-    // 验证是 damage 效果
-    if (target.key !== "damage") {
-        newError(["reduceDamageFor 只能作用于 damage 效果，当前效果:", target.key])
+    if (!isHurtEffectKey(target.key)) {
+        newError(["reduceDamageFor 只能作用于 attack/damage 效果，当前效果:", target.key])
         return false
     }
 
@@ -81,9 +85,8 @@ export const modifyDamageValue: EffectFunc = (event, effect) => {
         return false
     }
 
-    // 验证是 damage 效果
-    if (target.key !== "damage") {
-        newError(["modifyDamageValue 只能作用于 damage 效果，当前效果:", target.key])
+    if (!isHurtEffectKey(target.key)) {
+        newError(["modifyDamageValue 只能作用于 attack/damage 效果，当前效果:", target.key])
         return false
     }
 
@@ -113,8 +116,8 @@ export const nullifyDamageValue: EffectFunc = (event, effect) => {
         return false
     }
 
-    if (target.key !== "damage") {
-        newError(["nullifyDamageValue 只能作用于 damage 效果，当前效果:", target.key])
+    if (!isHurtEffectKey(target.key)) {
+        newError(["nullifyDamageValue 只能作用于 attack/damage 效果，当前效果:", target.key])
         return false
     }
 
@@ -146,9 +149,8 @@ export const modifyDamageByPercent: EffectFunc = (event, effect) => {
         return false
     }
 
-    // 验证是 damage 效果
-    if (target.key !== "damage") {
-        newError(["modifyDamageByPercent 只能作用于 damage 效果，当前效果:", target.key])
+    if (!isHurtEffectKey(target.key)) {
+        newError(["modifyDamageByPercent 只能作用于 attack/damage 效果，当前效果:", target.key])
         return false
     }
 
@@ -181,8 +183,8 @@ export const damageIgnoreArmor: EffectFunc = (event, effect) => {
 // event.source 是器官（由 ItemModifier 的 reaction 上下文提供）
 export const checkAndSaveLethal: EffectFunc = (event, effect) => {
     const target = event.target
-    if (Array.isArray(target) || !isEffect(target) || target.key !== "damage") {
-        newError(["checkAndSaveLethal 目标必须是 damage Effect"])
+    if (Array.isArray(target) || !isEffect(target) || !isHurtEffectKey(target.key)) {
+        newError(["checkAndSaveLethal 目标必须是 attack/damage Effect"])
         return false
     }
 

@@ -108,7 +108,7 @@ export const battleCommands: ConsoleCommand[] = [
                     source: nowPlayer,
                     medium: nowPlayer,
                     target: nowPlayer,
-                    effectUnits: [{ key: 'damage', params: { value } }]
+                    effectUnits: [{ key: 'attack', params: { value } }]
                 })
                 addOutput(`✓ 对玩家造成了 ${value} 点伤害`, 'result')
             } catch (error: any) {

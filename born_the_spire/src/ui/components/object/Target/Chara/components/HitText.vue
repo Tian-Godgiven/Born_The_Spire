@@ -98,7 +98,7 @@
         removers.push(trigger.appendTrigger({
             when: "before",
             how: "take",
-            key: "damage",
+            key: ["attack", "damage"],
             level: SNAPSHOT_LEVEL,
             callback: async (event, effect) => {
                 if (event.simulate) return   // 伤害预览不飘字
@@ -109,7 +109,7 @@
         removers.push(trigger.appendTrigger({
             when: "after",
             how: "take",
-            key: "damage",
+            key: ["attack", "damage"],
             level: 0,
             callback: async (event, effect) => {
                 if (event.simulate || !effect) return

@@ -12,6 +12,7 @@
  *   $triggerEffect.target.accessor(args)   → 获取触发效果的事件目标的属性
  *   $triggerCard.accessor(args)            → 触发事件的 medium 作为卡牌解读（非卡时静默 false）
  *   $owner.accessor(args)                  → 定义该 EffectUnit 的物品（卡牌/器官/遗物）自身属性
+ *   $item.accessor(args)                   → 同上（效果参数里与 $owner 同一实体；条件里 $item 是物品、$owner 是持有者）
  *   $participant.accessor(args)            → 从参与者获取属性值
  *   $event.info(key)                       → 获取触发事件的 info 字段值
  *   $scene                                 → 当前场景类型（combat/pool/event/...）
@@ -61,6 +62,48 @@ interface ParsedReference {
     accessor?: string
     args?: string[]
     raw: string
+}
+
+function describeParticipant(p: unknown): string {
+    if (p == null) return "(空)"
+    if (Array.isArray(p)) {
+        if (p.length === 0) return "(空数组)"
+        return p.map(describeParticipant).join("、")
+    }
+    const anyP = p as any
+    const kind = anyP.itemType ?? anyP.targetType ?? anyP.participantType ?? typeof p
+    const label = anyP.label
+    const key = anyP.key
+    if (label || key) {
+        return `${label ?? "?"} (${key ?? "?"}) [${kind}]`
+    }
+    return `[${kind}]`
+}
+
+function dumpRefContext(context: ReferenceContext): Record<string, string> {
+    const slots = ["item", "owner", "source", "medium", "target", "triggerSource", "triggerOwner", "triggerEffect"] as const
+    const present = slots.filter(k => (context as any)[k] != null)
+    const effect = context.triggerEffect as any
+    const event = context.event as any
+    return {
+        询问方: describeParticipant(context.item ?? context.owner ?? context.medium ?? context.source),
+        效果: effect ? `${effect.label || effect.key} (${effect.key})` : "(无)",
+        事件: event?.key ? String(event.key) : "(无)",
+        item: describeParticipant(context.item),
+        owner: describeParticipant(context.owner),
+        source: describeParticipant(context.source),
+        medium: describeParticipant(context.medium),
+        target: describeParticipant(context.target),
+        上下文已有: present.join(", ") || "(无)",
+    }
+}
+
+function failRefResolve(message: string, context: ReferenceContext): never {
+    const asker = describeParticipant(context.item ?? context.owner ?? context.medium ?? context.source)
+    newError([
+        `${asker} ${message}`,
+        dumpRefContext(context),
+    ])
 }
 
 // ==================== 单例类 ====================
@@ -290,14 +333,14 @@ export class ReferenceResolver {
     private resolveParticipantReference(parsed: ParsedReference, context: ReferenceContext): any {
         const { participant, accessor, args } = parsed
         if (!participant || !accessor) {
-            newError([`引用格式错误: ${parsed.raw}`])
+            failRefResolve(`引用格式错误: ${parsed.raw}`, context)
             return undefined
         }
 
         // 1. 解析 participant 为实体
         const entity = getTargetValue(participant, context)
         if (!entity) {
-            newError([`找不到参与者: ${participant}，在引用: ${parsed.raw}`])
+            failRefResolve(`找不到参与者: ${participant}，在引用: ${parsed.raw}`, context)
             return undefined
         }
 
@@ -307,7 +350,7 @@ export class ReferenceResolver {
             : entity
 
         if (!targetEntity || !(targetEntity as any)?.participantType) {
-            newError([`参与者 "${participant}" 不是有效实体: ${typeof entity}`])
+            failRefResolve(`参与者 "${participant}" 不是有效实体: ${typeof entity}`, context)
             return undefined
         }
 
@@ -367,7 +410,7 @@ export class ReferenceResolver {
         const target = resolveTargetOptional(expr, context)
         if (target !== null) return target
 
-        newError([`引用解析失败: 无法解析 "${ref}"`])
+        failRefResolve(`引用解析失败: 无法解析 "${ref}"`, context)
         return undefined
     }
 
@@ -382,7 +425,7 @@ export class ReferenceResolver {
     ): any {
         const target = resolveTargetOptional(targetKey, context)
         if (target === null || target === undefined) {
-            newError([`找不到目标: "${targetKey}"，在引用: "${raw}"`])
+            failRefResolve(`找不到目标: "${targetKey}"，在引用: "${raw}"`, context)
             return undefined
         }
 
@@ -408,7 +451,7 @@ export class ReferenceResolver {
     ): boolean {
         const collection = resolveTargetOptional(collectionKey, context)
         if (collection === null || collection === undefined) {
-            newError([`找不到集合: "${collectionKey}"`])
+            failRefResolve(`找不到集合: "${collectionKey}"`, context)
             return false
         }
 

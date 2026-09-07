@@ -255,12 +255,11 @@
     .states {
         position: absolute;
         top: 100%;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 240px;
+        left: 0;
+        right: 0;
         display: flex;
         flex-wrap: wrap;
-        justify-content: center;
+        justify-content: flex-start;
         gap: 2px;
         margin-top: 2px;
     }

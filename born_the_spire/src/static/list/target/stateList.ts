@@ -16,7 +16,7 @@ export const stateList: StateData[] = [
                 triggers: [{
                     when: "before",
                     how: "make",
-                    key: "damage",
+                    key: "attack",
                     action: "powerBoost"
                 }],
                 reaction: {
@@ -95,7 +95,7 @@ export const stateList: StateData[] = [
                 triggers: [{
                     when: "before",
                     how: "make",
-                    key: "damage",
+                    key: "attack",
                     action: "weakDebuff"
                 }],
                 reaction: {
@@ -128,9 +128,8 @@ export const stateList: StateData[] = [
                 triggers: [{
                     when: "before",
                     how: "take",
-                    key: "damage",
-                    action: "vulnerableDebuff",
-                    condition: "$triggerCard.hasTag(attack)"
+                    key: "attack",
+                    action: "vulnerableDebuff"
                 }],
                 reaction: {
                     vulnerableDebuff: [{
@@ -162,7 +161,7 @@ export const stateList: StateData[] = [
                 triggers: [{
                     when: "before",
                     how: "take",
-                    key: "damage",
+                    key: ["attack", "damage"],
                     action: "acidWoundDebuff"
                 }],
                 reaction: {
@@ -192,7 +191,7 @@ export const stateList: StateData[] = [
                 triggers: [{
                     when: "before",
                     how: "make",
-                    key: "damage",
+                    key: "attack",
                     action: "momentumBoost"
                 }],
                 reaction: {
@@ -491,10 +490,9 @@ export const stateList: StateData[] = [
                 triggers: [{
                     when: "after",
                     how: "take",
-                    key: "damage",
+                    key: "attack",
                     action: "malleableTick",
-                    requirePositiveEffect: true,
-                    condition: "$triggerCard.hasTag(attack)"
+                    requirePositiveEffect: true
                 }],
                 reaction: {
                     malleableTick: [{
@@ -529,7 +527,7 @@ export const stateList: StateData[] = [
                         label: "凌迟伤害",
                         targetType: "allEnemies",
                         effect: [{
-                            key: "damage",
+                            key: "attack",
                             params: { value: "$source.stateStack()" }
                         }]
                     }]
@@ -550,9 +548,8 @@ export const stateList: StateData[] = [
             triggers: [{
                 when: "before",
                 how: "take",
-                key: "damage",
-                action: "hardenAbsorb",
-                condition: "$triggerCard.hasTag(attack)"
+                key: "attack",
+                action: "hardenAbsorb"
             }],
             reaction: {
                 hardenAbsorb: [
@@ -586,9 +583,8 @@ export const stateList: StateData[] = [
             triggers: [{
                 when: "before",
                 how: "take",
-                key: "damage",
-                action: "flightEvade",
-                condition: "$triggerCard.hasTag(attack)"
+                key: "attack",
+                action: "flightEvade"
             }],
             reaction: {
                 flightEvade: [
@@ -622,9 +618,8 @@ export const stateList: StateData[] = [
             triggers: [{
                 when: "before",
                 how: "take",
-                key: "damage",
-                action: "absorbAndConsume",
-                condition: "$triggerCard.hasTag(attack)"
+                key: "attack",
+                action: "absorbAndConsume"
             }],
             reaction: {
                 absorbAndConsume: [

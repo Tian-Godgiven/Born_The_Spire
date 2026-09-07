@@ -17,7 +17,7 @@ export const cardList:CardMap[] = [{
         use:{
             target:{faction:"opponent"},  // 攻击敌对阵营
             effects:[{
-                key:"damage",
+                key:"attack",
                 params:{value:"$medium.status(damage)"},
             }]
         }
@@ -44,7 +44,7 @@ export const cardList:CardMap[] = [{
         use:{
             target:{faction:"enemy"},
             effects:[{
-                key:"damage",
+                key:"attack",
                 params:{value:"$medium.status(damage)"},
             }]
         }
@@ -71,7 +71,7 @@ export const cardList:CardMap[] = [{
         use:{
             target:{faction:"enemy"},
             effects:[{
-                key:"damage",
+                key:"attack",
                 params:{value:15},
             }]
         }
@@ -92,7 +92,7 @@ export const cardList:CardMap[] = [{
         use:{
             target:{faction:"enemy"},
             effects:[{
-                key:"damage",
+                key:"attack",
                 params:{value:8},
             }]
         }
@@ -154,7 +154,7 @@ export const cardList:CardMap[] = [{
         use:{
             target:{faction:"enemy"},
             effects:[{
-                key:"damage",
+                key:"attack",
                 params:{value:"random(5,10)"},
             }]
         }
@@ -191,7 +191,7 @@ export const cardList:CardMap[] = [{
         use:{
             target:{faction:"enemy"},
             effects:[{
-                key:"damage",
+                key:"attack",
                 params:{value:"$medium.status(damage)"},
             },{
                 key:"applyState",
@@ -218,7 +218,7 @@ export const cardList:CardMap[] = [{
         use:{
             target:{number:"all"},//阵营默认为敌人
             effects:[{
-                key:"damage",
+                key:"attack",
                 params:{value:"$medium.status(damage)"},
             }]
         }
@@ -242,7 +242,7 @@ export const cardList:CardMap[] = [{
         use:{
             target:{faction:"all",number:"all"},
             effects:[{
-                key:"damage",
+                key:"attack",
                 params:{value:999},
             }]
         }
@@ -260,7 +260,7 @@ export const cardList:CardMap[] = [{
         use:{
             target:{faction:"enemy",number:3},
             effects:[{
-                key:"damage",
+                key:"attack",
                 params:{value:2},
             }]
         }
@@ -360,7 +360,7 @@ export const cardList:CardMap[] = [{
         use:{
             target:{faction:"enemy"},
             effects:[{
-                key:"damage",
+                key:"attack",
                 params:{value:999},
             }]
         }
@@ -379,7 +379,7 @@ export const cardList:CardMap[] = [{
         use:{
             target:{faction:"enemy",number:"all"},
             effects:[{
-                key:"damage",
+                key:"attack",
                 params:{value:999},
             }]
         }
@@ -435,7 +435,7 @@ export const cardList:CardMap[] = [{
         use:{
             target:{faction:"opponent"},  // 攻击敌对阵营
             effects:[{
-                key:"damage",
+                key:"attack",
                 params:{value:5},
             }]
         }
@@ -453,7 +453,7 @@ export const cardList:CardMap[] = [{
         use:{
             target:{faction:"opponent"},
             effects:[{
-                key:"damage",
+                key:"attack",
                 params:{value:6},
             }]
         }
@@ -565,7 +565,7 @@ export const cardList:CardMap[] = [{
         use: {
             target: {faction: "opponent"},
             effects: [
-                { key: "repeatEffects", params: { times: "$owner.status(hits)", effects: [{ key: "damage", params: { value: 3 } }] } }
+                { key: "repeatEffects", params: { times: "$owner.status(hits)", effects: [{ key: "attack", params: { value: 3 } }] } }
             ]
         }
     }
@@ -618,7 +618,7 @@ export const cardList:CardMap[] = [{
         use: {
             target: {faction: "opponent"},
             effects: [
-                { key: "damage", params: { value: "$owner.status(damage)" } },
+                { key: "attack", params: { value: "$owner.status(damage)" } },
                 { key: "heal", params: { value: "$owner.status(heal)" }, target: "source" },
                 { key: "applyState", params: { stateKey: "weak", stacks: "$owner.status(weakStacks)" } }
             ]
@@ -646,9 +646,9 @@ export const cardList:CardMap[] = [{
         use: {
             target: {faction: "opponent"},
             effects: [
-                { key: "damage", params: { value: 4 } },
-                { key: "damage", params: { value: 4 } },
-                { key: "damage", params: { value: 4 } }
+                { key: "attack", params: { value: 4 } },
+                { key: "attack", params: { value: 4 } },
+                { key: "attack", params: { value: 4 } }
             ]
         }
     }
@@ -746,7 +746,7 @@ export const cardList:CardMap[] = [{
         use: {
             target: {faction: "opponent"},
             effects: [
-                { key: "damage", params: { value: "$medium.status(damage)" } }
+                { key: "attack", params: { value: "$medium.status(damage)" } }
             ]
         }
     },
@@ -765,7 +765,7 @@ export const cardList:CardMap[] = [{
     status: {
         cost: 0
     },
-    describe: ["随机获得", {$:"充能"}, "（1%归零/9%空/60%+1/20%+2/10%+3）"],
+    describe: ["随机获得", {$:"充能"}, ],
     key: "enemy_card_unstable_charge",
     interaction: {
         use: {
@@ -791,7 +791,7 @@ export const cardList:CardMap[] = [{
         use: {
             target: { faction: "opponent" },
             effects: [
-                { key: "damage", params: { value: 3, multiplier: "$source.stateStack(charge)" } },
+                { key: "attack", params: { value: 3, multiplier: "$source.stateStack(charge)" } },
                 // 卡牌 target 是对手，但充能在使用者自己身上，要用 target: "source" 把清除打回自己
                 { key: "removeState", params: { stateKey: "charge" }, target: "source" }
             ]
@@ -833,7 +833,7 @@ export const cardList:CardMap[] = [{
         use: {
             target: { faction: "opponent" },
             effects: [
-                { key: "damage", params: { value: 10 } },
+                { key: "attack", params: { value: 10 } },
                 { key: "applyState", params: { stateKey: "vulnerable", stacks: 2 } }
             ]
         }
@@ -967,7 +967,7 @@ export const cardList:CardMap[] = [{
         use: {
             target: { faction: "opponent" },
             effects: [
-                { key: "damage", params: { value: 8 } },
+                { key: "attack", params: { value: 8 } },
                 { key: "applyState", params: { stateKey: "poison", stacks: 2 } }
             ]
         }
@@ -1069,7 +1069,7 @@ export const cardList:CardMap[] = [{
         use: {
             target: { faction: "opponent" },
             effects: [
-                { key: "repeatEffects", params: { times: "$owner.status(hits)", effects: [{ key: "damage", params: { value: 4 } }] } }
+                { key: "repeatEffects", params: { times: "$owner.status(hits)", effects: [{ key: "attack", params: { value: 4 } }] } }
             ]
         }
     }
@@ -1085,7 +1085,7 @@ export const cardList:CardMap[] = [{
     interaction: {
         use: {
             target: { faction: "opponent" },
-            effects: [{ key: "damage", params: { value: 8 } }]
+            effects: [{ key: "attack", params: { value: 8 } }]
         }
     }
 },

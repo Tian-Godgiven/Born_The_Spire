@@ -195,7 +195,7 @@ export const yourCard: CardMap = {
     interaction: {
         use: {
             target: { faction: 'opponent' },
-            effects: [{ key: 'damage', params: { value: 5 } }]
+            effects: [{ key: 'attack', params: { value: 5 } }]
         }
     }
 }

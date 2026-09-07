@@ -29,11 +29,11 @@ const relic_bloodPrismChainDamage: EffectFunc = (event, effect) => {
     handleEventEntity(target, (t) => {
         if (!isEntity(t)) return
         doEvent({
-            key: 'damage',
+            key: 'attack',
             source: source,
             medium: medium,
             target: t,
-            effectUnits: [{ key: 'damage', params: { value: randomDamage } }]
+            effectUnits: [{ key: 'attack', params: { value: randomDamage } }]
         })
     })
 
@@ -44,11 +44,11 @@ const relic_bloodPrismChainDamage: EffectFunc = (event, effect) => {
     const damageToEnemies = Math.floor(randomDamage * multiplier)
     for (const enemy of battle.getTeam('enemy')) {
         doEvent({
-            key: 'damage',
+            key: 'attack',
             source: source,
             medium: medium,
             target: enemy,
-            effectUnits: [{ key: 'damage', params: { value: damageToEnemies } }]
+            effectUnits: [{ key: 'attack', params: { value: damageToEnemies } }]
         })
     }
 }

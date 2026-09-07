@@ -236,8 +236,10 @@ const cardRef = ref<HTMLElement>()
     }
 
     .describe{
-        text-wrap: wrap;
-        padding:0 5px;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        padding: 0 5px;
+        overflow-x: hidden;
         overflow-y: auto;
     }
 }

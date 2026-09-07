@@ -51,7 +51,7 @@ export const organEntryDefinitions: Record<string, OrganEntryDefinition> = {
                 {
                     when: "after",
                     how: "take",
-                    key: "damage",  // 监听 chara 受到伤害
+                    key: ["attack", "damage"],
                     action: "fragileBreak"
                 }
             )

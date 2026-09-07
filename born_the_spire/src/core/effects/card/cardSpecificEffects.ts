@@ -155,11 +155,11 @@ export const card_commandStrike: EffectFunc = (event, effect) => {
         const hits = Math.floor(stacks / n)
         for (let i = 0; i < hits; i++) {
             doEvent({
-                key: "damage",
+                key: "attack",
                 source: ally,
                 medium: event.medium,
                 target,
-                effectUnits: [{ key: "damage", params: { value: damage } }]
+                effectUnits: [{ key: "attack", params: { value: damage } }]
             })
         }
     }
@@ -183,11 +183,11 @@ export const card_heatBlast: EffectFunc = (event, effect) => {
     if (!isEntity(target)) return false
 
     doEvent({
-        key: "damage",
+        key: "attack",
         source,
         medium: event.medium,
         target,
-        effectUnits: [{ key: "damage", params: { value: totalDamage } }]
+        effectUnits: [{ key: "attack", params: { value: totalDamage } }]
     })
     return true
 }
@@ -212,11 +212,11 @@ export const card_corrosiveBurst: EffectFunc = (event, effect) => {
     const target = Array.isArray(event.target) ? event.target[0] : event.target
     if (isEntity(target)) {
         doEvent({
-            key: "damage",
+            key: "attack",
             source,
             medium: event.medium,
             target,
-            effectUnits: [{ key: "damage", params: { value: baseDamage + corrosion * 2 } }]
+            effectUnits: [{ key: "attack", params: { value: baseDamage + corrosion * 2 } }]
         })
     }
     doEvent({
