@@ -38,7 +38,8 @@ behavior: {
 intent 可选值：
   `"attack"` / `"defend"` / `"buff"` / `"debuff"` / `"heal"` / `"special"` / `"unknown"`
 
-不填 intent 时，系统从所选卡牌的 tags 自动推导。
+不填 intent 时，系统从所选卡牌的 use 效果推导（`gainArmor` → 防御，`attack`/`damage` → 攻击，`applyState` 打对面 → 减益）。
+不要用 `unknown` 表示「技能池里牌不一样」——那会一律显示问号。`unknown` 只留给真正要藏意图的迷雾行动。
 
 ---
 
@@ -255,7 +256,7 @@ behavior: {
 
 ```typescript
 const intentValueSources: Partial<Record<IntentType, string[]>> = {
-    attack: ["damage"],
+    attack: ["attack", "damage"],
     defend: ["gainArmor"],
     heal: ["heal"]
 }

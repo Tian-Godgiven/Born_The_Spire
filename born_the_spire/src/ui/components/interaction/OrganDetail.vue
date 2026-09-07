@@ -44,7 +44,7 @@
 
             <!-- 玩家版本卡牌悬浮按钮 -->
             <div class="player-version-anchor" v-if="hasPlayerVersion">
-                <Popover placement="right" @update:show="handlePlayerVersionShow">
+                <Popover placement="bottom" @update:show="handlePlayerVersionShow">
                     <div class="player-version-btn">显示玩家版本</div>
 
                     <template #content>

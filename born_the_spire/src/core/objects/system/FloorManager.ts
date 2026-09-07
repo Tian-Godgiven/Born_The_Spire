@@ -714,45 +714,14 @@ export class FloorManager {
         // 合并配置
         const fullConfig: FloorMapConfig = {
             ...defaultFloorMapConfig,
-            ...config
+            ...config,
+            roomPools: {
+                ...defaultFloorMapConfig.roomPools,
+                ...config?.roomPools
+            }
         }
 
-        // 从 roomRegistry 填充房间池（如果配置中没有提供）
-        if (fullConfig.roomPools.battles.length === 0) {
-            fullConfig.roomPools.battles = roomRegistry
-                .getRoomConfigsByType("battle")
-                .map(c => c.key)
-        }
-        if (fullConfig.roomPools.eliteBattles && fullConfig.roomPools.eliteBattles.length === 0) {
-            fullConfig.roomPools.eliteBattles = roomRegistry
-                .getRoomConfigsByType("eliteBattle")
-                .map(c => c.key)
-        }
-        if (fullConfig.roomPools.elitePlusBattles && fullConfig.roomPools.elitePlusBattles.length === 0) {
-            fullConfig.roomPools.elitePlusBattles = roomRegistry
-                .getRoomConfigsByType("elitePlusBattle")
-                .map(c => c.key)
-        }
-        if (fullConfig.roomPools.events.length === 0) {
-            fullConfig.roomPools.events = roomRegistry
-                .getRoomConfigsByType("event")
-                .map(c => c.key)
-        }
-        if (fullConfig.roomPools.pools.length === 0) {
-            fullConfig.roomPools.pools = roomRegistry
-                .getRoomConfigsByType("pool")
-                .map(c => c.key)
-        }
-        if (fullConfig.roomPools.blackStores.length === 0) {
-            fullConfig.roomPools.blackStores = roomRegistry
-                .getRoomConfigsByType("blackStore")
-                .map(c => c.key)
-        }
-        if (fullConfig.roomPools.treasures && fullConfig.roomPools.treasures.length === 0) {
-            fullConfig.roomPools.treasures = roomRegistry
-                .getRoomConfigsByType("treasure")
-                .map(c => c.key)
-        }
+        this.fillEmptyRoomPools(fullConfig)
 
         // 生成地图
         const generator = new MapGenerator(fullConfig)
@@ -766,6 +735,61 @@ export class FloorManager {
         }
 
         return this.currentMap
+    }
+
+    /**
+     * 空池从 roomRegistry 填充。普通战斗按 encounterPool 拆成弱池 / 普通池，测试战斗两边都不进。
+     */
+    private fillEmptyRoomPools(fullConfig: FloorMapConfig): void {
+        const pools = fullConfig.roomPools
+        const hallwayConfigs = roomRegistry.getRoomConfigsByType("battle")
+        const easyKeys = hallwayConfigs
+            .filter(c => c.customData?.encounterPool === "easy")
+            .map(c => c.key)
+        const normalKeys = hallwayConfigs
+            .filter(c => c.customData?.encounterPool !== "easy" && c.customData?.test !== true)
+            .map(c => c.key)
+
+        if (!pools.easyBattles || pools.easyBattles.length === 0) {
+            pools.easyBattles = easyKeys
+        }
+        if (pools.battles.length === 0) {
+            pools.battles = normalKeys
+        } else {
+            const easySet = new Set(pools.easyBattles)
+            pools.battles = pools.battles.filter(key => !easySet.has(key))
+        }
+
+        if (pools.eliteBattles && pools.eliteBattles.length === 0) {
+            pools.eliteBattles = roomRegistry
+                .getRoomConfigsByType("eliteBattle")
+                .map(c => c.key)
+        }
+        if (pools.elitePlusBattles && pools.elitePlusBattles.length === 0) {
+            pools.elitePlusBattles = roomRegistry
+                .getRoomConfigsByType("elitePlusBattle")
+                .map(c => c.key)
+        }
+        if (pools.events.length === 0) {
+            pools.events = roomRegistry
+                .getRoomConfigsByType("event")
+                .map(c => c.key)
+        }
+        if (pools.pools.length === 0) {
+            pools.pools = roomRegistry
+                .getRoomConfigsByType("pool")
+                .map(c => c.key)
+        }
+        if (pools.blackStores.length === 0) {
+            pools.blackStores = roomRegistry
+                .getRoomConfigsByType("blackStore")
+                .map(c => c.key)
+        }
+        if (pools.treasures && pools.treasures.length === 0) {
+            pools.treasures = roomRegistry
+                .getRoomConfigsByType("treasure")
+                .map(c => c.key)
+        }
     }
 
     /**

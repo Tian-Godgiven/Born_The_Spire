@@ -60,7 +60,8 @@ export interface FloorConfig {
 
     // 房间池配置
     roomPools: {
-        battles: string[]          // 普通战斗房间key列表
+        battles: string[]          // 普通战斗房间key列表（弱池之外）
+        easyBattles?: string[]     // 弱怪池：本层前 N 场实际进入的普通战斗从这里抽
         eliteBattles: string[]     // 精英战斗房间key列表
         elitePlusBattles: string[] // 强化精英战斗房间key列表
         bossBattles: string[]      // Boss战斗房间key列表

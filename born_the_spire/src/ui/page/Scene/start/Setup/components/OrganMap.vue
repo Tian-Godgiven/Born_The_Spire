@@ -13,8 +13,9 @@
             <Popover
                 v-for="organ in organs"
                 :key="organ.key"
-                placement="left"
-                :max-width="270"
+                placement="right"
+                align="start"
+                :max-width="hasMilestones(organ) ? 560 : 270"
                 :close-delay="50"
                 :disabled="!isUnlocked(organ.key)"
             >
@@ -37,9 +38,12 @@
                     <div v-if="organ.key === HEART_KEY" class="lock-badge">🔒</div>
                 </div>
 
-                <!-- Hover 显示的器官详情 -->
+                <!-- Hover 往右开：介绍贴着格子，有里程碑时再在更外侧竖排一列 -->
                 <template #content>
-                    <OrganPopup :organ="organ" />
+                    <div class="organ-hover-stack">
+                        <OrganPopup :organ="organ" />
+                        <OrganMilestoneTrack v-if="hasMilestones(organ)" :organ="organ" />
+                    </div>
                 </template>
             </Popover>
         </div>
@@ -63,9 +67,11 @@ import {
     type MetaProgressSave
 } from '@/core/persistence/metaProgress'
 import { getPartLabel } from '@/static/list/target/organPart'
+import { getOrganMilestones } from '@/static/list/target/organQuality'
 import OrganDetail from '@/ui/components/interaction/OrganDetail.vue'
 import Popover from '@/ui/components/global/Popover.vue'
 import OrganPopup from '@/ui/components/interaction/OrganPopup.vue'
+import OrganMilestoneTrack from '@/ui/components/interaction/OrganMilestoneTrack.vue'
 
 const HEART_KEY = 'original_organ_00001'
 
@@ -95,6 +101,10 @@ function isUnlocked(organKey: string): boolean {
 
 function getOrganCost(organ: Organ): number {
     return ORGAN_RARITY_COST[organ.rarity] || 1
+}
+
+function hasMilestones(organ: Organ): boolean {
+    return getOrganMilestones(organ).length > 0
 }
 
 function canSelect(organ: Organ): boolean {
@@ -252,6 +262,19 @@ function closeOrganDetail() {
             right: 2px;
             font-size: 12px;
         }
+    }
+}
+
+.organ-hover-stack {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 14px;
+    white-space: normal;
+
+    :deep(.organ-popup) {
+        flex-shrink: 0;
     }
 }
 </style>

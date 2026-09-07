@@ -1,0 +1,92 @@
+<template>
+<div v-if="rows.length > 0" class="milestone-track">
+    <div
+        v-for="row in rows"
+        :key="row.level"
+        class="milestone-row"
+        :class="row.state"
+    >
+        <div class="milestone-lv">
+            Lv.{{ row.level }}<span v-if="row.state === 'next'"> 下一档</span>
+        </div>
+        <DescribeText :describe="row.describe" :target="organ" />
+    </div>
+</div>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue'
+import { Organ } from '@/core/objects/target/Organ'
+import { getOrganMilestones } from '@/static/list/target/organQuality'
+import DescribeText from '@/ui/components/display/DescribeText.vue'
+import type { Describe } from '@/ui/hooks/express/describe'
+
+const { organ } = defineProps<{
+    organ: Organ
+}>()
+
+type MilestoneRowState = 'reached' | 'next' | 'later'
+
+const rows = computed(() => {
+    const milestones = getOrganMilestones(organ)
+    const next = milestones.find(m => m.level > organ.level)
+    const source = organ.upgradeConfig?.milestones ?? []
+    return milestones.map(m => {
+        const described = source.find(item => item.level === m.level)?.describe
+        let state: MilestoneRowState = 'later'
+        if (m.level <= organ.level) state = 'reached'
+        else if (next && m.level === next.level) state = 'next'
+        return {
+            level: m.level,
+            describe: described && described.length > 0 ? described : ['效果'] as Describe,
+            state
+        }
+    })
+})
+</script>
+
+<style scoped lang="scss">
+.milestone-track {
+    width: 240px;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    font-size: 14px;
+    white-space: normal;
+    background: white;
+
+    .track-title {
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+
+    .milestone-row {
+        border: 2px solid black;
+        padding: 8px;
+        margin-bottom: 8px;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+
+        .milestone-lv {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        &.reached {
+            background: black;
+            color: white;
+
+            :deep(.describe-text) {
+                color: white;
+            }
+        }
+
+        &.next,
+        &.later {
+            background: white;
+            color: black;
+        }
+    }
+}
+</style>

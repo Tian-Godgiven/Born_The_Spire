@@ -1,9 +1,12 @@
 import type { DescribeSegment } from "./describe"
 import type { Card as CardType } from "@/core/objects/item/Subclass/Card"
+import { formatCardDisplayName } from "@/core/objects/item/Subclass/Card"
 import type { Organ } from "@/core/objects/target/Organ"
 import { getCardModifier } from "@/core/objects/system/modifier/CardModifier"
 import { isChara } from "@/core/utils/typeGuards"
 import { nowPlayer } from "@/core/objects/game/run"
+import { upgradeCard } from "@/core/effects/card/cardUpgrade"
+import { getLazyModule } from "@/core/utils/lazyLoader"
 
 /**
  * 按 key 创建一张临时卡牌实例，仅用于预览展示，不进入任何牌堆
@@ -50,6 +53,59 @@ export function findCardInstance(cardId: string, organ?: Organ): CardType | null
         ...piles.exhaustPile
     ]
     return allCards.find((card: any) => card.__id === cardId) || null
+}
+
+/**
+ * 本器官当前等级已经跑过几次「锻造提供的牌」
+ */
+export function countOrganCardForges(organ?: Organ): number {
+    if (!organ) return 0
+    const level = organ.level ?? 1
+    const milestones = organ.upgradeConfig?.milestones
+        ?? (organ as any).upgrade?.milestones
+        ?? []
+    return milestones.filter((m: any) =>
+        m.level <= level &&
+        m.effects?.some((e: any) => e.key === "upgradeOrganCards")
+    ).length
+}
+
+/**
+ * 按索引取器官已经提供出去的卡牌实例（锻过的那张）
+ */
+export function getOrganCardAtIndex(organ: Organ | undefined, index: number): CardType | null {
+    if (!organ) return null
+    const owner = organ.owner
+    if (!owner || !isChara(owner)) return null
+    try {
+        return getCardModifier(owner).getCardsFromSource(organ)[index] ?? null
+    } catch {
+        return null
+    }
+}
+
+/**
+ * 描述里 {"@": n} 显示的卡名。有实例用实例（含 +），否则按 key + 器官是否已锻造来推。
+ */
+export function getOrganCardDisplayName(
+    organ: Organ | undefined,
+    index: number,
+    preferPlayerCards = false
+): string | null {
+    const instance = getOrganCardAtIndex(organ, index)
+    if (instance) return instance.displayName
+
+    const cardKey = getCardKeyByIndex(index, organ, preferPlayerCards)
+    if (!cardKey) return null
+    try {
+        const cardList = getLazyModule<any[]>("cardList")
+        const cardConfig = cardList.find((c: any) => c.key === cardKey)
+        if (!cardConfig) return null
+        const forged = countOrganCardForges(organ) > 0
+        return formatCardDisplayName(cardConfig.label, forged ? 1 : 0)
+    } catch {
+        return null
+    }
 }
 
 /**
@@ -102,6 +158,16 @@ export async function resolveCardFromSegment(
         return findCardInstance(ref, organ)
     }
 
+    const instance = getOrganCardAtIndex(organ, ref)
+    if (instance) return instance
+
     const cardKey = getCardKeyByIndex(ref, organ, options?.preferPlayerCards)
-    return cardKey ? await createCardFromKey(cardKey) : null
+    if (!cardKey) return null
+    const card = await createCardFromKey(cardKey)
+    if (!card) return null
+    const forges = countOrganCardForges(organ)
+    for (let i = 0; i < forges; i++) {
+        upgradeCard(card)
+    }
+    return card
 }

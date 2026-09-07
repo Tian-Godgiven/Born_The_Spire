@@ -35,6 +35,11 @@ export type CardMap = ItemMap & {
     }
 }
 
+/** 锻造后在名字后面加 +（多数牌只能锻一档） */
+export function formatCardDisplayName(label: string, level: number): string {
+    return level > 0 ? `${label}+` : label
+}
+
 /**
  * 卡牌对象
  *
@@ -58,6 +63,11 @@ export class Card extends Item{
     constructor(map:CardMap){
         super(map)
         this.tags = map.tags
+    }
+
+    /** 锻造后在名字后面加 +（多数牌只能锻一档） */
+    get displayName(): string {
+        return formatCardDisplayName(this.label, this.level)
     }
 
     /**

@@ -52,20 +52,7 @@
         </div>
 
         <template #content>
-          <div class="milestone-track">
-            <div class="track-title">里程碑</div>
-            <div
-              v-for="row in getMilestoneRows(organ)"
-              :key="row.level"
-              class="milestone-row"
-              :class="row.state"
-            >
-              <div class="milestone-lv">
-                Lv.{{ row.level }}<span v-if="row.state === 'next'"> 下一档</span>
-              </div>
-              <DescribeText :describe="row.describe" :target="organ" />
-            </div>
-          </div>
+          <OrganMilestoneTrack :organ="organ" />
         </template>
       </Popover>
     </div>
@@ -84,8 +71,7 @@ import { Organ } from '@/core/objects/target/Organ'
 import { Player } from '@/core/objects/target/Player'
 import {
   resolveOrganUpgradeCost,
-  canContinueOrganUpgrade,
-  getOrganMilestones
+  canContinueOrganUpgrade
 } from '@/static/list/target/organQuality'
 import { getRarityColor, getRarityLabel } from '@/static/list/system/rarityPalette'
 import { getPartLabel } from '@/static/list/target/organPart'
@@ -93,8 +79,7 @@ import { getCurrentValue } from '@/core/objects/system/Current/current'
 import { getStatusValue } from '@/core/objects/system/status/Status'
 import { getReserveModifier } from '@/core/objects/system/modifier/ReserveModifier'
 import Popover from '@/ui/components/global/Popover.vue'
-import DescribeText from '@/ui/components/display/DescribeText.vue'
-import type { Describe } from '@/ui/hooks/express/describe'
+import OrganMilestoneTrack from '@/ui/components/interaction/OrganMilestoneTrack.vue'
 
 const props = defineProps<{
   organs: Organ[]
@@ -151,24 +136,6 @@ function getMaxMass(organ: Organ): number {
   } catch {
     return 0
   }
-}
-
-type MilestoneRowState = 'reached' | 'next' | 'later'
-
-function getMilestoneRows(organ: Organ): { level: number, describe: Describe, state: MilestoneRowState }[] {
-  const milestones = getOrganMilestones(organ)
-  const next = milestones.find(m => m.level > organ.level)
-  return milestones.map(m => {
-    const described = (m as { describe?: Describe }).describe
-    let state: MilestoneRowState = 'later'
-    if (m.level <= organ.level) state = 'reached'
-    else if (next && m.level === next.level) state = 'next'
-    return {
-      level: m.level,
-      describe: described && described.length > 0 ? described : ['效果'],
-      state
-    }
-  })
 }
 
 function handleSelectOrgan(organ: Organ) {
@@ -287,50 +254,6 @@ function handleCancel() {
     .health-info {
       font-size: 16px;
       font-weight: bold;
-    }
-  }
-}
-
-.milestone-track {
-  font-size: 14px;
-  white-space: normal;
-  background: white;
-  border: 2px solid black;
-  padding: 10px;
-  box-sizing: border-box;
-
-  .track-title {
-    font-weight: bold;
-    margin-bottom: 8px;
-  }
-
-  .milestone-row {
-    border: 2px solid black;
-    padding: 8px;
-    margin-bottom: 8px;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-
-    .milestone-lv {
-      font-weight: bold;
-      margin-bottom: 4px;
-    }
-
-    &.reached {
-      background: black;
-      color: white;
-
-      :deep(.describe-text) {
-        color: white;
-      }
-    }
-
-    &.next,
-    &.later {
-      background: white;
-      color: black;
     }
   }
 }

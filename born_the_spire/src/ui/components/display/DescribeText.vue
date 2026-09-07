@@ -66,7 +66,7 @@
         // describe 阶段没解析出名字，再按实例 ID 去持有者牌堆里找一次
         if (segment.cardRefType === 'instance' && typeof segment.cardRef === 'string') {
             const card = findCardInstance(segment.cardRef, organ.value)
-            if (card) return `【${card.label}】`
+            if (card) return `【${card.displayName}】`
         }
         return '【卡牌】'
     }

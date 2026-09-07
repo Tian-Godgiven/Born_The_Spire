@@ -46,7 +46,9 @@ export async function initBattleRooms(): Promise<void> {
             description: battle.description,
             customData: {
                 battleType: battle.battleType,
-                enemyConfigs: battle.enemyConfigs
+                enemyConfigs: battle.enemyConfigs,
+                encounterPool: battle.encounterPool,
+                test: battle.test
             }
         })
     })

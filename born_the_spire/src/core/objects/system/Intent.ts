@@ -131,7 +131,7 @@ export function getIntentTypeInfo(type: IntentType): IntentTypeInfo | undefined 
  * 可通过 registerIntentValueSource 扩展（供 Mod 使用）
  */
 const intentValueSources: Partial<Record<IntentType, string[]>> = {
-    attack: ["damage"],
+    attack: ["attack", "damage"],
     defend: ["gainArmor"],
     heal: ["heal"]
 }
@@ -147,14 +147,44 @@ export function registerIntentValueSource(intentType: IntentType, effectKeys: st
 }
 
 /**
- * 从卡牌 tag 推导意图类型（兜底逻辑）
+ * 从卡牌的 use 效果推导意图类型
  *
- * 当 BehaviorPattern 没有声明 intent 时使用
+ * 比 tag 准：技能牌可能是护甲、上毒或回血，不能一律当成防御。
+ * 当 BehaviorPattern 没有声明 intent 时使用。
  */
-function inferIntentFromTags(card: Card): IntentType {
+function collectEffectKeys(units: EffectUnit[] | undefined, into: string[] = []): string[] {
+    if (!units) return into
+    for (const unit of units) {
+        into.push(unit.key)
+        const nested = unit.params?.effects
+        if (Array.isArray(nested)) collectEffectKeys(nested as EffectUnit[], into)
+    }
+    return into
+}
+
+function useTargetHint(target: unknown): string | undefined {
+    if (target == null) return undefined
+    if (typeof target === "string") return target
+    if (typeof target === "object") {
+        const spec = target as { faction?: string, key?: string }
+        return spec.faction ?? spec.key
+    }
+    return undefined
+}
+
+function inferIntentFromCard(card: Card): IntentType {
+    const use = card.getInteraction("use")
+    const keys = collectEffectKeys(use ? use.effects : undefined)
+    if (keys.includes("attack") || keys.includes("damage")) return "attack"
+    if (keys.includes("gainArmor")) return "defend"
+    if (keys.includes("heal")) return "heal"
+    if (keys.includes("applyState")) {
+        const hint = useTargetHint(use ? use.target : undefined)
+        if (hint === "self" || hint === "owner") return "buff"
+        return "debuff"
+    }
     if (card.tags?.includes("attack")) return "attack"
     if (card.tags?.includes("defence")) return "defend"
-    if (card.tags?.includes("skill")) return "defend"
     if (card.tags?.includes("power")) return "buff"
     if (card.tags?.includes("curse")) return "debuff"
     return "special"
@@ -164,7 +194,7 @@ function inferIntentFromTags(card: Card): IntentType {
  * 从卡牌列表分析生成意图
  *
  * 意图类型优先使用 BehaviorPattern 声明的 intentType，
- * 未声明时从卡牌 tag 推导。
+ * 未声明时从所选卡牌的效果推导。
  * 意图数值从卡牌效果的 params.value 读取，通过事件模拟系统计算 Buff 影响。
  * multiplier 会乘进单段数值（放电 3×充能层）；repeatEffects 会展开成段数（群咬 3×2）。
  *
@@ -185,8 +215,8 @@ export async function cardsToIntent(
         return { type: "unknown", actions: [], visibility }
     }
 
-    // 1. 确定意图类型：优先用声明的，否则从卡牌 tag 推导
-    const type = intentType ?? inferIntentFromTags(cards[0])
+    // 1. 确定意图类型：优先用声明的，否则从所选卡牌的效果推导
+    const type = intentType ?? inferIntentFromCard(cards[0])
 
     // 2. 计算意图数值
     const effectKeys = intentValueSources[type]
@@ -279,7 +309,7 @@ export function formatIntentDisplay(intent: Intent): string {
         case "card":
             // 显示所有执行的卡牌名称
             if (intent.actions.length > 0) {
-                const cardNames = intent.actions.map(card => card.label).join(" + ")
+                const cardNames = intent.actions.map(card => card.displayName).join(" + ")
                 const countText = intent.count ? ` x${intent.count}` : ""
                 return `${typeName}: ${cardNames}${countText}`
             }

@@ -10,13 +10,8 @@
         <button class="action-btn secondary" @click="importSave">导入存档</button>
     </div>
 
-    <!-- 中间 -->
+    <!-- 中间：左边选器官（hover 往右开），右边角色预览 -->
      <div class="center">
-        <div class="left-panel">
-            <Chara v-if="previewPlayer" :target="previewPlayer" side='left' :key="previewPlayer.__id"></Chara>
-            <button class="deck-btn" @click="showDeckModal = true">查看卡组</button>
-        </div>
-
         <OrganMap
             v-model="selectedOrgans"
             :organs="displayOrgans"
@@ -25,6 +20,11 @@
             :budget-max="budgetMax"
             :selected-cost="selectedCost"
         />
+
+        <div class="preview-panel">
+            <Chara v-if="previewPlayer" :target="previewPlayer" side='right' :key="previewPlayer.__id"></Chara>
+            <button class="deck-btn" @click="showDeckModal = true">查看卡组</button>
+        </div>
      </div>
 
     <!-- 底部按钮 -->
@@ -282,7 +282,7 @@ onMounted(async () => {
     flex-grow: 1;
     min-height: 0;
     >*{ flex-grow: 1; }
-    .left-panel {
+    .preview-panel {
         display: flex;
         flex-direction: column;
         align-items: center;

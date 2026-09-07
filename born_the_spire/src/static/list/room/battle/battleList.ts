@@ -12,6 +12,10 @@ export interface BattleRoomConfig {
     description: string
     battleType: BattleRoomType
     enemyConfigs: EnemyInstanceConfig[]
+    /** 弱怪池。本层前几场实际进入的普通战斗从这里抽 */
+    encounterPool?: "easy" | "normal"
+    /** 测试战斗，不进地图自动池 */
+    test?: boolean
 }
 
 export const battleList: BattleRoomConfig[] = [
@@ -21,6 +25,7 @@ export const battleList: BattleRoomConfig[] = [
         name: "不屈小鼠",
         description: "越打越硬的小家伙",
         battleType: "normal",
+        test: true,
         enemyConfigs: ["test_enemy_mouse"]
     },
     {
@@ -53,6 +58,7 @@ export const battleList: BattleRoomConfig[] = [
         name: "毒沼",
         description: "一只毒液蟾在此守候",
         battleType: "normal",
+        encounterPool: "easy",
         enemyConfigs: [
             {
                 key: "enemy_poison_toad",
@@ -74,6 +80,7 @@ export const battleList: BattleRoomConfig[] = [
         name: "血雾",
         description: "一只寄血蜱在血雾中盘旋",
         battleType: "normal",
+        encounterPool: "easy",
         enemyConfigs: [
             {
                 key: "enemy_blood_tick",
@@ -95,6 +102,7 @@ export const battleList: BattleRoomConfig[] = [
         name: "废弃哨站",
         description: "一台装甲哨卫守在路口",
         battleType: "normal",
+        encounterPool: "easy",
         enemyConfigs: [
             {
                 key: "enemy_armored_sentry",
@@ -132,15 +140,15 @@ export const battleList: BattleRoomConfig[] = [
         name: "孢子洞",
         description: "一朵孢子菌静静生长",
         battleType: "normal",
+        encounterPool: "easy",
         enemyConfigs: [
             {
                 key: "enemy_spore_fungus",
                 behavior: {
                     patterns: [],
                     fallback: {
-                        intent: "unknown",
                         action: { selector: { tags: ["skill"] }, mode: "random" },
-                        describe: "毒孢"
+                        describe: "毒孢或硬化"
                     }
                 }
             }
@@ -153,6 +161,7 @@ export const battleList: BattleRoomConfig[] = [
         name: "蚁群巡逻",
         description: "两只蚁兵正在巡逻",
         battleType: "normal",
+        encounterPool: "easy",
         enemyConfigs: [
             {
                 key: "enemy_ant_soldier",
@@ -325,9 +334,8 @@ export const battleList: BattleRoomConfig[] = [
                 behavior: {
                     patterns: [],
                     fallback: {
-                        intent: "unknown",
                         action: { selector: { tags: ["skill"] }, mode: "random" },
-                        describe: "毒孢"
+                        describe: "毒孢或硬化"
                     }
                 }
             },

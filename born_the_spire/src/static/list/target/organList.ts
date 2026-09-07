@@ -1145,7 +1145,7 @@ export const organList:OrganMap[] = [
 {
     label: "蚁颚",
     key: "enemy_organ_ant_mandible",
-    describe: ["提供1张", {"@": 0}, "卡牌", "Lv.2：群咬额外攻击1次"],
+    describe: ["提供1张", {"@": 0}],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Bone,
     status: {
@@ -1157,11 +1157,8 @@ export const organList:OrganMap[] = [
         maxLevel: 2,
         milestones: [{
             level: 2,
-            describe: ["群咬额外攻击1次"],
-            effects: [{
-                key: "modifyOrganCardStatus",
-                params: { statusKey: "hits", delta: 1 }
-            }]
+            describe: ["锻造提供的卡牌"],
+            effects: [{ key: "upgradeOrganCards" }]
         }]
     },
     interaction: {

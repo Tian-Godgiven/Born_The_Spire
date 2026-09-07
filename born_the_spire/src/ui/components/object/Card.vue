@@ -1,7 +1,7 @@
 <template>
 <div class="card" ref="cardRef" :class="{ 'temporary': card.isTemporary, 'disabled': card.isDisabled }">
     <div class="cost" v-if="cost !== null">{{ cost }}</div>
-    <div class="title">{{ card.label }}</div>
+    <div class="title">{{ card.displayName }}</div>
     <div class="line"></div>
 
     <!-- 临时标识 -->

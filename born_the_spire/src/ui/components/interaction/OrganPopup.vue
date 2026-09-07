@@ -1,7 +1,7 @@
 <template>
 <div class="organ-popup">
     <div class="popup-header">
-        <span class="popup-organ-name">{{ organ.label }}</span>
+        <span class="popup-organ-name">{{ organ.label }}<span v-if="organ.level" class="popup-organ-level"> Lv.{{ organ.level }}</span></span>
         <span class="popup-rarity" :style="{ color: getRarityColor(organ.rarity) }">{{ getRarityLabel(organ.rarity) }}</span>
     </div>
 
@@ -58,6 +58,11 @@ function getEntryLabel(entryKey: string): string {
         .popup-organ-name {
             font-size: 16px;
             font-weight: bold;
+
+            .popup-organ-level {
+                font-size: 12px;
+                font-weight: normal;
+            }
         }
 
         .popup-rarity {

@@ -568,6 +568,12 @@ export const cardList:CardMap[] = [{
                 { key: "repeatEffects", params: { times: "$owner.status(hits)", effects: [{ key: "attack", params: { value: 3 } }] } }
             ]
         }
+    },
+    upgradeConfig: {
+        maxLevel: 1,
+        levelConfigs: {
+            1: { status: { hits: 3 } }
+        }
     }
 },
 

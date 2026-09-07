@@ -27,6 +27,8 @@ export class MapGenerator {
   private config: FloorMapConfig
   private rng: SeededRandom
   private usedRooms: Map<RoomType, Set<string>> = new Map()
+  /** 本图已实际进入（分配过 key）的普通战斗次数。精英/Boss 不计 */
+  private hallwayBattlesFought = 0
 
   constructor(config: FloorMapConfig) {
     this.config = config
@@ -497,27 +499,56 @@ export class MapGenerator {
    * 延迟分配房间key（在进入房间时调用）
    */
   public assignLazyRoomKey(node: MapNode): string {
-    const pool = this.getRoomPool(node.roomType)
+    if (node.roomType === "battle") {
+      return this.assignHallwayBattleKey(node)
+    }
+    return this.pickRoomKey(node, this.getRoomPool(node.roomType)) ?? `${node.roomType}_default`
+  }
+
+  /**
+   * 前 easyBattleCount 场实际进入的普通战斗从弱池抽，之后只用 battles。
+   */
+  private assignHallwayBattleKey(node: MapNode): string {
+    const limit = this.config.roomAssignmentStrategy?.easyBattleCount ?? 3
+    const easyPool = this.config.roomPools.easyBattles ?? []
+    const useEasy = this.hallwayBattlesFought < limit && easyPool.length > 0
+    this.hallwayBattlesFought++
+
+    if (useEasy) {
+      const easyKey = this.pickRoomKey(node, easyPool, { fallbackOnEmpty: true })
+      if (easyKey) return easyKey
+    }
+
+    return this.pickRoomKey(node, this.config.roomPools.battles) ?? "battle_default"
+  }
+
+  /**
+   * 从给定池抽一个未用过的房间 key，写入 usedRooms[node.roomType]
+   */
+  private pickRoomKey(
+    node: MapNode,
+    pool: string[],
+    options?: { fallbackOnEmpty?: boolean }
+  ): string | null {
     if (pool.length === 0) {
+      if (options?.fallbackOnEmpty) return null
       console.warn(`[MapGenerator] 房间池为空: ${node.roomType}`)
       return `${node.roomType}_default`
     }
 
-    // 检查是否追踪已使用房间
     const trackUsed = this.config.roomAssignmentStrategy?.trackUsedRooms !== false
     const usedSet = this.usedRooms.get(node.roomType)
 
     if (trackUsed && usedSet) {
-      // 过滤掉已使用的房间
       const availablePool = pool.filter(key => !usedSet.has(key))
 
       if (availablePool.length === 0) {
-        // 池耗尽，检查策略
+        if (options?.fallbackOnEmpty) return null
+
         const strategy = this.config.roomAssignmentStrategy?.exhaustionStrategy?.[node.roomType] || "reset"
 
         if (strategy === "reset") {
           usedSet.clear()
-          // 重新选择
           const nodeRng = this.rng.derive(node.id)
           const roomKey = nodeRng.choice(pool)
           usedSet.add(roomKey)
@@ -530,16 +561,14 @@ export class MapGenerator {
         }
       }
 
-      // 从可用池中选择
       const nodeRng = this.rng.derive(node.id)
       const roomKey = nodeRng.choice(availablePool)
       usedSet.add(roomKey)
       return roomKey
-    } else {
-      // 不追踪，直接随机选择
-      const nodeRng = this.rng.derive(node.id)
-      return nodeRng.choice(pool)
     }
+
+    const nodeRng = this.rng.derive(node.id)
+    return nodeRng.choice(pool)
   }
 
   /**

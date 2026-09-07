@@ -6,6 +6,7 @@ import { resolveGlossary } from "./glossaryResolve";
 import { isStatus } from "@/core/utils/typeGuards";
 import { getLazyModule } from "@/core/utils/lazyLoader";
 import { getCardModifier } from "@/core/objects/system/modifier/CardModifier";
+import { getOrganCardDisplayName } from "./cardSegment";
 
 //对象的描述，存储为数据，使用时翻译为对应的字符串
 export type Describe = (
@@ -64,28 +65,7 @@ export function getDescribe(describe:Describe|undefined,target?:Object){
                 let cardLabel = "[卡牌]"
 
                 if (typeof cardIndexOrId === 'number') {
-                    // 先尝试 cards 数组，再 fallback 到 cardsByOwner.player
-                    let cardKey: string | undefined
-                    const targetCards = (target as any)?.cards
-                    if (targetCards && Array.isArray(toRaw(targetCards))) {
-                        cardKey = targetCards[cardIndexOrId]
-                    }
-                    if (!cardKey) {
-                        const cardsByOwner = (target as any)?.cardsByOwner
-                        if (cardsByOwner?.player) {
-                            const playerCards = Array.isArray(cardsByOwner.player) ? cardsByOwner.player : [cardsByOwner.player]
-                            cardKey = playerCards[cardIndexOrId]
-                        }
-                    }
-                    if (cardKey && typeof cardKey === 'string') {
-                        try {
-                            const cardList = getLazyModule<any[]>('cardList')
-                            const cardConfig = cardList.find((c: any) => c.key === cardKey)
-                            if (cardConfig) cardLabel = cardConfig.label
-                        } catch {
-                            // cardList 尚未加载，保持默认值
-                        }
-                    }
+                    cardLabel = getOrganCardDisplayName(target as any, cardIndexOrId) ?? "[卡牌]"
                 } else if (typeof cardIndexOrId === 'string') {
                     // 卡牌实例 ID，从器官的卡牌修饰器中查找
                     try {
@@ -96,7 +76,7 @@ export function getDescribe(describe:Describe|undefined,target?:Object){
                                 const cardsFromOrgan = cardModifier.getCardsFromSource(organ)
                                 const cardInstance = cardsFromOrgan.find((c: any) => c.__id === cardIndexOrId)
                                 if (cardInstance) {
-                                    cardLabel = cardInstance.label || cardInstance.key || "[卡牌]"
+                                    cardLabel = cardInstance.displayName || cardInstance.key || "[卡牌]"
                                 }
                             }
                         }
@@ -183,26 +163,7 @@ export function getDescribeStructured(describe:Describe|undefined,target?:Object
                 let cardLabel = "[卡牌]"
 
                 if (typeof cardIndexOrId === 'number') {
-                    // 数字索引：从 cards 数组查找 cardKey，再查 cardList 获取 label
-                    let cardKey: string | undefined
-                    const targetCards = (target as any)?.cards
-                    if (targetCards && Array.isArray(targetCards)) {
-                        cardKey = targetCards[cardIndexOrId]
-                    }
-                    if (!cardKey) {
-                        const cardsByOwner = (target as any)?.cardsByOwner
-                        if (cardsByOwner?.player) {
-                            const playerCards = Array.isArray(cardsByOwner.player) ? cardsByOwner.player : [cardsByOwner.player]
-                            cardKey = playerCards[cardIndexOrId]
-                        }
-                    }
-                    if (cardKey && typeof cardKey === 'string') {
-                        try {
-                            const cardList = getLazyModule<any[]>('cardList')
-                            const cardConfig = cardList.find((c: any) => c.key === cardKey)
-                            if (cardConfig) cardLabel = cardConfig.label
-                        } catch { /* cardList 尚未加载 */ }
-                    }
+                    cardLabel = getOrganCardDisplayName(target as any, cardIndexOrId) ?? "[卡牌]"
                     segments.push({
                         text: cardLabel,
                         type: 'card' as const,
@@ -219,7 +180,7 @@ export function getDescribeStructured(describe:Describe|undefined,target?:Object
                                 const cardsFromOrgan = cardModifier.getCardsFromSource(organ)
                                 const cardInstance = cardsFromOrgan.find((c: any) => c.__id === cardIndexOrId)
                                 if (cardInstance) {
-                                    cardLabel = cardInstance.label || cardInstance.key || "[卡牌]"
+                                    cardLabel = cardInstance.displayName || cardInstance.key || "[卡牌]"
                                 }
                             }
                         }

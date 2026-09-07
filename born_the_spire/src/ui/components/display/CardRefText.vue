@@ -1,5 +1,5 @@
 <template>
-<Popover inline placement="right" align="trigger" :close-delay="300" @update:show="handleShow">
+<Popover inline placement="bottom" align="trigger" :close-delay="300" @update:show="handleShow">
     <span class="card-term">{{ label }}</span>
 
     <template #content>

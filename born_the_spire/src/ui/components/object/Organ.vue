@@ -35,7 +35,7 @@
         </div>
     </template>
 
-    {{ organ.label }}<template v-if="showDescribe">:{{ describe }}</template>
+    {{ organ.label }}<span v-if="organ.level" class="organ-level"> Lv.{{ organ.level }}</span><template v-if="showDescribe">:{{ describe }}</template>
 
     <!-- 器官详情弹窗 -->
     <OrganDetail
@@ -244,6 +244,11 @@ import type { BadgeRenderData, BadgePosition } from '@/core/types/BadgeConfig';
 
     &:hover {
         background: rgba(0, 0, 0, 0.05);
+    }
+
+    .organ-level {
+        font-size: 12px;
+        font-weight: normal;
     }
 
     &.temporary:hover {

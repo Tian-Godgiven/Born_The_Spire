@@ -9,6 +9,8 @@ import type { RoomType } from "@/core/objects/room/Room"
  */
 export interface RoomPools {
   battles: string[]
+  /** 弱怪池。本层已打过的普通战斗不足 easyBattleCount 时从这里抽，用完不混进 battles */
+  easyBattles?: string[]
   eliteBattles?: string[]
   elitePlusBattles?: string[]
   events: string[]
@@ -336,6 +338,13 @@ export interface RoomAssignmentStrategy {
    * - false: 不追踪，允许重复
    */
   trackUsedRooms?: boolean
+
+  /**
+   * 本层前几场实际进入的普通战斗从 easyBattles 抽。
+   * 只计 hallway（roomType battle），精英/Boss 不计。默认 3。
+   * 0 表示不用弱池。
+   */
+  easyBattleCount?: number
 }
 
 /**
@@ -423,7 +432,8 @@ export const defaultFloorMapConfig: FloorMapConfig = {
       event: "reset"    // 事件池耗尽后重置
     },
 
-    trackUsedRooms: true  // 追踪已使用的房间
+    trackUsedRooms: true,  // 追踪已使用的房间
+    easyBattleCount: 3
   },
 
   // ==================== 约束规则 ====================
@@ -472,6 +482,7 @@ export const defaultFloorMapConfig: FloorMapConfig = {
 
   roomPools: {
     battles: [],
+    easyBattles: [],
     eliteBattles: [],
     events: [],
     pools: [],
