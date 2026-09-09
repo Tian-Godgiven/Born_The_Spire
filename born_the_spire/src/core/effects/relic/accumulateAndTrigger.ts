@@ -148,7 +148,7 @@ export const accumulateAndTrigger: EffectFunc = (event, effect) => {
         if (maxTriggerPerBattle === undefined || !usedKey) return
         const { remove } = owner.appendTrigger({
             when: "after",
-            how: "make",
+            how: "take",
             key: "battleStart",
             callback: () => {
                 const usedStatus = item.status?.[usedKey]

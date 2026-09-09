@@ -12,6 +12,7 @@ import { resolveTriggerEventTarget } from "../trigger/resolveTriggerEventTarget"
 import { nowBattle } from "@/core/objects/game/battle"
 import { isEntity, isEnemy } from "@/core/utils/typeGuards"
 import { resolveTriggerMountTargets } from "@/core/utils/resolveTriggerMountTargets"
+import { createPreviewApplicator } from "../effect/previewApplicator"
 import { checkCondition as checkConditionExpr } from "@/core/types/ConditionSystem"
 import type { ConditionContext, Condition } from "@/core/types/ConditionSystem"
 import type { ActionEvent } from "../ActionEvent"
@@ -103,6 +104,10 @@ export async function executeItemReaction(params: {
 
     for (const eventConfig of reactionEvents) {
         if (eventConfig.targetType === "triggerEffect" && !triggerEffect) continue
+
+        // 意图预览会把 before/on/after 触发器跑一遍。只允许改正在结算的 Effect 参数，
+        // 否则会像薄翅/过期隔板那样把扣层写进真器官。
+        if (triggerEvent.simulate && eventConfig.targetType !== "triggerEffect") continue
 
         // 通用条件检查（新格式）
         if (eventConfig.condition && !evaluateCondition(eventConfig.condition, item, owner, triggerEvent, triggerEffect)) continue
@@ -303,11 +308,20 @@ export class ItemModifier {
             return
         }
 
+        const preview = createPreviewApplicator({
+            reactionEvents,
+            condition: triggerDef.condition,
+            item,
+            owner: this.owner,
+            extraCheck: () => !item.isDisabled
+        })?.preview
+
         const triggerRemover = triggerMountTarget.appendTrigger({
             when,
             how,
             key,
             level,
+            preview,
             callback: async (event, _effect, _triggerLevel) => {
                 // 检查物品是否被禁用（器官损坏等情况）
                 if (item.isDisabled) return

@@ -183,7 +183,7 @@ export const cardList:CardMap[] = [{
     status:{
         vulnerable:2,
         damage:8,
-        cost:1
+        cost:2
     },
     describe:["造成",{key:["status","damage"]},"点伤害，使目标获得",{key:["status","vulnerable"]},"层",{$:"易伤"}],
     key:"original_card_00011",
@@ -660,28 +660,36 @@ export const cardList:CardMap[] = [{
     }
 },
 
-// 毒孢：孢子菌的孢子囊，对所有角色施加中毒（包括自身）
+// 毒孢：孢子菌的孢子囊。未升级全体同层；升级后友方少、敌方多（玩家/敌人共用，器官对称）
 {
     label: "毒孢",
     tags: ["skill", "enemy"],
     status: {
-        stacks: 1,
+        "ally-stacks": 3,
+        "enemy-stacks": 3,
         cost: 1
     },
-    describe: ["对所有角色施加", {key: ["status", "stacks"]}, "层", {$:"中毒"}],
+    describe: ["对所有角色施加", {key: ["status", "ally-stacks"]}, "层", {$:"中毒"}],
     key: "enemy_card_toxic_spore",
     interaction: {
         use: {
-            target: {faction: "all"},
+            target: {faction: "all", number: "all"},
             effects: [
-                { key: "applyState", params: { stateKey: "poison", stacks: "$medium.status(stacks)" } }
+                { key: "applyState", params: { stateKey: "poison", stacks: "$medium.status(ally-stacks)" }, target: "allTeammates" },
+                { key: "applyState", params: { stateKey: "poison", stacks: "$medium.status(enemy-stacks)" }, target: "allOpponents" }
             ]
         }
     },
     upgradeConfig: {
         maxLevel: 1,
         levelConfigs: {
-            1: { status: { stacks: 2 } }
+            1: {
+                status: { "ally-stacks": 2, "enemy-stacks": 4 },
+                describe: [
+                    "对友方施加", {key: ["status", "ally-stacks"]}, "层", {$:"中毒"},
+                    "，对敌方施加", {key: ["status", "enemy-stacks"]}, "层", {$:"中毒"}
+                ]
+            }
         }
     }
 },
@@ -712,39 +720,40 @@ export const cardList:CardMap[] = [{
     }
 },
 
-// 修复：维修无人机的维修模块，恢复目标器官质量
+// 修复：维修无人机的维修模块，回复目标生命
 {
     label: "修复",
     tags: ["skill", "enemy"],
     status: {
         cost: 1,
-        heal: 8
+        heal: 4
     },
-    describe: ["恢复最受损器官", {key: ["status", "heal"]}, "点质量"],
+    describe: ["回复", {key: ["status", "heal"]}, "点生命"],
     key: "enemy_card_repair",
+    entry: ["card_exhaust", "card_void"],
     interaction: {
         use: {
-            target: {key: "self"},
+            target: { faction: "all" },
             effects: [
-                { key: "repairOrgan", params: { value: "$medium.status(heal)" } }
+                { key: "heal", params: { value: "$medium.status(heal)" } }
             ]
         }
     },
     upgradeConfig: {
         maxLevel: 1,
         levelConfigs: {
-            1: { status: { heal: 12 } }
+            1: { status: { heal: 6 } }
         }
     }
 },
 
-// 重击：故障机器的重锤，消耗2费造成大量伤害
+// 重击：故障机器的重锤
 {
     label: "重击",
     tags: ["attack", "enemy"],
     status: {
-        damage: 14,
-        cost: 2
+        damage: 23,
+        cost: 3
     },
     describe: ["造成", {key: ["status", "damage"]}, "点伤害"],
     key: "enemy_card_heavy_strike",
@@ -759,7 +768,7 @@ export const cardList:CardMap[] = [{
     upgradeConfig: {
         maxLevel: 1,
         levelConfigs: {
-            1: { status: { damage: 18 } }
+            1: { status: { damage: 28 } }
         }
     }
 },

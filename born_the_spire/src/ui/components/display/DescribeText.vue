@@ -8,6 +8,7 @@
             :organ="organ"
             :hoverTarget="hoverTarget"
             :preferPlayerCards="preferPlayerCards"
+            :anchor="anchorEl"
         />
         <br v-else-if="segment.type === 'break'">
         <span

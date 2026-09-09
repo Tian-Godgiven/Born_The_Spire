@@ -27,7 +27,7 @@
  *   badges: [{ type: "counter", value: "$owner.stateStack(power)" }]
  *
  * 引用自身挂着的状态层数（$item 是器官/遗物本体，$owner 是持有它的角色）：
- *   badges: [{ type: "counter", value: "$item.stateStack(separatorWear)", showWhen: "$item.stateStack(separatorWear) > 0" }]
+ *   badges: [{ type: "counter", value: "$item.stateStack(separatorWear)", showWhen: "$item.stateStack(separatorWear) > 0", position: "bottom-right" }]
  *
  * 条件显示：
  *   badges: [{ type: "cooldown", status: "cooldown", showWhen: "$scene == combat" }]

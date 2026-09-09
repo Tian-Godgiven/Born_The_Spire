@@ -103,10 +103,10 @@ export const organ_rustySeparator: EffectFunc = (event, effect) => {
 }
 
 /**
- * 急救电池：受到伤害后，若生命低于阈值则自动回血，全局限用 N 次
+ * 急救营养液：受到伤害后，若生命低于阈值则自动回血，全局限用 N 次
  *
  * 在 after take damage 触发，event.medium 是器官本身
- * 器官需声明 charges status 作为剩余次数计数器
+ * 器官需声明 charges（剩余）和 max-charges（上限）两个 status，扣剩余不要改上限
  *
  * params:
  *   threshold: number - 触发生命比例阈值（如 0.3 表示 30%）
@@ -138,7 +138,7 @@ export const organ_emergencyBattery: EffectFunc = (event, effect) => {
     })
 
     charges.setOriginalBaseValue(Number(charges.baseValue) - 1)
-    newLog([organ, `急救电池触发，回复 ${healAmount} 生命，剩余 ${charges.value} 次`])
+    newLog([organ, `急救营养液触发，回复 ${healAmount} 生命，剩余 ${charges.value} 次`])
 
     return true
 }

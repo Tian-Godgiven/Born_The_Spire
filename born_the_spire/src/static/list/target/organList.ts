@@ -772,29 +772,44 @@ export const organList:OrganMap[] = [
 {
     label: "薄翅",
     key: "enemy_organ_thin_wings",
-    describe: ["战斗开始时获得", { key: ["status", "flightStacks"] }, "层", {$:"飞行"}],
+    describe: [
+        "初始拥有", { key: ["status", "max-wingStacks"] }, "层",
+        "<br>",
+        "战斗开始时获得等同于层数的", {$:"飞行"},
+        "<br>",
+        "每次受到攻击时层数 -1"
+    ],
     rarity: OrganRarity.Uncommon,
     part: OrganPartEnum.Skin,
     status: {
         "max-mass": 15,
-        "flightStacks": 3
+        "wingStacks": 3,
+        "max-wingStacks": 3
     },
     current: ["mass"],
+    badges: [{
+        type: "counter",
+        status: "wingStacks",
+        maxStatus: "max-wingStacks",
+        position: "bottom-right"
+    }],
     upgrade: {
         maxLevel: 3,
+        perLevel: {
+            effects: [{
+                key: "setBaseStatus",
+                params: { statusKey: "wingStacks", value: 3 },
+                target: "eventMedium"
+            }]
+        },
         milestones: [
             {
                 level: 2,
-                describe: ["无"]
+                describe: ["层数加满"]
             },
             {
                 level: 3,
-                describe: ["改为获得 4 层", {$:"飞行"}],
-                effects: [{
-                    key: "setBaseStatus",
-                    params: { statusKey: "flightStacks", value: 4 },
-                    target: "eventMedium"
-                }]
+                describe: ["层数加满"]
             }
         ]
     },
@@ -802,12 +817,22 @@ export const organList:OrganMap[] = [
         work: {
             target: { key: "self" },
             effects: [],
-            triggers: [{
-                when: "after",
-                how: "make",
-                key: "battleStart",
-                action: "openingFlight"
-            }]
+            triggers: [
+                {
+                    when: "after",
+                    how: "take",
+                    key: "battleStart",
+                    action: "openingFlight",
+                    condition: "$item.status(wingStacks) > 0"
+                },
+                {
+                    when: "after",
+                    how: "take",
+                    key: "attack",
+                    action: "consumeWing",
+                    condition: "$item.status(wingStacks) > 0"
+                }
+            ]
         }
     },
     reaction: {
@@ -815,7 +840,13 @@ export const organList:OrganMap[] = [
             key: "openingFlight",
             label: "薄翅：开局飞行",
             targetType: "triggerOwner",
-            effect: [{ key: "applyState", params: { stateKey: "flight", stacks: "$owner.status(flightStacks)" } }]
+            effect: [{ key: "applyState", params: { stateKey: "flight", stacks: "$owner.status(wingStacks)" } }]
+        }],
+        consumeWing: [{
+            key: "consumeWing",
+            label: "薄翅：挨打消耗层数",
+            targetType: "triggerSource",
+            effect: [{ key: "decrementStatus", params: { statusKey: "wingStacks" } }]
         }]
     }
 },
@@ -983,9 +1014,9 @@ export const organList:OrganMap[] = [
         ]
     }
 },
-// ========== 急救电池 ==========
+// ========== 急救营养液 ==========
 {
-    label: "急救电池",
+    label: "急救营养液",
     key: "enemy_organ_emergency_battery",
     describe: [
         "生命低于30%时自动回血", { key: ["status", "heal-amount"] }, "点",
@@ -996,9 +1027,16 @@ export const organList:OrganMap[] = [
     status: {
         "max-mass": 20,
         "charges": 2,
+        "max-charges": 2,
         "heal-amount": 20
     },
     current: ["mass"],
+    badges: [{
+        type: "counter",
+        status: "charges",
+        maxStatus: "max-charges",
+        position: "bottom-right"
+    }],
     upgrade: {
         maxLevel: 3,
         milestones: [
@@ -1032,7 +1070,7 @@ export const organList:OrganMap[] = [
     reaction: {
         emergencyHeal: [{
             key: "emergencyBattery",
-            label: "急救电池：紧急回血",
+            label: "急救营养液：紧急回血",
             targetType: "triggerOwner",
             effect: [{
                 key: "organ_emergencyBattery",
@@ -1102,6 +1140,7 @@ export const organList:OrganMap[] = [
         type: "counter",
         value: "$item.stateStack(separatorWear)",
         showWhen: "$item.stateStack(separatorWear) > 0",
+        position: "bottom-right",
         style: { backgroundColor: "#dc2626" }
     }],
     interaction: {
@@ -1338,7 +1377,7 @@ export const organList:OrganMap[] = [
                 },
                 {
                     when: "after",
-                    how: "make",
+                    how: "take",
                     key: "battleStart",
                     action: "openingArmor",
                     condition: "$item.status(opening-armor) > 0"
@@ -1509,7 +1548,7 @@ export const organList:OrganMap[] = [
             triggers: [
                 {
                     when: "after",
-                    how: "make",
+                    how: "take",
                     key: "battleStart",
                     action: "corruptionCost"
                 },
@@ -1554,7 +1593,7 @@ export const organList:OrganMap[] = [
             triggers: [
                 {
                     when: "after",
-                    how: "make",
+                    how: "take",
                     key: "battleStart",
                     action: "initLifeStealBudget"
                 },
@@ -1935,7 +1974,7 @@ export const organList:OrganMap[] = [
             effects: [],
             triggers: [{
                 when: "after",
-                how: "make",
+                how: "take",
                 key: "battleStart",
                 action: "gainInitialPower"
             }]
@@ -2033,7 +2072,7 @@ export const organList:OrganMap[] = [
             effects: [],
             triggers: [{
                 when: "after",
-                how: "make",
+                how: "take",
                 key: "battleStart",
                 action: "openingArmor"
             }]
@@ -2065,7 +2104,7 @@ export const organList:OrganMap[] = [
             effects: [],
             triggers: [{
                 when: "after",
-                how: "make",
+                how: "take",
                 key: "battleStart",
                 action: "openingForceField"
             }]
@@ -2138,7 +2177,7 @@ export const organList:OrganMap[] = [
             effects: [],
             triggers: [
                 {
-                    when: "after", how: "make", key: "battleStart",
+                    when: "after", how: "take", key: "battleStart",
                     action: "lethalGuardCharge"
                 },
                 {

@@ -85,8 +85,8 @@ function checkChooseNum(targetType:TargetType,specificTargets:Target[]|null){
 
     // 只有在以下情况才自动选择（不需要用户点击）：
     // 1. 指定了 key（如 "self"）且只有1个可选目标
-    // 2. 指定数量为 "all" 或阵营为 "all"
-    if(targetType.number === "all" || targetType.faction === "all"){
+    // 2. 指定数量为 "all"（打全体）。faction: "all" 只表示阵营不限，默认仍要点选一个
+    if(targetType.number === "all"){
         noNeedChoose = true
         needChooseNum = 1
     }

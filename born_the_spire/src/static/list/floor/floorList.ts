@@ -43,7 +43,7 @@ export const floorList: FloorConfig[] = [
         name: "底层",
         order: 1,
         roomPools: {
-            battles: ["battle_normal_rocker"],
+            battles: [],
             eliteBattles: floor1Elites,
             elitePlusBattles: floor1Elites,
             bossBattles: floor1Bosses,
@@ -71,7 +71,7 @@ export const floorList: FloorConfig[] = [
         name: "中层",
         order: 2,
         roomPools: {
-            battles: ["battle_normal_rocker"],
+            battles: [],
             eliteBattles: floor1Elites,
             elitePlusBattles: floor1Elites,
             bossBattles: floor1Bosses,
@@ -94,7 +94,7 @@ export const floorList: FloorConfig[] = [
         name: "高层",
         order: 3,
         roomPools: {
-            battles: ["battle_normal_rocker"],
+            battles: [],
             eliteBattles: floor1Elites,
             elitePlusBattles: floor1Elites,
             bossBattles: floor1Bosses,
@@ -117,7 +117,7 @@ export const floorList: FloorConfig[] = [
         name: "终层",
         order: 4,
         roomPools: {
-            battles: ["battle_normal_rocker"],
+            battles: [],
             eliteBattles: floor1Elites,
             elitePlusBattles: floor1Elites,
             bossBattles: floor1Bosses,

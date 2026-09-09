@@ -94,10 +94,8 @@ export const decrementStatus: EffectFunc = (event, effect) => {
             console.warn(`实体 ${e.label} 没有属性 ${statusKey}`)
             return
         }
-        // 直接设置为当前值减去 amount
-        // null（无此概念）参与算术时按 0 处理
         const baseValueNum = typeof status.baseValue === 'number' ? status.baseValue : Number(status.baseValue ?? 0)
-        const newValue = baseValueNum - Number(amount)
+        const newValue = Math.max(0, baseValueNum - Number(amount))
         status.setOriginalBaseValue(newValue)
     })
 }

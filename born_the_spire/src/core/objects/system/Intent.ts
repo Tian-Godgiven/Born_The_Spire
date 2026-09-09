@@ -1,5 +1,5 @@
 import { Card } from "@/core/objects/item/Subclass/Card"
-import { simulateEffect } from "./SimulateEvent"
+import { previewEffect } from "./effect/previewEffect"
 import { Entity } from "./Entity"
 import type { EffectUnit } from "./effect/EffectUnit"
 import type { EventParticipant } from "@/core/types/event/EventParticipant"
@@ -8,8 +8,8 @@ import { nanoid } from "nanoid"
 /**
  * 意图模拟用的虚拟目标
  *
- * 不带任何触发器，避免模拟时触发 target 端的机制（如护甲吸收伤害）
- * 意图只需要计算 source 端的 buff 影响（力量、虚弱等）
+ * 没传入真实目标时用这个空对象，避免误把玩家自己的飞行/易伤折进卡面。
+ * 传入玩家后才会折叠受击方的 before take。
  */
 const intentDummyTarget: EventParticipant = {
     __id: nanoid(),
@@ -36,15 +36,22 @@ export type IntentVisibility =
     | "exact"       // 能看到精确数值
     | "card"        // 能看到具体卡牌名称
 
+export type IntentPart = {
+    type: IntentType
+    value?: number
+    count?: number
+}
+
 /**
  * 意图对象
  *
  * 表示敌人的行动意图，包含类型、数值和实际要执行的卡牌
  */
 export type Intent = {
-    type: IntentType            // 意图类型
-    value?: number              // 显示的数值（伤害/格挡等）
-    count?: number              // 攻击次数（多段攻击时显示）
+    type: IntentType            // 首段意图类型（兼容只读 type 的调用方）
+    value?: number              // 首段显示数值
+    count?: number               // 首段攻击次数
+    parts: IntentPart[]        // 每张行动牌一段，多招并排展示
     actions: Card[]             // 实际要执行的卡牌列表
     visibility?: IntentVisibility  // 可见性等级（默认为 exact）
 }
@@ -195,7 +202,7 @@ function inferIntentFromCard(card: Card): IntentType {
  *
  * 意图类型优先使用 BehaviorPattern 声明的 intentType，
  * 未声明时从所选卡牌的效果推导。
- * 意图数值从卡牌效果的 params.value 读取，通过事件模拟系统计算 Buff 影响。
+ * 意图数值从卡牌效果的 params.value 读取，再按 before 上的改参效果折叠（力量、易伤、飞行减半）。
  * multiplier 会乘进单段数值（放电 3×充能层）；repeatEffects 会展开成段数（群咬 3×2）。
  *
  * @param cards 要执行的卡牌列表
@@ -208,70 +215,79 @@ export async function cardsToIntent(
     cards: Card[],
     owner: Entity,
     visibility: IntentVisibility = "card",
-    intentType?: IntentType,
+    intentType?: IntentType | (IntentType | undefined)[],
     target?: Entity
 ): Promise<Intent> {
     if (cards.length === 0) {
-        return { type: "unknown", actions: [], visibility }
+        return { type: "unknown", parts: [{ type: "unknown" }], actions: [], visibility }
     }
 
-    // 1. 确定意图类型：优先用声明的，否则从所选卡牌的效果推导
-    const type = intentType ?? inferIntentFromCard(cards[0])
+    const simTarget = target ?? intentDummyTarget
+    const parts: IntentPart[] = []
 
-    // 2. 计算意图数值
-    const effectKeys = intentValueSources[type]
-    let intentValue: number | undefined = undefined
-    let intentCount: number | undefined = undefined
-
-    if (effectKeys && effectKeys.length > 0) {
-        const hits: number[] = []
-        const simTarget = target ?? intentDummyTarget
-
-        const collectHits = async (units: EffectUnit[] | undefined, card: Card, repeats: number) => {
-            if (!units || repeats <= 0) return
-            for (const unit of units) {
-                if (unit.key === "repeatEffects") {
-                    const resolved = await simulateEffect(unit, owner, card, simTarget)
-                    const times = Number(resolved.params.times)
-                    const inner = resolved.params.effects
-                    if (!Number.isFinite(times) || times <= 0 || !Array.isArray(inner)) continue
-                    await collectHits(inner as EffectUnit[], card, repeats * times)
-                    continue
-                }
-                if (!effectKeys.includes(unit.key) || unit.params?.value == null) continue
-                const simulated = await simulateEffect(unit, owner, card, simTarget)
-                const base = Number(simulated.params.value)
-                const rawMul = simulated.params.multiplier
-                const mul = rawMul === undefined ? 1 : Number(rawMul)
-                const perHit = base * (Number.isFinite(mul) ? mul : 1)
-                if (!Number.isFinite(perHit)) continue
-                for (let i = 0; i < repeats; i++) hits.push(perHit)
-            }
-        }
-
-        for (const card of cards) {
-            await collectHits(card.getInteraction("use")?.effects, card, 1)
-        }
-
-        if (hits.length > 0) {
-            const first = hits[0]
-            const allSame = hits.every(value => value === first)
-            if (allSame) {
-                intentValue = first
-                if (hits.length > 1) intentCount = hits.length
-            } else {
-                intentValue = hits.reduce((sum, value) => sum + value, 0)
-            }
-        }
+    for (let i = 0; i < cards.length; i++) {
+        const card = cards[i]
+        const type = Array.isArray(intentType)
+            ? (intentType[i] ?? inferIntentFromCard(card))
+            : (intentType ?? inferIntentFromCard(card))
+        parts.push(await computeIntentPart(card, type, owner, simTarget))
     }
 
     return {
-        type,
-        value: intentValue,
-        count: intentCount,
+        type: parts[0].type,
+        value: parts[0].value,
+        count: parts[0].count,
+        parts,
         actions: cards,
         visibility
     }
+}
+
+async function computeIntentPart(
+    card: Card,
+    type: IntentType,
+    owner: Entity,
+    simTarget: EventParticipant
+): Promise<IntentPart> {
+    const effectKeys = intentValueSources[type]
+    if (!effectKeys || effectKeys.length === 0) {
+        return { type }
+    }
+
+    const hits: number[] = []
+
+    const collectHits = async (units: EffectUnit[] | undefined, repeats: number) => {
+        if (!units || repeats <= 0) return
+        for (const unit of units) {
+            if (unit.key === "repeatEffects") {
+                const resolved = previewEffect(unit, owner, card, simTarget)
+                const times = Number(resolved.params.times)
+                const inner = resolved.params.effects
+                if (!Number.isFinite(times) || times <= 0 || !Array.isArray(inner)) continue
+                await collectHits(inner as EffectUnit[], repeats * times)
+                continue
+            }
+            if (!effectKeys.includes(unit.key) || unit.params?.value == null) continue
+            const simulated = previewEffect(unit, owner, card, simTarget)
+            const base = Number(simulated.params.value)
+            const rawMul = simulated.params.multiplier
+            const mul = rawMul === undefined ? 1 : Number(rawMul)
+            const perHit = base * (Number.isFinite(mul) ? mul : 1)
+            if (!Number.isFinite(perHit)) continue
+            for (let r = 0; r < repeats; r++) hits.push(perHit)
+        }
+    }
+
+    await collectHits(card.getInteraction("use")?.effects, 1)
+
+    if (hits.length === 0) return { type }
+
+    const first = hits[0]
+    const allSame = hits.every(value => value === first)
+    if (allSame) {
+        return { type, value: first, count: hits.length > 1 ? hits.length : undefined }
+    }
+    return { type, value: hits.reduce((sum, value) => sum + value, 0) }
 }
 
 /**
@@ -281,40 +297,26 @@ export async function cardsToIntent(
  * @returns 格式化后的显示文本
  */
 export function formatIntentDisplay(intent: Intent): string {
-    const typeInfo = getIntentTypeInfo(intent.type)
-    const typeName = typeInfo?.label || "未知"
-
-    switch (intent.visibility) {
-        case "hidden":
-            return "?"
-
-        case "type":
-            return typeName
-
-        case "range":
-            if (intent.value !== undefined) {
-                const range = getValueRange(intent.value)
-                return `${typeName}(${range})`
-            }
-            return typeName
-
-        case "exact":
-        default:
-            if (intent.value !== undefined) {
-                const countText = intent.count ? ` x${intent.count}` : ""
-                return `${typeName}: ${intent.value}${countText}`
-            }
-            return typeName
-
-        case "card":
-            // 显示所有执行的卡牌名称
-            if (intent.actions.length > 0) {
-                const cardNames = intent.actions.map(card => card.displayName).join(" + ")
-                const countText = intent.count ? ` x${intent.count}` : ""
-                return `${typeName}: ${cardNames}${countText}`
-            }
-            return typeName
+    const parts = intent.parts?.length ? intent.parts : [{ type: intent.type, value: intent.value, count: intent.count }]
+    const formatPart = (part: IntentPart): string => {
+        const typeName = getIntentTypeInfo(part.type)?.label || "未知"
+        if (intent.visibility === "hidden") return "?"
+        if (intent.visibility === "type") return typeName
+        if (intent.visibility === "range" && part.value !== undefined) {
+            return `${typeName}(${getValueRange(part.value)})`
+        }
+        if (part.value !== undefined) {
+            const countText = part.count ? ` x${part.count}` : ""
+            return `${typeName}: ${part.value}${countText}`
+        }
+        return typeName
     }
+
+    if (intent.visibility === "card" && intent.actions.length > 0) {
+        return intent.actions.map(card => card.displayName).join(" + ")
+    }
+
+    return parts.map(formatPart).join(" + ")
 }
 
 /**

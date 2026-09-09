@@ -416,7 +416,7 @@ export const effectMap:EffectData[] = [
     key:"organ_rustySeparator",
     effect:organ_rustySeparator
 },{
-    label:"急救电池",
+    label:"急救营养液",
     key:"organ_emergencyBattery",
     effect:organ_emergencyBattery
 },{

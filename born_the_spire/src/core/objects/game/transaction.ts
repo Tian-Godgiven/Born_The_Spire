@@ -140,6 +140,7 @@ export class Transaction{
                 const target = resolveTarget(effect.targetSpec, {
                     source: event.source as any,
                     target: event.target as any,
+                    owner: (event.medium as any)?.owner ?? event.source,
                     event,
                     battle: nowBattle.value ?? undefined
                 })

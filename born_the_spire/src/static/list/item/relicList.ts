@@ -74,7 +74,7 @@ export const relicList: RelicMap[] = [
                 target: { key: "self" },
                 triggers: [{
                     when: "after",
-                    how: "make",
+                    how: "take",
                     key: "battleStart",
                     action: "applyScholarDraw"
                 }]
@@ -107,7 +107,7 @@ export const relicList: RelicMap[] = [
                 effects: [],
                 triggers: [{
                     when: "after",
-                    how: "make",
+                    how: "take",
                     key: "battleStart",
                     action: "applyFirstTurnDraw"
                 }]

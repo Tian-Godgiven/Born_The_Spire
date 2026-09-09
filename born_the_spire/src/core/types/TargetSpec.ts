@@ -304,14 +304,14 @@ export function getTargetValue(
         // allEnemies/allAllies 是写死的玩家视角，只适合确定站在玩家一侧的内容
         case "allOpponents": {
             if (!context.battle) throw new Error("[resolveTarget] battle 不存在，无法获取 allOpponents")
-            const holder = context.owner ?? context.triggerOwner
-            if (!holder) throw new Error("[resolveTarget] context 中没有 owner/triggerOwner，无法判断 allOpponents 的阵营")
+            const holder = context.owner ?? context.triggerOwner ?? context.source
+            if (!holder) throw new Error("[resolveTarget] context 中没有 owner/triggerOwner/source，无法判断 allOpponents 的阵营")
             return isEnemy(holder) ? context.battle.getAlivePlayers() : context.battle.getAliveEnemies()
         }
         case "allTeammates": {
             if (!context.battle) throw new Error("[resolveTarget] battle 不存在，无法获取 allTeammates")
-            const holder = context.owner ?? context.triggerOwner
-            if (!holder) throw new Error("[resolveTarget] context 中没有 owner/triggerOwner，无法判断 allTeammates 的阵营")
+            const holder = context.owner ?? context.triggerOwner ?? context.source
+            if (!holder) throw new Error("[resolveTarget] context 中没有 owner/triggerOwner/source，无法判断 allTeammates 的阵营")
             return isEnemy(holder) ? context.battle.getAliveEnemies() : context.battle.getAlivePlayers()
         }
         case "allEntities":

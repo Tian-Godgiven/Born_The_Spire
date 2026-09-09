@@ -295,22 +295,20 @@ export async function startNewBattle(playerTeam:(Player|Chara)[],enemyTeam:(Enem
         //当前玩家开始战斗（初始化状态）
         await nowPlayer.startBattle()
 
-        // 触发 battleStart 事件
-        // player 是 source 和 target，所以同时触发 make 和 take
-        doEvent({
+        // 每人一条自己的 battleStart（三方都是自己）。开战触发器用 how:take。
+        // 敌人那条 source 必须是敌人：写成玩家的话，how:make 会按敌人数再跑一遍。
+        await doEvent({
             key: "battleStart",
             source: nowPlayer,
             medium: nowPlayer,
             target: nowPlayer,
             effectUnits: []
         })
-
-        // 给所有敌人也发送 battleStart（让敌人能收到 take battleStart）
         for (const enemy of enemyTeam) {
-            doEvent({
+            await doEvent({
                 key: "battleStart",
-                source: nowPlayer,
-                medium: nowPlayer,  // medium 改为 nowPlayer，因为 battle 不再是 EventParticipant
+                source: enemy,
+                medium: enemy,
                 target: enemy,
                 effectUnits: []
             })

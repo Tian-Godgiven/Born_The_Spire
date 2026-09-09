@@ -1,5 +1,12 @@
 <template>
-<Popover inline placement="bottom" align="trigger" :close-delay="300" @update:show="handleShow">
+<Popover
+    inline
+    placement="bottom"
+    align="trigger"
+    :anchor="anchor"
+    :close-delay="300"
+    @update:show="handleShow"
+>
     <span class="card-term" @click.stop="openDetail">{{ label }}</span>
 
     <template #content>
@@ -26,7 +33,7 @@
      * 点击打开详情弹窗，可对照锻造前后。
      * 卡牌实例在首次悬停或点击时才解析，描述里写了多少张牌都不会在渲染时就把它们全建出来。
      */
-    const { segment, text, organ, hoverTarget, preferPlayerCards = false } = defineProps<{
+    const { segment, text, organ, hoverTarget, preferPlayerCards = false, anchor = null } = defineProps<{
         segment: DescribeSegment,
         /** 覆盖显示文本，不传就用片段自带的 */
         text?: string,
@@ -35,7 +42,12 @@
         /** 传给卡面做数值预览的目标 */
         hoverTarget?: Entity | Entity[],
         /** 器官同时有敌人版和玩家版卡牌时，优先预览玩家版（奖励界面用） */
-        preferPlayerCards?: boolean
+        preferPlayerCards?: boolean,
+        /**
+         * 卡面贴在这块的外边缘，不要用外层浮层整块（介绍+状态并排时那块比介绍框高）。
+         * DescribeText 把术语板锚点传过来：器官介绍框 / 卡面本身。
+         */
+        anchor?: HTMLElement | null
     }>()
 
     const card = shallowRef<CardType | null>(null)

@@ -55,13 +55,12 @@ export const battleList: BattleRoomConfig[] = [
 
     // ========== 第一层普通战斗 ==========
 
-    // 1. 毒液蟾×1 — 入门：中毒+易伤
+    // 1. 毒液蟾×1 — 中毒+易伤，不进弱池
     {
         key: "battle_f1_poison_toad",
         name: "毒沼",
         description: "一只毒液蟾在此守候",
         battleType: "normal",
-        encounterPool: "easy",
         enemyConfigs: [
             {
                 key: "enemy_poison_toad",
@@ -108,31 +107,7 @@ export const battleList: BattleRoomConfig[] = [
         encounterPool: "easy",
         enemyConfigs: [
             {
-                key: "enemy_armored_sentry",
-                behavior: {
-                    patterns: [
-                        {
-                            priority: 10,
-                            intent: "attack",
-                            condition: {
-                                hasState: { target: "self", stateKey: "charge", stacks: 2 }
-                            },
-                            action: {
-                                selector: { key: "enemy_card_discharge" },
-                                mode: "random"
-                            },
-                            describe: "充能≥2：放电"
-                        }
-                    ],
-                    fallback: {
-                        intent: "unknown",
-                        action: {
-                            selector: { key: "enemy_card_unstable_charge" },
-                            mode: "random"
-                        },
-                        describe: "不稳定充能"
-                    }
-                }
+                key: "enemy_armored_sentry"
             }
         ]
     },
@@ -259,32 +234,14 @@ export const battleList: BattleRoomConfig[] = [
         battleType: "normal",
         enemyConfigs: [
             {
-                key: "enemy_armored_sentry",
-                behavior: {
-                    patterns: [
-                        {
-                            priority: 10,
-                            intent: "attack",
-                            condition: {
-                                hasState: { target: "self", stateKey: "charge", stacks: 2 }
-                            },
-                            action: { selector: { key: "enemy_card_discharge" }, mode: "random" },
-                            describe: "充能≥2：放电"
-                        }
-                    ],
-                    fallback: {
-                        intent: "unknown",
-                        action: { selector: { key: "enemy_card_unstable_charge" }, mode: "random" },
-                        describe: "不稳定充能"
-                    }
-                }
+                key: "enemy_armored_sentry"
             },
             {
                 key: "enemy_repair_drone",
                 behavior: {
                     patterns: [],
                     fallback: {
-                        intent: "unknown",
+                        intent: "heal",
                         action: { selector: { tags: ["skill"] }, mode: "random" },
                         describe: "修复"
                     }
@@ -303,11 +260,16 @@ export const battleList: BattleRoomConfig[] = [
             {
                 key: "enemy_broken_machine",
                 behavior: {
-                    patterns: [],
-                    fallback: {
+                    patterns: [{
+                        condition: { hasOrgan: "enemy_organ_unstable_battery" },
                         intent: "attack",
                         action: { selector: { tags: ["attack"] }, mode: "random" },
                         describe: "重击"
+                    }],
+                    fallback: {
+                        intent: "unknown",
+                        action: { selector: { key: "fallback_struggle" }, mode: "random" },
+                        describe: "无法重击"
                     }
                 }
             },
@@ -316,7 +278,7 @@ export const battleList: BattleRoomConfig[] = [
                 behavior: {
                     patterns: [],
                     fallback: {
-                        intent: "unknown",
+                        intent: "heal",
                         action: { selector: { tags: ["skill"] }, mode: "random" },
                         describe: "修复"
                     }
@@ -417,11 +379,16 @@ export const battleList: BattleRoomConfig[] = [
             {
                 key: "enemy_broken_machine",
                 behavior: {
-                    patterns: [],
-                    fallback: {
+                    patterns: [{
+                        condition: { hasOrgan: "enemy_organ_unstable_battery" },
                         intent: "attack",
                         action: { selector: { tags: ["attack"] }, mode: "random" },
                         describe: "重击"
+                    }],
+                    fallback: {
+                        intent: "unknown",
+                        action: { selector: { key: "fallback_struggle" }, mode: "random" },
+                        describe: "无法重击"
                     }
                 }
             },

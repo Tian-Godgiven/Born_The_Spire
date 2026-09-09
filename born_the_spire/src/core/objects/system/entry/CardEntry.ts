@@ -196,7 +196,7 @@ export const cardEntryDefinitions: Record<string, CardEntryDefinition> = {
                 player,  // target
                 {
                     when: "after",
-                    how: "make",
+                    how: "take",
                     key: "battleStart",
                     onlyKey: "inherent_moveToHand",  // 确保只有一个触发器
                     action: "moveInherentToHand"

@@ -1,32 +1,32 @@
 <template>
 <Popover v-if="intent" placement="bottom" align="center" :max-width="600">
-    <!-- 意图图标和值 -->
-    <div class="intent-main" :class="intentTypeClass">
-        <!-- 意图类型图标 -->
-        <div class="intent-icon">
-            {{ intentIcon }}
-        </div>
-
-        <!-- 意图值 -->
-        <div class="intent-value" v-if="showValue">
-            {{ displayValue }}
-        </div>
-
-        <!-- 多段攻击次数 -->
-        <div class="intent-count" v-if="intent.count && intent.count > 1">
-            ×{{ intent.count }}
+    <div class="intent-row">
+        <div
+            v-for="(part, index) in parts"
+            :key="index"
+            class="intent-main"
+            :class="'intent-' + part.type"
+        >
+            <div class="intent-icon">
+                {{ iconFor(part.type) }}
+            </div>
+            <div class="intent-value" v-if="showValue(part)">
+                {{ displayValue(part) }}
+            </div>
+            <div class="intent-count" v-if="part.count && part.count > 1">
+                ×{{ part.count }}
+            </div>
         </div>
     </div>
 
-    <!-- 悬停显示详情 -->
     <template #content>
         <div class="tooltip-content">
-            <!-- 显示值的描述（非 card 模式） -->
-            <div v-if="intent.value !== undefined && intent.visibility !== 'card'">
-                {{ intentDescription }}
+            <div v-if="intent.visibility !== 'card' && partDescriptions.length">
+                <div v-for="(text, index) in partDescriptions" :key="index">
+                    {{ text }}
+                </div>
             </div>
 
-            <!-- card 级别：悬停显示卡牌详情 -->
             <div v-if="intent.visibility === 'card'" class="tooltip-card-list">
                 <Card v-for="card in intent.actions" :key="card.key" :card="card" />
             </div>
@@ -41,7 +41,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Intent } from '@/core/objects/system/Intent'
+import type { Intent, IntentPart, IntentType } from '@/core/objects/system/Intent'
 import Card from '@/ui/components/object/Card.vue'
 import Popover from '@/ui/components/global/Popover.vue'
 
@@ -49,17 +49,15 @@ const props = defineProps<{
     intent?: Intent
 }>()
 
-// 意图类型对应的 CSS 类
-const intentTypeClass = computed(() => {
-    if (!props.intent) return ''
-    return `intent-${props.intent.type}`
+const parts = computed<IntentPart[]>(() => {
+    if (!props.intent) return []
+    if (props.intent.visibility === 'hidden') return [{ type: 'unknown' }]
+    if (props.intent.parts?.length) return props.intent.parts
+    return [{ type: props.intent.type, value: props.intent.value, count: props.intent.count }]
 })
 
-// 意图图标
-const intentIcon = computed(() => {
-    if (!props.intent) return ''
-
-    switch (props.intent.type) {
+function iconFor(type: IntentType): string {
+    switch (type) {
         case 'attack':
             return '⚔️'
         case 'defend':
@@ -70,80 +68,58 @@ const intentIcon = computed(() => {
             return '↓'
         case 'special':
             return '✨'
+        case 'heal':
+            return '+'
         case 'unknown':
         default:
             return '?'
     }
-})
+}
 
-// 意图标签
-const intentLabel = computed(() => {
-    if (!props.intent) return ''
-
-    switch (props.intent.type) {
-        case 'attack':
-            return '攻击'
-        case 'defend':
-            return '防御'
-        case 'buff':
-            return '增益'
-        case 'debuff':
-            return '减益'
-        case 'special':
-            return '特殊'
-        case 'unknown':
-        default:
-            return '未知'
-    }
-})
-
-// 是否显示数值/卡牌名称
-const showValue = computed(() => {
+function showValue(part: IntentPart): boolean {
     if (!props.intent) return false
     if (props.intent.visibility === 'hidden') return false
     if (props.intent.visibility === 'type') return false
-    // card 模式同 exact，显示类型+数值，悬停时再显示卡牌详情
-    return props.intent.value !== undefined
-})
+    return part.value !== undefined
+}
 
-// 显示的值
-const displayValue = computed(() => {
-    if (!props.intent || props.intent.value === undefined) return ''
-
-    if (props.intent.visibility === 'range') {
-        // 范围显示（简化：显示 ±20%）
-        const min = Math.floor(props.intent.value * 0.8)
-        const max = Math.ceil(props.intent.value * 1.2)
+function displayValue(part: IntentPart): string {
+    if (part.value === undefined) return ''
+    if (props.intent?.visibility === 'range') {
+        const min = Math.floor(part.value * 0.8)
+        const max = Math.ceil(part.value * 1.2)
         return `${min}-${max}`
     }
+    return part.value.toString()
+}
 
-    // exact 或 card 模式：显示精确值
-    return props.intent.value.toString()
-})
-
-// 意图描述
-const intentDescription = computed(() => {
-    if (!props.intent) return ''
-
-    const value = displayValue.value
-
-    switch (props.intent.type) {
+function describePart(part: IntentPart): string {
+    const value = displayValue(part)
+    switch (part.type) {
         case 'attack':
             return `造成 ${value} 点伤害`
         case 'defend':
             return `获得 ${value} 点格挡`
         case 'buff':
-            return `增益效果（${value}）`
+            return value ? `增益效果（${value}）` : '增益效果'
         case 'debuff':
-            return `减益效果（${value}）`
+            return value ? `减益效果（${value}）` : '减益效果'
+        case 'heal':
+            return value ? `回复 ${value} 点生命` : '治疗'
         case 'special':
-            return `特殊行动`
+            return '特殊行动'
         default:
             return '未知行动'
     }
+}
+
+const partDescriptions = computed(() => {
+    if (!props.intent || props.intent.visibility === 'card') return []
+    return parts.value
+        .filter(part => part.value !== undefined || part.type === 'buff' || part.type === 'debuff' || part.type === 'special')
+        .map(describePart)
 })
 
-// 可见性提示
 const visibilityHint = computed(() => {
     if (!props.intent) return ''
 
@@ -163,6 +139,12 @@ const visibilityHint = computed(() => {
 </script>
 
 <style scoped lang="scss">
+.intent-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
 .intent-main {
     display: flex;
     align-items: center;
@@ -173,9 +155,7 @@ const visibilityHint = computed(() => {
     min-width: 50px;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.3s ease;
 
-    // 意图类型颜色
     &.intent-attack {
         border-color: #d32f2f;
         .intent-icon {
@@ -211,15 +191,18 @@ const visibilityHint = computed(() => {
         }
     }
 
+    &.intent-heal {
+        border-color: #44cc44;
+        .intent-icon {
+            color: #44cc44;
+        }
+    }
+
     &.intent-unknown {
         border-color: #616161;
         .intent-icon {
             color: #616161;
         }
-    }
-
-    &:hover {
-        transform: scale(1.05);
     }
 
     .intent-icon {
@@ -238,7 +221,6 @@ const visibilityHint = computed(() => {
     }
 }
 
-// 意图改变动画
 @keyframes intent-change {
     0% {
         opacity: 1;
@@ -258,13 +240,10 @@ const visibilityHint = computed(() => {
     animation: intent-change 0.6s ease;
 }
 
-// 浮层挂在 Chara 的意图容器下，那个容器为了小徽章设了 12px + nowrap，
-// 这里必须重置回正常排版，否则浮层里的卡牌字会变小且不换行
 .tooltip-content {
     font-size: 16px;
     white-space: normal;
 
-    // card 模式下的卡牌列表
     .tooltip-card-list {
         display: flex;
         flex-wrap: wrap;

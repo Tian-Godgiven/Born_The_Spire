@@ -349,7 +349,29 @@ export const enemyList:EnemyMap[] = [
         organ: [
             "enemy_organ_rusty_separator",
             "enemy_organ_charge_cannon"
-        ]
+        ],
+        cards: ["original_card_00001", "original_card_00014"],
+        behavior: {
+            moves: {
+                mode: "loop",
+                list: [
+                    {
+                        cards: [
+                            "enemy_card_unstable_charge",
+                            ["original_card_00001", "original_card_00014"]
+                        ],
+                        describe: "充能，并随机打击或防御"
+                    },
+                    {
+                        condition: {
+                            hasState: { target: "self", stateKey: "charge", stacks: 2 }
+                        },
+                        cards: ["enemy_card_discharge"],
+                        describe: "充能≥2：放电"
+                    }
+                ]
+            }
+        }
     },
 
     {
@@ -365,7 +387,7 @@ export const enemyList:EnemyMap[] = [
     {
         label: "故障机器",
         key: "enemy_broken_machine",
-        status: { "max-health": 40 },
+        status: { "max-health": 40, "max-energy": 2 },
         organ: [
             "enemy_organ_unstable_battery",
             "enemy_organ_heavy_hammer"

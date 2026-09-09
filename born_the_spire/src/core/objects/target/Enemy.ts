@@ -9,9 +9,11 @@ import { cardsToIntent } from "../system/Intent";
 import type { Intent, IntentType, IntentVisibility } from "../system/Intent";
 import { doEvent } from "../system/ActionEvent";
 import type { Player } from "./Player";
-import { selectAction } from "../system/EnemyBehavior";
+import { selectAction, selectTurnActions } from "../system/EnemyBehavior";
 import type { EnemyBehaviorConfig } from "../system/EnemyBehavior";
 import { isOrganDisabled } from "@/core/effects/organ/disableOrgan";
+import { nowBattle } from "../game/battle";
+import { getCurrentValue } from "../system/Current/current";
 
 export type EnemyMap = CharaMap & {
     key:string
@@ -23,10 +25,11 @@ export type EnemyMap = CharaMap & {
 export class Enemy extends Chara{
     public readonly targetType = 'enemy' as const  // 类型标识
     public intent?: Intent  // 当前意图（下回合要执行的行动）
-    public _intentType?: IntentType  // 当前意图的声明类型（来自 BehaviorPattern）
+    public _intentType?: IntentType | (IntentType | undefined)[]  // 声明的意图类型（单招或多张各一）
     public _intentTarget?: any  // 意图的模拟目标（用于计算 target 端 buff）
     public behavior?: EnemyBehaviorConfig  // 敌人行为配置
     public exclusiveCards: string[] = []  // 敌人专属卡牌key列表
+    public aiCursor: number = 0  // 剧本 / loop 序列指针，存在实例上以免改到共享配置
 
     // 双牌堆系统
     public drawPile: {
@@ -134,7 +137,12 @@ export class Enemy extends Chara{
      * @param cards 要执行的卡牌列表
      * @param visibility 可见性等级（默认为 exact）
      */
-    async setIntent(cards: Card[], visibility: IntentVisibility = "card", intentType?: IntentType, target?: Player) {
+    async setIntent(
+        cards: Card[],
+        visibility: IntentVisibility = "card",
+        intentType?: IntentType | (IntentType | undefined)[],
+        target?: Player
+    ) {
         this._intentType = intentType
         this._intentTarget = target
         this.intent = await cardsToIntent(cards, this, visibility, intentType, target)
@@ -156,7 +164,9 @@ export class Enemy extends Chara{
             return
         }
 
-        const result = await selectAction(this.behavior, this, player, turnCount)
+        const result = this.behavior.moves?.list?.length
+            ? await selectTurnActions(this.behavior, this, player, turnCount)
+            : await selectAction(this.behavior, this, player, turnCount)
 
         if (result.cards.length > 0) {
             newLog(["敌人改变意图", this.label])
@@ -348,10 +358,29 @@ export class Enemy extends Chara{
      * @param defaultTarget 默认目标（玩家）
      * @returns 目标数组
      */
-    private resolveTargets(targetConfig: any, defaultTarget: Player): Player[] {
+    private resolveTargets(targetConfig: any, defaultTarget: Player): any[] {
         // 如果没有配置，默认目标是玩家
         if (!targetConfig) {
             return [defaultTarget]
+        }
+
+        if (targetConfig.faction === "all") {
+            const battle = nowBattle.value
+            if (!battle) return [defaultTarget]
+            const players = battle.getAlivePlayers()
+            const enemies = battle.getAliveEnemies()
+            if (targetConfig.number === "all") {
+                return [...players, ...enemies]
+            }
+            // 点选一张：AI 给自己或友军里血最低的奶
+            if (enemies.length === 0) return [this]
+            let lowest = enemies[0]
+            for (const ally of enemies) {
+                if (getCurrentValue(ally as any, "health") < getCurrentValue(lowest as any, "health")) {
+                    lowest = ally
+                }
+            }
+            return [lowest]
         }
 
         // 根据 faction 确定目标
@@ -361,7 +390,7 @@ export class Enemy extends Chara{
 
         // 如果是 self，目标是自己
         if (targetConfig.key === "self") {
-            return [this as any]  // 敌人自己作为目标
+            return [this as any]
         }
 
         // 默认返回玩家

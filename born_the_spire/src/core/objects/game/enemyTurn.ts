@@ -1,7 +1,7 @@
 import type { Battle } from "./battle";
 import type { Enemy } from "@/core/objects/target/Enemy"
 import type { Player } from "@/core/objects/target/Player"
-import { selectAction } from "@/core/objects/system/EnemyBehavior"
+import { selectAction, selectTurnActions } from "@/core/objects/system/EnemyBehavior"
 import { newLog } from "@/ui/hooks/global/log"
 import { startCharaTurn, endCharaTurn } from "@/core/effects/turn"
 
@@ -67,9 +67,9 @@ export async function executeAllEnemiesTurn(
  *
  * 流程：
  *   1. 清理上回合残留的行动牌条目
- *   2. 行为模式执行 n 次（n = actions-per-turn），将 n 张行动牌放入抽牌堆
+ *   2. 有 moves 时选一招（可多张牌）；否则按 actions-per-turn 把 pattern 评 n 次
  *   3. 从抽牌堆抽 handSize 张组成手牌（行动牌保序，垃圾牌随机插入）
- *   4. 根据手牌中的行动牌设置意图
+ *   4. 根据手牌中的行动牌设置意图（多张则多段意图并排）
  */
 export async function prepareEnemyIntents(
     enemies: Enemy[],
@@ -88,18 +88,28 @@ export async function prepareEnemyIntents(
         // 1. 清理上回合未消耗的行动牌条目（实际卡牌仍在 CardModifier，只清引用）
         enemy.drawPile.actions = []
 
-        const actionsPerTurn = Number(enemy.status["actions-per-turn"]?.value || 1)
         const handSize = enemy.behavior.handSize ?? 5
 
-        // 2. 行为模式执行 n 次，将选出的行动牌放入抽牌堆
-        for (let order = 0; order < actionsPerTurn; order++) {
-            const result = await selectAction(enemy.behavior, enemy, player, turnCount)
-            if (result.cards.length > 0) {
-                enemy.drawPile.actions.push({
-                    card: result.cards[0],
-                    order,
-                    intent: result.intent
-                })
+        // 2. 选本回合行动牌。有剧本 moves 时一回合只决定一招（可多张）；
+        // 否则按 actions-per-turn 把 pattern 评 n 次。
+        if (enemy.behavior.moves?.list?.length) {
+            const result = await selectTurnActions(enemy.behavior, enemy, player, turnCount)
+            result.cards.forEach((card, order) => {
+                const intent = Array.isArray(result.intent) ? result.intent[order] : result.intent
+                enemy.drawPile.actions.push({ card, order, intent })
+            })
+        } else {
+            const actionsPerTurn = Number(enemy.status["actions-per-turn"]?.value || 1)
+            for (let order = 0; order < actionsPerTurn; order++) {
+                const result = await selectAction(enemy.behavior, enemy, player, turnCount)
+                if (result.cards.length > 0) {
+                    const intent = Array.isArray(result.intent) ? result.intent[0] : result.intent
+                    enemy.drawPile.actions.push({
+                        card: result.cards[0],
+                        order,
+                        intent
+                    })
+                }
             }
         }
 
@@ -109,7 +119,8 @@ export async function prepareEnemyIntents(
         // 4. 设置意图（仅展示行动牌，让玩家可以预判）
         if (drawnActions.length > 0) {
             const intentCards = drawnActions.map(a => a.card)
-            const intentType  = drawnActions[0].intent
+            const declared = drawnActions.map(a => a.intent)
+            const intentType = declared.some(type => type !== undefined) ? declared : undefined
             await enemy.setIntent(intentCards, "card", intentType, player)
         } else {
             enemy.clearIntent()

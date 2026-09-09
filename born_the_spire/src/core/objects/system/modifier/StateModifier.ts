@@ -10,6 +10,7 @@ import { resolveTriggerEventTarget } from "../trigger/Trigger"
 import { isEntity } from "@/core/utils/typeGuards"
 import { checkCondition } from "@/core/types/ConditionSystem"
 import { nowBattle } from "@/core/objects/game/battle"
+import { createPreviewApplicator } from "../effect/previewApplicator"
 import { nanoid } from "nanoid"
 import _ from "lodash"
 import { State } from "../State"
@@ -248,7 +249,13 @@ export class StateModifier {
                                 info: {...clonedEventConfig.info},
                                 effectUnits: clonedEventConfig.effect || []
                             })
-                        }
+                        },
+                        preview: createPreviewApplicator({
+                            reactionEvents: [clonedEventConfig],
+                            item: state as any,
+                            owner: this.owner,
+                            extraCheck: () => !!this.getState(state.key)
+                        })?.preview
                     })
 
                     // 收集 remover
@@ -285,6 +292,13 @@ export class StateModifier {
                     how,
                     key,
                     level,
+                    preview: createPreviewApplicator({
+                        reactionEvents,
+                        condition: (triggerDef as any).condition,
+                        item: state as any,
+                        owner: this.owner,
+                        extraCheck: () => !!this.getState(state.key)
+                    })?.preview,
                     callback: async (event, effect, _triggerLevel) => {
                         // 防御性检查：状态已被移除则跳过
                         if (!this.getState(state.key)) return

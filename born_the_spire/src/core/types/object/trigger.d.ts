@@ -27,6 +27,7 @@ export type TriggerUnit<
     callback:TriggerFunc<s,m,t>,
     id:string,//单元被分配的随机id，用于移除或修改指定的触发器
     level?:number,//触发优先级
+    preview?: (effect: Effect) => void
 }
 
 
@@ -42,7 +43,8 @@ export type TriggerObj<
     level?:number,
     callback:TriggerFunc<s,m,t>,
     importantKey?:string,
-    onlyKey?:string
+    onlyKey?:string,
+    preview?: (effect: Effect) => void
 }
 
 

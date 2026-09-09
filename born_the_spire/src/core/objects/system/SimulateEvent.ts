@@ -1,293 +1,60 @@
-import { ActionEvent, getCurrentExecutingEvent, setCurrentExecutingEvent } from "./ActionEvent"
-import { Effect } from "./effect/Effect"
-import { createEffectByUnit } from "./effect/EffectUnit"
-import type { EffectUnit } from "./effect/EffectUnit"
+import { previewEffect } from "./effect/previewEffect"
 import { Entity } from "./Entity"
+import type { EffectUnit } from "./effect/EffectUnit"
 import type { EventParticipant } from "@/core/types/event/EventParticipant"
-import { isEntity } from "@/core/utils/typeGuards"
-import { cloneDeep } from "lodash"
-import type { TriggerWhen } from "@/core/types/object/trigger"
-import { Transaction } from "../game/transaction"
+import type { ActionEvent } from "./ActionEvent"
 
 /**
- * 事件模拟系统
- *
- * 用于模拟事件的执行流程，但不实际执行效果和产生副作用
- * 主要用途：
- * - 意图系统：计算受 Buff 影响后的伤害/格挡
- * - Mod 功能：预测效果结果
- * - AI 决策：评估不同行动的收益
- *
- * 模拟模式下：
- * - 触发器会被执行（可以修改 effect 参数）
- * - 效果函数不会被执行（不修改游戏状态）
- * - 不产生副作用（不消耗资源、不创建修饰器等）
- * - 不收集到事务中
- * - 不创建日志
+ * 意图 / 卡面数字不再走假战斗。请用 previewEffect。
+ * 这里只保留旧名字，避免外部 import 立刻断掉。
  */
-
-/**
- * 模拟单个效果的执行
- *
- * 创建一个模拟的 ActionEvent，触发相关触发器，但不执行效果函数
- *
- * @param effectUnit 要模拟的效果单元
- * @param source 效果来源
- * @param medium 效果媒介
- * @param target 效果目标
- * @returns 修改后的效果单元（包含触发器修改后的参数）
- */
-export async function simulateEffect(
+export function simulateEffect(
     effectUnit: EffectUnit,
     source: EventParticipant,
     medium: EventParticipant,
-    target: EventParticipant | EventParticipant[],
-    info: Record<string, any> = {},
-    effectUnits: EffectUnit[] = [effectUnit]
-): Promise<EffectUnit> {
-    // 深拷贝 effect，避免修改原对象
-    const mockEffectUnit = cloneDeep(effectUnit)
-
-    // 创建模拟事件
-    const mockEvent = new ActionEvent(
-        mockEffectUnit.key,
-        source,
-        medium,
-        target,
-        info,
-        [mockEffectUnit]
-    )
-
-    // 标记为模拟模式
-    mockEvent.simulate = true
-
-    // 创建模拟事务，让触发器 callback 中的 doEvent 能通过 runWithCollector 被同步执行
-    const mockTransaction = new Transaction()
-    mockTransaction.simulate = true
-    ;(mockEvent as any)._transaction = mockTransaction
-
-    // 和真事件一样：owner 取 medium（卡牌/器官），这样 $owner.status(hits) 才能解析
-    const mockEffect = createEffectByUnit(mockEvent, mockEffectUnit, isEntity(medium) ? medium : undefined)
-
-    // 设置 currentExecutingEvent 为 mockEvent
-    // 这样触发器 callback 中的 doEvent 能通过 currentExecutingEvent._transaction 找到 mockTransaction
-    const previousEvent = getCurrentExecutingEvent()
-    setCurrentExecutingEvent(mockEvent)
-
-    try {
-        // 触发 before 触发器（触发器可以修改 mockEffect.params）
-        await simulateTriggers(mockEffect, "before", 0)
-
-        // on：护甲吸收等，固定在 before 之后
-        await simulateTriggers(mockEffect, "on", 0)
-
-        // 触发 after 触发器
-        await simulateTriggers(mockEffect, "after", 0)
-    } finally {
-        setCurrentExecutingEvent(previousEvent)
-    }
-
-    // 返回修改后的 effectUnit
-    return {
-        ...mockEffectUnit,
-        params: mockEffect.params  // 返回触发器修改后的参数
-    }
+    target: EventParticipant | EventParticipant[]
+): EffectUnit {
+    return previewEffect(effectUnit, source, medium, target)
 }
 
-/**
- * 模拟完整事件的执行
- *
- * 创建一个模拟的 ActionEvent，触发所有相关触发器，但不执行效果
- *
- * @param key 事件 key
- * @param source 事件来源
- * @param medium 事件媒介
- * @param target 事件目标
- * @param effectUnits 效果单元列表
- * @returns 修改后的效果单元列表
- */
-export async function simulateEvent(
-    key: string,
+export function simulateEvent(
+    _key: string,
     source: EventParticipant,
     medium: EventParticipant,
     target: EventParticipant | EventParticipant[],
-    effectUnits: EffectUnit[],
-    info: Record<string, any> = {}
-): Promise<EffectUnit[]> {
-    // 深拷贝所有 effectUnits
-    const mockEffectUnits = cloneDeep(effectUnits)
-
-    // 创建模拟事件
-    const mockEvent = new ActionEvent(
-        key,
-        source,
-        medium,
-        target,
-        info,
-        mockEffectUnits
-    )
-
-    // 标记为模拟模式
-    mockEvent.simulate = true
-
-    // 创建模拟事务，让触发器 callback 中的 doEvent 能通过 runWithCollector 被同步执行
-    const mockTransaction = new Transaction()
-    mockTransaction.simulate = true
-    ;(mockEvent as any)._transaction = mockTransaction
-
-    // 设置 currentExecutingEvent 为 mockEvent
-    const previousEvent = getCurrentExecutingEvent()
-    setCurrentExecutingEvent(mockEvent)
-
-    try {
-        // 触发事件级别的 before 触发器
-        await simulateEventTriggers(mockEvent, "before", 0)
-        await simulateEventTriggers(mockEvent, "on", 0)
-
-        // 触发每个效果的触发器
-        for (const effect of mockEvent.effects) {
-            await simulateTriggers(effect, "before", 1)
-            await simulateTriggers(effect, "on", 1)
-            await simulateTriggers(effect, "after", -1)
-        }
-
-        // 触发事件级别的 after 触发器
-        await simulateEventTriggers(mockEvent, "after", 0)
-    } finally {
-        setCurrentExecutingEvent(previousEvent)
-    }
-
-    // 返回修改后的 effectUnits
-    return mockEvent.effects.map(effect => ({
-        key: effect.key,
-        params: effect.params,
-        describe: effect.describe
-    }))
+    effectUnits: EffectUnit[]
+): EffectUnit[] {
+    return effectUnits.map(unit => previewEffect(unit, source, medium, target))
 }
 
-/**
- * 模拟触发器执行（效果级别）
- *
- * 触发与效果相关的触发器，但不执行效果函数
- */
-async function simulateTriggers(
-    effect: Effect,
-    when: TriggerWhen,
-    triggerLevel: number
-) {
-    const event = effect.actionEvent
-
-    // 检查是否为模拟模式
-    if (!event.simulate) {
-        console.warn("[SimulateEvent] 尝试在非模拟事件上调用 simulateTriggers")
-        return
-    }
-
-    // 触发 source 的触发器
-    if (isEntity(event.source)) {
-        await event.source.makeEvent(when, effect.key, event, effect, triggerLevel)
-    }
-
-    // 触发 medium 的触发器
-    if (isEntity(event.medium)) {
-        await event.medium.viaEvent(when, effect.key, event, effect, triggerLevel)
-    }
-
-    // 触发 target 的触发器
-    const targets = Array.isArray(event.target) ? event.target : [event.target]
-    for (const t of targets) {
-        if (isEntity(t)) {
-            await t.takeEvent(when, effect.key, event, effect, triggerLevel)
-        }
-    }
-}
-
-/**
- * 模拟触发器执行（事件级别）
- *
- * 触发与事件相关的触发器
- */
-async function simulateEventTriggers(
-    event: ActionEvent,
-    when: TriggerWhen,
-    triggerLevel: number
-) {
-    // 检查是否为模拟模式
-    if (!event.simulate) {
-        console.warn("[SimulateEvent] 尝试在非模拟事件上调用 simulateEventTriggers")
-        return
-    }
-
-    // 触发 source 的触发器
-    if (isEntity(event.source)) {
-        await event.source.makeEvent(when, event.key, event, null, triggerLevel)
-    }
-
-    // 触发 medium 的触发器
-    if (isEntity(event.medium)) {
-        await event.medium.viaEvent(when, event.key, event, null, triggerLevel)
-    }
-
-    // 触发 target 的触发器
-    const targets = Array.isArray(event.target) ? event.target : [event.target]
-    for (const t of targets) {
-        if (isEntity(t)) {
-            await t.takeEvent(when, event.key, event, null, triggerLevel)
-        }
-    }
-}
-
-/**
- * 检查事件是否为模拟模式
- *
- * 触发器可以使用此方法判断是否应该执行副作用
- */
 export function isSimulateMode(event: ActionEvent): boolean {
     return event.simulate
 }
 
-/**
- * 便捷方法：模拟伤害效果
- *
- * 用于意图系统计算受 Buff 影响后的伤害
- */
-export async function simulateDamage(
+export function simulateDamage(
     baseDamage: number,
     source: Entity,
     target: Entity
-): Promise<number> {
-    const result = await simulateEffect(
-        {
-            key: "attack",
-            params: { value: baseDamage }
-        },
+): number {
+    const result = previewEffect(
+        { key: "attack", params: { value: baseDamage } },
         source,
-        source,  // medium 通常是卡牌，这里简化为 source
+        source,
         target
     )
-
-    return result.params.value as number
+    return Number(result.params.value)
 }
 
-/**
- * 便捷方法：模拟格挡效果
- *
- * 用于意图系统计算受 Buff 影响后的格挡
- */
-export async function simulateBlock(
+export function simulateBlock(
     baseBlock: number,
     source: Entity,
     target: Entity
-): Promise<number> {
-    const result = await simulateEffect(
-        {
-            key: "gainArmor",
-            params: { value: baseBlock }
-        },
+): number {
+    const result = previewEffect(
+        { key: "gainArmor", params: { value: baseBlock } },
         source,
         source,
         target
     )
-
-    return result.params.value as number
+    return Number(result.params.value)
 }

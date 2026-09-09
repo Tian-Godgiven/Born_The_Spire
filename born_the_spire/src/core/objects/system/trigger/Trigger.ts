@@ -4,11 +4,11 @@ import { getDefaultTrigger, type DefaultTrigger } from "./defaultTrigger";
 import { appendImportantTrigger, createImportantTrigger, type ImportantTrigger } from "./importantTrigger";
 import type { ActionEvent } from "../ActionEvent";
 import type { Effect } from "../effect/Effect";
-import { doEvent } from "../ActionEvent";
 import { nanoid } from "nanoid";
 import type { Item } from "../../item/Item";
 import { newError } from "@/ui/hooks/global/alert";
-import { getCurrentTransaction } from "../../game/transaction";
+import { getCurrentTransaction } from "../../game/transaction"
+import { createPreviewApplicator } from "../effect/previewApplicator";
 
 export { resolveTriggerEventTarget } from "./resolveTriggerEventTarget";
 export { TriggerLevel } from "./triggerLevel";
@@ -39,7 +39,8 @@ export class Trigger{
         const unit:TriggerUnit = {
             callback: obj.callback,
             id,
-            level:obj?.level??0
+            level:obj?.level??0,
+            preview: obj.preview
         }
         for (const k of keys) {
             if(!this[how][when][k]){
@@ -125,6 +126,16 @@ export class Trigger{
 export function createTriggerByTriggerMap(source:Entity,target:Entity, item:TriggerMap[number]){
     const {when ="before", how, key, level} = item
 
+    const reactionEvents = (item as any).event
+        ? (Array.isArray((item as any).event) ? (item as any).event : [(item as any).event])
+        : (source as any).reaction?.[(item as any).action]
+    const preview = createPreviewApplicator({
+        reactionEvents: reactionEvents ?? [],
+        condition: item.condition,
+        item: source,
+        owner: target
+    })?.preview
+
     const callback:TriggerFunc = async(triggerEvent,triggerEffect,_triggerLevel)=>{
         // 动态导入 executeItemReaction，避免循环依赖
         const { executeItemReaction } = await import("../modifier/ItemModifier")
@@ -149,8 +160,8 @@ export function createTriggerByTriggerMap(source:Entity,target:Entity, item:Trig
             newError([`触发器配置错误：需要 action 字段`, item])
             return
         }
-        const reactionEvents = (source as any).reaction?.[action]
-        if (!reactionEvents) {
+        const actionReactionEvents = (source as any).reaction?.[action]
+        if (!actionReactionEvents) {
             const sourceInfo = (source as any).label || (source as any).key || source.constructor.name
             const targetInfo = (target as any).label || (target as any).key || target.constructor.name
             newError([
@@ -165,7 +176,7 @@ export function createTriggerByTriggerMap(source:Entity,target:Entity, item:Trig
         }
         await executeItemReaction({
             item: source as Item,
-            reactionEvents,
+            reactionEvents: actionReactionEvents,
             triggerEvent,
             owner: target,
             triggerEffect,
@@ -176,18 +187,18 @@ export function createTriggerByTriggerMap(source:Entity,target:Entity, item:Trig
     if(importantKey){
         const onlyKey = (item as any).onlyKey
         return createImportantTrigger({
-            when,how,key,callback,level,importantKey,onlyKey
+            when,how,key,callback,level,importantKey,onlyKey,preview
         })
     }
     return createTrigger({
-        when,how,key,callback,level
+        when,how,key,callback,level,preview
     })
 }
 
 //创建触发器，通过实体的getTrigger方法挂载到实体上
-export function createTrigger({when,how,key,callback,level}:TriggerObj):TriggerObj{
+export function createTrigger({when,how,key,callback,level,preview}:TriggerObj):TriggerObj{
     return {
-        when,how,key,callback,level
+        when,how,key,callback,level,preview
     }
 }
 
