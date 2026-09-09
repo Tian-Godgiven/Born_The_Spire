@@ -171,15 +171,24 @@ export function changeCurrentValue(target:Entity,key:string,newValue:number,even
         // 限制 newValue 在合理范围内
         const minBy = current.options.minBy
         const maxBy = current.options.maxBy
+        let minValue: number | undefined
+        let maxValue: number | undefined
         if(minBy !== undefined && minBy !== null){
-            const minValue = Number(getCurrentMaxOrMin(target,minBy))
+            minValue = Number(getCurrentMaxOrMin(target,minBy))
             newValue = Math.max(newValue, minValue)
         }
         if(maxBy !== undefined && maxBy !== null){
-            const maxValue = Number(getCurrentMaxOrMin(target,maxBy))
+            maxValue = Number(getCurrentMaxOrMin(target,maxBy))
             newValue = Math.min(newValue, maxValue)
         }
         current.value = newValue
+        // 先写入再回调：死亡链会读当前生命，写之前触发会看到旧值
+        if(maxValue !== undefined && newValue >= maxValue){
+            current.options.reachMax?.(event,target,current)
+        }
+        if(minValue !== undefined && newValue <= minValue){
+            current.options.reachMin?.(event,target,current)
+        }
         return Math.abs(newValue - nowValue)
     }
     return false
@@ -211,11 +220,6 @@ function changeCurrentOverMax(target:Entity,current:Current,newValue:number,even
                 break;
         }
     }
-    //达到上限
-    if(newValue >= maxValue){
-        //触发上限回调
-        current.options.reachMax?.(event,target,current)
-    }
     return res
 }
 
@@ -246,11 +250,6 @@ function changeCurrentOverMin(target:Entity,current:Current,newValue:number,even
                 res = nowValue - newValue
                 break;
         }
-    }
-    //达到下限
-    if(newValue <= minValue){
-        //触发下限回调
-        current.options.reachMin?.(event,target,current)
     }
     return res
 }

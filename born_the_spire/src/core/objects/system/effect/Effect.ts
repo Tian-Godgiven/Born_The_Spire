@@ -1,6 +1,7 @@
 import type { ActionEvent } from "../ActionEvent";
 import type { EffectFunc, EffectParams } from "./EffectFunc";
 import type { EventParticipant } from "@/core/types/event/EventParticipant";
+import type { TriggerWhen } from "@/core/types/object/trigger";
 
 import { doEffectFunc, resolveEffectParams } from "./EffectFunc";
 import { isEntity } from "@/core/utils/typeGuards";
@@ -101,7 +102,7 @@ export class Effect implements EventParticipant{
         return result
     }
     //触发效果对象所在的事件的参与者的触发器
-    async trigger(when:"before"|"after",triggerLevel:number){
+    async trigger(when:TriggerWhen,triggerLevel:number){
         const event = this.actionEvent
 
         // 设置当前执行的事件（用于传递模拟标记）

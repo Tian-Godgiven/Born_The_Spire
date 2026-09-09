@@ -535,7 +535,7 @@ async function handleProceed() {
   overflow-x: auto;
   padding-bottom: 4px;
 
-  :deep(.popover-trigger) {
+  > :deep(.popover-trigger) {
     display: block;
     flex: 0 0 270px;
   }

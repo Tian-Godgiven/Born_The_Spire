@@ -38,6 +38,9 @@ export interface GameSettingsV1 {
      * 只记玩家主动关掉的项，没记过的一律视为开启，新增类别不会因旧存档缺 key 而默认关闭
      */
     animationCategories: Record<string, boolean>
+
+    /** 开局带秒杀/永生/无敌。控制台 toggleTestMode 切换，下次建角色才生效 */
+    testMode: boolean
 }
 
 /** 当前使用的设置类型 */
@@ -91,7 +94,8 @@ export function createDefaultSettings(): GameSettings {
         showOrganDescribe: false,
         animationSpeed: 1,
         skipAnimation: false,
-        animationCategories: {}
+        animationCategories: {},
+        testMode: true
     }
 }
 
@@ -150,3 +154,20 @@ watch(settings, () => saveSettings(settings), { deep: true })
 export function resetSettings(): void {
     Object.assign(settings, createDefaultSettings())
 }
+
+/** 测试模式开局牌。pool 仍是 test，不会进战斗奖励 */
+export const TEST_STARTER_CARDS = [
+    "test_card_instant_kill",
+    "test_card_immortal",
+    "test_card_invincible",
+] as const
+
+/** 非测试模式开局：3 打击 + 3 防御 */
+export const NORMAL_STARTER_CARDS = [
+    "original_card_00001",
+    "original_card_00001",
+    "original_card_00001",
+    "original_card_00014",
+    "original_card_00014",
+    "original_card_00014",
+] as const

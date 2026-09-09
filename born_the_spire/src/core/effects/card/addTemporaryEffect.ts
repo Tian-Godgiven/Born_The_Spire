@@ -7,6 +7,7 @@ import { doEvent, ActionEvent } from "@/core/objects/system/ActionEvent"
 import { isCard, isPlayer } from "@/core/utils/typeGuards"
 import { nanoid } from "nanoid"
 import { nowBattle } from "@/core/objects/game/battle"
+import type { TriggerWhen } from "@/core/types/object/trigger"
 
 /**
  * 临时效果配置
@@ -16,7 +17,7 @@ export interface TemporaryEffectConfig {
   key: string              // 效果唯一标识
   label: string            // 效果名称（UI显示）
   describe: Describe        // 添加的描述（支持动态值引用）
-  triggerWhen: "before" | "after"
+  triggerWhen: TriggerWhen
   triggerHow: "make" | "via" | "take"
   triggerKey: string       // 触发事件类型（如"useCard"）
   effect: EffectUnit[]     // 触发时执行的效果配置（EffectUnit数组）
@@ -55,7 +56,7 @@ export const addTemporaryEffect: EffectFunc = (event, effectObj) => {
   const effectKey = String(params.effectKey || "")
   const label = String(params.label || "临时效果")
   const describe = (params.describe as string[]) || []
-  const triggerWhen = (params.triggerWhen as "before" | "after") || "after"
+  const triggerWhen = (params.triggerWhen as TriggerWhen) || "after"
   const triggerHow = (params.triggerHow as "make" | "via" | "take") || "via"
   const triggerKey = String(params.triggerKey || "useCard")
   const effect = (params.effect as EffectUnit[]) || []

@@ -8,8 +8,9 @@ import { getLazyModule } from "@/core/utils/lazyLoader";
 import { getCardModifier } from "@/core/objects/system/modifier/CardModifier";
 
 //对象的描述，存储为数据，使用时翻译为对应的字符串
+// 字符串恰好为 "<br>" 时是换行分隔符，不是要显示的文字
 export type Describe = (
-    string //字符串
+    string
     | number //数字（会被转换为字符串）
 |{
     key:string[] //需要访问的对象属性的key，如果获取的对象是数组则会在其中寻找key属性为对应值的对象
@@ -26,7 +27,7 @@ export type Describe = (
  */
 export type DescribeSegment = {
     text: string
-    type: 'plain' | 'value' | 'glossary' | 'card'
+    type: 'plain' | 'value' | 'glossary' | 'card' | 'break'
     glossaryKey?: string  // 如果是glossary类型
     cardRef?: string | number  // 如果是card类型（实例ID、key或索引）
     cardRefType?: 'instance' | 'key'  // card引用类型
@@ -53,6 +54,43 @@ function organCardKeyAtIndex(organ: any, index: number): string | undefined {
     const playerCards = organ?.cardsByOwner?.player
     if (Array.isArray(playerCards)) return playerCards[index]
     return typeof playerCards === "string" ? playerCards : undefined
+}
+
+function organCardKeys(organ: any): string[] {
+    if (Array.isArray(organ?.cards)) return organ.cards
+    const playerCards = organ?.cardsByOwner?.player
+    if (Array.isArray(playerCards)) return playerCards
+    return typeof playerCards === "string" ? [playerCards] : []
+}
+
+/** 里程碑只锻牌时可以不写 describe，展示为「锻造提供的xx卡牌」。 */
+export function forgeProvideDescribe(organ: any, cardKey?: string): Describe {
+    const cards = organCardKeys(organ)
+    if (cards.length === 0) return ["锻造提供的卡牌"]
+    const idxs = cardKey
+        ? [Math.max(0, cards.indexOf(cardKey))]
+        : cards.map((_, i) => i)
+    const parts: Describe = ["锻造提供的"]
+    idxs.forEach((idx, i) => {
+        if (i > 0) parts.push(i === idxs.length - 1 ? "和" : "、")
+        parts.push({ "@": idx })
+    })
+    parts.push("卡牌")
+    return parts
+}
+
+export function resolveOrganMilestoneDescribe(
+    organ: any,
+    milestone: { describe?: Describe, effects?: Array<{ key: string, params?: Record<string, any> }> }
+): Describe {
+    const forge = milestone.effects?.find(e => e.key === "upgradeOrganCards")
+    const extra = milestone.describe
+    if (forge) {
+        const line = forgeProvideDescribe(organ, forge.params?.cardKey as string | undefined)
+        if (extra && extra.length > 0) return [...line, "<br>", ...extra]
+        return line
+    }
+    return extra && extra.length > 0 ? extra : ["效果"]
 }
 
 /** 描述里 {@:索引} 的显示名。不要从 cardSegment 取，见常见错误排查手册 L1。 */
@@ -82,7 +120,7 @@ export function getDescribe(describe:Describe|undefined,target?:Object){
     describe.forEach(value=>{
         //纯字符串或数字直接添加
         if(typeof value == "string"){
-            text += value
+            text += value === "<br>" ? "\n" : value
         }
         else if(typeof value == "number"){
             text += String(value)
@@ -166,10 +204,14 @@ export function getDescribeStructured(describe:Describe|undefined,target?:Object
     describe.forEach(value=>{
         //纯字符串或数字
         if(typeof value == "string"){
-            segments.push({
-                text: value,
-                type: 'plain'
-            })
+            if (value === "<br>") {
+                segments.push({ text: "", type: 'break' })
+            } else {
+                segments.push({
+                    text: value,
+                    type: 'plain'
+                })
+            }
         }
         else if(typeof value == "number"){
             segments.push({

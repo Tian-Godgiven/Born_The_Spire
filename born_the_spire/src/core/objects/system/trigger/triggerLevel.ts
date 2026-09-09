@@ -7,9 +7,12 @@
  * 注意 level 只在**同一个 how 的列表内**比较。跨 when / 跨 how 是排不了的，
  * 整体顺序永远是：
  *
- *     before 整批  →  after 整批
+ *     before 整批  →  on 整批  →  效果执行  →  after 整批
  *     同一 when 内：make  →  via  →  take
  *     同一 how 内： level 降序
+ *
+ * on 固定在 before 之后、效果执行之前。护甲吸收挂 on，蚀伤/易伤挂 before，
+ * 不用靠 level 互抢。
  *
  * 所以想让某个触发器绝对第一，三层都要占：when:"before" + how:"make" + level:FIRST。
  */

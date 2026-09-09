@@ -291,7 +291,7 @@ export const enemyList:EnemyMap[] = [
     {
         label: "蚁兵",
         key: "enemy_ant_soldier",
-        status: { "max-health": 25 },
+        status: { "max-health": 15 },
         organ: [
             { key: "enemy_organ_ant_mandible", level: 1 },
             "enemy_organ_ant_acid_gland"

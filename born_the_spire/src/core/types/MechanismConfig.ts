@@ -4,6 +4,7 @@
  */
 
 import type { Component } from "vue"
+import type { TriggerWhen } from "@/core/types/object/trigger"
 import { Entity } from "@/core/objects/system/Entity"
 import { ActionEvent } from "@/core/objects/system/ActionEvent"
 import { Effect } from "@/core/objects/system/effect/Effect"
@@ -50,7 +51,7 @@ export interface GainModifierConfig {
  * 自定义触发器配置
  */
 export interface CustomTriggerConfig {
-    when: "before" | "after"
+    when: TriggerWhen
     how: "make" | "via" | "take"
     key: string                                // 事件 key
     callback: (event: ActionEvent, effect: Effect | null, mechanismValue: number, entity: Entity) => void | Promise<void>

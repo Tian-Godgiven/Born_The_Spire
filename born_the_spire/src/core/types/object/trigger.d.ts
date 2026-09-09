@@ -8,9 +8,12 @@ export type TriggerFunc<
 > = (event:ActionEvent<s,m,t>,effect:Effect|null,triggerLevel:number=0)=>void
 
 
-//触发器包含before和after两种类型
+// before 改参数 → on 结算发生（护甲吸收）→ after 响应
+export type TriggerWhen = "before" | "on" | "after"
+
 export type TriggerType = {
     before:Record<string,TriggerUnit[]>,
+    on:Record<string,TriggerUnit[]>,
     after:Record<string,TriggerUnit[]>,
 }
 
@@ -33,7 +36,7 @@ export type TriggerObj<
     m extends Entity = Entity,
     t extends Entity = Entity
 > = {
-    when:"before"|"after",
+    when:TriggerWhen,
     how:"take"|"make"|"via",
     key:string | string[],
     level?:number,
@@ -89,7 +92,7 @@ export interface TriggerCondition {
 
 // 旧格式：直接定义事件配置（向后兼容）
 export interface TriggerMapItemWithEvent {
-    when: "before" | "after";
+    when: TriggerWhen;
     how: "make" | "via" | "take";
     key: string | string[];
     level?: number;
@@ -100,7 +103,7 @@ export interface TriggerMapItemWithEvent {
 
 // 新格式：使用 action + reaction（推荐）
 export interface TriggerMapItemWithAction {
-    when: "before" | "after";
+    when: TriggerWhen;
     how: "make" | "via" | "take";
     key: string | string[];
     level?: number;
@@ -122,7 +125,7 @@ export interface TriggerMapItemWithAction {
 
 // 特殊格式：在 before 阶段直接取消触发事件，不产生子事件（用于壁垒等）
 export interface TriggerMapItemWithCancelEvent {
-    when: "before" | "after";
+    when: TriggerWhen;
     how: "make" | "via" | "take";
     key: string | string[];
     level?: number;
@@ -137,7 +140,7 @@ export type TriggerMapItem = TriggerMapItemWithEvent | TriggerMapItemWithAction 
 
 // 有 importantKey 的版本（仅支持新格式）
 export interface ImportantTriggerMapItem {
-    when: "before" | "after";
+    when: TriggerWhen;
     how: "make" | "via" | "take";
     key: string | string[];
     level?: number;

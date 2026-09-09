@@ -195,7 +195,7 @@ function handleCancel() {
     max-height: 500px;
     overflow-y: auto;
 
-    :deep(.popover-trigger) {
+    > :deep(.popover-trigger) {
       display: block;
     }
 

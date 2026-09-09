@@ -9,6 +9,7 @@
             :hoverTarget="hoverTarget"
             :preferPlayerCards="preferPlayerCards"
         />
+        <br v-else-if="segment.type === 'break'">
         <span
             v-else
             :class="{ 'glossary-term': segment.type === 'glossary' }"

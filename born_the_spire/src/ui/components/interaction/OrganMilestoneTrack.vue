@@ -19,7 +19,7 @@ import { computed } from 'vue'
 import { Organ } from '@/core/objects/target/Organ'
 import { getOrganMilestones } from '@/static/list/target/organQuality'
 import DescribeText from '@/ui/components/display/DescribeText.vue'
-import type { Describe } from '@/ui/hooks/express/describe'
+import { resolveOrganMilestoneDescribe } from '@/ui/hooks/express/describe'
 
 const { organ } = defineProps<{
     organ: Organ
@@ -32,13 +32,13 @@ const rows = computed(() => {
     const next = milestones.find(m => m.level > organ.level)
     const source = organ.upgradeConfig?.milestones ?? []
     return milestones.map(m => {
-        const described = source.find(item => item.level === m.level)?.describe
+        const sourceItem = source.find(item => item.level === m.level)
         let state: MilestoneRowState = 'later'
         if (m.level <= organ.level) state = 'reached'
         else if (next && m.level === next.level) state = 'next'
         return {
             level: m.level,
-            describe: described && described.length > 0 ? described : ['效果'] as Describe,
+            describe: resolveOrganMilestoneDescribe(organ, sourceItem ?? m),
             state
         }
     })

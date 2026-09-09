@@ -239,7 +239,7 @@ function generateTriggersForMechanism(
     // 1. 生成吸收伤害的 Trigger
     if (logic.absorbDamage?.enabled) {
         const { remove } = entity.trigger.appendTrigger({
-            when: "before",
+            when: "on",
             how: "take",
             key: "attack",
             level: logic.absorbDamage.priority || 0,

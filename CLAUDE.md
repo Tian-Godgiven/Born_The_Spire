@@ -46,14 +46,14 @@ Transaction（事务）→ EventStack（事件栈）→ ActionEvent（过程事�
 - **Effect**：事件执行时由 EffectUnit 创建的运行时对象
 - **EffectFunc**：实际修改游戏状态的函数，注册在 effectMap
 
-每个 Effect 执行前后都有触发周期（before/after），触发器可以修改 Effect 参数或响应已发生的变化。
+每个 Effect 执行时有触发周期（before → on → after），触发器可以修改 Effect 参数或响应已发生的变化。
 
 ### 触发器系统（Trigger）
 
 触发器通过 `when × how × key` 三维定位响应的事件：
 
 ```
-when: "before" | "after"          — 事件效果执行前/后
+when: "before" | "on" | "after"  — 改参数 / 结算发生（护甲） / 事后响应
 how:  "make" | "via" | "take"     — 实体是事件的来源/媒介/目标
 key:  "damage" | "turnStart" | …  — 事件类型
 ```

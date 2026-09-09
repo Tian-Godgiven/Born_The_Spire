@@ -23,7 +23,7 @@ import { getStateModifier } from "../system/modifier/StateModifier";
  */
 export interface OrganUpgradeMilestone {
     level: number                   // 达到此等级时触发
-    describe?: Describe             // 升级页路线上这一档的说明
+    describe?: Describe             // 升级页路线上这一档的说明；只锻牌时可不写
     effects?: EffectUnit[]          // 效果列表
     component?: string | Component  // 自定义组件
     componentData?: any             // 传递给组件的数据

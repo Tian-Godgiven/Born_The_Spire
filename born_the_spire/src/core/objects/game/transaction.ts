@@ -108,8 +108,11 @@ export class Transaction{
     }
 
     private async _executeEventInner(event: ActionEvent) {
-        // 1. Event before 触发器
+        // 1. Event before 触发器（改参数）
         await event.trigger("before", 0)
+
+        // 1.25. Event on 触发器（结算发生，固定在 before 之后）
+        await event.trigger("on", 0)
 
         // 1.5. 执行 onExecute 回调（如果有）
         if (event.onExecute) {
@@ -153,8 +156,11 @@ export class Transaction{
                 continue
             }
 
-            // Effect before 触发器
+            // Effect before 触发器（蚀伤、易伤、力量等改参数）
             await effect.trigger("before", 0)
+
+            // Effect on 触发器（护甲吸收等，固定在 before 之后）
+            await effect.trigger("on", 0)
 
             // 执行效果
             await effect.apply()

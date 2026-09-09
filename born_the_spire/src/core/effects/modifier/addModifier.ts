@@ -7,6 +7,7 @@ import { Effect } from "@/core/objects/system/effect/Effect";
 import { resolveTriggerEventTarget } from "@/core/objects/system/trigger/Trigger";
 import { Entity } from "@/core/objects/system/Entity";
 import { getCurrentValue, changeCurrentValue } from "@/core/objects/system/Current/current";
+import type { TriggerWhen } from "@/core/types/object/trigger"
 
 /**
  * 添加最大生命并回复生命
@@ -154,7 +155,7 @@ export const addStatusModifier: EffectFunc = (event, effect) => {
  * 添加触发器到目标
  *
  * 参数：
- * - when: "before" | "after"
+ * - when: TriggerWhen
  * - how: "make" | "via" | "take"
  * - key: 事件键名
  * - level: 触发级别（可选，默认0）
@@ -180,7 +181,7 @@ export const addTriggerToTarget: EffectFunc = (event, effect) => {
     }
 
     // 类型转换
-    const whenStr = String(when) as "before" | "after";
+    const whenStr = String(when) as TriggerWhen;
     const howStr = String(how) as "make" | "via" | "take";
     const keyStr = String(key);
     const levelNum = Number(level);

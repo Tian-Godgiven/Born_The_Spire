@@ -14,6 +14,7 @@
     import { Chara } from '@/core/objects/target/Target'
     import { getCurrentValue } from '@/core/objects/system/Current/current'
     import { useAnimation } from '@/ui/animation'
+    import { TriggerLevel } from '@/core/objects/system/trigger/Trigger'
     import type { ActionEvent } from '@/core/objects/system/ActionEvent'
     import type { Effect } from '@/core/objects/system/effect/Effect'
 
@@ -72,7 +73,8 @@
     // ========== 数值采样 ==========
     // 结算量用 health / armor 前后快照做差，不读 after 时的 params.value：
     // 减伤、护甲吸收、生命上限截断都会让参数和实际对不上。
-    // incoming 是 before 里当时的 params.value：完全抵消时血甲都不变，只能靠它判断「本来有伤害」。
+    // incoming 是 on 阶段、护甲吸收之前的 params.value。
+    // 完全抵消时血甲都不变，只能靠它判断「本来有伤害」。
     const snapshots = new WeakMap<Effect, { health: number, armor: number, incoming: number }>()
 
     function takeSnapshot(effect: Effect | null) {
@@ -85,18 +87,18 @@
         })
     }
 
-    // before 触发器的 level 必须高于护甲吸收（mechanismRegistry 里 absorbDamage.priority = 100），
-    // 触发器按 level 降序执行，否则快照拿到的已经是扣完护甲的值，算不出格挡量
-    const SNAPSHOT_LEVEL = 1000
+    // on 阶段快照：before 里蚀伤/易伤已经改完参数，护甲吸收还没跑。
+    // level 要高于护甲吸收的 priority（100），否则 incoming 已经是扣完甲的值。
+    const SNAPSHOT_LEVEL = TriggerLevel.HIGH
 
     const removers: Array<() => void> = []
 
     onMounted(() => {
         const trigger = props.target.trigger
 
-        // 伤害：before 存快照，after 比对
+        // 伤害：on 存快照（蚀伤已加、护甲未吸），after 比对
         removers.push(trigger.appendTrigger({
-            when: "before",
+            when: "on",
             how: "take",
             key: ["attack", "damage"],
             level: SNAPSHOT_LEVEL,

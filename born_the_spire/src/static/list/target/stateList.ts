@@ -146,6 +146,7 @@ export const stateList: StateData[] = [
         }
     },
     // 蚀伤：承受伤害时固定+1，层数为持续时间，回合结束-1层
+    // 挂 before：和力量/易伤一起改参数。护甲吸收在 on，天然排在这批之后。
     {
         label: "蚀伤",
         key: "acidWound",

@@ -6,6 +6,7 @@ import { potionCommands } from './potion'
 import { relicCommands } from './relic'
 import { organCommands } from './organ'
 import { debugCommands } from './debug'
+import { otherCommands } from './other'
 
 /** 注册所有内置控制台命令 */
 export function registerAllCommands() {
@@ -34,5 +35,6 @@ export function registerAllCommands() {
         ...relicCommands,
         ...organCommands,
         ...debugCommands,
+        ...otherCommands,
     ])
 }

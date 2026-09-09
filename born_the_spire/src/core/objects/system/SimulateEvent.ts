@@ -6,6 +6,7 @@ import { Entity } from "./Entity"
 import type { EventParticipant } from "@/core/types/event/EventParticipant"
 import { isEntity } from "@/core/utils/typeGuards"
 import { cloneDeep } from "lodash"
+import type { TriggerWhen } from "@/core/types/object/trigger"
 import { Transaction } from "../game/transaction"
 
 /**
@@ -77,6 +78,9 @@ export async function simulateEffect(
         // 触发 before 触发器（触发器可以修改 mockEffect.params）
         await simulateTriggers(mockEffect, "before", 0)
 
+        // on：护甲吸收等，固定在 before 之后
+        await simulateTriggers(mockEffect, "on", 0)
+
         // 触发 after 触发器
         await simulateTriggers(mockEffect, "after", 0)
     } finally {
@@ -138,10 +142,12 @@ export async function simulateEvent(
     try {
         // 触发事件级别的 before 触发器
         await simulateEventTriggers(mockEvent, "before", 0)
+        await simulateEventTriggers(mockEvent, "on", 0)
 
         // 触发每个效果的触发器
         for (const effect of mockEvent.effects) {
             await simulateTriggers(effect, "before", 1)
+            await simulateTriggers(effect, "on", 1)
             await simulateTriggers(effect, "after", -1)
         }
 
@@ -166,7 +172,7 @@ export async function simulateEvent(
  */
 async function simulateTriggers(
     effect: Effect,
-    when: "before" | "after",
+    when: TriggerWhen,
     triggerLevel: number
 ) {
     const event = effect.actionEvent
@@ -203,7 +209,7 @@ async function simulateTriggers(
  */
 async function simulateEventTriggers(
     event: ActionEvent,
-    when: "before" | "after",
+    when: TriggerWhen,
     triggerLevel: number
 ) {
     // 检查是否为模拟模式

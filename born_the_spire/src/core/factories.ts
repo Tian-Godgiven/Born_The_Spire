@@ -76,7 +76,11 @@ export async function createRelic(map: any): Promise<RelicType> {
  */
 export async function createPlayer(map: any): Promise<PlayerType> {
     const { Player } = await import("./objects/target/Player")
-    const player = new Player(map)
+    const { settings, TEST_STARTER_CARDS, NORMAL_STARTER_CARDS } = await import("@/core/persistence/settings")
+    const card = [...(map.card ?? [])]
+    const starter = settings.testMode ? TEST_STARTER_CARDS : NORMAL_STARTER_CARDS
+    card.push(...starter)
+    const player = new Player({ ...map, card })
     await player.initialize()
     return player
 }

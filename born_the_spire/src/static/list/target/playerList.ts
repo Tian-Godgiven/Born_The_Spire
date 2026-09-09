@@ -64,12 +64,8 @@ export const playerList:Record<string,PlayerMap> = {
         organ:[
             "original_organ_00001",  // 心脏 - 基础器官，不可移除
         ],
-        //测试期牌组：只带三张测试卡，方便快速验证机制
-        card:[
-                "test_card_instant_kill",  // 秒杀 - 对敌方全体999伤害
-                "test_card_immortal",      // 永生 - 回复999生命
-                "test_card_invincible",    // 无敌 - 获得999护甲
-            ],
+        // 测试卡由 settings.testMode 在 createPlayer 时注入，见 TEST_STARTER_CARDS
+        card: [],
         relic:[]
     }
 }

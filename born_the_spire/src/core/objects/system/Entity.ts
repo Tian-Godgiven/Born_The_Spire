@@ -1,7 +1,7 @@
 import type { StatusMap } from "@/core/types/StatusMapData";
 import type { ActionEvent } from "./ActionEvent";
 import type{ Describe } from "@/ui/hooks/express/describe";
-import type { TriggerMap, TriggerObj } from "@/core/types/object/trigger";
+import type { TriggerMap, TriggerObj, TriggerWhen } from "@/core/types/object/trigger";
 import type { Effect } from "./effect/Effect";
 import type { Current } from "./Current/current";
 import type { EventParticipant } from "@/core/types/event/EventParticipant";
@@ -89,15 +89,15 @@ export class Entity implements EventParticipant{
         return this.trigger.appendTrigger(triggerObj)
     }
     //对象的"造成"触发器被触发
-    async makeEvent(when: "before" | "after", triggerKey: string, event: ActionEvent, effect: Effect | null, triggerLevel: number){
+    async makeEvent(when: TriggerWhen, triggerKey: string, event: ActionEvent, effect: Effect | null, triggerLevel: number){
         await this.trigger.onTrigger(when, "make", triggerKey, {actionEvent:event, effect}, triggerLevel)
     }
     //对象作为媒介参与了某个事件
-    async viaEvent(when: "before" | "after", triggerKey: string, event: ActionEvent, effect: Effect | null, triggerLevel: number){
+    async viaEvent(when: TriggerWhen, triggerKey: string, event: ActionEvent, effect: Effect | null, triggerLevel: number){
         await this.trigger.onTrigger(when, "via", triggerKey, {actionEvent:event, effect}, triggerLevel)
     }
     //对象受到了某个事件
-    async takeEvent(when: "before" | "after", triggerKey: string, event: ActionEvent, effect: Effect | null, triggerLevel: number){
+    async takeEvent(when: TriggerWhen, triggerKey: string, event: ActionEvent, effect: Effect | null, triggerLevel: number){
         await this.trigger.onTrigger(when, "take", triggerKey, {actionEvent:event, effect}, triggerLevel)
     }
 }

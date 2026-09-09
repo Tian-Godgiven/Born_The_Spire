@@ -179,7 +179,7 @@ export const damageIgnoreArmor: EffectFunc = (event, effect) => {
 }
 
 // 致命保命：如果当前伤害会杀死目标，置零；并消耗器官身上的 lethalGuardReady 状态
-// 挂在 before take damage 触发器，target=triggerEffect（damage Effect），触发器 level 应低于护甲优先级
+// 挂在 on take attack/damage 触发器，target=triggerEffect；level 低于护甲 priority，在吸收之后再判定致命
 // event.source 是器官（由 ItemModifier 的 reaction 上下文提供）
 export const checkAndSaveLethal: EffectFunc = (event, effect) => {
     const target = event.target

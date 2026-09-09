@@ -1,4 +1,4 @@
-import type { TriggerEventConfig, TriggerFunc, TriggerMap, TriggerObj, TriggerType, TriggerUnit } from "@/core/types/object/trigger";
+import type { TriggerEventConfig, TriggerFunc, TriggerMap, TriggerObj, TriggerType, TriggerUnit, TriggerWhen } from "@/core/types/object/trigger";
 import type { Entity } from "../Entity";
 import { getDefaultTrigger, type DefaultTrigger } from "./defaultTrigger";
 import { appendImportantTrigger, createImportantTrigger, type ImportantTrigger } from "./importantTrigger";
@@ -16,9 +16,9 @@ export { TriggerLevel } from "./triggerLevel";
 // 触发器是基于事件总线的，一系列在个体上的响应器
 // 触发器的实现原理是：在某一个时刻(trigger_key)执行对应时刻的回调函数
 export class Trigger{
-    public take:TriggerType = {before:{},after:{}}
-    public make:TriggerType = {before:{},after:{}}
-    public via:TriggerType = {before:{},after:{}}
+    public take:TriggerType = {before:{},on:{},after:{}}
+    public make:TriggerType = {before:{},on:{},after:{}}
+    public via:TriggerType = {before:{},on:{},after:{}}
     public _defaultTrigger:DefaultTrigger[] = []
     public _importantTrigger:ImportantTrigger[] = []
     constructor(){}
@@ -63,7 +63,7 @@ export class Trigger{
         }
     }
     //获取指定位置的触发器列表
-    getTriggers(when: "before" | "after", how: "take" | "make" | "via", key: string): TriggerUnit[] | undefined {
+    getTriggers(when: TriggerWhen, how: "take" | "make" | "via", key: string): TriggerUnit[] | undefined {
         return this[how][when][key]
     }
     //移除并销毁触发器单元
@@ -87,7 +87,7 @@ export class Trigger{
 
     }
     //触发触发器
-    async onTrigger(when:"before"|"after",
+    async onTrigger(when:TriggerWhen,
         how:"take"|"make"|"via",
         triggerKey:string,
         {actionEvent,effect}:{actionEvent:ActionEvent,effect:Effect|null},

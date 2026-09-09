@@ -4,6 +4,7 @@
  * 提供查看和调试实体触发器的功能
  */
 
+import type { TriggerWhen } from "@/core/types/object/trigger"
 import { Entity } from "@/core/objects/system/Entity"
 import { Trigger } from "@/core/objects/system/trigger/Trigger"
 import type { TriggerUnit } from "../types/object/trigger"
@@ -14,7 +15,7 @@ import type { ImportantTrigger } from "@/core/objects/system/trigger/importantTr
  * 触发器信息结构
  */
 export interface TriggerDebugInfo {
-    when: "before" | "after"
+    when: TriggerWhen
     how: "take" | "make" | "via"
     key: string
     level: number
@@ -44,7 +45,7 @@ export function getEntityTriggers(entity: Entity): EntityTriggerReport {
     const triggers: TriggerDebugInfo[] = []
 
     // 遍历所有 when/how/key 组合
-    const whens: ("before" | "after")[] = ["before", "after"]
+    const whens: TriggerWhen[] = ["before", "on", "after"]
     const hows: ("take" | "make" | "via")[] = ["take", "make", "via"]
 
     for (const when of whens) {
@@ -118,7 +119,7 @@ function findImportantTriggerInfo(trigger: Trigger, id: string): { importantKey?
  * 触发器过滤条件
  */
 export interface TriggerFilter {
-    when?: "before" | "after"
+    when?: TriggerWhen
     how?: "take" | "make" | "via"
     key?: string
     source?: string

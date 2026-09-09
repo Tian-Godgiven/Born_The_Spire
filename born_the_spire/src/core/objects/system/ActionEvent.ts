@@ -2,6 +2,7 @@ import type { Effect } from "./effect/Effect";
 import type { LogUnit, LogData } from "@/ui/hooks/global/log";
 import type { EffectUnit } from "./effect/EffectUnit";
 import type { EventParticipant } from "@/core/types/event/EventParticipant";
+import type { TriggerWhen } from "@/core/types/object/trigger";
 
 import { newLog } from "@/ui/hooks/global/log";
 import { createEffectByUnit } from "./effect/EffectUnit";
@@ -66,7 +67,7 @@ export class ActionEvent<
         }
     }
     //触发事件
-    async trigger(when:"before"|"after",triggerLevel:number){
+    async trigger(when:TriggerWhen,triggerLevel:number){
         this.triggerLevel = triggerLevel
 
         // 设置当前执行的事件（用于传递模拟标记）

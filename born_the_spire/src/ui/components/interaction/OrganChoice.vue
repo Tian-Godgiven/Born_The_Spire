@@ -273,7 +273,7 @@ function handleConfirm() {
   flex-direction: column;
   gap: 15px;
 
-  :deep(.popover-trigger) {
+  > :deep(.popover-trigger) {
     display: block;
   }
 }
