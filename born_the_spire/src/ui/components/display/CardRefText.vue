@@ -1,12 +1,9 @@
 <template>
 <Popover inline placement="bottom" align="trigger" :close-delay="300" @update:show="handleShow">
-    <span class="card-term">{{ label }}</span>
+    <span class="card-term" @click.stop="openDetail">{{ label }}</span>
 
     <template #content>
-        <div class="card-preview" v-if="card">
-            <Card :card="card" :hoverTarget="hoverTarget" />
-            <GlossaryPanel :glossaries="glossaries" />
-        </div>
+        <Card v-if="card" :card="card" :hoverTarget="hoverTarget" />
     </template>
 </Popover>
 </template>
@@ -15,9 +12,8 @@
     import { computed, shallowRef, markRaw } from 'vue'
     import Popover from '@/ui/components/global/Popover.vue'
     import Card from '@/ui/components/object/Card.vue'
-    import GlossaryPanel from '@/ui/components/display/GlossaryPanel.vue'
     import { resolveCardFromSegment } from '@/ui/hooks/express/cardSegment'
-    import { getCardGlossaries } from '@/ui/hooks/express/glossary'
+    import { showCardDetail } from '@/ui/hooks/interaction/cardDetail'
     import type { DescribeSegment } from '@/ui/hooks/express/describe'
     import type { Organ } from '@/core/objects/target/Organ'
     import type { Card as CardType } from '@/core/objects/item/Subclass/Card'
@@ -26,8 +22,9 @@
     /**
      * 描述文本里的卡牌引用
      *
-     * 一段可悬停的卡名，悬停时在旁边展开完整卡面与术语。卡牌实例在首次悬停时才解析，
-     * 描述里写了多少张牌都不会在渲染时就把它们全建出来。
+     * 一段可悬停的卡名，悬停时展开完整卡面。术语板跟手牌一样，要再悬停那张卡才会出。
+     * 点击打开详情弹窗，可对照锻造前后。
+     * 卡牌实例在首次悬停或点击时才解析，描述里写了多少张牌都不会在渲染时就把它们全建出来。
      */
     const { segment, text, organ, hoverTarget, preferPlayerCards = false } = defineProps<{
         segment: DescribeSegment,
@@ -44,13 +41,22 @@
     const card = shallowRef<CardType | null>(null)
 
     const label = computed(() => text ?? segment.text)
-    const glossaries = computed(() => card.value ? getCardGlossaries(card.value) : [])
+
+    async function resolveCard() {
+        if (card.value) return card.value
+        const resolved = await resolveCardFromSegment(segment, organ, { preferPlayerCards })
+        if (resolved) card.value = markRaw(resolved)
+        return card.value
+    }
 
     async function handleShow(shown: boolean) {
-        if (!shown || card.value) return
-        const resolved = await resolveCardFromSegment(segment, organ, { preferPlayerCards })
-        // markRaw 防止卡牌对象被深度响应式包装
-        if (resolved) card.value = markRaw(resolved)
+        if (!shown) return
+        await resolveCard()
+    }
+
+    async function openDetail() {
+        const resolved = await resolveCard()
+        if (resolved) showCardDetail(resolved)
     }
 </script>
 
@@ -64,12 +70,5 @@
     &:hover {
         color: #1d4ed8;
     }
-}
-
-.card-preview {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    white-space: normal;
 }
 </style>

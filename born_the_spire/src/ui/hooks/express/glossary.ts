@@ -1,54 +1,57 @@
-import type { Card } from "@/core/objects/item/Subclass/Card"
-import { getDescribe, extractGlossaries } from "./describe"
+import { extractGlossaries, type Describe } from "./describe"
 import { resolveGlossary } from "./glossaryResolve"
-import { entryDefinitions } from "@/core/objects/system/Entry"
-import { getEntryModifier } from "@/core/objects/system/modifier/EntryModifier"
-import { getTemporaryEffectDescribe } from "@/core/effects/card/addTemporaryEffect"
 
 /**
- * 卡牌术语说明的收集
+ * 术语说明的收集
  *
- * 卡面上出现的术语来自三处：describe 里的 $ 标记、卡牌词条名、临时效果描述里的 $ 标记。
- * 卡牌本体和各种卡牌预览浮层都要展示同一份说明，所以收集逻辑放在这里共享。
+ * 术语板由 DescribeText 弹出。板上的条目来自两处：调用方传入的 extraGlossaries
+ * （词条、一次性名词），以及这段 describe 里的 $ 标记。临时效果要把带 $ 的片段
+ * 并进传给 DescribeText 的 describe，不要让 DescribeText 去翻 Card / Organ 的内部字段。
  * 每个术语的实际说明由 resolveGlossary 去对应注册表取。
  */
 
-/** 术语显示名 */
-export function getGlossaryLabel(glossaryKey: string): string {
-    return resolveGlossary(glossaryKey)?.label || glossaryKey
+/** 词条 key，或没有注册表的一次性名词 */
+export type ExtraGlossary = string | {
+    label: string
+    describe: Describe
 }
 
-/** 术语说明文本 */
-export function getGlossaryDescription(glossaryKey: string): string {
-    const glossary = resolveGlossary(glossaryKey)
-    if (!glossary) return ""
-    return getDescribe(glossary.describe)
+export interface GlossaryPanelItem {
+    id: string
+    label: string
+    describe: Describe
 }
 
 /**
- * 收集一张卡牌需要解释的全部术语 key
+ * 组成术语板条目：extra 在前，这段 describe 的 $ 在后。按显示名去重。
+ * 解析不到的 key 直接丢掉，不要留空行。
  */
-export function getCardGlossaries(card: Card): string[] {
-    const glossaries = new Set<string>()
+export function collectGlossaryItems(
+    extra: ExtraGlossary[] | undefined,
+    describe: Describe | undefined
+): GlossaryPanelItem[] {
+    const items: GlossaryPanelItem[] = []
+    const seen = new Set<string>()
 
-    // 卡牌自身的词条
-    try {
-        const entries = getEntryModifier(card).getEntries()
-        for (const entryKey of entries) {
-            glossaries.add(entryDefinitions[entryKey]?.label ?? entryKey)
+    const push = (id: string, label: string, itemDescribe: Describe) => {
+        if (seen.has(label)) return
+        seen.add(label)
+        items.push({ id, label, describe: itemDescribe })
+    }
+
+    for (const extraItem of extra ?? []) {
+        if (typeof extraItem === "string") {
+            const resolved = resolveGlossary(extraItem)
+            if (resolved) push(extraItem, resolved.label, resolved.describe)
+        } else if (extraItem.label) {
+            push(`inline:${extraItem.label}`, extraItem.label, extraItem.describe)
         }
-    } catch {
-        // 卡牌尚未初始化词条管理器
     }
 
-    // 描述里的 $ 标记
-    extractGlossaries(card.describe).forEach(key => glossaries.add(key))
-
-    // 临时效果描述里的 $ 标记
-    for (const describe of getTemporaryEffectDescribe(card)) {
-        extractGlossaries([describe]).forEach(key => glossaries.add(key))
+    for (const key of extractGlossaries(describe)) {
+        const resolved = resolveGlossary(key)
+        if (resolved) push(key, resolved.label, resolved.describe)
     }
 
-    // 只保留真正能解析到说明的，避免弹出空条目
-    return Array.from(glossaries).filter(key => resolveGlossary(key) !== null)
+    return items
 }

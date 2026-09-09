@@ -283,6 +283,15 @@ export class FloorManager {
                 case "battle":
                     availableRooms = floorConfig.roomPools.battles
                     break
+                case "eliteBattle":
+                    availableRooms = floorConfig.roomPools.eliteBattles
+                    break
+                case "elitePlusBattle":
+                    availableRooms = floorConfig.roomPools.elitePlusBattles
+                    break
+                case "bossBattle":
+                    availableRooms = floorConfig.roomPools.bossBattles
+                    break
                 case "event":
                     availableRooms = floorConfig.roomPools.events
                     break
@@ -291,6 +300,9 @@ export class FloorManager {
                     break
                 case "blackStore":
                     availableRooms = floorConfig.roomPools.blackStores
+                    break
+                case "treasure":
+                    availableRooms = floorConfig.roomPools.treasures
                     break
             }
         }
@@ -600,12 +612,20 @@ export class FloorManager {
         switch (roomType) {
             case "battle":
                 return floorConfig.roomPools.battles
+            case "eliteBattle":
+                return floorConfig.roomPools.eliteBattles
+            case "elitePlusBattle":
+                return floorConfig.roomPools.elitePlusBattles
+            case "bossBattle":
+                return floorConfig.roomPools.bossBattles
             case "event":
                 return floorConfig.roomPools.events
             case "pool":
                 return floorConfig.roomPools.pools
             case "blackStore":
                 return floorConfig.roomPools.blackStores
+            case "treasure":
+                return floorConfig.roomPools.treasures
             default:
                 return []
         }
@@ -712,11 +732,27 @@ export class FloorManager {
      */
     generateMap(config?: Partial<FloorMapConfig>): FloorMap {
         // 合并配置
+        const floorPools = this.getCurrentFloorConfig()?.roomPools
+        const fromFloor = floorPools
+            ? {
+                battles: floorPools.battles,
+                easyBattles: floorPools.easyBattles,
+                eliteBattles: floorPools.eliteBattles,
+                elitePlusBattles: floorPools.elitePlusBattles,
+                bossBattles: floorPools.bossBattles,
+                events: floorPools.events,
+                pools: floorPools.pools,
+                blackStores: floorPools.blackStores,
+                treasures: floorPools.treasures
+            }
+            : {}
+
         const fullConfig: FloorMapConfig = {
             ...defaultFloorMapConfig,
             ...config,
             roomPools: {
                 ...defaultFloorMapConfig.roomPools,
+                ...fromFloor,
                 ...config?.roomPools
             }
         }
@@ -738,7 +774,7 @@ export class FloorManager {
     }
 
     /**
-     * 空池从 roomRegistry 填充。普通战斗按 encounterPool 拆成弱池 / 普通池，测试战斗两边都不进。
+     * 空池从 roomRegistry 填充。普通战斗按 encounterPool 拆成弱池 / 普通池，测试战斗不进任何自动池。
      */
     private fillEmptyRoomPools(fullConfig: FloorMapConfig): void {
         const pools = fullConfig.roomPools
@@ -763,11 +799,13 @@ export class FloorManager {
         if (pools.eliteBattles && pools.eliteBattles.length === 0) {
             pools.eliteBattles = roomRegistry
                 .getRoomConfigsByType("eliteBattle")
+                .filter(c => c.customData?.test !== true)
                 .map(c => c.key)
         }
         if (pools.elitePlusBattles && pools.elitePlusBattles.length === 0) {
             pools.elitePlusBattles = roomRegistry
                 .getRoomConfigsByType("elitePlusBattle")
+                .filter(c => c.customData?.test !== true)
                 .map(c => c.key)
         }
         if (pools.events.length === 0) {

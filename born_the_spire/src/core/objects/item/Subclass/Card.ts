@@ -1,4 +1,4 @@
-import { Target } from "@/core/objects/target/Target";
+import type { Target } from "@/core/objects/target/Target";
 import { Item } from "@/core/objects/item/Item";
 import type { ItemMap } from "@/core/objects/item/Item";
 import { doEvent, ActionEvent } from "@/core/objects/system/ActionEvent";

@@ -5,8 +5,10 @@ import type { Organ } from "@/core/objects/target/Organ"
 import { getCardModifier } from "@/core/objects/system/modifier/CardModifier"
 import { isChara } from "@/core/utils/typeGuards"
 import { nowPlayer } from "@/core/objects/game/run"
-import { upgradeCard } from "@/core/effects/card/cardUpgrade"
+import { upgradeCard, applyCardLevel } from "@/core/effects/card/cardUpgrade"
 import { getLazyModule } from "@/core/utils/lazyLoader"
+import { getEntryModifier } from "@/core/objects/system/modifier/EntryModifier"
+import { markRaw } from "vue"
 
 /**
  * 按 key 创建一张临时卡牌实例，仅用于预览展示，不进入任何牌堆
@@ -24,6 +26,30 @@ export async function createCardFromKey(cardKey: string): Promise<CardType | nul
         console.error("[cardSegment] 创建临时卡牌失败:", cardKey, error)
         return null
     }
+}
+
+/**
+ * 造一张仅供展示的牌，停在指定锻造等级。不进牌堆，词条只记在牌上给卡面画标签。
+ */
+export async function previewCardAtLevel(source: CardType, level: number): Promise<CardType | null> {
+    const card = await createCardFromKey(source.key)
+    if (!card) return null
+
+    try {
+        const cardList = getLazyModule<any[]>("cardList")
+        const cardData = cardList.find((c: any) => c.key === source.key)
+        if (cardData?.entry) {
+            const entryModifier = getEntryModifier(card)
+            for (const entryKey of cardData.entry) {
+                entryModifier.addEntry(entryKey)
+            }
+        }
+    } catch (error) {
+        console.error("[cardSegment] 预览牌词条失败:", source.key, error)
+    }
+
+    if (level > 0 && !applyCardLevel(card, level)) return null
+    return markRaw(card)
 }
 
 /**

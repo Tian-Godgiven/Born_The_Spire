@@ -46,6 +46,9 @@ export interface OrganUpgradeConfig {
 
     // 特定等级的里程碑（可选）
     milestones?: OrganUpgradeMilestone[]
+
+    // 会在战斗中自己升级。悬停时才展示里程碑，普通战斗器官不要写
+    combatUpgrade?: boolean
 }
 
 export type OrganMap = ItemMap&TargetMap&{

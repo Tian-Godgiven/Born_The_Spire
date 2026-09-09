@@ -13,7 +13,7 @@ import PopUp from './PopUp.vue';
 <style scoped lang='scss'>
 //弹窗容器
 .popUpContainer{
-	z-index: 6;
+	z-index: 9999;
 	position: absolute;
 	height: 100%;
 	width: 100%;

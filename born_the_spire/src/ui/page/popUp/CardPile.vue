@@ -3,7 +3,14 @@
     <Mask></Mask>
     <div class="container">
         <div class="cards">
-            <CardVue v-for="card in cardPile" :card></CardVue>
+            <div
+                class="card-inspect"
+                v-for="card in cardPile"
+                :key="card.__id"
+                @click.stop="showCardDetail(card)"
+            >
+                <CardVue :card="card" />
+            </div>
         </div>
         <div class="close" @click="closePopUp(popUp)">关闭</div>
     </div>
@@ -15,7 +22,8 @@
     import CardVue from '@/ui/components/object/Card.vue';
     import { closePopUp } from '@/ui/hooks/global/popUp';
     import type { PopUp } from '@/ui/hooks/global/popUp';
-import Mask from '@/ui/components/global/Mask.vue';
+    import Mask from '@/ui/components/global/Mask.vue';
+    import { showCardDetail } from '@/ui/hooks/interaction/cardDetail';
     const {popUp,props} = defineProps<{popUp:PopUp,props:{cardPile:Card[]}}>()
     const {cardPile} = props
 </script>
@@ -37,6 +45,9 @@ import Mask from '@/ui/components/global/Mask.vue';
             grid-template-columns: repeat(7,auto);
             gap: 10px;
             align-content: flex-start;
+        }
+        .card-inspect{
+            cursor: pointer;
         }
         .close{
             width: 100px;

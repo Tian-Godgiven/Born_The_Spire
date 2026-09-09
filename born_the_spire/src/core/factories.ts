@@ -1,24 +1,22 @@
 /**
  * 工厂函数中心
  *
- * 核心原则：外部代码只使用 import type，通过工厂来创建实例
- * 工厂内部使用值导入和 new 操作，集中管理创建逻辑
+ * 运行时入口：new 对应的类，再 initialize()。
+ * 不是加载隔离层。Player / Enemy 都 extends Chara，顶层值导入会在
+ * preload 还在加载 Target.ts 时就把子类跑起来（Cannot access 'Chara'）。
+ * 这两个在 create 函数里再取类，调用发生在 preload 之后。
  */
 
 import type { EntityMap } from "./objects/system/Entity"
 import type { EffectUnit } from "./objects/system/effect/EffectUnit"
 
-// 值导入（核心类已在 preload.ts 中预加载）
 import { Entity } from "./objects/system/Entity"
 import { Card } from "./objects/item/Subclass/Card"
 import { Potion } from "./objects/item/Subclass/Potion"
 import { Relic } from "./objects/item/Subclass/Relic"
-import { Player } from "./objects/target/Player"
-import { Enemy } from "./objects/target/Enemy"
 import { Organ } from "./objects/target/Organ"
 import { ActionEvent } from "./objects/system/ActionEvent"
 
-// 类型导入（用于返回类型）
 import type { Entity as EntityType } from "./objects/system/Entity"
 import type { Card as CardType } from "./objects/item/Subclass/Card"
 import type { Potion as PotionType } from "./objects/item/Subclass/Potion"
@@ -72,8 +70,12 @@ export async function createRelic(map: any): Promise<RelicType> {
 
 /**
  * 创建 Player 实例
+ *
+ * 不在文件顶层值导入 Player。Chara 还在 Target.ts 里加载时，
+ * 谁 import 本文件都不能去执行 `class Player extends Chara`。
  */
 export async function createPlayer(map: any): Promise<PlayerType> {
+    const { Player } = await import("./objects/target/Player")
     const player = new Player(map)
     await player.initialize()
     return player
@@ -83,6 +85,7 @@ export async function createPlayer(map: any): Promise<PlayerType> {
  * 创建 Enemy 实例
  */
 export async function createEnemy(map: any): Promise<EnemyType> {
+    const { Enemy } = await import("./objects/target/Enemy")
     const enemy = new Enemy(map)
     await enemy.initialize()
     return enemy

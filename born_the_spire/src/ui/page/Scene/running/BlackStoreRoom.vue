@@ -182,7 +182,7 @@
             @mouseleave="startHideTooltip"
         >
             <!-- 器官详情 -->
-            <OrganPopup
+            <OrganHoverContent
                 v-if="tooltipItem.type === 'organ' && getPreview(tooltipItem.id)"
                 :organ="getPreview(tooltipItem.id)"
             />
@@ -279,7 +279,7 @@ import { goToNextStep } from '@/core/hooks/step'
 import { getDescribe } from '@/ui/hooks/express/describe'
 import { getRarityColor, getRarityLabel } from '@/static/list/system/rarityPalette'
 import LeaveButton from '@/ui/components/global/LeaveButton.vue'
-import OrganPopup from '@/ui/components/interaction/OrganPopup.vue'
+import OrganHoverContent from '@/ui/components/interaction/OrganHoverContent.vue'
 import Card from '@/ui/components/object/Card.vue'
 import Popover from '@/ui/components/global/Popover.vue'
 

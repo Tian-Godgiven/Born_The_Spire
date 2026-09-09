@@ -6,6 +6,33 @@
 import type { FloorConfig } from "@/core/types/FloorConfig"
 import { countPlayerMarks } from "@/core/hooks/mark"
 
+const floor1Elites = [
+    "battle_elite_ant_queen",
+    "battle_elite_iron_fortress",
+    "battle_elite_heap_hunter"
+]
+
+const floor1Bosses = [
+    "battle_f1_boss_slag_king",
+    "battle_f1_boss_plague_mother",
+    "battle_f1_boss_iron_war_machine"
+]
+
+const floor1Events = [
+    "event_mysterious_merchant",
+    "event_treasure_chest",
+    "event_healing_spring",
+    "event_lake_spirit",
+    "event_god_of_chance",
+    "event_embryogenesis",
+    "event_abandoned_shrine",
+    "event_collector",
+    "event_transplant_surgery",
+    "event_feeder",
+    "event_hatchery",
+    "event_sacrifice_altar"
+]
+
 /**
  * 所有层级配置
  */
@@ -17,10 +44,10 @@ export const floorList: FloorConfig[] = [
         order: 1,
         roomPools: {
             battles: ["battle_normal_rocker"],
-            eliteBattles: ["battle_elite_berserker", "battle_elite_hydra"],
-            elitePlusBattles: ["battle_elite_plus_berserker"],
-            bossBattles: [],       // 添加Boss战斗
-            events: [],            // 事件池（不包含苏生事件）
+            eliteBattles: floor1Elites,
+            elitePlusBattles: floor1Elites,
+            bossBattles: floor1Bosses,
+            events: floor1Events,
             blackStores: ["blackStore_default"],
             pools: ["pool_default"],
             treasures: ["treasure_default"]
@@ -45,10 +72,10 @@ export const floorList: FloorConfig[] = [
         order: 2,
         roomPools: {
             battles: ["battle_normal_rocker"],
-            eliteBattles: ["battle_elite_berserker", "battle_elite_hydra"],
-            elitePlusBattles: ["battle_elite_plus_berserker"],
-            bossBattles: [],
-            events: [],
+            eliteBattles: floor1Elites,
+            elitePlusBattles: floor1Elites,
+            bossBattles: floor1Bosses,
+            events: floor1Events,
             blackStores: ["blackStore_default"],
             pools: ["pool_default"],
             treasures: ["treasure_default"]
@@ -68,10 +95,10 @@ export const floorList: FloorConfig[] = [
         order: 3,
         roomPools: {
             battles: ["battle_normal_rocker"],
-            eliteBattles: ["battle_elite_berserker", "battle_elite_hydra"],
-            elitePlusBattles: ["battle_elite_plus_berserker"],
-            bossBattles: [],
-            events: [],
+            eliteBattles: floor1Elites,
+            elitePlusBattles: floor1Elites,
+            bossBattles: floor1Bosses,
+            events: floor1Events,
             blackStores: ["blackStore_default"],
             pools: ["pool_default"],
             treasures: ["treasure_default"]
@@ -91,10 +118,10 @@ export const floorList: FloorConfig[] = [
         order: 4,
         roomPools: {
             battles: ["battle_normal_rocker"],
-            eliteBattles: ["battle_elite_berserker", "battle_elite_hydra"],
-            elitePlusBattles: ["battle_elite_plus_berserker"],
-            bossBattles: [],
-            events: [],
+            eliteBattles: floor1Elites,
+            elitePlusBattles: floor1Elites,
+            bossBattles: floor1Bosses,
+            events: floor1Events,
             blackStores: ["blackStore_default"],
             pools: ["pool_default"],
             treasures: ["treasure_default"]

@@ -24,7 +24,6 @@ export type EffectData = {
 export function registerRelic(relic: RelicMap): void {
     const relicList = getLazyModule<RelicMap[]>('relicList')
     relicList.push(relic)
-    console.log(`[Mod] 注册遗物: ${relic.key} - ${relic.label}`)
 }
 
 /**
@@ -33,7 +32,6 @@ export function registerRelic(relic: RelicMap): void {
 export function registerCard(card: CardMap): void {
     const cardList = getLazyModule<CardMap[]>('cardList')
     cardList.push(card)
-    console.log(`[Mod] 注册卡牌: ${card.key} - ${card.label}`)
 }
 
 /**
@@ -42,7 +40,6 @@ export function registerCard(card: CardMap): void {
 export function registerOrgan(organ: OrganMap): void {
     const organList = getLazyModule<OrganMap[]>('organList')
     organList.push(organ)
-    console.log(`[Mod] 注册器官: ${organ.key} - ${organ.label}`)
 }
 
 /**
@@ -51,7 +48,6 @@ export function registerOrgan(organ: OrganMap): void {
 export function registerEnemy(enemy: EnemyMap): void {
     const enemyList = getLazyModule<EnemyMap[]>('enemyList')
     enemyList.push(enemy)
-    console.log(`[Mod] 注册敌人: ${enemy.key} - ${enemy.label}`)
 }
 
 /**
@@ -60,7 +56,6 @@ export function registerEnemy(enemy: EnemyMap): void {
 export function registerEffect(effect: EffectData): void {
     const effectMap = getLazyModule<EffectData[]>('effectMap')
     effectMap.push(effect)
-    console.log(`[Mod] 注册效果: ${effect.key} - ${effect.label}`)
 }
 
 /**
@@ -69,7 +64,6 @@ export function registerEffect(effect: EffectData): void {
 export function registerEvent(event: EventMap): void {
     const eventList = getLazyModule<EventMap[]>('eventList')
     eventList.push(event)
-    console.log(`[Mod] 注册事件: ${event.key} - ${event.title}`)
 }
 
 /**

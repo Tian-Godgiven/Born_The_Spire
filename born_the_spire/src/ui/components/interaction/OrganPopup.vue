@@ -1,5 +1,5 @@
 <template>
-<div class="organ-popup">
+<div class="organ-popup" ref="popupRef">
     <div class="popup-header">
         <span class="popup-organ-name">{{ organ.label }}<span v-if="organ.level" class="popup-organ-level"> Lv.{{ organ.level }}</span></span>
         <span class="popup-rarity" :style="{ color: getRarityColor(organ.rarity) }">{{ getRarityLabel(organ.rarity) }}</span>
@@ -15,7 +15,14 @@
     <div v-if="organ.entry && organ.entry.length > 0" class="popup-divider"></div>
 
     <div class="popup-content">
-        <DescribeText :describe="organ.describe" :target="organ" />
+        <DescribeText
+            :describe="organ.describe"
+            :target="organ"
+            :prefer-player-cards="preferPlayerCards"
+            :glossary-anchor="popupRef"
+            :glossary-order="1"
+            :extra-glossaries="organ.entry"
+        />
     </div>
 
     <!-- 器官自身的状态：内部计数标记（损耗、充能、预算等）都挂在器官上 -->
@@ -24,15 +31,19 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { Organ } from '@/core/objects/target/Organ'
 import DescribeText from '@/ui/components/display/DescribeText.vue'
 import StateDisplay from '@/ui/components/display/StateDisplay.vue'
 import { entryDefinitions } from '@/core/objects/system/Entry'
 import { getRarityColor, getRarityLabel } from '@/static/list/system/rarityPalette'
 
-defineProps<{
+const { organ, preferPlayerCards = false } = defineProps<{
     organ: Organ
+    preferPlayerCards?: boolean
 }>()
+
+const popupRef = ref<HTMLElement>()
 
 // 获取词条 label —— 走 entryDefinitions 合并表，避免硬编码字典与词条系统脱节
 function getEntryLabel(entryKey: string): string {
@@ -48,6 +59,7 @@ function getEntryLabel(entryKey: string): string {
     padding: 12px;
     width: 270px;
     box-sizing: border-box;
+    flex-shrink: 0;
 
     .popup-header {
         display: flex;

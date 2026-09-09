@@ -2,6 +2,20 @@ import { Card } from "@/core/objects/item/Subclass/Card"
 import { cardList } from "@/static/list/item/cardList"
 import { getEntryModifier } from "@/core/objects/system/modifier/EntryModifier"
 import { newLog } from "@/ui/hooks/global/log"
+import { markRaw } from "vue"
+
+export function getCardUpgradeConfig(card: Card) {
+    return cardList.find(c => c.key === card.key)?.upgradeConfig
+}
+
+/** 详情弹窗要不要画「显示锻造后的卡牌」。未锻造要能 +1，已锻造要能看回 0 级。 */
+export function canPreviewCardForge(card: Card): boolean {
+    const config = getCardUpgradeConfig(card)
+    if (!config) return false
+    if (card.level > 0) return true
+    const maxLevel = config.maxLevel ?? Infinity
+    return card.level < maxLevel && !!config.levelConfigs?.[card.level + 1]
+}
 
 /**
  * 应用指定等级的卡牌配置
@@ -49,7 +63,14 @@ export function applyCardLevel(card: Card, targetLevel: number): boolean {
         }
     }
 
-    // 3. 更新等级
+    // 3. 更新描述（没有覆盖则保持当前描述；回到 0 级时用卡牌原描述）
+    if (levelConfig.describe) {
+        card.describe = markRaw(levelConfig.describe)
+    } else if (targetLevel === 0 && cardData.describe) {
+        card.describe = markRaw(cardData.describe)
+    }
+
+    // 4. 更新等级
     card.level = targetLevel
 
     return true

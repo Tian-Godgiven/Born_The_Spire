@@ -1,6 +1,15 @@
 import { ref, onMounted, type Ref } from "vue"
 
 /**
+ * 打开游戏内容弹窗时把所有悬停浮层收掉，避免 10000 的术语/卡名预览盖住 9999 的弹窗。
+ */
+export const popoverDismissToken = ref(0)
+
+export function dismissAllPopovers() {
+    popoverDismissToken.value++
+}
+
+/**
  * 浮层根元素的标记类名
  *
  * 浮层靠它认出「我现在处在哪个浮层里面」，见 usePopoverHost / findPopoverLayer。
@@ -15,6 +24,29 @@ export const POPOVER_LAYER_CLASS = "popover-layer"
  * 嵌套浮层是外层浮层的 DOM 子节点，同值即可自然叠在外层之上，不需要逐层加码。
  */
 export const POPOVER_Z_INDEX = 10000
+
+const POPOVER_HOVER_OPEN_DELAY_FALLBACK_MS = 400
+
+/**
+ * 悬停过多久才弹出。数值来自全局 SCSS `$popover-hover-open-delay`（写成 CSS 变量）。
+ */
+export function getPopoverHoverOpenDelay(): number {
+    if (typeof document === "undefined") return POPOVER_HOVER_OPEN_DELAY_FALLBACK_MS
+    const raw = getComputedStyle(document.documentElement)
+        .getPropertyValue("--popover-hover-open-delay")
+        .trim()
+    if (!raw) return POPOVER_HOVER_OPEN_DELAY_FALLBACK_MS
+    if (raw.endsWith("ms")) {
+        const value = parseFloat(raw)
+        return Number.isFinite(value) ? value : POPOVER_HOVER_OPEN_DELAY_FALLBACK_MS
+    }
+    if (raw.endsWith("s")) {
+        const value = parseFloat(raw)
+        return Number.isFinite(value) ? value * 1000 : POPOVER_HOVER_OPEN_DELAY_FALLBACK_MS
+    }
+    const value = parseFloat(raw)
+    return Number.isFinite(value) ? value : POPOVER_HOVER_OPEN_DELAY_FALLBACK_MS
+}
 
 /**
  * 找出元素所处的浮层根节点，不在任何浮层里则返回 null

@@ -8,11 +8,14 @@
             <div class="modal-content">
                 <div class="card-container">
                     <div class="card-grid" v-if="cards.length > 0">
-                        <Card
+                        <div
+                            class="card-inspect"
                             v-for="card in cards"
                             :key="card.__id"
-                            :card="card"
-                        />
+                            @click.stop="showCardDetail(card)"
+                        >
+                            <Card :card="card" />
+                        </div>
                     </div>
 
                     <div v-else class="empty-state">
@@ -30,6 +33,7 @@
 import { computed } from 'vue'
 import type { Card as CardData } from '@/core/objects/item/Subclass/Card'
 import Card from '@/ui/components/object/Card.vue'
+import { showCardDetail } from '@/ui/hooks/interaction/cardDetail'
 
 const props = defineProps<{
     cards: CardData[]
@@ -124,6 +128,10 @@ function close() {
     grid-template-columns: repeat(5, 130px);
     gap: 20px;
     justify-content: center;
+}
+
+.card-inspect {
+    cursor: pointer;
 }
 
 .empty-state {

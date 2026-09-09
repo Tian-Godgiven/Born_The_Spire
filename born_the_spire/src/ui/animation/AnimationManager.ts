@@ -1,5 +1,5 @@
 import gsap from "gsap"
-import { reactive, shallowReactive } from "vue"
+import { markRaw, shallowReactive } from "vue"
 import { settings } from "@/core/persistence/settings"
 import { isAnimationCategoryEnabled } from "./categories"
 import type {
@@ -85,13 +85,12 @@ class AnimationManager {
     bind(bindingId: string, el: HTMLElement): void {
         this.elements.set(bindingId, el)
         if (!this.states.has(bindingId)) {
-            // state 必须是响应式的，否则组件里 v-for 渲染的 appendItems 永远不会更新。
-            // 用 shallowReactive 而不是 reactive：activeHandles 里装着 gsap timeline 的闭包，
-            // 深度代理它没有意义还有风险；只有 replaceComponent 的赋值和 appendItems 的增删需要被追踪。
+            // state / appendItems 都用 shallowReactive：v-for 要追踪增删，但不能深度代理
+            // 组件定义（否则 <component :is> 会报 Component that was made a reactive object）。
             const state: AnimationBindingState = shallowReactive({
                 activeHandles: new Map<string, AnimationHandle>(),
                 replaceComponent: null as any,
-                appendItems: reactive([] as AnimationBindingState["appendItems"]),
+                appendItems: shallowReactive([] as AnimationBindingState["appendItems"]),
             })
             this.states.set(bindingId, state)
         }
@@ -275,7 +274,7 @@ class AnimationManager {
                 state.activeHandles.set(appendId, handle)
                 state.appendItems.push({
                     id: appendId,
-                    component: def.appendComponent,
+                    component: markRaw(def.appendComponent),
                     // 把实际时长一并交给组件，让它自己的动画和这里的计时器对齐。
                     // 组件里是 CSS 动画，gsap 的 timeScale 管不到它，所以这里得自己按倍率换算
                     props: { ...options?.params, duration: this.resolveDuration(def) / speed },
@@ -283,7 +282,7 @@ class AnimationManager {
             } else {
                 state.activeHandles.set(`${channel}:${def.key}`, handle)
                 if (def.mode === "replace" && def.replaceComponent) {
-                    state.replaceComponent = def.replaceComponent
+                    state.replaceComponent = markRaw(def.replaceComponent)
                 }
             }
         }

@@ -4,7 +4,7 @@ import { reactive } from "vue"
 /**
  * 房间类型
  */
-export type RoomType = "init" | "battle" | "event" | "pool" | "blackStore" | "roomSelect" | "floorSelect" | "eliteBattle" | "elitePlusBattle" | "treasure" | "defeat" | "victory"
+export type RoomType = "init" | "battle" | "event" | "pool" | "blackStore" | "roomSelect" | "floorSelect" | "eliteBattle" | "elitePlusBattle" | "bossBattle" | "treasure" | "defeat" | "victory"
 
 /**
  * 房间状态
@@ -111,6 +111,7 @@ export abstract class Room {
             "floorSelect": "层级选择",
             "eliteBattle": "精英战斗",
             "elitePlusBattle": "精英+战斗",
+            "bossBattle": "Boss战斗",
             "treasure": "宝箱",
             "defeat": "失败",
             "victory": "通关"
@@ -133,6 +134,7 @@ export abstract class Room {
             "floorSelect": "↕",
             "eliteBattle": "👑",
             "elitePlusBattle": "👑👑",
+            "bossBattle": "♛",
             "treasure": "📦",
             "defeat": "💀",
             "victory": "🏆"

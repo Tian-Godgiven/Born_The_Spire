@@ -36,6 +36,7 @@
                     :target="organ"
                     bracket-cards
                     :hoverTarget="hoverTarget"
+                    :extra-glossaries="organ.entry"
                 />
             </div>
 
@@ -48,10 +49,7 @@
                     <div class="player-version-btn">显示玩家版本</div>
 
                     <template #content>
-                        <div class="card-preview" v-if="playerCard">
-                            <Card :card="playerCard" :hoverTarget="hoverTarget" />
-                            <GlossaryPanel :glossaries="playerCardGlossaries" />
-                        </div>
+                        <Card v-if="playerCard" :card="playerCard" :hoverTarget="hoverTarget" />
                     </template>
                 </Popover>
             </div>
@@ -65,11 +63,9 @@ import { computed, shallowRef, markRaw, type PropType } from 'vue'
 import { Organ } from '@/core/objects/target/Organ'
 import { getDescribe } from '@/ui/hooks/express/describe'
 import { createCardFromKey } from '@/ui/hooks/express/cardSegment'
-import { getCardGlossaries } from '@/ui/hooks/express/glossary'
 import { getStatusValue, ifHaveStatus } from '@/core/objects/system/status/Status'
 import { getPartLabel } from '@/static/list/target/organPart'
 import Card from '@/ui/components/object/Card.vue'
-import GlossaryPanel from '@/ui/components/display/GlossaryPanel.vue'
 import DescribeText from '@/ui/components/display/DescribeText.vue'
 import StateDisplay from '@/ui/components/display/StateDisplay.vue'
 import Popover from '@/ui/components/global/Popover.vue'
@@ -102,7 +98,6 @@ function getEntryDescription(entryKey: string): string {
 const hasPlayerVersion = computed(() => !!props.organ.cardsByOwner?.player)
 
 const playerCard = shallowRef<CardType | null>(null)
-const playerCardGlossaries = computed(() => playerCard.value ? getCardGlossaries(playerCard.value) : [])
 
 async function handlePlayerVersionShow(shown: boolean) {
     if (!shown || playerCard.value) return
@@ -239,13 +234,6 @@ const currentMass = computed(() => {
             color: #555;
         }
     }
-}
-
-.card-preview {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    white-space: normal;
 }
 
 // 定位交给外层容器，按钮本身保持静态，免得和 Popover 触发区的 position: relative 打架

@@ -15,7 +15,7 @@
         :key="organ.key"
         placement="right"
         align="start"
-        :max-width="280"
+        :max-width="organHoverMaxWidth(organ)"
       >
         <div
           class="organ-item"
@@ -52,7 +52,7 @@
         </div>
 
         <template #content>
-          <OrganMilestoneTrack :organ="organ" />
+          <OrganHoverContent :organ="organ" />
         </template>
       </Popover>
     </div>
@@ -79,7 +79,7 @@ import { getCurrentValue } from '@/core/objects/system/Current/current'
 import { getStatusValue } from '@/core/objects/system/status/Status'
 import { getReserveModifier } from '@/core/objects/system/modifier/ReserveModifier'
 import Popover from '@/ui/components/global/Popover.vue'
-import OrganMilestoneTrack from '@/ui/components/interaction/OrganMilestoneTrack.vue'
+import OrganHoverContent, { organHoverMaxWidth } from '@/ui/components/interaction/OrganHoverContent.vue'
 
 const props = defineProps<{
   organs: Organ[]

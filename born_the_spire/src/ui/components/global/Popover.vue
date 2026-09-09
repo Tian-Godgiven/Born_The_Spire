@@ -25,8 +25,18 @@
 </template>
 
 <script setup lang='ts'>
-    import { ref, computed, watch, nextTick, onMounted, onUnmounted, useTemplateRef } from 'vue'
-    import { POPOVER_LAYER_CLASS, POPOVER_Z_INDEX, findPopoverLayer } from '@/ui/hooks/interaction/popoverHost'
+    import { ref, computed, watch, nextTick, onMounted, onUnmounted, useTemplateRef, inject, provide } from 'vue'
+    import { POPOVER_LAYER_CLASS, POPOVER_Z_INDEX, findPopoverLayer, popoverDismissToken, getPopoverHoverOpenDelay } from '@/ui/hooks/interaction/popoverHost'
+    import {
+        POPOVER_PACK_KEY,
+        createPackId,
+        registerPackMember,
+        unregisterPackMember,
+        getPackGroup,
+        layoutPackGroup,
+        packGroupHasPointer,
+        type PopoverPackMember
+    } from '@/ui/hooks/interaction/popoverPack'
 
     /** 浮层落在基准的哪一侧；那一侧放不下会自动翻到对面 */
     type Placement = "left" | "right" | "top" | "bottom"
@@ -46,12 +56,14 @@
         align,
         offset = 8,
         closeDelay = 200,
+        openDelay,
         anchor = null,
         triggerElement = null,
         disabled = false,
         maxWidth = 300,
         inline = false,
-        show
+        show,
+        order
     } = defineProps<{
         /** hover 悬停开合；click 点击开合并点外部关闭；manual 只听 v-model:show */
         trigger?: "hover" | "click" | "manual",
@@ -61,6 +73,8 @@
         offset?: number,
         /** 指针离开后延迟多久关闭，留出移进浮层的时间 */
         closeDelay?: number,
+        /** 指针停多久才弹出。不传则用全局 `$popover-hover-open-delay` */
+        openDelay?: number,
         /**
          * 定位基准。不传时：触发区在别的浮层里就以那个浮层为基准（浮层落在它外侧，不会盖住
          * 触发它的文字），否则以触发区自身为基准
@@ -77,7 +91,13 @@
         maxWidth?: number,
         /** 触发区嵌在文字流里时打开，包裹层改为行内，不会把一句话截断成两行 */
         inline?: boolean,
-        show?: boolean
+        show?: boolean,
+        /**
+         * 同一锚点、同一侧的外侧序号。数字小的贴着锚点，大的往外排。
+         * 嵌套浮层写了它，就加入外层那一排，不再单独贴着外层浮层的外边缘。
+         * 不写则还是原来的贴边行为（卡名预览、卡面术语板）。
+         */
+        order?: number
     }>()
 
     const emit = defineEmits<{
@@ -99,6 +119,34 @@
     const hostLayer = ref<HTMLElement | null>(null)
     const host = computed<HTMLElement | string>(() => hostLayer.value ?? "body")
 
+    const parentPack = inject(POPOVER_PACK_KEY, null)
+    /** 写了 order 的嵌套浮层：跟外层共用锚点，按 order 往同一侧排 */
+    const joinsHostPack = computed(() => order !== undefined && parentPack != null)
+
+    function getOwnOriginAnchor(): HTMLElement | null {
+        if (anchor) return anchor
+        if (triggerElement) return triggerElement
+        const wrapper = triggerRef.value
+        if (!wrapper) return null
+        return (wrapper.firstElementChild ?? wrapper) as HTMLElement
+    }
+
+    function getGroupAnchor(): HTMLElement | null {
+        if (joinsHostPack.value) return parentPack?.getOriginAnchor() ?? null
+        return getOwnOriginAnchor()
+    }
+
+    function getGroupPlacement(): Placement {
+        if (joinsHostPack.value) return parentPack?.getRequestedPlacement() ?? placement
+        return placement
+    }
+
+    provide(POPOVER_PACK_KEY, {
+        getOriginAnchor: getOwnOriginAnchor,
+        getRequestedPlacement: () => placement,
+        actualPlacement
+    })
+
     const layerStyle = computed<Record<string, string>>(() => ({
         position: "fixed",
         left: `${position.value?.left ?? 0}px`,
@@ -111,6 +159,7 @@
 
     onMounted(() => {
         hostLayer.value = findPopoverLayer(triggerElement ?? triggerRef.value)
+        registerPackMember(packMember)
     })
 
     // ============ 开合 ============
@@ -118,6 +167,7 @@
     /** 指针是否停在触发区或浮层内。浮层挂在触发区之外，两边共用同一套进出逻辑 */
     let pointerInside = false
     let closeTimer: ReturnType<typeof setTimeout> | null = null
+    let openTimer: ReturnType<typeof setTimeout> | null = null
 
     function clearCloseTimer() {
         if (closeTimer) {
@@ -126,23 +176,43 @@
         }
     }
 
+    function clearOpenTimer() {
+        if (openTimer) {
+            clearTimeout(openTimer)
+            openTimer = null
+        }
+    }
+
+    function resolveOpenDelay(): number {
+        return openDelay ?? getPopoverHoverOpenDelay()
+    }
+
     function open() {
         clearCloseTimer()
+        clearOpenTimer()
         if (disabled) return
         shown.value = true
     }
 
     function close(delay = 0) {
         clearCloseTimer()
+        clearOpenTimer()
         if (delay <= 0) {
             shown.value = false
             return
         }
         closeTimer = setTimeout(() => {
             closeTimer = null
-            if (pointerInside) return
+            if (shouldRemainOpen()) return
             shown.value = false
         }, delay)
+    }
+
+    function shouldRemainOpen(): boolean {
+        if (pointerInside) return true
+        // 最内侧那层：指针移到同一排更外侧的浮层上时不要关
+        if (!joinsHostPack.value && packGroupHasPointer(packMember)) return true
+        return false
     }
 
     function toggle() {
@@ -154,12 +224,28 @@
         // 等 disabled 转回可用时要能立刻把浮层补上
         pointerInside = true
         if (trigger !== "hover") return
-        open()
+        clearCloseTimer()
+        if (shown.value) {
+            open()
+            return
+        }
+        clearOpenTimer()
+        const delay = resolveOpenDelay()
+        if (delay <= 0) {
+            open()
+            return
+        }
+        openTimer = setTimeout(() => {
+            openTimer = null
+            if (!pointerInside || disabled) return
+            open()
+        }, delay)
     }
 
     function handlePointerLeave() {
         pointerInside = false
         if (trigger !== "hover") return
+        clearOpenTimer()
         close(closeDelay)
     }
 
@@ -217,7 +303,7 @@
         }
 
         await nextTick()
-        updatePosition()
+        layoutPackGroup(packMember)
         startObserve()
         if (trigger === "click") document.addEventListener("click", handleDocumentClick)
     })
@@ -230,15 +316,21 @@
     watch(() => disabled, (isDisabled) => {
         if (isDisabled) {
             clearCloseTimer()
+            clearOpenTimer()
             shown.value = false
         } else if (pointerInside && trigger === "hover") {
             shown.value = true
         }
     })
 
+    watch(popoverDismissToken, () => {
+        pointerInside = false
+        close()
+    })
+
     // 基准换了（比如浮层跟着当前悬停的器官走）要重新贴过去
-    watch([() => anchor, () => align, () => placement], () => {
-        if (shown.value) nextTick(updatePosition)
+    watch([() => anchor, () => align, () => placement, () => order], () => {
+        if (shown.value) nextTick(() => layoutPackGroup(packMember))
     })
 
     // ============ 定位 ============
@@ -288,15 +380,54 @@
      * 按实测尺寸摆放浮层：优先用指定方向，那一侧放不下就翻到对面，最后统一收进视口
      *
      * 与基准的间距由 .popover-layer 的 padding 提供，所以这里直接贴着基准边缘算坐标
+     *
+     * 同一组里 order 更大的一块贴着前一块的外边缘，不各自贴回锚点。
      */
-    function updatePosition() {
-        const anchorRect = getAnchorRect()
+    function layoutSelf() {
         const element = layerRef.value
-        if (!anchorRect || !element) return
+        if (!element) return
 
         const { width, height } = element.getBoundingClientRect()
         const viewportWidth = window.innerWidth
         const viewportHeight = window.innerHeight
+        const group = getPackGroup(packMember)
+        const index = group.findIndex(item => item.id === packMember.id)
+
+        if (index > 0) {
+            const prevLayer = group[index - 1].getLayer()
+            if (!prevLayer) return
+            const prevRect = prevLayer.getBoundingClientRect()
+            const place = parentPack?.actualPlacement.value ?? placement
+            let left = 0
+            let top = 0
+            switch (place) {
+                case "right":
+                    left = prevRect.right
+                    top = prevRect.top
+                    break
+                case "left":
+                    left = prevRect.left - width
+                    top = prevRect.top
+                    break
+                case "bottom":
+                    top = prevRect.bottom
+                    left = prevRect.left
+                    break
+                case "top":
+                    top = prevRect.top - height
+                    left = prevRect.left
+                    break
+            }
+            actualPlacement.value = place
+            position.value = {
+                left: clamp(left, VIEWPORT_MARGIN, viewportWidth - width - VIEWPORT_MARGIN),
+                top: clamp(top, VIEWPORT_MARGIN, viewportHeight - height - VIEWPORT_MARGIN)
+            }
+            return
+        }
+
+        const anchorRect = getAnchorRect()
+        if (!anchorRect) return
 
         let place = placement
         if (place === "right" && anchorRect.right + width > viewportWidth && anchorRect.left - width >= 0) {
@@ -339,11 +470,28 @@
         }
     }
 
+    const packMember: PopoverPackMember = {
+        id: createPackId(),
+        getOrder: () => order ?? 0,
+        getGroupAnchor,
+        getGroupPlacement,
+        getShown: () => shown.value,
+        getPointerInside: () => pointerInside,
+        getLayer: () => layerRef.value ?? null,
+        layoutSelf
+    }
+
+    if (parentPack) {
+        watch(parentPack.actualPlacement, () => {
+            if (shown.value) nextTick(() => layoutPackGroup(packMember))
+        })
+    }
+
     // 浮层内容是异步/动态的（描述长度、词条数量都会变），尺寸一变就得重新收进视口
     let observer: ResizeObserver | null = null
     function startObserve() {
         if (!layerRef.value || observer) return
-        observer = new ResizeObserver(() => updatePosition())
+        observer = new ResizeObserver(() => layoutPackGroup(packMember))
         observer.observe(layerRef.value)
     }
     function stopObserve() {
@@ -352,7 +500,9 @@
     }
 
     onUnmounted(() => {
+        unregisterPackMember(packMember)
         clearCloseTimer()
+        clearOpenTimer()
         stopObserve()
         unbindTriggerElement()
         document.removeEventListener("click", handleDocumentClick)

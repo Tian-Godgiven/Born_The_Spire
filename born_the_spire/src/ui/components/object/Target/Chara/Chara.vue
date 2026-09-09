@@ -14,7 +14,7 @@
         class="chara-popover"
         :placement="popupSide"
         :anchor="hoveredOrganElement"
-        :max-width="600"
+        :max-width="hoverShowsMilestones ? 900 : 600"
         :offset="12"
         :disabled="!hasPopoverContent"
         @update:show="onPopoverShow"
@@ -46,8 +46,7 @@
             </div>
         </Target>
 
-        <!-- 两个浮层并排放在同一个容器里，整体朝屏幕中间弹 -->
-        <!-- 器官介绍在内侧（紧挨着触发它的器官方块），角色状态排到外侧 -->
+        <!-- 战斗悬停只出介绍；里程碑留给选器官 / 洗涤，除非这器官会在战斗里自己升级 -->
         <template #content>
             <div class="popover-stack" :class="popupSide">
                 <template v-if="hoveredOrgan">
@@ -55,7 +54,12 @@
                         v-if="showOrganDescribe"
                         :entries="hoveredOrgan.entry"
                     />
-                    <OrganPopup v-else :organ="hoveredOrgan" />
+                    <OrganHoverContent
+                        v-else
+                        :organ="hoveredOrgan"
+                        :reverse="popupSide === 'left'"
+                        :show-milestones="hoverShowsMilestones"
+                    />
                 </template>
                 <StateDisplay v-if="stateList.length > 0" :target="target" />
             </div>
@@ -79,7 +83,7 @@
     import State from '@/ui/components/object/State.vue';
     import StateDisplay from '@/ui/components/display/StateDisplay.vue';
     import EntryDisplay from '@/ui/components/display/EntryDisplay.vue';
-    import OrganPopup from '@/ui/components/interaction/OrganPopup.vue';
+    import OrganHoverContent from '@/ui/components/interaction/OrganHoverContent.vue';
     import Popover from '@/ui/components/global/Popover.vue';
     import { settings } from '@/core/persistence/settings';
     import MechanismDisplay from '@/ui/components/display/MechanismDisplay.vue';
@@ -129,6 +133,7 @@
     // 当前悬停的器官，由 Organ 组件上报；element 用作浮层的定位锚点，让浮层贴住器官方块
     const hoveredOrgan = shallowRef<OrganClass | null>(null)
     const hoveredOrganElement = shallowRef<HTMLElement | null>(null)
+    const hoverShowsMilestones = computed(() => !!hoveredOrgan.value?.upgradeConfig?.combatUpgrade)
 
     function onOrganHover(payload: { organ: OrganClass, element: HTMLElement | null } | null) {
         // 离开器官时不清空：浮层还开着就说明鼠标要么仍在角色上、要么已经移进浮层，

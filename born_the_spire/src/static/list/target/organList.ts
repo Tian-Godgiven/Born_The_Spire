@@ -139,7 +139,7 @@ export const organList:OrganMap[] = [
                 },
                 {
                     level: 3,
-                    describe: ["生效时力量 +1"]
+                    describe: ["生效时", {$:"力量"}, " +1"]
                 }
             ]
         },
@@ -315,7 +315,7 @@ export const organList:OrganMap[] = [
         key: "organ_resilient_shell",
         describe: [
             "每累计受到", { key: ["status", "hurt-threshold"] }, "点伤害，获得",
-            { key: ["status", "armor-gain"] }, "点护甲（",
+            { key: ["status", "armor-gain"] }, "点", {$:"护甲"}, "（",
             { key: ["status", "damage-taken"] }, "/", { key: ["status", "hurt-threshold"] }, "）"
         ],
         rarity: OrganRarity.Common,
@@ -353,7 +353,7 @@ export const organList:OrganMap[] = [
                 },
                 {
                     level: 4,
-                    describe: ["每次改为获得 2 点护甲"],
+                    describe: ["每次改为获得 2 点", {$:"护甲"}],
                     effects: [{
                         key: "setBaseStatus",
                         params: { statusKey: "armor-gain", value: 2 },
@@ -390,7 +390,7 @@ export const organList:OrganMap[] = [
     key:"organ_series_weaken_002",
     describe:[
         "提供1张",{"@": 0},"到牌组",
-        "对拥有虚弱的敌人造成伤害时，每层虚弱额外造成",{key:["status","weak-bonus"]},"点伤害"
+        "对拥有", {$:"虚弱"}, "的敌人造成伤害时，每层", {$:"虚弱"}, "额外造成",{key:["status","weak-bonus"]},"点伤害"
     ],
     rarity: OrganRarity.Uncommon,
     part: OrganPartEnum.Gland,
@@ -455,7 +455,7 @@ export const organList:OrganMap[] = [
 {
     label: "蓄力腺",
     key: "enemy_organ_ant_charge_gland",
-    describe: ["回合结束时获得", { key: ["status", "momentum-gain"] }, "层蓄势"],
+    describe: ["回合结束时获得", { key: ["status", "momentum-gain"] }, "层", {$:"蓄势"}],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Gland,
     status: {
@@ -472,7 +472,7 @@ export const organList:OrganMap[] = [
             },
             {
                 level: 3,
-                describe: ["改为获得 2 层蓄势"],
+                describe: ["改为获得 2 层", {$:"蓄势"}],
                 effects: [{
                     key: "setBaseStatus",
                     params: { statusKey: "momentum-gain", value: 2 },
@@ -509,7 +509,7 @@ export const organList:OrganMap[] = [
 {
     label: "节甲",
     key: "enemy_organ_ant_carapace",
-    describe: ["回合开始时获得", { key: ["status", "armor-gain"] }, "点护甲"],
+    describe: ["回合开始时获得", { key: ["status", "armor-gain"] }, "点", {$:"护甲"}],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Skin,
     status: {
@@ -522,7 +522,7 @@ export const organList:OrganMap[] = [
         milestones: [
             {
                 level: 2,
-                describe: ["改为获得 4 点护甲"],
+                describe: ["改为获得 4 点", {$:"护甲"}],
                 effects: [{
                     key: "setBaseStatus",
                     params: { statusKey: "armor-gain", value: 4 },
@@ -531,7 +531,7 @@ export const organList:OrganMap[] = [
             },
             {
                 level: 3,
-                describe: ["改为获得 5 点护甲"],
+                describe: ["改为获得 5 点", {$:"护甲"}],
                 effects: [{
                     key: "setBaseStatus",
                     params: { statusKey: "armor-gain", value: 5 },
@@ -570,7 +570,7 @@ export const organList:OrganMap[] = [
     key: "enemy_organ_spore_sac",
     describe: [
         "提供1张", {"@": 0}, "卡牌",
-        "损坏时对所有敌人施加", { key: ["status", "break-poison"] }, "层中毒"
+        "损坏时对所有敌人施加", { key: ["status", "break-poison"] }, "层", {$:"中毒"}
     ],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Gland,
@@ -590,7 +590,7 @@ export const organList:OrganMap[] = [
             },
             {
                 level: 3,
-                describe: ["损坏时中毒改为 5 层"],
+                describe: ["损坏时", {$:"中毒"}, "改为 5 层"],
                 effects: [{
                     key: "setBaseStatus",
                     params: { statusKey: "break-poison", value: 5 },
@@ -619,7 +619,7 @@ export const organList:OrganMap[] = [
     key: "enemy_organ_fungal_cap",
     describe: [
         "提供1张", {"@": 0}, "卡牌",
-        "回合开始时获得", { key: ["status", "armor-gain"] }, "点护甲"
+        "回合开始时获得", { key: ["status", "armor-gain"] }, "点", {$:"护甲"}
     ],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Skin,
@@ -692,7 +692,7 @@ export const organList:OrganMap[] = [
 {
     label: "毒皮",
     key: "enemy_organ_poison_skin",
-    describe: ["受到伤害时对伤害来源施加", { key: ["status", "poison-reflect"] }, "层中毒"],
+    describe: ["受到伤害时对伤害来源施加", { key: ["status", "poison-reflect"] }, "层", {$:"中毒"}],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Skin,
     status: {
@@ -709,7 +709,7 @@ export const organList:OrganMap[] = [
             },
             {
                 level: 3,
-                describe: ["改为施加 3 层中毒"],
+                describe: ["改为施加 3 层", {$:"中毒"}],
                 effects: [{
                     key: "setBaseStatus",
                     params: { statusKey: "poison-reflect", value: 3 },
@@ -777,7 +777,7 @@ export const organList:OrganMap[] = [
 {
     label: "薄翅",
     key: "enemy_organ_thin_wings",
-    describe: ["战斗开始时获得", { key: ["status", "flightStacks"] }, "层飞行"],
+    describe: ["战斗开始时获得", { key: ["status", "flightStacks"] }, "层", {$:"飞行"}],
     rarity: OrganRarity.Uncommon,
     part: OrganPartEnum.Skin,
     status: {
@@ -794,7 +794,7 @@ export const organList:OrganMap[] = [
             },
             {
                 level: 3,
-                describe: ["改为获得 4 层飞行"],
+                describe: ["改为获得 4 层", {$:"飞行"}],
                 effects: [{
                     key: "setBaseStatus",
                     params: { statusKey: "flightStacks", value: 4 },
@@ -828,7 +828,7 @@ export const organList:OrganMap[] = [
 {
     label: "毒腺",
     key: "enemy_organ_poison_gland",
-    describe: ["回合开始时对所有对手施加", { key: ["status", "poison-gain"] }, "层中毒"],
+    describe: ["回合开始时对所有对手施加", { key: ["status", "poison-gain"] }, "层", {$:"中毒"}],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Gland,
     status: {
@@ -845,7 +845,7 @@ export const organList:OrganMap[] = [
             },
             {
                 level: 3,
-                describe: ["改为施加 2 层中毒"],
+                describe: ["改为施加 2 层", {$:"中毒"}],
                 effects: [{
                     key: "setBaseStatus",
                     params: { statusKey: "poison-gain", value: 2 },
@@ -927,7 +927,7 @@ export const organList:OrganMap[] = [
             },
             {
                 level: 3,
-                describe: ["生效时力量 +2"]
+                    describe: ["生效时", {$:"力量"}, " +2"]
             }
         ]
     },
@@ -1098,7 +1098,7 @@ export const organList:OrganMap[] = [
 {
     label: "过期隔板",
     key: "enemy_organ_rusty_separator",
-        describe: ["受到攻击时：30%完全抵消（本回合每抵消一次，概率-10%），20%失去所有格挡"],
+        describe: ["受到攻击时：30%完全抵消（本回合每抵消一次，概率-10%），20%失去所有", {$:"格挡"}],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Bone,
     status: {
@@ -1177,7 +1177,7 @@ export const organList:OrganMap[] = [
     key: "enemy_organ_pheromone_gland",
     describe: [
         "提供1张", {"@": 0}, "卡牌",
-        "每回合给所有友军+", { key: ["status", "command-gain"] }, "指挥层"
+        "每回合给所有友军+", { key: ["status", "command-gain"] }, "层", {$:"指挥"}
     ],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Gland,
@@ -1201,7 +1201,7 @@ export const organList:OrganMap[] = [
             },
             {
                 level: 4,
-                describe: ["每回合改为 +2 指挥"],
+                describe: ["每回合改为 +2 ", {$:"指挥"}],
                 effects: [{
                     key: "setBaseStatus",
                     params: { statusKey: "command-gain", value: 2 },
@@ -1257,7 +1257,7 @@ export const organList:OrganMap[] = [
 {
     label: "王室甲壳",
     key: "enemy_organ_royal_carapace",
-    describe: ["每回合开始：每存活友军获得3护甲"],
+    describe: ["每回合开始：每存活友军获得3", {$:"护甲"}],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Skin,
     status: { "max-mass": 40 },
@@ -1290,7 +1290,7 @@ export const organList:OrganMap[] = [
 {
     label: "壁垒甲壳",
     key: "enemy_organ_barricade_shell",
-    describe: ["护甲不在回合开始时消失"],
+    describe: [{$:"护甲"}, "不在回合开始时消失"],
     rarity: OrganRarity.Uncommon,
     part: OrganPartEnum.Skin,
     status: {
@@ -1304,7 +1304,7 @@ export const organList:OrganMap[] = [
         milestones: [
             {
                 level: 2,
-                describe: ["回合开始获得 1 点护甲"],
+                describe: ["回合开始获得 1 点", {$:"护甲"}],
                 effects: [{
                     key: "setBaseStatus",
                     params: { statusKey: "armor-gain", value: 1 },
@@ -1313,7 +1313,7 @@ export const organList:OrganMap[] = [
             },
             {
                 level: 3,
-                describe: ["回合开始改为 3 点护甲"],
+                describe: ["回合开始改为 3 点", {$:"护甲"}],
                 effects: [{
                     key: "setBaseStatus",
                     params: { statusKey: "armor-gain", value: 3 },
@@ -1322,7 +1322,7 @@ export const organList:OrganMap[] = [
             },
             {
                 level: 4,
-                describe: ["战斗开始获得 10 点护甲"],
+                describe: ["战斗开始获得 10 点", {$:"护甲"}],
                 effects: [{
                     key: "setBaseStatus",
                     params: { statusKey: "opening-armor", value: 10 },
@@ -1381,7 +1381,7 @@ export const organList:OrganMap[] = [
 {
     label: "金属化核心",
     key: "enemy_organ_metallicize_core",
-    describe: ["每回合结束时获得3护甲", "提供1张", {"@": 0}, "卡牌"],
+    describe: ["每回合结束时获得3", {$:"护甲"}, "提供1张", {"@": 0}, "卡牌"],
     rarity: OrganRarity.Uncommon,
     part: OrganPartEnum.Core,
     status: { "max-mass": 40 },
@@ -1434,7 +1434,7 @@ export const organList:OrganMap[] = [
             },
             {
                 level: 3,
-                describe: ["回合开始获得 3 点护甲"],
+                describe: ["回合开始获得 3 点", {$:"护甲"}],
                 effects: [{
                     key: "setBaseStatus",
                     params: { statusKey: "armor-gain", value: 3 },
@@ -1473,7 +1473,7 @@ export const organList:OrganMap[] = [
 {
     label: "柔韧甲片",
     key: "enemy_organ_malleable_plating",
-    describe: ["受到攻击时获得等同柔韧层数的护甲"],
+    describe: ["受到攻击时获得等同", {$:"柔韧"}, "层数的", {$:"护甲"}],
     rarity: OrganRarity.Uncommon,
     part: OrganPartEnum.Skin,
     status: { "max-mass": 35 },
@@ -1487,7 +1487,7 @@ export const organList:OrganMap[] = [
             },
             {
                 level: 3,
-                describe: ["柔韧改为 4 层"]
+                describe: [{$:"柔韧"}, "改为 4 层"]
             }
         ]
     },
@@ -1508,7 +1508,7 @@ export const organList:OrganMap[] = [
 {
     label: "腐化腺",
     key: "enemy_organ_corruption_gland",
-    describe: ["战斗开始失去8点生命", "每回合开始获得1层力量"],
+    describe: ["战斗开始失去8点生命", "每回合开始获得1层", {$:"力量"}],
     rarity: OrganRarity.Uncommon,
     part: OrganPartEnum.Gland,
     status: { "max-mass": 40 },
@@ -1617,7 +1617,7 @@ export const organList:OrganMap[] = [
 {
     label: "污秽厚皮",
     key: "enemy_organ_filthy_hide",
-    describe: ["每回合开始获得5层变硬", "受到攻击时减少本次伤害（层数×10%）"],
+    describe: ["每回合开始获得5层", {$:"变硬"}, "受到攻击时减少本次伤害（层数×10%）"],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Skin,
     status: { "max-mass": 35 },
@@ -1650,7 +1650,7 @@ export const organList:OrganMap[] = [
 {
     label: "毒素核心",
     key: "enemy_organ_toxic_core",
-    describe: ["提供1张", {"@": 0}, "卡牌", "每回合给双方施加1层中毒"],
+    describe: ["提供1张", {"@": 0}, "卡牌", "每回合给双方施加1层", {$:"中毒"}],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Core,
     status: { "max-mass": 35 },
@@ -1682,7 +1682,7 @@ export const organList:OrganMap[] = [
 {
     label: "毒素护甲",
     key: "enemy_organ_poison_armor",
-    describe: ["每回合首次受到伤害后获得3护甲"],
+    describe: ["每回合首次受到伤害后获得3", {$:"护甲"}],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Skin,
     status: { "max-mass": 30 },
@@ -1776,7 +1776,7 @@ export const organList:OrganMap[] = [
 {
     label: "腐化铠甲",
     key: "enemy_organ_corruption_armor",
-    describe: ["回合结束时，每有1个对手具备debuff获得3点护甲"],
+    describe: ["回合结束时，每有1个对手具备debuff获得3点", {$:"护甲"}],
     rarity: OrganRarity.Uncommon,
     part: OrganPartEnum.Skin,
     status: { "max-mass": 40 },
@@ -1807,7 +1807,7 @@ export const organList:OrganMap[] = [
 {
     label: "剧毒心核",
     key: "enemy_organ_toxic_core_boss",
-    describe: ["施加中毒时额外+1层"],
+    describe: ["施加", {$:"中毒"}, "时额外+1层"],
     rarity: OrganRarity.Rare,
     part: OrganPartEnum.Core,
     status: { "max-mass": 50 },
@@ -1838,7 +1838,7 @@ export const organList:OrganMap[] = [
 {
     label: "菌网根系",
     key: "enemy_organ_mycelial_network",
-    describe: ["回合开始时，给随机1个对手施加2层中毒"],
+    describe: ["回合开始时，给随机1个对手施加2层", {$:"中毒"}],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Nerve,
     status: { "max-mass": 30 },
@@ -1869,7 +1869,7 @@ export const organList:OrganMap[] = [
 {
     label: "不稳定毒囊",
     key: "enemy_organ_volatile_sac",
-    describe: ["宿主死亡时对所有对手施加3层中毒"],
+    describe: ["宿主死亡时对所有对手施加3层", {$:"中毒"}],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Gland,
     status: { "max-mass": 25 },
@@ -1901,7 +1901,7 @@ export const organList:OrganMap[] = [
 {
     label: "点火核",
     key: "enemy_organ_ignition_core",
-    describe: ["提供重铸卡牌；每打出一张攻击牌，自身获得1层点火"],
+    describe: ["提供重铸卡牌；每打出一张攻击牌，自身获得1层", {$:"点火"}],
     rarity: OrganRarity.Rare,
     part: OrganPartEnum.Core,
     status: { "max-mass": 50 },
@@ -1934,7 +1934,7 @@ export const organList:OrganMap[] = [
 {
     label: "熔铸魂",
     key: "enemy_organ_cast_soul",
-    describe: ["提供铸铁力卡牌；战斗开始时获得2层力量"],
+    describe: ["提供铸铁力卡牌；战斗开始时获得2层", {$:"力量"}],
     rarity: OrganRarity.Uncommon,
     part: OrganPartEnum.Heart,
     status: { "max-mass": 40 },
@@ -1998,7 +1998,7 @@ export const organList:OrganMap[] = [
 {
     label: "熔渣心",
     key: "enemy_organ_slag_heart",
-    describe: ["提供熔铸打击与高炉护壁；获得力量时额外+1层"],
+    describe: ["提供熔铸打击与高炉护壁；获得", {$:"力量"}, "时额外+1层"],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Heart,
     status: { "max-mass": 30 },
@@ -2032,7 +2032,7 @@ export const organList:OrganMap[] = [
 {
     label: "铁壁核心",
     key: "enemy_organ_iron_wall_core",
-    describe: ["提供装甲组装卡牌；战斗开始时获得15点护甲"],
+    describe: ["提供装甲组装卡牌；战斗开始时获得15点", {$:"护甲"}],
     rarity: OrganRarity.Uncommon,
     part: OrganPartEnum.Core,
     status: { "max-mass": 40 },
@@ -2064,7 +2064,7 @@ export const organList:OrganMap[] = [
 {
     label: "过载核心",
     key: "enemy_organ_overload_core",
-    describe: ["提供过载屏障卡牌；战斗开始时获得1层力场护盾"],
+    describe: ["提供过载屏障卡牌；战斗开始时获得1层", {$:"力场护盾"}],
     rarity: OrganRarity.Rare,
     part: OrganPartEnum.Heart,
     status: { "max-mass": 40 },
@@ -2294,7 +2294,7 @@ export const organList:OrganMap[] = [
 {
     label: "囊胚",
     key: "organ_embryo_stage3",
-    describe: ["回合开始时获得 5 护甲", "每完成一轮进化，额外获得 1 护甲", "提供 1 张", { "@": 0 }, "到牌组"],
+    describe: ["回合开始时获得 5 ", {$:"护甲"}, "每完成一轮进化，额外获得 1 ", {$:"护甲"}, "提供 1 张", { "@": 0 }, "到牌组"],
     rarity: OrganRarity.Uncommon,
     part: OrganPartEnum.Core,
     status: {

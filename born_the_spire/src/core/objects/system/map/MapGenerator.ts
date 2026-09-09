@@ -323,7 +323,7 @@ export class MapGenerator {
   private inferRoomTypeFromKey(roomKey: string): RoomType {
     if (roomKey.startsWith("battle_elite_plus")) return "elitePlusBattle"
     if (roomKey.startsWith("battle_elite")) return "eliteBattle"
-    if (roomKey.startsWith("battle_boss")) return "battle"
+    if (roomKey.startsWith("battle_boss") || roomKey.includes("_boss_")) return "bossBattle"
     if (roomKey.startsWith("battle")) return "battle"
     if (roomKey.startsWith("event")) return "event"
     if (roomKey.startsWith("pool")) return "pool"
@@ -582,6 +582,8 @@ export class MapGenerator {
         return this.config.roomPools.eliteBattles || []
       case "elitePlusBattle":
         return this.config.roomPools.elitePlusBattles || []
+      case "bossBattle":
+        return this.config.roomPools.bossBattles || []
       case "event":
         return this.config.roomPools.events
       case "pool":

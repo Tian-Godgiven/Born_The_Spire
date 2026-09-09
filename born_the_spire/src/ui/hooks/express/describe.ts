@@ -6,7 +6,6 @@ import { resolveGlossary } from "./glossaryResolve";
 import { isStatus } from "@/core/utils/typeGuards";
 import { getLazyModule } from "@/core/utils/lazyLoader";
 import { getCardModifier } from "@/core/objects/system/modifier/CardModifier";
-import { getOrganCardDisplayName } from "./cardSegment";
 
 //对象的描述，存储为数据，使用时翻译为对应的字符串
 export type Describe = (
@@ -32,6 +31,48 @@ export type DescribeSegment = {
     cardRef?: string | number  // 如果是card类型（实例ID、key或索引）
     cardRefType?: 'instance' | 'key'  // card引用类型
     style?: Record<string, string>
+}
+
+function formatCardLabel(label: string, level: number): string {
+    return level > 0 ? `${label}+` : label
+}
+
+function countOrganCardForges(organ: any): number {
+    if (!organ) return 0
+    const level = organ.level ?? 1
+    const milestones = organ.upgradeConfig?.milestones ?? organ.upgrade?.milestones ?? []
+    return milestones.filter((m: any) =>
+        m.level <= level &&
+        m.effects?.some((e: any) => e.key === "upgradeOrganCards")
+    ).length
+}
+
+function organCardKeyAtIndex(organ: any, index: number): string | undefined {
+    const cards = organ?.cards
+    if (Array.isArray(cards) && cards[index]) return cards[index]
+    const playerCards = organ?.cardsByOwner?.player
+    if (Array.isArray(playerCards)) return playerCards[index]
+    return typeof playerCards === "string" ? playerCards : undefined
+}
+
+/** 描述里 {@:索引} 的显示名。不要从 cardSegment 取，见常见错误排查手册 L1。 */
+function organCardLabelByIndex(target: any, index: number): string {
+    if (!target) return "[卡牌]"
+    try {
+        if (target.owner) {
+            const cards = getCardModifier(target.owner).getCardsFromSource(target)
+            const instance = cards[index]
+            if (instance) return instance.displayName || instance.key || "[卡牌]"
+        }
+        const cardKey = organCardKeyAtIndex(target, index)
+        if (!cardKey) return "[卡牌]"
+        const cardList = getLazyModule<any[]>('cardList')
+        const cardConfig = cardList.find((c: any) => c.key === cardKey)
+        if (!cardConfig) return "[卡牌]"
+        return formatCardLabel(cardConfig.label, countOrganCardForges(target) > 0 ? 1 : 0)
+    } catch {
+        return "[卡牌]"
+    }
 }
 
 //将描述对象翻译为文本
@@ -65,7 +106,7 @@ export function getDescribe(describe:Describe|undefined,target?:Object){
                 let cardLabel = "[卡牌]"
 
                 if (typeof cardIndexOrId === 'number') {
-                    cardLabel = getOrganCardDisplayName(target as any, cardIndexOrId) ?? "[卡牌]"
+                    cardLabel = organCardLabelByIndex(target, cardIndexOrId)
                 } else if (typeof cardIndexOrId === 'string') {
                     // 卡牌实例 ID，从器官的卡牌修饰器中查找
                     try {
@@ -163,7 +204,7 @@ export function getDescribeStructured(describe:Describe|undefined,target?:Object
                 let cardLabel = "[卡牌]"
 
                 if (typeof cardIndexOrId === 'number') {
-                    cardLabel = getOrganCardDisplayName(target as any, cardIndexOrId) ?? "[卡牌]"
+                    cardLabel = organCardLabelByIndex(target, cardIndexOrId)
                     segments.push({
                         text: cardLabel,
                         type: 'card' as const,

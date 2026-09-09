@@ -2,6 +2,7 @@ import gsap from "gsap"
 import type { AnimationDefinition } from "./types"
 import { animationManager } from "./AnimationManager"
 import { registerAnimationCategories, presetAnimationCategories } from "./categories"
+import { markRaw } from "vue"
 import HitTextItem from "./components/HitTextItem.vue"
 
 /**
@@ -59,7 +60,7 @@ export const presetAnimations: AnimationDefinition[] = [
         category: "hitText",
         mode: "append",
         channel: "hit_text",
-        appendComponent: HitTextItem,
+        appendComponent: markRaw(HitTextItem),
         duration: 1.8,
     },
 

@@ -11,12 +11,14 @@
           暂无卡牌
         </div>
         <div v-else class="card-list">
-          <Card
+          <div
+            class="card-inspect"
             v-for="card in cards"
             :key="card.__id"
-            :card="card"
-            :side="'left'"
-          />
+            @click.stop="showCardDetail(card)"
+          >
+            <Card :card="card" :side="'left'" />
+          </div>
         </div>
       </div>
 
@@ -31,6 +33,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import Card from '@/ui/components/object/Card.vue'
+import { showCardDetail } from '@/ui/hooks/interaction/cardDetail'
 import {
   showCardGroupModal,
   cardGroupTitle,
@@ -114,6 +117,10 @@ function handleClose() {
   flex-wrap: wrap;
   gap: 15px;
   justify-content: center;
+}
+
+.card-inspect {
+  cursor: pointer;
 }
 
 .empty-message {

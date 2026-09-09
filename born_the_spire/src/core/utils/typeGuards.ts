@@ -22,17 +22,7 @@ export function isEntity(participant: EventParticipant | any): participant is En
     if (Array.isArray(participant)) {
         return participant.every(p => p?.participantType === 'entity')
     }
-    const result = participant?.participantType === 'entity'
-    // 调试日志：记录participantType不是'entity'的对象
-    if (!result && participant && participant.participantType) {
-        // 只记录一次，避免刷屏
-        console.warn('[isEntity] participantType 不是 entity:', {
-            participantType: participant.participantType,
-            label: participant.label,
-            key: participant.key
-        })
-    }
-    return result
+    return participant?.participantType === 'entity'
 }
 
 /**

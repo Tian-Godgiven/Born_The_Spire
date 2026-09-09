@@ -1,6 +1,7 @@
 import { reactive, ref } from "vue"
 import type { ShallowRef } from "vue"
 import { nanoid } from "nanoid"
+import { dismissAllPopovers } from "@/ui/hooks/interaction/popoverHost"
 
 export let popUpList = reactive<PopUp[]>([])
 export let maskIndex = ref(0)
@@ -23,6 +24,8 @@ export function showPopUp(popUp:PopUp){
 	}
 
 	popUp.id = nanoid()
+
+	dismissAllPopovers()
 	
 	// 添加弹窗
 	popUp["index"] = popUpList.length

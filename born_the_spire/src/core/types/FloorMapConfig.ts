@@ -13,6 +13,7 @@ export interface RoomPools {
   easyBattles?: string[]
   eliteBattles?: string[]
   elitePlusBattles?: string[]
+  bossBattles?: string[]
   events: string[]
   pools: string[]
   blackStores: string[]
@@ -416,14 +417,14 @@ export const defaultFloorMapConfig: FloorMapConfig = {
       roomTypes: ["pool", "pool", "pool"]
     },
     14: {
-      roomKeys: ["battle_boss_default"]
+      roomTypes: ["bossBattle"]
     }
   },
 
   // 房间分配策略
   roomAssignmentStrategy: {
     lazyTypes: ["battle", "eliteBattle", "elitePlusBattle", "event"],  // 战斗、精英、强化精英和事件延迟分配
-    eagerTypes: ["pool", "blackStore", "treasure"],  // 休息、商店和宝箱立即分配
+    eagerTypes: ["pool", "blackStore", "treasure", "bossBattle"],  // 休息、商店、宝箱、Boss立即分配
 
     exhaustionStrategy: {
       battle: "reset",  // 战斗池耗尽后重置
@@ -484,6 +485,8 @@ export const defaultFloorMapConfig: FloorMapConfig = {
     battles: [],
     easyBattles: [],
     eliteBattles: [],
+    elitePlusBattles: [],
+    bossBattles: [],
     events: [],
     pools: [],
     blackStores: [],

@@ -78,28 +78,27 @@
         <button v-if="organRewardCancelable" class="modal-close-btn" @click="closeOrganReward">×</button>
         <div class="choice-title">选择器官</div>
 
-        <!-- 横向器官卡片 -->
+        <!-- 介绍常驻在卡片上；悬停只出里程碑，术语板由介绍框自己带 -->
         <div class="organ-cards-row">
-          <div
-            v-for="organ in organRewardOptions"
+          <Popover
+            v-for="organ in organRewardPreviews"
             :key="organ.key"
-            class="organ-detail-card"
-            :class="{ selected: selectedOrganKey === organ.key }"
-            @click="selectOrgan(organ.key)"
+            placement="right"
+            align="start"
+            :max-width="240"
+            :disabled="getOrganMilestones(organ).length === 0"
           >
-            <div class="organ-card-name">{{ organ.label }}</div>
-            <div class="organ-card-meta">
-              <span class="organ-rarity" :style="{ color: getRarityColor(organ.rarity) }">{{ getRarityLabel(organ.rarity) }}</span>
-              <span v-if="organ.part" class="organ-part">{{ getPartLabel(organ.part) }}</span>
+            <div
+              class="organ-reward-option"
+              :class="{ selected: selectedOrganKey === organ.key }"
+              @click="selectOrgan(organ.key)"
+            >
+              <OrganPopup :organ="organ" prefer-player-cards />
             </div>
-            <div class="organ-card-divider"></div>
-            <div v-if="organ.entry?.length" class="organ-card-entries">
-              <span v-for="entry in organ.entry" :key="entry" class="entry-tag">【{{ entry }}】</span>
-            </div>
-            <div class="organ-card-desc">
-                <DescribeText :describe="organ.describe" :target="organ" prefer-player-cards />
-              </div>
-          </div>
+            <template #content>
+              <OrganMilestoneTrack :organ="organ" />
+            </template>
+          </Popover>
         </div>
 
         <!-- 底部行：动作按钮 -->
@@ -188,16 +187,17 @@ import { ref, computed, markRaw, shallowRef } from 'vue'
 import { currentRewards, showRewardUI, confirmRewards, navigateOnProceed, handleExclusiveGroup, canProceed, requireAllRewards } from '@/ui/hooks/interaction/rewardDisplay'
 import { organRewardActionRegistry } from '@/static/registry/organRewardActionRegistry'
 import { nowPlayer } from '@/core/objects/game/run'
-import { getDescribe } from '@/ui/hooks/express/describe'
-import { getPartLabel } from '@/static/list/target/organPart'
-import { getRarityColor, getRarityLabel } from '@/static/list/system/rarityPalette'
+import { getOrganMilestones } from '@/static/list/target/organQuality'
+import { Organ } from '@/core/objects/target/Organ'
 import type { OrganMap } from '@/core/objects/target/Organ'
 import type { OrganRewardAction } from '@/core/types/organRewardAction'
 import Card from '@/ui/components/object/Card.vue'
-import DescribeText from '@/ui/components/display/DescribeText.vue'
 import type { Card as CardType } from '@/core/objects/item/Subclass/Card'
 import Relic from '@/ui/components/object/Relic.vue'
 import type { Relic as RelicType } from '@/core/objects/item/Subclass/Relic'
+import Popover from '@/ui/components/global/Popover.vue'
+import OrganPopup from '@/ui/components/interaction/OrganPopup.vue'
+import OrganMilestoneTrack from '@/ui/components/interaction/OrganMilestoneTrack.vue'
 const visible = computed(() => showRewardUI.value)
 const rewards = computed(() => currentRewards.value)
 
@@ -209,6 +209,9 @@ const organActions = ref<OrganRewardAction[]>([])
 const organRewardCancelable = ref(true)
 
 const organRewardOptions = computed<OrganMap[]>(() => currentOrganReward.value?.organOptions ?? [])
+const organRewardPreviews = computed(() =>
+    organRewardOptions.value.map(data => markRaw(new Organ(data)))
+)
 
 function openOrganChoice(reward: any) {
   currentOrganReward.value = reward
@@ -245,10 +248,6 @@ async function executeOrganAction(actionKey: string) {
   closeOrganReward()
   await reward.claim()
   handleExclusiveGroup(reward)
-}
-
-function getOrganDescribe(organ: OrganMap): string {
-  return getDescribe(organ.describe, organ)
 }
 
 const currentChoiceReward = ref<any>(null)
@@ -535,69 +534,23 @@ async function handleProceed() {
   gap: 15px;
   overflow-x: auto;
   padding-bottom: 4px;
+
+  :deep(.popover-trigger) {
+    display: block;
+    flex: 0 0 270px;
+  }
 }
 
-.organ-detail-card {
-  flex: 0 0 200px;
-  min-height: 200px;
-  padding: 16px;
-  border: 2px solid #ccc;
-  background: white;
+.organ-reward-option {
   cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 
-  &:hover {
-    border-color: #888;
+  &:hover :deep(.organ-popup) {
     background: rgba(0, 0, 0, 0.02);
   }
 
-  &.selected {
-    border-color: black;
+  &.selected :deep(.organ-popup) {
     background: rgba(0, 0, 0, 0.04);
   }
-}
-
-.organ-card-name {
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
-}
-
-.organ-card-meta {
-  display: flex;
-  gap: 8px;
-  font-size: 12px;
-  color: #666;
-}
-
-.organ-rarity {
-  font-weight: bold;
-}
-
-.organ-card-divider {
-  height: 1px;
-  background: #ddd;
-}
-
-.organ-card-entries {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.entry-tag {
-  font-size: 12px;
-  color: #555;
-  font-weight: bold;
-}
-
-.organ-card-desc {
-  font-size: 13px;
-  color: #555;
-  line-height: 1.5;
-  flex: 1;
 }
 
 .organ-reward-footer {

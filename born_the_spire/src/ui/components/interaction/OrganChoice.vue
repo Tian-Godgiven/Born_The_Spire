@@ -12,55 +12,65 @@
       </div>
 
       <div class="organ-list">
-        <div
-          v-for="organ in organOptions"
+        <Popover
+          v-for="organ in organPreviews"
           :key="organ.key"
-          class="organ-card"
-          :class="{ selected: isSelected(organ.key), disabled: !canSelect(organ.key) }"
-          @click="toggleSelection(organ.key)"
+          placement="right"
+          align="start"
+          :max-width="organHoverMaxWidth(organ)"
         >
-          <div class="organ-name">{{ organ.label }}</div>
-          <div v-if="organ.describe" class="organ-description">
-            {{ organ.describe }}
-          </div>
-
           <div
-            v-if="isSelected(organ.key) && actionMode === 'selectThenAction'"
-            class="reward-action-buttons"
+            class="organ-card"
+            :class="{ selected: isSelected(organ.key), disabled: !canSelect(organ.key) }"
+            @click="toggleSelection(organ.key)"
           >
-            <button
-              v-for="action in availableActions"
-              :key="action.key"
-              class="reward-action-btn"
-              :class="{ active: getOrganAction(organ.key) === action.key }"
-              @click.stop="selectAction(organ.key, action.key)"
-              :disabled="!isActionEnabled(action, organ)"
+            <div class="organ-name">{{ organ.label }}</div>
+            <div v-if="organ.part" class="organ-meta">{{ getPartLabel(organ.part) }}</div>
+
+            <div
+              v-if="isSelected(organ.key) && actionMode === 'selectThenAction'"
+              class="reward-action-buttons"
             >
-              <span class="reward-action-icon">{{ action.icon }}</span>
-              <span class="reward-action-label">{{ action.label }}</span>
-            </button>
+              <button
+                v-for="action in availableActions"
+                :key="action.key"
+                class="reward-action-btn"
+                :class="{ active: getOrganAction(organ.key) === action.key }"
+                @click.stop="selectAction(organ.key, action.key)"
+                :disabled="!isActionEnabled(action, organ)"
+              >
+                <span class="reward-action-icon">{{ action.icon }}</span>
+                <span class="reward-action-label">{{ action.label }}</span>
+              </button>
+            </div>
+
+            <div v-if="isSelected(organ.key)" class="organ-action-footer">
+              <button class="back-btn" @click.stop="deselectOrgan(organ.key)">
+                返回
+              </button>
+            </div>
           </div>
 
-          <!-- 返回按钮：取消当前器官的选择 -->
-          <div v-if="isSelected(organ.key)" class="organ-action-footer">
-            <button class="back-btn" @click.stop="deselectOrgan(organ.key)">
-              返回
-            </button>
-          </div>
-        </div>
+          <template #content>
+            <OrganHoverContent :organ="organ" />
+          </template>
+        </Popover>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, markRaw } from 'vue'
 import { currentOrganChoice, confirmOrganChoice } from '@/ui/hooks/interaction/organChoice'
 import { getLazyModule } from '@/core/utils/lazyLoader'
-import type { OrganMap } from '@/core/objects/target/Organ'
+import { Organ, type OrganMap } from '@/core/objects/target/Organ'
 import { organRewardActionRegistry } from '@/static/registry/organRewardActionRegistry'
 import type { OrganRewardAction } from '@/core/types/organRewardAction'
 import { nowPlayer } from '@/core/objects/game/run'
+import { getPartLabel } from '@/static/list/target/organPart'
+import Popover from '@/ui/components/global/Popover.vue'
+import OrganHoverContent, { organHoverMaxWidth } from '@/ui/components/interaction/OrganHoverContent.vue'
 
 const visible = computed(() => currentOrganChoice.value !== null)
 const config = computed(() => currentOrganChoice.value)
@@ -76,6 +86,10 @@ const organOptions = computed(() => {
     .map(key => organList.find(o => o.key === key))
     .filter((o): o is OrganMap => o !== undefined)
 })
+
+const organPreviews = computed(() =>
+    organOptions.value.map(data => markRaw(new Organ(data)))
+)
 
 const selectCount = computed(() => config.value?.maxSelect || 1)
 const actionMode = computed(() => config.value?.actionMode || 'selectOnly')
@@ -175,7 +189,7 @@ function getOrganAction(organKey: string): string | undefined {
 }
 
 // 检查动作是否可用
-function isActionEnabled(action: OrganRewardAction, organ: OrganMap): boolean {
+function isActionEnabled(action: OrganRewardAction, _organ: Organ): boolean {
   if (typeof action.enabled === 'function') {
     // 这里需要创建临时 Organ 对象来检查
     return true  // 简化处理，实际可以更精确
@@ -258,6 +272,10 @@ function handleConfirm() {
   display: flex;
   flex-direction: column;
   gap: 15px;
+
+  :deep(.popover-trigger) {
+    display: block;
+  }
 }
 
 .organ-card {
@@ -290,10 +308,9 @@ function handleConfirm() {
   color: #333;
 }
 
-.organ-description {
+.organ-meta {
   font-size: 14px;
   color: #666;
-  line-height: 1.5;
 }
 
 .choice-actions {

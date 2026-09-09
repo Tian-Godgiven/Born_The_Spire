@@ -81,8 +81,9 @@ const { remove } = entity.trigger.appendTrigger({
 ### 其他核心系统
 
 - **依赖注入容器**：`src/core/container.ts`，注册了工厂函数和单例（modifierManager 等）
-- **懒加载系统**：`src/core/utils/lazyLoader.ts`，避免核心类与数据配置文件的循环依赖
-- **CRITICAL**：本项目是 Vite + ES Modules，**不可使用 `require()`**，循环依赖用动态 `import()` 解决
+- **懒加载系统**：`src/core/utils/lazyLoader.ts`，只延迟数据表（organList / cardList / effectMap 等），避免核心类在加载阶段去碰配置
+- **工厂**：`src/core/factories.ts`，目前只负责 `new` + `initialize()`，去留另议。`createPlayer` / `createEnemy` 不能顶层值导入（会在加载 `Chara` 时提前执行子类）
+- **CRITICAL**：Vite + ES Modules，**不可使用 `require()`**。循环依赖优先 `import type`、懒加载数据、preload 分层。`await import()` 只放在 `preload.ts`、`lazyLoader` 的 loader、`initContainer()`，以及工厂里对 `Player` / `Enemy` 的延迟取值。见《常见错误排查手册》L1
 
 ### Key System Objects（`src/core/objects/system/`）
 
@@ -276,6 +277,6 @@ await completeAndGoNext()   // 完成当前房间，显示地图让玩家选择�
 - **`效果实现场景手册.md`** — 10 场景横切手册：EffectUnit 数组、`$` 引用表达式、影响牌堆/status/state、拦截修改参数、新建 EffectFunc
 - **`事件实现场景手册.md`** — 10 场景：单幕/多幕/ifAble/rewards/互斥组/选择界面/saveData+ifShow/嵌入战斗/customCallback/新增 event effect；含 eventEffectMap 速查与 8 个常见坑
 - **`动画实现场景手册.md`** — 13 场景 + AnimationManager 内部机制 + 13 个常见坑：复用/注册 preset、useAnimation 组件接入、多阶段演出、watch 驱动、channel/priority/repeat/interruptible 决策、append 跳字（已实证）、注册动画类别与全局跳过/调速；replace 模式仍未实测
-- **`常见错误排查手册.md`** — 跨类型错误主题分类：事件系统绕过、修饰器误清理、触发器 when/how 错用等
+- **`常见错误排查手册.md`** — 跨类型错误主题分类：事件系统绕过、修饰器误清理、触发器 when/how 错用、模块加载顺序（Cannot access before initialization）等
 
 场景手册与开发指南的分工：开发指南答「需要动哪些文件、字段格式」，场景手册答「我想做出 XX 效果，具体数据怎么写」。

@@ -20,22 +20,18 @@
         </span>
     </div>
 
-    <!-- 结构化描述渲染 -->
+    <!-- 术语板绑在 DescribeText 上；锚点是整张卡，词条走 extraGlossaries -->
     <div class="describe">
-        <DescribeText :describe="describeToShow" :target="enhancedCard" />
+        <DescribeText
+            :describe="describeToShow"
+            :target="enhancedCard"
+            :glossary-anchor="cardRef"
+            glossary-placement="right"
+            glossary-align="trigger"
+            :extra-glossaries="entries"
+            :glossary-disabled="card.isDisabled"
+        />
     </div>
-
-    <!-- 整卡术语说明：触发区是卡牌自身，这里只声明浮层 -->
-    <Popover
-        inline
-        :trigger-element="cardRef"
-        :disabled="card.isDisabled || allGlossaries.length === 0"
-        placement="right"
-    >
-        <template #content>
-            <GlossaryPanel :glossaries="allGlossaries" />
-        </template>
-    </Popover>
 </div>
 </template>
 
@@ -43,10 +39,7 @@
 import type { Card } from '@/core/objects/item/Subclass/Card';
 import type { Entity } from '@/core/objects/system/Entity';
 import { getStatusValue, ifHaveStatus } from '@/core/objects/system/status/Status';
-import { getCardGlossaries } from '@/ui/hooks/express/glossary';
-import GlossaryPanel from '@/ui/components/display/GlossaryPanel.vue';
 import DescribeText from '@/ui/components/display/DescribeText.vue';
-import Popover from '@/ui/components/global/Popover.vue';
 import { computed, ref, type PropType } from 'vue';
 import { entryDefinitions } from '@/core/objects/system/Entry';
 import { getEntryModifier } from '@/core/objects/system/modifier/EntryModifier';
@@ -131,9 +124,6 @@ const entries = computed(() => {
 function getEntryLabel(entryKey: string): string {
     return entryDefinitions[entryKey]?.label || entryKey
 }
-
-// 收集所有需要显示的术语（词条 + describe中的术语 + 临时效果中的术语）
-const allGlossaries = computed(() => getCardGlossaries(card))
 
 // 获取临时移除时机的文本
 function getRemoveOnText(): string {

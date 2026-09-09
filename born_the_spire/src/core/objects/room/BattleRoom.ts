@@ -32,7 +32,7 @@ export type EnemyInstanceConfig = string | {
  * 战斗房间配置
  */
 export interface BattleRoomConfig extends RoomConfig {
-    type: "battle"
+    type: "battle" | "eliteBattle" | "elitePlusBattle" | "bossBattle"
     battleType?: BattleRoomType  // 战斗类型：normal, elite, boss
     enemyConfigs?: EnemyMap[] | EnemyInstanceConfig[]    // 敌人配置列表或实例配置
     customData?: {

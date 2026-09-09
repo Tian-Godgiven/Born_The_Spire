@@ -50,6 +50,12 @@ onMounted(()=>{
 </script>
 
 <style lang="scss">
+@use './ui/styles/variables' as *;
+
+:root {
+  --popover-hover-open-delay: #{$popover-hover-open-delay};
+}
+
 body{
   margin: 0;
 }

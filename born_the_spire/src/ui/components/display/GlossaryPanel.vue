@@ -1,21 +1,22 @@
 <template>
-<div class="glossary-panel" v-if="glossaries.length > 0">
+<div class="glossary-panel" v-if="items.length > 0">
     <div
-        v-for="glossaryKey in glossaries"
-        :key="glossaryKey"
+        v-for="item in items"
+        :key="item.id"
         class="glossary-item"
     >
-        <div class="glossary-term">{{ getGlossaryLabel(glossaryKey) }}</div>
-        <div class="glossary-desc">{{ getGlossaryDescription(glossaryKey) }}</div>
+        <div class="glossary-term">{{ item.label }}</div>
+        <div class="glossary-desc">{{ getDescribe(item.describe) }}</div>
     </div>
 </div>
 </template>
 
 <script setup lang="ts">
-import { getGlossaryLabel, getGlossaryDescription } from '@/ui/hooks/express/glossary'
+import { getDescribe } from '@/ui/hooks/express/describe'
+import type { GlossaryPanelItem } from '@/ui/hooks/express/glossary'
 
 defineProps<{
-    glossaries: string[]
+    items: GlossaryPanelItem[]
 }>()
 </script>
 
