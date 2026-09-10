@@ -7,7 +7,8 @@ import { newLog } from "@/ui/hooks/global/log"
 import { doEvent } from "@/core/objects/system/ActionEvent"
 import { nowPlayer } from "@/core/objects/game/run"
 import { getLazyModule } from "@/core/utils/lazyLoader"
-import { randomChoices, randomChoice, randomChance, randomWeightedChoice } from "@/core/hooks/random"
+import { randomChoices, randomChoice, randomChance, randomWeightedChoice, randomInt } from "@/core/hooks/random"
+import { getCurrentValue } from "@/core/objects/system/Current/current"
 import { showRandomCardShowcase } from "@/ui/hooks/interaction/randomCardShowcase"
 import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
 import { getPotionModifier } from "@/core/objects/system/modifier/PotionModifier"
@@ -56,9 +57,14 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
     },
 
     /**
-     * 获得金钱
+     * 获得金钱。amount 固定值；min+max 则在闭区间内随机（含两端）。
      */
-    "gainGold": async (params: { amount: number }) => {
+    "gainGold": async (params: { amount?: number, min?: number, max?: number }) => {
+        let amount = params.amount ?? 0
+        if (params.min != null && params.max != null) {
+            amount = randomInt(params.min, params.max, "gainGold")
+        }
+        if (amount <= 0) return
         await doEvent({
             key: "gainReserve",
             source: nowPlayer,
@@ -66,7 +72,7 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
             target: nowPlayer,
             effectUnits: [{
                 key: "gainReserve",
-                params: { reserveKey: "gold", amount: params.amount }
+                params: { reserveKey: "gold", amount }
             }]
         })
     },
@@ -129,11 +135,16 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
     },
 
     /**
-     * 按百分比失去生命（基于最大生命值）
+     * 按百分比失去生命（基于最大生命值）。
+     * notLethal：至少留 1 点当前生命。
      */
-    "loseHealthPercent": async (params: { percent: number }) => {
+    "loseHealthPercent": async (params: { percent: number, notLethal?: boolean }) => {
         const maxHealth = (nowPlayer.status["max-health"]?.value ?? 0) as number
-        const loseValue = Math.floor(maxHealth * params.percent / 100)
+        let loseValue = Math.floor(maxHealth * params.percent / 100)
+        if (params.notLethal) {
+            const hp = getCurrentValue(nowPlayer, "health", 0)
+            loseValue = Math.min(loseValue, Math.max(0, hp - 1))
+        }
         if (loseValue <= 0) return
         await doEvent({
             key: "loseHealth",
@@ -648,7 +659,7 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
      * 无常之神：单次骰子结果
      * 按阶段的正负概率、大中小权重、结果池，抽出并应用一项结果。
      *
-     * 阶段规则见 文档/设计/第一层事件设计.md 无常之神条目。
+     * 阶段规则见 eventList 的 event_god_of_chance，以及《事件实现场景手册》场景 11。
      */
     "godOfChance_roll": async (params: { stage: number }) => {
         const stage = params.stage

@@ -5,10 +5,6 @@
       <button v-if="cancelable" class="close-btn" @click="handleCancel">取消</button>
     </div>
 
-    <div class="description" v-if="description">
-      {{ description }}
-    </div>
-
     <div class="card-list">
       <div
         v-for="card in availableCards"
@@ -25,12 +21,6 @@
     </div>
 
     <div class="footer">
-      <div class="selection-info">
-        已选择: {{ selectedCards.length }} / {{ maxSelect === Infinity ? '∞' : maxSelect }}
-        <span v-if="minSelect > 0" class="min-hint">
-          (至少选择 {{ minSelect }} 张)
-        </span>
-      </div>
       <button
         class="confirm-btn"
         @click="handleConfirm"
@@ -88,44 +78,34 @@ const availableCards = computed(() => {
 
 // 检查卡牌是否已选中
 function isSelected(card: Card): boolean {
-  return selectedCards.value.includes(card)
+  return selectedCards.value.some(c => c.__id === card.__id)
 }
 
 // 检查是否可以选择该卡牌
 function canSelect(card: Card): boolean {
-  // 如果已选中，总是可以点击（用于取消选择）
   if (isSelected(card)) return true
-
-  // 如果已达到最大选择数量，不能再选
   if (selectedCards.value.length >= maxSelect.value) return false
-
   return true
 }
 
-// 检查是否可以确认
+// 必须选满 minSelect 张才能确认；minSelect 为 0 时可以空确认
 const canConfirm = computed(() => {
-  return selectedCards.value.length >= minSelect.value &&
-         selectedCards.value.length <= maxSelect.value
+  const n = selectedCards.value.length
+  return n >= minSelect.value && n <= maxSelect.value
 })
 
-// 选择/取消选择卡牌
 function handleSelectCard(card: Card) {
   if (!canSelect(card)) return
 
-  const index = selectedCards.value.indexOf(card)
+  if (isSelected(card)) {
+    selectedCards.value = selectedCards.value.filter(c => c.__id !== card.__id)
+    return
+  }
 
-  if (index >= 0) {
-    // 已选中，取消选择
-    selectedCards.value.splice(index, 1)
+  if (maxSelect.value === 1) {
+    selectedCards.value = [card]
   } else {
-    // 未选中，添加选择
-    if (maxSelect.value === 1) {
-      // 单选模式：替换当前选择
-      selectedCards.value = [card]
-    } else {
-      // 多选模式：添加到列表
-      selectedCards.value.push(card)
-    }
+    selectedCards.value = [...selectedCards.value, card]
   }
 }
 
@@ -147,19 +127,16 @@ function handleCancel() {
   min-width: 600px;
   max-width: 900px;
   background: white;
-  border: 2px solid black;
 
   .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid black;
+    margin-bottom: 16px;
 
     h2 {
       margin: 0;
-      font-size: 24px;
+      font-size: 20px;
     }
 
     .close-btn {
@@ -175,21 +152,14 @@ function handleCancel() {
     }
   }
 
-  .description {
-    margin-bottom: 16px;
-    font-size: 14px;
-    color: #666;
-    line-height: 1.5;
-  }
-
   .card-list {
     display: flex;
     flex-wrap: wrap;
     gap: 16px;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     max-height: 500px;
     overflow-y: auto;
-    padding: 10px;
+    padding: 20px;
 
     .card-item {
       position: relative;
@@ -228,22 +198,7 @@ function handleCancel() {
 
   .footer {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px;
-    border: 2px solid black;
-    background: rgba(0, 0, 0, 0.02);
-
-    .selection-info {
-      font-size: 16px;
-      font-weight: bold;
-
-      .min-hint {
-        font-size: 14px;
-        font-weight: normal;
-        color: #666;
-      }
-    }
+    justify-content: flex-end;
 
     .confirm-btn {
       padding: 10px 20px;

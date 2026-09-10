@@ -163,8 +163,7 @@ export async function chooseCardsToRemove(
   minCount: number = 0
 ): Promise<Card[]> {
   return showCardChoice({
-    title: "选择要移除的卡牌",
-    description: count === 1 ? "选择一张卡牌移除" : `选择最多 ${count} 张卡牌移除`,
+    title: count === 1 ? "选择1张卡牌移除" : `选择${count}张卡牌移除`,
     cards: player.getCardGroup(),
     minSelect: minCount,
     maxSelect: count,

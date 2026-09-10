@@ -6,7 +6,8 @@
 import type { EventMap } from "@/core/types/EventMapData"
 import { eventEffectMap } from "./eventEffectMap"
 import { nowPlayer } from "@/core/objects/game/run"
-import { randomChoice, randomChance } from "@/core/hooks/random"
+import { randomChoice, randomChance, randomInt } from "@/core/hooks/random"
+import { getCurrentValue } from "@/core/objects/system/Current/current"
 import { getCardModifier } from "@/core/objects/system/modifier/CardModifier"
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
 import { isOrgan } from "@/core/utils/typeGuards"
@@ -15,6 +16,12 @@ import { doEvent } from "@/core/objects/system/ActionEvent"
 import { upgradeCard } from "@/core/effects/card/cardUpgrade"
 import type { Organ } from "@/core/objects/target/Organ"
 import type { Card } from "@/core/objects/item/Subclass/Card"
+
+function nonLethalHalfMaxHealth(): number {
+    const maxHealth = Number(nowPlayer.status["max-health"]?.value ?? 0)
+    const hp = getCurrentValue(nowPlayer, "health", 0)
+    return Math.min(Math.floor(maxHealth * 0.5), Math.max(0, hp - 1))
+}
 
 /**
  * 收藏家 NPC 点名：按稀有度优先（rare > uncommon > common），同层随机。
@@ -186,78 +193,125 @@ export const eventList: EventMap[] = [
         ]
     },
 
-    // 示例事件2：宝箱
+    // 两个宝箱
     {
         key: "event_treasure_chest",
-        title: "宝箱",
-        description: "你发现了一个宝箱，里面似乎有什么东西...",
+        title: "两个宝箱",
+        description: "一座荒废的垃圾堆里赫然摆着两个一大一小的宝箱，大的那个宝箱上似乎沾着血迹……",
         icon: "📦",
-        options: [
+        scenes: [
             {
-                title: "打开宝箱",
-                description: "获得物质",
-                icon: "🔓",
-                rewards: [
-                    { type: "material", amount: 100 }
+                key: "offer",
+                title: "两个宝箱",
+                description: "一座荒废的垃圾堆里赫然摆着两个一大一小的宝箱，大的那个宝箱上似乎沾着血迹……",
+                options: [
+                    {
+                        title: "打开小宝箱",
+                        description: "获得一些奖励",
+                        icon: "📦",
+                        nextScene: "result_small",
+                        saveData: (data) => {
+                            data.gold = randomInt(30, 40, "event_treasure_small_gold")
+                        },
+                        customCallback: async (data) => {
+                            await eventEffectMap.gainGold({ amount: data.gold })
+                        }
+                    },
+                    {
+                        title: "打开大宝箱",
+                        description: "获得更多奖励，但代价是……？",
+                        icon: "🩸",
+                        nextScene: "result_big",
+                        saveData: (data) => {
+                            data.gold = randomInt(50, 80, "event_treasure_big_gold")
+                            data.damage = nonLethalHalfMaxHealth()
+                        },
+                        customCallback: async (data) => {
+                            if (data.damage > 0) {
+                                await eventEffectMap.loseHealth({ amount: data.damage })
+                            }
+                            await eventEffectMap.gainGold({ amount: data.gold })
+                            await eventEffectMap.gainRandomRelic({ count: 1, rarity: "common" })
+                        }
+                    }
                 ]
             },
             {
-                title: "小心打开（失去 10 生命）",
-                description: "获得更多物质和随机遗物",
-                icon: "⚠️",
-                effects: [
-                    { key: "loseHealth", params: { amount: 10 } }
-                ],
-                rewards: [
-                    { type: "material", amount: 150 },
-                    { type: "relicSelect", draw: { count: 3 }, selectCount: 1 }
+                key: "result_small",
+                title: "两个宝箱",
+                description: (data) => `小箱子里有${data.gold}金币，或许大宝箱里会有更多……但垃圾堆骤然坍塌，你没有机会知道了。`,
+                options: [
+                    { title: "离开", description: "离开", icon: "🚪" }
                 ]
             },
             {
-                title: "离开",
-                description: "不冒险",
-                icon: "🚪",
-                effects: [
-                    { key: "nothing" }
+                key: "result_big",
+                title: "两个宝箱",
+                description: (data) => `大箱子里有${data.gold}金币，还有一件遗物！/br/但就在你将其取出时，箱子猛地合上狠狠地咬了你一口，造成${data.damage}点伤害！/br/所幸你将战利品带了出来，至于小箱子……你可不打算再冒一次风险……`,
+                options: [
+                    { title: "离开", description: "离开", icon: "🚪" }
                 ]
             }
         ]
     },
 
-    // 示例事件3：治疗泉水
+    // 清澈泉水
     {
         key: "event_healing_spring",
-        title: "治疗泉水",
-        description: "你发现了一处清澈的泉水，散发着治愈的光芒...",
+        title: "清澈泉水",
+        description: "你在一片狼藉中发现了一处明透的泉水",
         icon: "💧",
-        mutuallyExclusiveGroups: [
-            ["drink_spring", "purify_cards"]  // 饮用和净化互斥，只能选一个
-        ],
-        options: [
+        scenes: [
             {
-                key: "drink_spring",
-                title: "饮用泉水",
-                description: "回复 50 生命",
-                icon: "🍶",
-                effects: [
-                    { key: "healHealth", params: { amount: 50 } }
+                key: "offer",
+                title: "清澈泉水",
+                description: "你在一片狼藉中发现了一处明透的泉水",
+                options: [
+                    {
+                        title: "吸收",
+                        description: "恢复50%最大生命",
+                        icon: "🍶",
+                        nextScene: "result_absorb",
+                        saveData: (data) => {
+                            const maxHealth = Number(nowPlayer.status["max-health"]?.value ?? 0)
+                            const hp = getCurrentValue(nowPlayer, "health", 0)
+                            data.heal = Math.min(
+                                Math.floor(maxHealth * 0.5),
+                                Math.max(0, maxHealth - hp)
+                            )
+                        },
+                        customCallback: async (data) => {
+                            if (data.heal > 0) {
+                                await eventEffectMap.healHealth({ amount: data.heal })
+                            }
+                        }
+                    },
+                    {
+                        title: "浸泡",
+                        description: "从你的牌组中选择一张卡牌将其移除",
+                        icon: "✨",
+                        ifAble: "$owner.cardCount() >= 1",
+                        nextScene: "result_soak",
+                        effects: [
+                            { key: "removeCard", params: { count: 1, minCount: 1 } }
+                        ]
+                    }
                 ]
             },
             {
-                key: "purify_cards",
-                title: "用泉水净化（移除一张卡牌）",
-                description: "净化你的牌组",
-                icon: "✨",
-                effects: [
-                    { key: "removeCard", params: { count: 1, minCount: 0 } }
+                key: "result_absorb",
+                title: "清澈泉水",
+                description: "洁净的泉水修复了你的存在，你感到更加完整……",
+                options: [
+                    { title: "离开", description: "离开", icon: "🚪" }
                 ]
             },
             {
-                title: "离开",
-                description: "保留泉水给其他人",
-                icon: "🚪",
-                effects: [
-                    { key: "nothing" }
+                key: "result_soak",
+                title: "清澈泉水",
+                description: "浸泡在透明的池水中，你感到一些多余的存在从你身上被稀释而出……",
+                options: [
+                    { title: "离开", description: "离开", icon: "🚪" }
                 ]
             }
         ]
