@@ -202,7 +202,7 @@ function inferIntentFromCard(card: Card): IntentType {
  *
  * 意图类型优先使用 BehaviorPattern 声明的 intentType，
  * 未声明时从所选卡牌的效果推导。
- * 意图数值从卡牌效果的 params.value 读取，再按 before 上的改参效果折叠（力量、易伤、飞行减半）。
+ * 意图数值从卡牌效果的 params.value 读取，再按 before / on 上的改参效果折叠（力量、易伤、飞行减半）。
  * multiplier 会乘进单段数值（放电 3×充能层）；repeatEffects 会展开成段数（群咬 3×2）。
  *
  * @param cards 要执行的卡牌列表

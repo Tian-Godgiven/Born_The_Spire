@@ -222,14 +222,13 @@ export async function startNewRun(seed?: string, ascensionLevel: number = 0, ini
     // 生成地图（使用 GameRun 的种子）
     const floorMap = nowGameRun.floorManager.generateMap({
         seed: nowGameRun.seed,  // 传递种子
-        // 前3层不出现精英战斗和水池；前3场实际进入的普通战斗从弱池抽
+        // 前5层不出现精英；前3层不出现水池；前3场实际进入的普通战斗从弱池抽
         layerSpecificWeights: {
             0: { battle: 1, eliteBattle: 0, event: 0, pool: 0, blackStore: 0 },      // 第1层：只有战斗
             1: { battle: 1, eliteBattle: 0, event: 0.2, pool: 0, blackStore: 0 },    // 第2层：战斗+少量事件
             2: { battle: 1, eliteBattle: 0, event: 0.2, pool: 0, blackStore: 0 },    // 第3层：战斗+少量事件
-            // 第4层开始允许精英和水池
-            3: { battle: 1, eliteBattle: 0.3, event: 0.3, pool: 0.5, blackStore: 0 },
-            4: { battle: 1, eliteBattle: 0.3, event: 0.3, pool: 0.5, blackStore: 0 }
+            3: { battle: 1, eliteBattle: 0, event: 0.3, pool: 0.5, blackStore: 0 },  // 第4层：可出水池，仍无精英
+            4: { battle: 1, eliteBattle: 0, event: 0.3, pool: 0.5, blackStore: 0 }   // 第5层：仍无精英
         }
     })
 

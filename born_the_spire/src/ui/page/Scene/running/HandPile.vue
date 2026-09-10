@@ -1,5 +1,5 @@
 <template>
-<div class="handPile center">
+<TransitionGroup name="hand-card" tag="div" class="handPile center">
     <div
         v-for="(card, index) in visibleHandPile"
         :key="card.__id"
@@ -10,7 +10,7 @@
     >
         <HandCard :card />
     </div>
-</div>
+</TransitionGroup>
 </template>
 
 <script setup lang='ts'>
@@ -47,9 +47,33 @@
     display: flex;
     align-items: flex-end;
     justify-content: center;
+    position: relative;
 }
 
 .hand-card-slot {
     transition: margin-left 0.15s ease;
+}
+
+.hand-card-enter-active,
+.hand-card-leave-active {
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.hand-card-enter-from {
+    opacity: 0;
+    transform: translate(-80px, 24px) scale(0.9);
+}
+
+.hand-card-leave-to {
+    opacity: 0;
+    transform: translate(80px, -12px) scale(0.85);
+}
+
+.hand-card-leave-active {
+    position: absolute;
+}
+
+.hand-card-move {
+    transition: transform 0.15s ease;
 }
 </style>

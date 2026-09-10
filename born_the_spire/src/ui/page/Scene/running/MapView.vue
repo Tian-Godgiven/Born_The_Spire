@@ -32,7 +32,7 @@
           <div
             v-for="node in nodes"
             :key="node.id"
-            :class="['map-node', node.state]"
+            :class="['map-node', node.state, `tone-${node.tone}`, { 'is-boss': node.roomType === 'bossBattle' }]"
             :style="{
               left: node.x + 'px',
               top: node.y + 'px'
@@ -41,21 +41,26 @@
             @mouseenter="hoveredNode = node"
             @mouseleave="hoveredNode = null"
           >
-            <!-- Hover效果圆圈（内嵌SVG实现画圆） -->
-            <svg class="hover-ring" width="56" height="56" viewBox="0 0 56 56">
-              <circle
-                cx="28"
-                cy="28"
-                r="26"
-                fill="none"
-                stroke="#333"
-                stroke-width="2"
-                class="hover-circle"
-              />
-            </svg>
+            <template v-if="node.roomType === 'bossBattle'">
+              <div class="boss-name">【{{ getBattleName(node) }}】</div>
+            </template>
+            <template v-else>
+              <!-- Hover效果圆圈（内嵌SVG实现画圆） -->
+              <svg class="hover-ring" width="56" height="56" viewBox="0 0 56 56">
+                <circle
+                  cx="28"
+                  cy="28"
+                  r="26"
+                  fill="none"
+                  stroke="#333"
+                  stroke-width="2"
+                  class="hover-circle"
+                />
+              </svg>
 
-            <!-- 节点图标 -->
-            <div class="node-icon">{{ getNodeIcon(node) }}</div>
+              <!-- 节点图标 -->
+              <div class="node-icon">{{ getNodeIcon(node) }}</div>
+            </template>
 
             <!-- 当前节点标记 -->
             <div v-if="node.state === 'current'" class="current-marker"></div>
@@ -78,6 +83,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { nowGameRun, enterRoom } from '@/core/objects/game/run'
 import type { MapNode } from '@/core/objects/system/map/MapNode'
 import type { RoomType } from '@/core/objects/room/Room'
+import { battleList } from '@/static/list/room/battle/battleList'
 
 // 定义 emit
 const emit = defineEmits<{
@@ -122,20 +128,20 @@ const svgHeight = computed(() => {
 })
 
 // 计算节点位置
+type NodeTone = 'active' | 'ahead' | 'dead'
+
 const nodes = computed(() => {
   if (!floorMap.value) return []
 
-  const result: Array<MapNode & { x: number; y: number }> = []
+  const result: Array<MapNode & { x: number; y: number; tone: NodeTone }> = []
 
   for (let layer = 0; layer < floorMap.value.totalLayers; layer++) {
     const layerNodes = floorMap.value.getLayer(layer)
     const layerWidth = (layerNodes.length - 1) * nodeSpacing
 
     layerNodes.forEach((node, index) => {
-      // 计算Y坐标（从下到上）
       const y = svgHeight.value - padding - layer * layerHeight
 
-      // 计算X坐标（居中分布）
       let x: number
       if (layerNodes.length === 1) {
         x = svgWidth.value / 2
@@ -144,9 +150,7 @@ const nodes = computed(() => {
         x = startX + index * nodeSpacing
       }
 
-      // 应用节点的水平偏移（如果有）
       if (node.x !== undefined && node.x !== 0.5) {
-        // node.x 是 0-1 的比例，转换为实际偏移
         const offset = (node.x - 0.5) * nodeSpacing * 0.5
         x += offset
       }
@@ -154,13 +158,20 @@ const nodes = computed(() => {
       result.push({
         ...node,
         x,
-        y
+        y,
+        tone: getNodeTone(node)
       })
     })
   }
 
   return result
 })
+
+function getNodeTone(node: MapNode): NodeTone {
+  if (node.state === 'current' || node.state === 'available') return 'active'
+  if (node.state === 'completed') return 'dead'
+  return 'ahead'
+}
 
 // 计算连接线
 const connections = computed(() => {
@@ -224,7 +235,13 @@ function getNodeIcon(node: MapNode): string {
 }
 
 // 获取节点显示名称
-function getNodeDisplayName(node: MapNode): string {
+function getBattleName(node: MapNode): string {
+  if (!node.roomKey) return getNodeTypeName(node.roomType)
+  const battle = battleList.find(b => b.key === node.roomKey)
+  return battle?.name || getNodeTypeName(node.roomType)
+}
+
+function getNodeTypeName(roomType: RoomType): string {
   const nameMap: Record<RoomType, string> = {
     init: '初始',
     battle: '战斗',
@@ -240,7 +257,12 @@ function getNodeDisplayName(node: MapNode): string {
     defeat: '失败',
     victory: '通关'
   }
-  return nameMap[node.roomType] || '未知'
+  return nameMap[roomType] || '未知'
+}
+
+function getNodeDisplayName(node: MapNode): string {
+  if (node.roomType === 'bossBattle') return getBattleName(node)
+  return getNodeTypeName(node.roomType)
 }
 
 // 获取节点状态文本
@@ -392,9 +414,6 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   overflow: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   cursor: grab;
   user-select: none;
 
@@ -405,7 +424,7 @@ onMounted(() => {
 
 .map-content {
   position: relative;
-  flex-shrink: 0;
+  margin: 0 auto;
 }
 
 .map-svg {
@@ -419,15 +438,14 @@ onMounted(() => {
 
 /* 连接线样式 */
 .connection {
-  stroke: #ccc;
-  transition: stroke 0.3s;
+  stroke: #ddd;
 
   &.available {
-    stroke: #666;
+    stroke: #222;
   }
 
   &.completed {
-    stroke: #4caf50;
+    stroke: #666;
   }
 }
 
@@ -459,21 +477,91 @@ onMounted(() => {
 
   &.locked {
     cursor: not-allowed;
-    opacity: 0.5;
   }
 
-  &.completed {
-    opacity: 0.7;
+  &.is-boss {
+    width: auto;
+    height: auto;
+    padding: 4px 0;
+
+    &.available:hover .boss-name {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    .current-marker {
+      display: none;
+    }
   }
 }
 
-/* 节点图标 */
+.boss-name {
+  font-family: "SimHei", "Heiti SC", "Microsoft YaHei", sans-serif;
+  font-size: 22px;
+  font-weight: bold;
+  color: #000;
+  white-space: nowrap;
+  line-height: 1.2;
+  user-select: none;
+  pointer-events: none;
+  z-index: 2;
+  filter: grayscale(1);
+}
+
+.map-node.is-boss.current .boss-name {
+  text-decoration: underline;
+}
+
 .node-icon {
   font-size: 32px;
   user-select: none;
   pointer-events: none;
   position: relative;
   z-index: 2;
+  filter: grayscale(1);
+}
+
+.tone-active .node-icon,
+.tone-active .boss-name {
+  filter: grayscale(1);
+}
+
+.tone-dead .node-icon,
+.tone-dead .boss-name {
+  filter: grayscale(1) brightness(0.78);
+  opacity: 0.7;
+}
+
+.tone-ahead .node-icon,
+.tone-ahead .boss-name {
+  filter: grayscale(1) brightness(1.55);
+  opacity: 0.55;
+}
+
+.map-node.available .node-icon,
+.map-node.available .boss-name {
+  animation: map-node-pulse 0.9s ease-in-out infinite;
+}
+
+.map-node.available .hover-ring {
+  animation: map-node-pulse-centered 0.9s ease-in-out infinite;
+}
+
+@keyframes map-node-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.14);
+  }
+}
+
+@keyframes map-node-pulse-centered {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.14);
+  }
 }
 
 /* Hover圆圈样式 - 使用SVG实现画圆效果 */
@@ -504,25 +592,13 @@ onMounted(() => {
   position: absolute;
   width: 66px;
   height: 66px;
-  border: 3px solid gold;
+  border: 2px solid #000;
   border-radius: 50%;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
   z-index: 0;
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  50% {
-    opacity: 0.5;
-    transform: translate(-50%, -50%) scale(1.1);
-  }
 }
 
 /* 节点信息面板 */

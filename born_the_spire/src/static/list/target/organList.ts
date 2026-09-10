@@ -775,7 +775,7 @@ export const organList:OrganMap[] = [
     describe: [
         "初始拥有", { key: ["status", "max-wingStacks"] }, "层",
         "<br>",
-        "战斗开始时获得等同于层数的", {$:"飞行"},
+        "战斗开始时获得等同于层数的", {$:"飞飘"},
         "<br>",
         "每次受到攻击时层数 -1"
     ],
@@ -838,9 +838,9 @@ export const organList:OrganMap[] = [
     reaction: {
         openingFlight: [{
             key: "openingFlight",
-            label: "薄翅：开局飞行",
+            label: "薄翅：开局飞飘",
             targetType: "triggerOwner",
-            effect: [{ key: "applyState", params: { stateKey: "flight", stacks: "$owner.status(wingStacks)" } }]
+            effect: [{ key: "applyState", params: { stateKey: "flutter", stacks: "$owner.status(wingStacks)" } }]
         }],
         consumeWing: [{
             key: "consumeWing",

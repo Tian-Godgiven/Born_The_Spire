@@ -1,5 +1,5 @@
 /**
- * 卡面数字预览。意图和卡面共用 previewEffect：只折叠 before 上的改参效果。
+ * 卡面数字预览。意图和卡面共用 previewEffect：折叠 before / on 上的改参效果。
  */
 
 import type { Card } from "@/core/objects/item/Subclass/Card"

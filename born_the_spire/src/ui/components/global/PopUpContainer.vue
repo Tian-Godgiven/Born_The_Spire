@@ -1,20 +1,22 @@
 <template>
-<div id="popUpContainer" class="popUpContainer" >
+<Teleport to="body">
+<div id="popUpContainer" class="popUpContainer" :style="{ zIndex: SHOW_POPUP_Z_INDEX }">
     <PopUp :key="popUp.id" v-for="popUp in popUpList" :popUp="popUp"/>
 </div>
+</Teleport>
 </template>
 
 <script setup lang='ts'>
 import { popUpList } from '@/ui/hooks/global/popUp';
 import PopUp from './PopUp.vue';
+import { SHOW_POPUP_Z_INDEX } from '@/ui/hooks/interaction/popoverHost'
 
 </script>
 
 <style scoped lang='scss'>
 //弹窗容器
 .popUpContainer{
-	z-index: 9999;
-	position: absolute;
+	position: fixed;
 	height: 100%;
 	width: 100%;
 	top:0;

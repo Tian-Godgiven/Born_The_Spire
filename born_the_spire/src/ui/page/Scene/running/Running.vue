@@ -57,6 +57,7 @@ import GlobalMessage from '@/ui/components/display/GlobalMessage.vue'
 import { nowGameRun } from '@/core/objects/game/run'
 import { getRoomComponent } from '@/ui/registry/roomComponentRegistry'
 import { setShowMapCallback } from '@/core/hooks/step'
+import { hideRewardUI } from '@/ui/hooks/interaction/rewardDisplay'
 
 // 获取当前房间对应的组件
 const currentRoomComponent = computed(() => {
@@ -78,6 +79,7 @@ const hasOpenedMap = ref(false)
 
 // 显示地图
 function showMap() {
+    hideRewardUI()
     mapOverlay.value?.show()
     // 标记用户已打开过地图
     hasOpenedMap.value = true

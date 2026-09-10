@@ -1,5 +1,5 @@
 import type { Entity } from "../Entity"
-import type { StateData } from "../State"
+import type { StateData, Stack } from "../State"
 import type { LogUnit } from "@/ui/hooks/global/log"
 import type { TriggerEventConfig } from "@/core/types/object/trigger"
 import type { ConditionContext } from "@/core/types/ConditionSystem"
@@ -106,10 +106,10 @@ export class StateModifier {
         // 深拷贝 stateData，避免污染原始数据
         const clonedStateData = _.cloneDeep(stateData)
 
-        // 创建新状态
+        // 创建新状态。数字层数会带上模板里的 `n`（飞行记下获得时的层数）
         const state = new State({
             ...clonedStateData,
-            stacks: stacks
+            stacks: resolveInitialStacks(clonedStateData, stacks)
         })
 
         // 创建 unit 管理副作用（同时添加到响应式 units 数组）
@@ -163,6 +163,8 @@ export class StateModifier {
                     defaultStack.stack += stacks
                     newLog([this.owner, "的", state, "层数增加", stacks])
                 }
+                const cap = state.stacks.find(s => s.key === "n")
+                if (cap) cap.stack += stacks
             } else {
                 // 处理多个层数
                 for (const newStack of stacks) {
@@ -181,6 +183,8 @@ export class StateModifier {
                     defaultStack.stack = stacks
                     newLog([this.owner, "的", state, "层数刷新为", stacks])
                 }
+                const cap = state.stacks.find(s => s.key === "n")
+                if (cap) cap.stack = stacks
             } else {
                 for (const newStack of stacks) {
                     const existingStack = state.stacks.find(s => s.key === newStack.key)
@@ -193,7 +197,10 @@ export class StateModifier {
         } else if (behavior === "none") {
             // 不做任何处理
             newLog([this.owner, "已有", state, "，无法重复获得"])
+            return
         }
+
+        this.emitStateChanged(state.key)
     }
 
     /**
@@ -531,6 +538,38 @@ export class StateModifier {
     getAllStates(): State[] {
         return this.units.map(u => u.state)
     }
+}
+
+/**
+ * 施加时若只给了一个数字，带上状态模板里 default 以外的层。
+ * `n` 记下获得时的层数（飞行回合开始恢复用），施加多少 `n` 就是多少。
+ */
+function resolveInitialStacks(
+    stateData: StateData,
+    stacks: number | Array<{key: string, stack: number}>
+): number | Stack[] {
+    const template: Stack[] = typeof stateData.stacks === "number"
+        ? [{ key: "default", stack: stateData.stacks }]
+        : (stateData.stacks ? _.cloneDeep(stateData.stacks) : [])
+    const extras = template.filter(s => s.key !== "default")
+    if (extras.length === 0) return stacks
+
+    if (typeof stacks === "number") {
+        return [
+            { key: "default", stack: stacks },
+            ...extras.map(s => ({ ...s, stack: s.key === "n" ? stacks : s.stack }))
+        ]
+    }
+
+    const merged = stacks.map(s => ({ ...s }))
+    for (const extra of extras) {
+        if (merged.some(s => s.key === extra.key)) continue
+        const fallback = extra.key === "n"
+            ? (merged.find(s => s.key === "default")?.stack ?? extra.stack)
+            : extra.stack
+        merged.push({ ...extra, stack: fallback })
+    }
+    return merged
 }
 
 /**

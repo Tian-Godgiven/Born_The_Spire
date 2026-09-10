@@ -24,7 +24,7 @@ export const glossaryMap: Record<string, GlossaryEntry> = {
     // describe 里的 {$:"xxx"} 会自动去那些注册表查，不要在这里抄第二份。
     "护甲": {
         label: "护甲",
-        describe: ["抵挡伤害，回合结束时不会消失"],
+        describe: ["抵挡伤害，回合开始时消失"],
         style: {
             color: "#3b82f6",
             fontWeight: "bold"

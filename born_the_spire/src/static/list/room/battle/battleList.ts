@@ -76,7 +76,7 @@ export const battleList: BattleRoomConfig[] = [
         ]
     },
 
-    // 1b. 寄血蜱×1 — 飞行减伤 + 吸血虚弱
+    // 1b. 寄血蜱×1 — 飞飘减伤 + 吸血虚弱
     {
         key: "battle_f1_blood_tick",
         name: "血雾",

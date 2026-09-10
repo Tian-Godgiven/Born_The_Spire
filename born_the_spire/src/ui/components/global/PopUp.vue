@@ -1,6 +1,6 @@
 <template>
 <Transition name="popup-fade" appear>
-    <div class="popUp" :style="{zIndex:index}">
+    <div class="popUp" :style="{ zIndex: (index ?? 0) + 1 }">
         <component :is="innerVue"
             :popUp="popUp"
             :returnValue="popUp?.returnValue"

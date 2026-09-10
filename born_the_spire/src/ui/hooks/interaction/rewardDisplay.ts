@@ -1,5 +1,8 @@
 import { ref } from 'vue'
 import { Reward } from '@/core/objects/reward/Reward'
+import { newLog } from '@/ui/hooks/global/log'
+
+const SELECT_REWARD_TYPES = new Set(['organSelect', 'relicSelect', 'cardSelect'])
 
 /**
  * 通用奖励展示系统
@@ -84,16 +87,55 @@ export function handleExclusiveGroup(claimedReward: Reward) {
  * 确认所有奖励已领取，关闭界面
  */
 export function confirmRewards() {
-    if (rewardResolver) {
-        rewardResolver()
-        rewardResolver = null
-    }
+    releaseRewardWaiter()
 
     currentRewards.value = []
     showRewardUI.value = false
     rewardTitle.value = ""
     rewardDescription.value = ""
     requireAllRewards.value = false
+}
+
+/** 打开地图时先藏起奖励，不清空列表 */
+export function hideRewardUI() {
+    showRewardUI.value = false
+}
+
+/** 关掉地图后，还有没领完的就重新显示 */
+export function restoreRewardUI() {
+    if (currentRewards.value.length > 0) {
+        showRewardUI.value = true
+    }
+}
+
+/** 让 showRewards 的等待结束，房间 complete 才能继续；不清空奖励 */
+export function releaseRewardWaiter() {
+    if (rewardResolver) {
+        rewardResolver()
+        rewardResolver = null
+    }
+}
+
+async function claimRemainingRewards() {
+    for (const reward of currentRewards.value) {
+        if (reward.isClaimed() || reward.isLocked()) continue
+        if (SELECT_REWARD_TYPES.has(reward.type)) {
+            reward.markAsClaimed()
+            continue
+        }
+        await reward.claim()
+        if (!reward.isClaimed()) {
+            newLog([`${reward.getDisplayTitle()} 未能领取（栏位可能已满），已跳过`])
+            reward.markAsClaimed()
+        }
+    }
+}
+
+/** 真正进入下一房间时结算剩余奖励并清空 */
+export async function settlePendingRewards() {
+    if (currentRewards.value.length === 0) return
+    await claimRemainingRewards()
+    confirmRewards()
 }
 
 /**

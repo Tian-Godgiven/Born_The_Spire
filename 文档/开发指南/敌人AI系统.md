@@ -332,18 +332,18 @@ Mod 通过 `registerIntentValueSource(intentType, effectKeys)` 扩展或覆盖�
 
 ### Buff 影响与护甲不扣减
 
-数值不是直接读 `params.value`，而是走 `previewEffect` 折叠 `before` 上的改参效果：
+数值不是直接读 `params.value`，而是走 `previewEffect` 折叠 `before` / `on` 上的改参效果：
 
   source 端 Buff（力量、虚弱等）→ 影响输出
-  target 端 Buff（易伤、飞行减半等）→ 影响接收
-  护甲吸收、飞行扣层、过期隔板掷骰 → **不进预览**
-  `attack` 是挨打，`damage` 是中毒等非挨打；意图的攻击类会读这两种效果 key，但折叠按各自的 before 触发器算
+  target 端 Buff（易伤、飞飘/飞行减半等）→ 影响接收
+  护甲吸收、飞飘/飞行扣层、过期隔板掷骰 → **不进预览**
+  `attack` 是挨打，`damage` 是中毒等非挨打；意图的攻击类会读这两种效果 key，但折叠按各自的 before / on 触发器算
   `multiplier` → 乘进单段数值（放电 `value: 3, multiplier: "$source.stateStack(charge)"`，2 层充能显示 6，不是 3）
   `repeatEffects` → 展开成段数，同值多段显示 `n × m`（群咬 3 点打 2 次显示 `3 × 2`）
   模拟时 medium 必须是卡牌本身，`$owner.status(hits)` 才能解析
   多张行动牌各自算一段 `parts`，不再把两张牌的伤害加进同一个数字
 
-技术实现：`event.simulate = true`，护甲相关触发器在 `simulate` 模式下自动跳过。
+技术实现：`previewEffect` 只跑挂了 `preview` 的改参，护甲吸收没有 `preview`，不会扣格挡。
 
 技术实现：`event.simulate = true`，护甲相关触发器在 `simulate` 模式下自动跳过。
 

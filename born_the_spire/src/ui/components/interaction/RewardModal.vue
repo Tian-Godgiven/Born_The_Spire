@@ -184,7 +184,7 @@
 
 <script setup lang="ts">
 import { ref, computed, markRaw, shallowRef } from 'vue'
-import { currentRewards, showRewardUI, confirmRewards, navigateOnProceed, handleExclusiveGroup, canProceed, requireAllRewards } from '@/ui/hooks/interaction/rewardDisplay'
+import { currentRewards, showRewardUI, navigateOnProceed, handleExclusiveGroup, canProceed, requireAllRewards, hideRewardUI, releaseRewardWaiter, settlePendingRewards } from '@/ui/hooks/interaction/rewardDisplay'
 import { organRewardActionRegistry } from '@/static/registry/organRewardActionRegistry'
 import { nowPlayer } from '@/core/objects/game/run'
 import { getOrganMilestones } from '@/static/list/target/organQuality'
@@ -332,26 +332,19 @@ async function claimReward(reward: any) {
 
 // 前进
 async function handleProceed() {
-  // 自动领取所有未领取且未锁定的奖励
-  for (const reward of rewards.value) {
-    if (!reward.isClaimed() && !reward.isLocked()) {
-      if (reward.type === 'organSelect' || reward.type === 'relicSelect' || reward.type === 'cardSelect') {
-        // 跳过选择类奖励
-        reward.markAsClaimed()
-      } else {
-        await reward.claim()
-      }
-    }
-  }
+  closeOrganReward()
+  closeRelicChoice()
+  closeCardChoice()
 
-  // 关闭奖励界面
-  confirmRewards()
-
-  // 仅在需要自动导航时前往下一步
   if (navigateOnProceed.value) {
+    hideRewardUI()
+    releaseRewardWaiter()
     const { completeAndGoNext } = await import('@/core/hooks/step')
     await completeAndGoNext()
+    return
   }
+
+  await settlePendingRewards()
 }
 </script>
 
@@ -642,8 +635,6 @@ async function handleProceed() {
   overflow-y: auto;
 }
 
-// 遗物/卡牌本身已有黑边，外层只负责选中指示，收紧内边距避免双层框太厚
-.relic-choice-card,
 .card-choice-card {
   padding: 6px;
 }
@@ -663,6 +654,23 @@ async function handleProceed() {
   &.selected {
     border-color: #2d5016;
     background: #e8f5e9;
+  }
+}
+
+.choice-card.relic-choice-card {
+  padding: 0;
+  border: none;
+  background: transparent;
+
+  &:hover,
+  &.selected {
+    border: none;
+    background: transparent;
+  }
+
+  &:hover :deep(.relic),
+  &.selected :deep(.relic) {
+    background: rgba(0, 0, 0, 0.05);
   }
 }
 

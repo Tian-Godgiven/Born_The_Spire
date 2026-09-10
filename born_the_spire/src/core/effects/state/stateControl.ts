@@ -123,3 +123,50 @@ export const changeStateStack: EffectFunc = (event: ActionEvent, effect) => {
 
     return success
 }
+
+/**
+ * 将目标状态的层数设为绝对值
+ *
+ * params:
+ * - stateKey: string - 状态的 key
+ * - stackKey: string - 层数的 key（默认 "default"）
+ * - value: number - 目标层数
+ */
+export const setStateStack: EffectFunc = (event: ActionEvent, effect) => {
+    const stateKey = effect.params.stateKey as string
+    const stackKey = (effect.params.stackKey as string) ?? "default"
+    const value = Number(effect.params.value)
+
+    if (!stateKey) {
+        newError(["setStateStack 效果缺少 stateKey 参数"])
+        return false
+    }
+    if (!Number.isFinite(value)) {
+        newError(["setStateStack 效果缺少有效的 value 参数"])
+        return false
+    }
+
+    let success = false
+    handleEventEntity(event.target, (t) => {
+        if (!isEntity(t)) {
+            newError(["setStateStack 只能作用于 Entity，当前类型:", t.participantType])
+            return
+        }
+
+        const stateModifier = getStateModifier(t as any)
+        const state = stateModifier.getState(stateKey)
+        if (!state) return
+        const stack = state.stacks.find((s: { key: string }) => s.key === stackKey)
+        if (!stack) return
+
+        const delta = value - stack.stack
+        if (delta === 0) {
+            success = true
+            return
+        }
+        const changed = stateModifier.changeStack(stateKey, stackKey, delta)
+        if (changed !== false) success = true
+    })
+
+    return success
+}

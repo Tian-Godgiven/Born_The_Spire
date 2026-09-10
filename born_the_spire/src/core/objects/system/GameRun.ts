@@ -66,6 +66,9 @@ export class GameRun{
      * 进入一个房间
      */
     async enterRoom(room: Room) {
+        const { settlePendingRewards } = await import("@/ui/hooks/interaction/rewardDisplay")
+        await settlePendingRewards()
+
         // 如果有正在进行的房间，先退出
         if (this.currentRoom && this.currentRoom.state === "active") {
             try {

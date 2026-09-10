@@ -162,21 +162,19 @@ export class MapGenerator {
       const rules = this.config.nodeCountRules
 
       if (layer === 0 && rules.startLayer !== undefined) {
-        nodeCount = rules.startLayer
+        nodeCount = resolveLayerNodeCount(rules.startLayer, this.rng)
       } else if (layer === this.config.layers - 1 && rules.bossLayer !== undefined) {
         nodeCount = rules.bossLayer
       } else if (rules.useDynamicMiddleRange && rules.startLayer !== undefined) {
+        const startMax = typeof rules.startLayer === "number" ? rules.startLayer : rules.startLayer.max
         const min = 2
-        const max = rules.startLayer * 2 - 1
+        const max = startMax * 2 - 1
         nodeCount = min + Math.floor(this.rng.next() * (max - min + 1))
       } else {
-        const { min, max } = this.config.nodesPerLayer
-        nodeCount = min + Math.floor(this.rng.next() * (max - min + 1))
+        nodeCount = pickNodesPerLayer(this.config.nodesPerLayer, this.rng)
       }
     } else {
-      // 使用简单配置
-      const { min, max } = this.config.nodesPerLayer
-      nodeCount = min + Math.floor(this.rng.next() * (max - min + 1))
+      nodeCount = pickNodesPerLayer(this.config.nodesPerLayer, this.rng)
     }
 
     const nodes: MapNode[] = []
@@ -739,4 +737,33 @@ export class MapGenerator {
     // 修正后重新分配 roomKey
     this.assignRoomKeys(map)
   }
+}
+
+function resolveLayerNodeCount(
+  spec: number | { min: number, max: number },
+  rng: SeededRandom
+): number {
+  if (typeof spec === "number") return spec
+  return spec.min + Math.floor(rng.next() * (spec.max - spec.min + 1))
+}
+
+function pickNodesPerLayer(
+  spec: { min: number, max: number, weights?: Record<number, number> },
+  rng: SeededRandom
+): number {
+  if (spec.weights) {
+    const items: number[] = []
+    const weights: number[] = []
+    for (const [key, weight] of Object.entries(spec.weights)) {
+      const count = Number(key)
+      if (count >= spec.min && count <= spec.max && weight > 0) {
+        items.push(count)
+        weights.push(weight)
+      }
+    }
+    if (items.length > 0) {
+      return rng.weightedChoice(items, weights)
+    }
+  }
+  return spec.min + Math.floor(rng.next() * (spec.max - spec.min + 1))
 }

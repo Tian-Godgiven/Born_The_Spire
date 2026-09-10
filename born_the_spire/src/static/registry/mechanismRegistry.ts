@@ -373,13 +373,13 @@ function generateTriggersForMechanism(
 
 /**
  * 护甲机制
- * 吸收伤害，回合结束时清零
+ * 吸收伤害，自己的回合开始时清零
  */
 registerMechanism({
     key: "armor",
     label: "护甲",
     icon: "🛡️",
-    description: "吸收伤害，回合结束时清零",
+    description: "吸收伤害，自己的回合开始时清零",
 
     // 数据层：存储在 current.armor
     data: {

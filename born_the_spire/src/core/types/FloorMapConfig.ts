@@ -135,12 +135,14 @@ export interface FloorMapConfig {
   nodesPerLayer: {
     min: number
     max: number
+    /** 有权重时按权重抽，没有则在 min~max 均匀抽 */
+    weights?: Record<number, number>
   }
 
   /** 节点数量规则（高级配置，覆盖 nodesPerLayer） */
   nodeCountRules?: {
-    /** 起点层节点数 */
-    startLayer?: number
+    /** 起点层节点数，可写固定值或 { min, max } */
+    startLayer?: number | { min: number, max: number }
     /** 中间层是否使用动态范围（基于起点层：2 到 startLayer*2-1） */
     useDynamicMiddleRange?: boolean
     /** Boss层节点数（默认1） */
@@ -380,12 +382,14 @@ export const defaultFloorMapConfig: FloorMapConfig = {
   layers: 15,
 
   nodesPerLayer: {
-    min: 3,
-    max: 5
+    min: 2,
+    max: 5,
+    weights: { 2: 5, 3: 45, 4: 35, 5: 15 }
   },
 
   nodeCountRules: {
-    // 起点层使用 nodesPerLayer 范围（2-5个节点）
+    // 起点层 2~4 个节点
+    startLayer: { min: 2, max: 4 },
     bossLayer: 1                // Boss层1个节点
   },
 

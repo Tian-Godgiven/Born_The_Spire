@@ -23,6 +23,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import MapView from '@/ui/page/Scene/running/MapView.vue'
+import { restoreRewardUI } from '@/ui/hooks/interaction/rewardDisplay'
 
 const visible = ref(false)
 
@@ -39,6 +40,7 @@ function hide() {
 // 关闭地图（点击背景或关闭按钮）
 function onClose() {
   hide()
+  restoreRewardUI()
 }
 
 // 进入房间时隐藏地图

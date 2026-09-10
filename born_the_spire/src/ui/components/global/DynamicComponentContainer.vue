@@ -4,6 +4,7 @@
     <div
       v-if="componentManager.state.isVisible && componentManager.state.layout === 'fullscreen'"
       class="component-container fullscreen"
+      :style="{ zIndex: SHOW_COMPONENT_Z_INDEX }"
     >
       <component
         :is="componentManager.state.component"
@@ -17,6 +18,7 @@
     <div
       v-if="componentManager.state.isVisible && componentManager.state.layout === 'modal'"
       class="component-container modal"
+      :style="{ zIndex: SHOW_COMPONENT_Z_INDEX }"
     >
       <div class="modal-overlay" @click="handleOverlayClick"></div>
       <div class="modal-content">
@@ -46,6 +48,7 @@
 
 <script setup lang="ts">
 import { componentManager } from '@/core/hooks/componentManager'
+import { SHOW_COMPONENT_Z_INDEX } from '@/ui/hooks/interaction/popoverHost'
 
 /**
  * 处理组件完成
@@ -73,7 +76,6 @@ function handleOverlayClick() {
 <style scoped lang="scss">
 .component-container {
   position: fixed;
-  z-index: 9999;
 
   &.fullscreen {
     top: 0;

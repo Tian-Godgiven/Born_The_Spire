@@ -345,7 +345,7 @@ export const enemyList:EnemyMap[] = [
     {
         label: "装甲哨卫",
         key: "enemy_armored_sentry",
-        status: { "max-health": 50 },
+        status: { "max-health": 35 },
         organ: [
             "enemy_organ_rusty_separator",
             "enemy_organ_charge_cannon"
@@ -422,7 +422,7 @@ export const enemyList:EnemyMap[] = [
     {
         label: "铁壁要塞",
         key: "enemy_iron_fortress",
-        status: { "max-health": 120 },
+        status: { "max-health": 65 },
         organ: [
             "enemy_organ_barricade_shell",
             "enemy_organ_metallicize_core",

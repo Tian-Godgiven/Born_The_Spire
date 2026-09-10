@@ -571,10 +571,10 @@ export const stateList: StateData[] = [
         }
     }
 },
-// 飞行：受到攻击伤害减半，每次被攻击消耗1层，不自动衰减
+// 飞飘：攻击伤害减半，每次挨打扣 1 层，再结算护甲。不自动衰减。
 {
-    label: "飞行",
-    key: "flight",
+    label: "飞飘",
+    key: "flutter",
     category: "buff",
     describe: ["受到的攻击伤害减半，每次受到攻击后失去1层"],
     showType: "number",
@@ -585,8 +585,55 @@ export const stateList: StateData[] = [
                 when: "before",
                 how: "take",
                 key: "attack",
-                action: "flightEvade"
+                action: "flutterEvade"
             }],
+            reaction: {
+                flutterEvade: [
+                    {
+                        key: "flutter_halve",
+                        label: "飞飘：伤害减半",
+                        targetType: "triggerEffect",
+                        effect: [{ key: "modifyDamageByPercent", params: { percent: -0.5 } }]
+                    },
+                    {
+                        key: "flutter_consume",
+                        label: "飞飘：消耗层数",
+                        targetType: "triggerOwner",
+                        effect: [{ key: "changeStateStack", params: { stateKey: "flutter", delta: -1 } }]
+                    }
+                ]
+            }
+        }
+    }
+},
+// 飞行：攻击伤害减半。挨打 -1 层，到 0 消失。回合开始若还在，恢复到获得时记下的 n。
+{
+    label: "飞行",
+    key: "flight",
+    category: "buff",
+    describe: ["受到的攻击伤害减半。每受到一次攻击失去1层，回合开始时恢复到获得时的层数"],
+    showType: "number",
+    repeate: "stack",
+    stacks: [
+        { key: "default", stack: 0 },
+        { key: "n", stack: 0, showType: "bool" }
+    ],
+    interaction: {
+        possess: {
+            triggers: [
+                {
+                    when: "before",
+                    how: "take",
+                    key: "attack",
+                    action: "flightEvade"
+                },
+                {
+                    when: "after",
+                    how: "take",
+                    key: "turnStart",
+                    action: "flightRestore"
+                }
+            ],
             reaction: {
                 flightEvade: [
                     {
@@ -601,7 +648,16 @@ export const stateList: StateData[] = [
                         targetType: "triggerOwner",
                         effect: [{ key: "changeStateStack", params: { stateKey: "flight", delta: -1 } }]
                     }
-                ]
+                ],
+                flightRestore: [{
+                    key: "flightRestore",
+                    label: "飞行：回合开始恢复层数",
+                    targetType: "triggerOwner",
+                    effect: [{
+                        key: "setStateStack",
+                        params: { stateKey: "flight", stackKey: "default", value: "$owner.stateStack(flight.n)" }
+                    }]
+                }]
             }
         }
     }

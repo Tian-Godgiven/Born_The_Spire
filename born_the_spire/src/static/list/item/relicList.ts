@@ -200,9 +200,9 @@ export const relicList: RelicMap[] = [
     },
     {
         label: "荆棘手套",
-        describe: ["每次打出卡牌时", "对随机一个敌人造成5点伤害"],
+        describe: ["每次打出卡牌时", "对随机一个敌人造成3点伤害"],
         key: "original_relic_thorns_glove",
-        rarity: "common",
+        rarity: "uncommon",
         pool: ["common"],
         interaction: {
             possess: {
@@ -221,7 +221,7 @@ export const relicList: RelicMap[] = [
                 key: "damage",
                 effect: [{
                     key: "attack",
-                    params: { value: 5 }
+                    params: { value: 3 }
                 }]
             }]
         }
