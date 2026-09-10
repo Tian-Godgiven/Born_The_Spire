@@ -111,10 +111,10 @@ export function getCurrentValue(entity:Entity,key:string,defaultValue?:number){
     if(current){
         return current.value
     }
-    else if(defaultValue){
+    else if(defaultValue !== undefined){
         return defaultValue
     }
-    newError(["尝试在",entity,"上获取当前值",key,"但即不存在这个值，也没有设定默认值。"])
+    newError(["尝试在",entity,"上获取当前值",key,"但既不存在这个值，也没有设定默认值。"])
 }
 
 //获取某个当前值
@@ -123,10 +123,10 @@ export function getCurrentRefValue(entity:Entity,key:string,defaultValue?:number
     if(current){
         return current._value
     }
-    else if(defaultValue){
+    else if(defaultValue !== undefined){
         return defaultValue
     }
-    newError(["尝试在",entity,"上获取当前值",key,"但即不存在这个值，也没有设定默认值。"])
+    newError(["尝试在",entity,"上获取当前值",key,"但既不存在这个值，也没有设定默认值。"])
 }
 
 //设置某个当前值（直接设置，不触发事件）

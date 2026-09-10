@@ -18,20 +18,24 @@
     </div>
 
     <div class="drawPile center"
+        data-card-pile="draw"
         @click="showCardPile('draw')">
         抽排堆：{{ drawNum }}
     </div>
-    <HandPile :class="{ 'hand-elevated': handCardSelectorActive }"></HandPile>
+    <HandPile :class="{ 'hand-elevated': handCardSelectorActive }" data-card-pile="hand"></HandPile>
     <div class="discardPile center"
+        data-card-pile="discard"
         @click="showCardPile('discard')">
         弃牌堆: {{ pileNum.discard }}
     </div>
     <div class="exhaustPile center"
+        data-card-pile="exhaust"
         @click="showCardPile('exhaust')">
         消耗堆: {{ pileNum.exhaust }}
     </div>
 
     <HandCardSelector />
+    <CardFlightOverlay />
 </div>
 </template>
 
@@ -45,6 +49,7 @@
     import Faction from '@/ui/components/object/Target/Faction.vue';
     import AllFactions from '@/ui/components/object/Target/AllFactions.vue';
     import HandCardSelector from '@/ui/components/interaction/HandCardSelector.vue';
+    import CardFlightOverlay from '@/ui/animation/components/CardFlightOverlay.vue';
     import { handCardSelectorActive } from '@/ui/hooks/interaction/handCardSelector';
 
     const emit = defineEmits<{

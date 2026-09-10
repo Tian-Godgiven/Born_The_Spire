@@ -87,7 +87,7 @@ export const presetAnimationCategories: AnimationCategory[] = [
     {
         key: "card",
         label: "卡牌演出",
-        describe: "卡牌出现、升空、复制时的动画"
+        describe: "抽牌、打出停顿、飞向弃牌或消耗堆"
     },
     {
         key: "ui",

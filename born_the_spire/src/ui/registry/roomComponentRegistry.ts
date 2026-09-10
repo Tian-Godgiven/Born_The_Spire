@@ -5,6 +5,7 @@
 
 import type { Component } from 'vue'
 import type { RoomType } from '@/core/objects/room/Room'
+import { roomRegistry } from '@/static/registry/roomRegistry'
 
 // 导入内置房间组件
 import Battle from '@/ui/page/Scene/running/Battle.vue'
@@ -13,6 +14,8 @@ import EventRoom from '@/ui/page/Scene/running/EventRoom.vue'
 import PoolRoom from '@/ui/page/Scene/running/PoolRoom.vue'
 import BlackStoreRoom from '@/ui/page/Scene/running/BlackStoreRoom.vue'
 import RoomSelectRoom from '@/ui/page/Scene/running/RoomSelectRoom.vue'
+import TreasureRoom from '@/ui/page/Scene/running/TreasureRoom.vue'
+import FloorSelectRoom from '@/ui/page/Scene/running/FloorSelectRoom.vue'
 import DefeatRoom from '@/ui/page/Scene/running/DefeatRoom.vue'
 import VictoryRoom from '@/ui/page/Scene/running/VictoryRoom.vue'
 
@@ -27,12 +30,15 @@ const roomComponentMap = new Map<RoomType | string, Component>()
 function initBuiltInRoomComponents() {
     roomComponentMap.set('init', InitRoom)
     roomComponentMap.set('battle', Battle)
-    roomComponentMap.set('eliteBattle', Battle)  // 精英战斗使用相同的战斗组件
-    roomComponentMap.set('bossBattle', Battle)   // Boss战斗使用相同的战斗组件
+    roomComponentMap.set('eliteBattle', Battle)
+    roomComponentMap.set('elitePlusBattle', Battle)
+    roomComponentMap.set('bossBattle', Battle)
     roomComponentMap.set('event', EventRoom)
     roomComponentMap.set('pool', PoolRoom)
     roomComponentMap.set('blackStore', BlackStoreRoom)
     roomComponentMap.set('roomSelect', RoomSelectRoom)
+    roomComponentMap.set('treasure', TreasureRoom)
+    roomComponentMap.set('floorSelect', FloorSelectRoom)
     roomComponentMap.set('defeat', DefeatRoom)
     roomComponentMap.set('victory', VictoryRoom)
 }
@@ -58,7 +64,9 @@ export function registerRoomComponent(roomType: RoomType | string, component: Co
  * @returns Vue 组件，如果未找到则返回 null
  */
 export function getRoomComponent(roomType: RoomType | string): Component | null {
-    return roomComponentMap.get(roomType) || null
+    return roomComponentMap.get(roomType)
+        ?? roomRegistry.getRoomType(roomType)?.defaultComponent
+        ?? null
 }
 
 /**
@@ -67,6 +75,7 @@ export function getRoomComponent(roomType: RoomType | string): Component | null 
  */
 export function hasRoomComponent(roomType: RoomType | string): boolean {
     return roomComponentMap.has(roomType)
+        || !!roomRegistry.getRoomType(roomType)?.defaultComponent
 }
 
 /**

@@ -7,19 +7,43 @@ import { getCardByKey } from "@/static/list/item/cardList";
 import { getCardModifier } from "../system/modifier/CardModifier";
 import { cardsToIntent } from "../system/Intent";
 import type { Intent, IntentType, IntentVisibility } from "../system/Intent";
-import { doEvent } from "../system/ActionEvent";
+import { doEvent, ActionEvent } from "../system/ActionEvent";
 import type { Player } from "./Player";
 import { selectAction, selectTurnActions } from "../system/EnemyBehavior";
 import type { EnemyBehaviorConfig } from "../system/EnemyBehavior";
 import { isOrganDisabled } from "@/core/effects/organ/disableOrgan";
 import { nowBattle } from "../game/battle";
 import { getCurrentValue } from "../system/Current/current";
+import { getStatusValue } from "../system/status/Status";
+import { beginTransaction, endTransaction } from "../game/transaction";
+import type { EffectUnit } from "../system/effect/EffectUnit";
 
 export type EnemyMap = CharaMap & {
     key:string
     status:Record<string,number|boolean>,
     behavior?: EnemyBehaviorConfig  // 敌人行为配置
     cards?: string[]  // 敌人专属卡牌（不通过器官提供）
+}
+
+const DEFAULT_MAX_ENERGY = 3
+
+const DEFAULT_ENERGY_REACTION = {
+    recoverEnergy: [{
+        key: "turnStart_recoverEnergy",
+        label: "回合开始时恢复能量",
+        effect: [{ key: "refillEnergy", params: {} }],
+        targetType: "triggerOwner" as const,
+    }],
+    emptyEnergy: [{
+        key: "turnEnd_emptyEnergy",
+        label: "回合结束时清空能量",
+        effect: [{ key: "emptyEnergy", params: {} }],
+        targetType: "triggerOwner" as const,
+    }],
+}
+
+function hasCurrentKey(current: EnemyMap["current"], key: string) {
+    return !!current?.find((i: any) => i === key || (typeof i === "object" && i.key === key))
 }
 
 export class Enemy extends Chara{
@@ -40,24 +64,21 @@ export class Enemy extends Chara{
     constructor(
         map:EnemyMap
     ){
-        //默认有生命值和存活状态
+        //默认有生命、能量、存活
         newLog(["创建了敌人",map])
-        if(map.current){
-            // 确保有 health
-            if(!map.current.find((i: any)=>{
-                return i === "health" || (typeof i === 'object' && i.key === "health");
-            })){
-                map.current.push("health")
-            }
-            // 确保有 isAlive
-            if(!map.current.find((i: any)=>{
-                return i === "isAlive" || (typeof i === 'object' && i.key === "isAlive");
-            })){
-                map.current.push("isAlive")
-            }
+        if (map.status["max-energy"] === undefined) {
+            map.status["max-energy"] = DEFAULT_MAX_ENERGY
         }
-        else{
-            map.current = ["health", "isAlive"]
+        if (!map.current) {
+            map.current = ["health", "energy", "isAlive"]
+        } else {
+            if (!hasCurrentKey(map.current, "health")) map.current.push("health")
+            if (!hasCurrentKey(map.current, "energy")) map.current.push("energy")
+            if (!hasCurrentKey(map.current, "isAlive")) map.current.push("isAlive")
+        }
+        map.reaction = {
+            ...DEFAULT_ENERGY_REACTION,
+            ...map.reaction,
         }
         super(map)
 
@@ -309,7 +330,7 @@ export class Enemy extends Chara{
     /**
      * 敌人打出一张卡牌
      *
-     * 敌人打出卡牌不需要支付能量，直接执行效果
+     * 和玩家一样支付能量；费用不足则打不出。
      *
      * @param card 要打出的卡牌
      * @param target 目标
@@ -321,9 +342,6 @@ export class Enemy extends Chara{
             return
         }
 
-        newLog(["敌人使用卡牌", this.label, card.label])
-
-        // 获取卡牌的使用效果
         const cardUse = card.getInteraction("use")
         if (!cardUse) {
             console.warn(`[Enemy.playCard] 卡牌 ${card.label} 没有使用效果`)
@@ -336,10 +354,33 @@ export class Enemy extends Chara{
             return
         }
 
-        // 确定目标
+        const cardCost = getStatusValue(card, "cost") ?? 0
+        const costEffect: EffectUnit = {
+            key: "payEnergy",
+            describe: [`支付${cardCost}点能量`],
+            params: { value: cardCost },
+            resultStoreAs: "payEnergyResult"
+        }
+        const tx = beginTransaction()
+        const payEvent = new ActionEvent(
+            "payEnergy",
+            this,
+            card,
+            this,
+            {},
+            [costEffect]
+        )
+        tx.add(payEvent)
+        await endTransaction()
+        if (!payEvent.getEventResult("payEnergyResult")) {
+            newLog([this, "能量不足，无法打出", card])
+            return
+        }
+
+        newLog(["敌人使用卡牌", this.label, card.label])
+
         const targets = this.resolveTargets(cardUse.target, target)
 
-        // 创建使用卡牌事件
         doEvent({
             key: "useCard",
             source: this,

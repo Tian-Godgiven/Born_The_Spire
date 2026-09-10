@@ -6,8 +6,8 @@ import { getFromEffectMap } from "@/static/list/system/effectMap"
 /**
  * 重复执行一组效果 N 次
  *
- * 每次迭代中，按顺序对每个效果执行 trigger(before) → apply → trigger(after)
- * 这样每次命中都能被触发器正确监听
+ * 每次迭代走 Effect.runCycle（before → on → apply → after），
+ * 和事务里普通效果同一套周期，护甲吸收和跳字快照都在 on。
  *
  * @params {
  *   times: number - 重复次数
@@ -31,9 +31,7 @@ export const repeatEffects: EffectFunc = async (event, effect) => {
                 params: { ...unit.params },
                 triggerEvent: event
             })
-            await subEffect.trigger("before", triggerLevel)
-            await subEffect.apply()
-            await subEffect.trigger("after", triggerLevel)
+            await subEffect.runCycle(triggerLevel)
         }
     }
 }

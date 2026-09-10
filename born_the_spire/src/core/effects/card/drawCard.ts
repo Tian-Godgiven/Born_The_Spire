@@ -83,8 +83,8 @@ export const drawFromDrawPile:EffectFunc = async (event,effect)=>{
             params:{ sourcePileName: "drawPile" as keyof CardPiles, card },
             triggerEvent:event
         })
-        await subEffect.trigger("before", triggerLevel)
-        await subEffect.apply()
-        await subEffect.trigger("after", triggerLevel)
+        await subEffect.runCycle(triggerLevel)
+        const { flyDrawnCard } = await import("@/ui/animation/cardFlight")
+        flyDrawnCard(card)
     }
 }

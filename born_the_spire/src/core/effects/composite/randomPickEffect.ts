@@ -41,8 +41,6 @@ export const randomPickEffect: EffectFunc = async (event, effect) => {
             params: { ...unit.params },
             triggerEvent: event
         })
-        await subEffect.trigger("before", triggerLevel)
-        await subEffect.apply()
-        await subEffect.trigger("after", triggerLevel)
+        await subEffect.runCycle(triggerLevel)
     }
 }

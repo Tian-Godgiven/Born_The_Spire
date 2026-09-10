@@ -405,6 +405,14 @@ Mod 通过 `registerIntentValueSource(intentType, effectKeys)` 扩展或覆盖�
 
 ---
 
+## 能量
+
+敌人默认有能量，上限 3，和玩家一样回合开始回满、回合结束清空。打牌走 `payEnergy`，费用不够则打不出（日志会记）。
+
+选意图发生在玩家回合开始时，那时敌人能量还是上回合清空后的 0，所以 AI **不按当前能量筛卡**。能不能付费看敌人自己回合开始回满（以及电池这类 after turnStart 加费）之后。故障机器上限 2、重击 3 费，要靠不稳定电池 +1 才能打出。
+
+---
+
 ## 相关文件
 
 行为决策：`src/core/objects/system/EnemyBehavior.ts`

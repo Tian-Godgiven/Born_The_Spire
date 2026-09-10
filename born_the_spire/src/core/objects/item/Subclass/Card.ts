@@ -237,6 +237,9 @@ export async function useCard(card:Card,fromPile:Card[],source:Player,targets:Ta
         return
     }
 
+    const { beginCardPlay } = await import("@/ui/animation/cardFlight")
+    const playVisual = await beginCardPlay(card)
+
     // 支付成功，触发 useCard 事件（用于触发器）
     // info.repeat 默认为1，触发器可在 before 阶段修改（如双发效果改为2）
     const useCardInfo = { repeat: 1 }
@@ -270,6 +273,13 @@ export async function useCard(card:Card,fromPile:Card[],source:Player,targets:Ta
         target: card,
         effectUnits: [afterUseEffect]
     })
+
+    const dest = afterUseEffect.key === "pay_exhaust"
+        ? "exhaust"
+        : afterUseEffect.key === "pay_removeAbility"
+            ? "none"
+            : "discard"
+    await playVisual.finish(dest)
 }
 
 //从抽牌堆中抽取n张卡牌,这是一个事件

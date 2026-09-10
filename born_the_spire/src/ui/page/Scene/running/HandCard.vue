@@ -60,13 +60,12 @@
         hoverTarget.value = target
     }
     //选择完成时使用卡牌效果
-    function onSuccess(targets:Target[]){
+    async function onSuccess(targets:Target[]){
         // 检查卡牌是否被禁用
         if (card.isDisabled) {
             return
         }
-        useCard(card,nowPlayer.cardPiles.handPile,nowPlayer.getSelf(),targets);
-        // 清除悬停目标
+        await useCard(card,nowPlayer.cardPiles.handPile,nowPlayer.getSelf(),targets);
         hoverTarget.value = undefined
     }
 </script>

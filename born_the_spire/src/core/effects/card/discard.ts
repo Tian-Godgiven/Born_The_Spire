@@ -22,7 +22,9 @@ export const discardCard:EffectFunc = (event,effect)=>{
     //丢弃的目标是 event.target（卡牌或卡牌数组）
     handleEventEntity(target,(card)=>{
         if (isCard(card)) {
-            //移动到弃牌堆
+            void import("@/ui/animation/cardFlight").then(({ flyHandToPile }) => {
+                flyHandToPile(card, "discard")
+            })
             cardMove(sourcePile,card,medium.cardPiles.discardPile,handContext)
         }
     })
@@ -69,7 +71,9 @@ export const pay_exhaustCard:EffectFunc = (event,effect)=>{
         // 只处理 Card 类型
         if (!isCard(cardEntity)) return;
         const card = cardEntity as Card;
-        //移动到消耗堆
+        void import("@/ui/animation/cardFlight").then(({ flyHandToPile }) => {
+            flyHandToPile(card, "exhaust")
+        })
         cardMove(sourcePile,card,source.cardPiles.exhaustPile,{handPile:source.cardPiles.handPile, owner:source as Entity})
     })
 }

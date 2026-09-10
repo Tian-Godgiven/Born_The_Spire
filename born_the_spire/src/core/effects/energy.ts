@@ -1,19 +1,27 @@
 import { showQuickInfo } from "@/ui/hooks/global/quickInfo"
 import { Player } from "../objects/target/Player"
 import type { EffectFunc } from "../objects/system/effect/EffectFunc"
+import type { Entity } from "../objects/system/Entity"
 import { getStatusValue } from "../objects/system/status/Status"
-import { changeCurrentValue, getCurrentValue } from "../objects/system/Current/current"
+import { changeCurrentValue, getCurrentValue, ifHaveCurrent } from "../objects/system/Current/current"
 import { doEvent, handleEventEntity } from "../objects/system/ActionEvent"
 import { isEntity } from "../utils/typeGuards"
+
+/** 没有 energy 当前值时跳过（器官等） */
+function withEnergy(e: unknown, fn: (entity: Entity) => void) {
+    if (!isEntity(e) || Array.isArray(e) || !ifHaveCurrent(e, "energy")) return
+    fn(e)
+}
 
 // 原子：获得 N 能量（受 max-energy 上限截断）
 export const gainEnergy: EffectFunc = (event, effect) => {
     const { target } = event
     const value = Number(effect.params.value ?? 0)
     handleEventEntity(target, (e) => {
-        if (!isEntity(e)) return
-        const nowValue = getCurrentValue(e, "energy")
-        changeCurrentValue(e, "energy", nowValue + value, event)
+        withEnergy(e, (entity) => {
+            const nowValue = getCurrentValue(entity, "energy", 0)
+            changeCurrentValue(entity, "energy", nowValue + value, event)
+        })
     })
 }
 
@@ -22,9 +30,10 @@ export const loseEnergy: EffectFunc = (event, effect) => {
     const { target } = event
     const value = Number(effect.params.value ?? 0)
     handleEventEntity(target, (e) => {
-        if (!isEntity(e)) return
-        const nowValue = getCurrentValue(e, "energy")
-        changeCurrentValue(e, "energy", nowValue - value, event)
+        withEnergy(e, (entity) => {
+            const nowValue = getCurrentValue(entity, "energy", 0)
+            changeCurrentValue(entity, "energy", nowValue - value, event)
+        })
     })
 }
 
@@ -32,9 +41,10 @@ export const loseEnergy: EffectFunc = (event, effect) => {
 export const refillEnergy: EffectFunc = (event, _effect) => {
     const { target } = event
     handleEventEntity(target, (e) => {
-        if (!isEntity(e)) return
-        const max = Number(getStatusValue(e, "max-energy", 0))
-        changeCurrentValue(e, "energy", max, event)
+        withEnergy(e, (entity) => {
+            const max = Number(getStatusValue(entity, "max-energy", 0))
+            changeCurrentValue(entity, "energy", max, event)
+        })
     })
 }
 
@@ -42,8 +52,9 @@ export const refillEnergy: EffectFunc = (event, _effect) => {
 export const emptyEnergy: EffectFunc = (event, _effect) => {
     const { target } = event
     handleEventEntity(target, (e) => {
-        if (!isEntity(e)) return
-        changeCurrentValue(e, "energy", 0, event)
+        withEnergy(e, (entity) => {
+            changeCurrentValue(entity, "energy", 0, event)
+        })
     })
 }
 
@@ -52,10 +63,10 @@ export const emptyEnergy: EffectFunc = (event, _effect) => {
 // 够 → 委派 loseEnergy 事件完成扣减，广播的仍是 loseEnergy（触发器统一入口）
 export const payEnergy: EffectFunc<boolean> = (event, effect) => {
     const { source } = event
-    if (!(source instanceof Player)) return false
+    if (!isEntity(source) || Array.isArray(source) || !ifHaveCurrent(source, "energy")) return false
     const cost = Number(effect.params.value ?? 0)
-    if (getCurrentValue(source, "energy") < cost) {
-        showQuickInfo("能量不足")
+    if (getCurrentValue(source, "energy", 0) < cost) {
+        if (source instanceof Player) showQuickInfo("能量不足")
         return false
     }
     doEvent({

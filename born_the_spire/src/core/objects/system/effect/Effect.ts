@@ -86,6 +86,18 @@ export class Effect implements EventParticipant{
     isCancelled(){
         return this._cancelled
     }
+    /**
+     * 完整周期：before → on → apply → after
+     * 手动 new Effect 跑子效果时必须走这里，漏掉 on 会跳过护甲吸收和跳字快照
+     */
+    async runCycle(triggerLevel: number = 0) {
+        await this.trigger("before", triggerLevel)
+        await this.trigger("on", triggerLevel)
+        const result = await this.apply()
+        await this.trigger("after", triggerLevel)
+        return result
+    }
+
     //启用这个效果,效果的事件对象的部分属性允许被覆盖（常见的是target等）
     async apply(override_event?:Partial<ActionEvent>){
         // 被取消的效果不执行

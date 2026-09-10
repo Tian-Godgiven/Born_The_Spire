@@ -17,19 +17,18 @@ export function dismissAllPopovers() {
 export const POPOVER_LAYER_CLASS = "popover-layer"
 
 /**
- * 悬停说明（Popover）的层级，游戏弹窗都从它往下减
+ * 层级用整档，不要 10000-1 这种减法。
  *
- * 取值高于全部模态框：模态里同样会弹卡面、术语这类浮层，
- * 层级低于模态的话浮层会被自己所在的模态盖住。
- * 嵌套浮层是外层浮层的 DOM 子节点，同值即可自然叠在外层之上，不需要逐层加码。
+ * 10000 悬停 — 卡名/术语必须盖过检视
+ * 9999  检视 — showPopUp / 卡牌详情
+ * 9500  飞牌 — 战场之上、检视之下
+ * 8999  选择 — showComponent / 水池升级
  */
 export const POPOVER_Z_INDEX = 10000
-
-/** 检视（showPopUp / 卡牌详情）。写在元素 style 上，Teleport 后 scoped CSS 可能套不上 */
-export const SHOW_POPUP_Z_INDEX = POPOVER_Z_INDEX - 1
-
-/** 选择（showComponent / 水池升级），低于检视 */
-export const SHOW_COMPONENT_Z_INDEX = POPOVER_Z_INDEX - 1000
+export const SHOW_POPUP_Z_INDEX = 9999
+export const SHOW_COMPONENT_Z_INDEX = 8999
+/** 战斗飞牌，低于检视、高于战场 */
+export const CARD_FLIGHT_Z_INDEX = 9500
 
 const POPOVER_HOVER_OPEN_DELAY_FALLBACK_MS = 400
 

@@ -168,6 +168,66 @@ export const presetAnimations: AnimationDefinition[] = [
                 .to(el, { opacity: 0, scale: 1.25, duration: 0.45, ease: "power2.in" })
         },
     },
+
+    {
+        key: "card_fly",
+        category: "card",
+        mode: "overlay",
+        channel: "flight",
+        interruptible: false,
+        repeat: "queue",
+        build: (el, params) => {
+            const dx = Number(params?.dx ?? 0)
+            const dy = Number(params?.dy ?? 0)
+            const hold = Number(params?.hold ?? 0)
+            const fromRot = Number(params?.fromRot ?? 0)
+            const toRot = Number(params?.toRot ?? 0)
+            const scale = Number(params?.scale ?? 1)
+            const vanish = Boolean(params?.vanish)
+            const tl = gsap.timeline({ paused: true })
+            gsap.set(el, { rotation: fromRot, opacity: 1, scale: 1 })
+            if (vanish) {
+                const dur = 0.36
+                const x0 = Number(gsap.getProperty(el, "x")) || 0
+                const y0 = Number(gsap.getProperty(el, "y")) || 0
+                const bulge = Math.min(28, Math.hypot(dx - x0, dy - y0) * 0.1)
+                const cx = (x0 + dx) / 2
+                const cy = Math.min(y0, dy) - bulge
+                const prog = { t: 0 }
+                tl.to(prog, {
+                    t: 1,
+                    duration: dur,
+                    ease: "power2.inOut",
+                    onUpdate: () => {
+                        const t = prog.t
+                        const u = 1 - t
+                        gsap.set(el, {
+                            x: u * u * x0 + 2 * u * t * cx + t * t * dx,
+                            y: u * u * y0 + 2 * u * t * cy + t * t * dy,
+                        })
+                    },
+                })
+                tl.to(el, { rotation: toRot, duration: dur, ease: "power2.inOut" }, 0)
+                tl.to(el, {
+                    scale: 0.1,
+                    opacity: 0,
+                    duration: dur * 2 / 3,
+                    ease: "power2.in",
+                }, dur / 3)
+            } else {
+                tl.to(el, {
+                    x: dx,
+                    y: dy,
+                    rotation: toRot,
+                    scale,
+                    duration: 0.28,
+                    ease: hold > 0 ? "power2.out" : "power2.inOut",
+                })
+            }
+            if (hold > 0) tl.to({}, { duration: hold })
+            return tl
+        },
+    },
 ]
 
 /**
