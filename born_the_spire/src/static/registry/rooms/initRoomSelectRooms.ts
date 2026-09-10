@@ -5,6 +5,7 @@
 
 import { roomRegistry } from "../roomRegistry"
 import { RoomSelectRoom } from "@/core/objects/room/RoomSelectRoom"
+import RoomSelectRoomComponent from "@/ui/page/Scene/running/RoomSelectRoom.vue"
 
 /**
  * 初始化房间选择
@@ -13,7 +14,7 @@ import { RoomSelectRoom } from "@/core/objects/room/RoomSelectRoom"
 export async function initRoomSelectRooms(): Promise<void> {
 
     // 注册房间选择类型
-    roomRegistry.registerRoomType("roomSelect", RoomSelectRoom)
+    roomRegistry.registerRoomType("roomSelect", RoomSelectRoom, RoomSelectRoomComponent)
 
     // 注册默认房间选择配置
     roomRegistry.registerRoomConfig({

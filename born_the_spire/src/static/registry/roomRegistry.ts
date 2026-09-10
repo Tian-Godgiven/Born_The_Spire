@@ -13,6 +13,7 @@ import { initRoomSelectRooms } from './rooms/initRoomSelectRooms'
 import { initTreasureRooms } from './rooms/initTreasureRooms'
 import { initFloorSelectRooms } from './rooms/initFloorSelectRooms'
 import { initBlackStoreRooms } from './rooms/initBlackStoreRooms'
+import { initDefeatVictoryRooms } from './rooms/initDefeatVictoryRooms'
 
 /**
  * 房间组件类型
@@ -71,7 +72,7 @@ export type RoomConstructor = new (config: any) => Room
  */
 interface RoomTypeRegistration {
     roomClass: RoomConstructor     // 房间类
-    defaultComponent?: Component   // 默认组件
+    defaultComponent: Component    // 进房时渲染的 Vue 页
 }
 
 /**
@@ -89,12 +90,12 @@ class RoomRegistry {
      * 注册房间类型
      * @param type 房间类型标识
      * @param roomClass 房间类
-     * @param defaultComponent 默认 Vue 组件（可选）
+     * @param defaultComponent 进房时渲染的 Vue 页
      */
     registerRoomType(
         type: string,
         roomClass: RoomConstructor,
-        defaultComponent?: Component
+        defaultComponent: Component
     ): void {
         if (this.roomTypes.has(type)) {
             console.warn(`[RoomRegistry] 房间类型 "${type}" 已存在，将被覆盖`)
@@ -104,7 +105,35 @@ class RoomRegistry {
             roomClass,
             defaultComponent
         })
+    }
 
+    /**
+     * 给已登记的类型换皮
+     */
+    setDefaultComponent(type: string, component: Component): void {
+        const existing = this.roomTypes.get(type)
+        if (!existing) {
+            console.warn(`[RoomRegistry] 房间类型 "${type}" 尚未注册，无法挂组件。请先 registerRoomType`)
+            return
+        }
+        this.roomTypes.set(type, {
+            ...existing,
+            defaultComponent: component
+        })
+    }
+
+    /**
+     * 按类型取进房 Vue 页
+     */
+    getDefaultComponent(type: string): Component | undefined {
+        return this.roomTypes.get(type)?.defaultComponent
+    }
+
+    /**
+     * 已登记的房间类型
+     */
+    getRegisteredTypes(): string[] {
+        return Array.from(this.roomTypes.keys())
     }
 
     /**
@@ -200,31 +229,25 @@ class RoomRegistry {
 
     /**
      * 获取房间组件
-     * @param room 房间实例或房间 key
+     * @param room 房间实例、房间配置 key，或房间类型
      */
     getRoomComponent(room: Room | string): Component | undefined {
-        let config: RoomMap | undefined
-
-        if (typeof room === 'string') {
-            config = this.getRoomConfig(room)
-        } else {
-            config = this.getRoomConfig(room.__key)
+        if (typeof room !== 'string') {
+            const config = this.getRoomConfig(room.__key)
+            if (config?.component && typeof config.component !== 'string') {
+                return config.component as Component
+            }
+            return this.getDefaultComponent(room.type)
         }
 
-        if (!config) {
-            return undefined
+        const config = this.getRoomConfig(room)
+        if (config?.component && typeof config.component !== 'string') {
+            return config.component as Component
         }
-
-        // 优先使用配置中的组件
-        if (config.component) {
-            return typeof config.component === 'string'
-                ? undefined  // 字符串路径需要动态加载
-                : config.component as Component
+        if (config) {
+            return this.getDefaultComponent(config.type)
         }
-
-        // 使用类型默认组件
-        const typeRegistration = this.getRoomType(config.type)
-        return typeRegistration?.defaultComponent
+        return this.getDefaultComponent(room)
     }
 
     /**
@@ -256,6 +279,7 @@ export async function initAllRooms(): Promise<void> {
     await initRoomSelectRooms()
     await initTreasureRooms()
     await initFloorSelectRooms()
+    await initDefeatVictoryRooms()
 
 }
 

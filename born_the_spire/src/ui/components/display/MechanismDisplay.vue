@@ -1,5 +1,9 @@
 <template>
-<div v-if="mechanismsToShow.length > 0" class="mechanism-display-container">
+<div
+    v-if="mechanismsToShow.length > 0"
+    class="mechanism-display-container"
+    :class="{ 'align-left': align === 'left' }"
+>
     <component
         v-for="mechanism in mechanismsToShow"
         :key="mechanism.key"
@@ -18,9 +22,11 @@ import { getMechanismConfig } from '@/static/registry/mechanismRegistry'
 import DefaultMechanismUI from './DefaultMechanismUI.vue'
 import { computed, type Component } from 'vue'
 
-const { entity, position } = defineProps<{
+const { entity, position, align = 'right' } = defineProps<{
     entity: Entity
     position: UIPosition
+    /** 贴着血条哪一侧。敌人朝左，避免被右边下一名挡住 */
+    align?: 'left' | 'right'
 }>()
 
 // 获取该位置应该显示的机制
@@ -63,5 +69,13 @@ const mechanismsToShow = computed(() => {
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    z-index: 2;
+
+    &.align-left {
+        left: auto;
+        right: 100%;
+        margin-left: 0;
+        margin-right: 8px;
+    }
 }
 </style>

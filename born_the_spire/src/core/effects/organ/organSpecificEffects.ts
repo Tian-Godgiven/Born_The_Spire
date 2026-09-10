@@ -1,6 +1,6 @@
 import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import { isEntity, isEffect, isEnemy } from "@/core/utils/typeGuards"
-import { isHurtEffectKey } from "@/core/effects/health/damage"
+import { isHurtEffectKey, nullifyHurtEffect } from "@/core/effects/health/damage"
 import { getStateModifier } from "@/core/objects/system/modifier/StateModifier"
 import { getContextRandom } from "@/core/hooks/random"
 import { doEvent } from "@/core/objects/system/ActionEvent"
@@ -88,7 +88,7 @@ export const organ_rustySeparator: EffectFunc = (event, effect) => {
     const roll = rng.nextFloatRange(0, 1)
 
     if (roll < chance) {
-        damageEffect.params.value = 0
+        nullifyHurtEffect(damageEffect)
         gainStateStack(organ as any, "separatorWear", 1, organ as any)
         newLog([host, `过期隔板：完全抵消伤害（本回合抵消概率降至 ${Math.round(Math.max(0, chance - blockDecay) * 100)}%）`])
     } else if (roll < chance + breakChance) {

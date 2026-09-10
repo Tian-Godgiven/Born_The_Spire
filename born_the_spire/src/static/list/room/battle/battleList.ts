@@ -198,15 +198,7 @@ export const battleList: BattleRoomConfig[] = [
         battleType: "normal",
         enemyConfigs: [
             {
-                key: "enemy_ant_guard",
-                behavior: {
-                    patterns: [],
-                    fallback: {
-                        intent: "attack",
-                        action: { selector: { tags: ["attack"] }, mode: "random" },
-                        describe: "群咬"
-                    }
-                }
+                key: "enemy_ant_guard"
             },
             {
                 key: "enemy_ant_soldier",
@@ -326,18 +318,11 @@ export const battleList: BattleRoomConfig[] = [
         battleType: "normal",
         enemyConfigs: [
             {
-                key: "enemy_ant_guard",
-                behavior: {
-                    patterns: [],
-                    fallback: {
-                        intent: "attack",
-                        action: { selector: { tags: ["attack"] }, mode: "random" },
-                        describe: "群咬"
-                    }
-                }
+                key: "enemy_ant_guard"
             },
             {
                 key: "enemy_ant_soldier",
+                uiSize: "small",
                 behavior: {
                     patterns: [],
                     fallback: {
@@ -353,6 +338,7 @@ export const battleList: BattleRoomConfig[] = [
             },
             {
                 key: "enemy_ant_soldier",
+                uiSize: "small",
                 behavior: {
                     patterns: [],
                     fallback: {
@@ -394,6 +380,7 @@ export const battleList: BattleRoomConfig[] = [
             },
             {
                 key: "enemy_ant_soldier",
+                uiSize: "small",
                 behavior: {
                     patterns: [],
                     fallback: {
@@ -409,6 +396,7 @@ export const battleList: BattleRoomConfig[] = [
             },
             {
                 key: "enemy_ant_soldier",
+                uiSize: "small",
                 behavior: {
                     patterns: [],
                     fallback: {
@@ -459,6 +447,7 @@ export const battleList: BattleRoomConfig[] = [
             },
             {
                 key: "enemy_ant_soldier",
+                uiSize: "small",
                 behavior: {
                     patterns: [],
                     fallback: {
@@ -474,6 +463,7 @@ export const battleList: BattleRoomConfig[] = [
             },
             {
                 key: "enemy_ant_soldier",
+                uiSize: "small",
                 behavior: {
                     patterns: [],
                     fallback: {
@@ -557,6 +547,7 @@ export const battleList: BattleRoomConfig[] = [
         enemyConfigs: [
             {
                 key: "enemy_slag_king",
+                uiSize: "big",
                 behavior: {
                     patterns: [
                         {
@@ -596,6 +587,7 @@ export const battleList: BattleRoomConfig[] = [
         enemyConfigs: [
             {
                 key: "enemy_plague_mother",
+                uiSize: "big",
                 behavior: {
                     patterns: [
                         {
@@ -625,6 +617,7 @@ export const battleList: BattleRoomConfig[] = [
         enemyConfigs: [
             {
                 key: "enemy_iron_war_machine",
+                uiSize: "big",
                 behavior: {
                     patterns: [
                         {

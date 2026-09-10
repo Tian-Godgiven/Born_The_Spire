@@ -40,6 +40,23 @@ let playCardId: string | null = null
 
 export const hiddenHandCardIds = ref<string[]>([])
 export const flightJobs = shallowRef<CardFlightJob[]>([])
+/** 打出飞牌进行中。结束回合可以点，但会先等这个变 false 再真正结束。 */
+export const playFlightActive = ref(false)
+
+const playIdleWaiters: Array<() => void> = []
+
+function setPlayFlightActive(active: boolean) {
+    playFlightActive.value = active
+    if (!active) {
+        const waiters = playIdleWaiters.splice(0)
+        waiters.forEach(fn => fn())
+    }
+}
+
+export function waitForPlayFlightIdle(): Promise<void> {
+    if (!playFlightActive.value) return Promise.resolve()
+    return new Promise(resolve => { playIdleWaiters.push(resolve) })
+}
 
 export function cardFlightEnabled(): boolean {
     return settings.skipAnimation !== true && isAnimationCategoryEnabled("card")
@@ -153,6 +170,7 @@ export async function beginCardPlay(card: Card): Promise<{ finish: (dest: CardPl
     if (!start) return dummySession()
 
     playCardId = card.__id
+    setPlayFlightActive(true)
     hideHand(card.__id)
 
     let heldResolve: () => void
@@ -173,6 +191,7 @@ export async function beginCardPlay(card: Card): Promise<{ finish: (dest: CardPl
         onDone: () => {
             showHand(card.__id)
             if (playCardId === card.__id) playCardId = null
+            setPlayFlightActive(false)
         },
     })
 

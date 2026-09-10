@@ -5,6 +5,7 @@
 
 import { roomRegistry } from "../roomRegistry"
 import { BlackStoreRoom } from "@/core/objects/room/BlackStoreRoom"
+import BlackStoreRoomComponent from "@/ui/page/Scene/running/BlackStoreRoom.vue"
 
 /**
  * 初始化黑市房间
@@ -13,7 +14,7 @@ import { BlackStoreRoom } from "@/core/objects/room/BlackStoreRoom"
 export async function initBlackStoreRooms(): Promise<void> {
 
     // 注册黑市房间类型
-    roomRegistry.registerRoomType("blackStore", BlackStoreRoom)
+    roomRegistry.registerRoomType("blackStore", BlackStoreRoom, BlackStoreRoomComponent)
 
     // 注册默认黑市房间配置
     roomRegistry.registerRoomConfig({

@@ -1,7 +1,7 @@
 /**
  * 失败房间
  * 玩家死亡后进入的特殊房间，展示本局统计信息
- * Mod 作者可以通过 roomComponentRegistry 注册自定义的失败页面组件
+ * Mod 作者可以通过 registerCustomRoomType / registerRoomComponent 换失败页
  */
 
 import { Room } from "./Room"

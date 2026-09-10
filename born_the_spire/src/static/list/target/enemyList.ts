@@ -301,12 +301,23 @@ export const enemyList:EnemyMap[] = [
     {
         label: "蚁卫",
         key: "enemy_ant_guard",
-        status: { "max-health": 45 },
+        status: { "max-health": 25 },
         organ: [
             { key: "enemy_organ_ant_mandible", level: 2 },
             "enemy_organ_ant_carapace",
             "enemy_organ_ant_charge_gland"
-        ]
+        ],
+        cards: ["original_card_00014"],
+        behavior: {
+            moves: {
+                mode: "loop",
+                list: [
+                    { cards: ["original_card_00014"], describe: "防御" },
+                    { cards: ["original_card_00014"], describe: "防御" },
+                    { cards: ["enemy_card_swarm_bite"], describe: "群咬" }
+                ]
+            }
+        }
     },
 
     {

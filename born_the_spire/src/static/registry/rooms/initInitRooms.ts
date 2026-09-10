@@ -5,6 +5,7 @@
 
 import { roomRegistry } from "../roomRegistry"
 import { InitRoom } from "@/core/objects/room/InitRoom"
+import InitRoomComponent from "@/ui/page/Scene/running/InitRoom.vue"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 
 /**
@@ -14,7 +15,7 @@ import { getLazyModule } from "@/core/utils/lazyLoader"
 export async function initInitRooms(): Promise<void> {
 
     // 注册初始化房间类型（使用 InitRoom 类）
-    roomRegistry.registerRoomType("init", InitRoom)
+    roomRegistry.registerRoomType("init", InitRoom, InitRoomComponent)
 
     // 获取初始化房间列表
     const initList = getLazyModule<any[]>('initList')

@@ -5,6 +5,7 @@
 
 import { roomRegistry } from "../roomRegistry"
 import { PoolRoom } from "@/core/objects/room/PoolRoom"
+import PoolRoomComponent from "@/ui/page/Scene/running/PoolRoom.vue"
 
 /**
  * 初始化水池房间
@@ -13,7 +14,7 @@ import { PoolRoom } from "@/core/objects/room/PoolRoom"
 export async function initPoolRooms(): Promise<void> {
 
     // 注册水池房间类型
-    roomRegistry.registerRoomType("pool", PoolRoom)
+    roomRegistry.registerRoomType("pool", PoolRoom, PoolRoomComponent)
 
     // 注册默认水池房间配置
     roomRegistry.registerRoomConfig({

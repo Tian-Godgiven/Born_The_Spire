@@ -239,47 +239,50 @@ export async function useCard(card:Card,fromPile:Card[],source:Player,targets:Ta
 
     const { beginCardPlay } = await import("@/ui/animation/cardFlight")
     const playVisual = await beginCardPlay(card)
+    let dest: "discard" | "exhaust" | "none" = "discard"
 
-    // 支付成功，触发 useCard 事件（用于触发器）
-    // info.repeat 默认为1，触发器可在 before 阶段修改（如双发效果改为2）
-    const useCardInfo = { repeat: 1 }
-    doEvent({
-        key: "useCard",
-        source,
-        medium: card,
-        target: targets,
-        info: useCardInfo,
-        effectUnits: []  // 没有直接效果，只用于触发器
-    })
-
-    // 根据 repeat 次数执行卡牌效果
-    const repeat = useCardInfo.repeat || 1
-    for (let i = 0; i < repeat; i++) {
-        doEvent({
-            key: "cardEffect",
+    try {
+        // 支付成功，触发 useCard 事件（用于触发器）
+        // info.repeat 默认为1，触发器可在 before 阶段修改（如双发效果改为2）
+        const useCardInfo = { repeat: 1 }
+        await doEvent({
+            key: "useCard",
             source,
             medium: card,
             target: targets,
-            effectUnits: cardEffects
+            info: useCardInfo,
+            effectUnits: []  // 没有直接效果，只用于触发器
         })
+
+        // 根据 repeat 次数执行卡牌效果
+        const repeat = useCardInfo.repeat || 1
+        for (let i = 0; i < repeat; i++) {
+            await doEvent({
+                key: "cardEffect",
+                source,
+                medium: card,
+                target: targets,
+                effectUnits: cardEffects
+            })
+        }
+
+        // 使用后处理（弃牌/消耗等）
+        const afterUseEffect = card.getAfterUseEffect(fromPile)
+        dest = afterUseEffect.key === "pay_exhaust"
+            ? "exhaust"
+            : afterUseEffect.key === "pay_removeAbility"
+                ? "none"
+                : "discard"
+        await doEvent({
+            key: "afterUseCard",
+            source,
+            medium: card,
+            target: card,
+            effectUnits: [afterUseEffect]
+        })
+    } finally {
+        await playVisual.finish(dest)
     }
-
-    // 使用后处理（弃牌/消耗等）
-    const afterUseEffect = card.getAfterUseEffect(fromPile)
-    doEvent({
-        key: "afterUseCard",
-        source,
-        medium: card,
-        target: card,
-        effectUnits: [afterUseEffect]
-    })
-
-    const dest = afterUseEffect.key === "pay_exhaust"
-        ? "exhaust"
-        : afterUseEffect.key === "pay_removeAbility"
-            ? "none"
-            : "discard"
-    await playVisual.finish(dest)
 }
 
 //从抽牌堆中抽取n张卡牌,这是一个事件

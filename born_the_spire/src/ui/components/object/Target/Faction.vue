@@ -1,8 +1,10 @@
 <template>
-<div class="faction"  
+<div class="faction"
     @mouseenter="onHover" @mouseleave="onLeave" @click="onClick">
     <ChooseBox :chooseState="chooseState.chooseState"></ChooseBox>
-    <CharaVue :class="ifCenter(target)?'center':''" v-for="target in charas" :target :side="whichSide" />
+    <div class="faction-members">
+        <CharaVue :class="ifCenter(target)?'center':''" v-for="target in charas" :target :side="whichSide" />
+    </div>
 </div>
 </template>
 
@@ -78,10 +80,17 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 30px;
+    overflow: visible;
     .chooseBox{
         width: 80%;
         height: 80%;
+    }
+    .faction-members {
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        gap: 66px;
+        overflow: visible;
     }
     .target{
         position: relative;

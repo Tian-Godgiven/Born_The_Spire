@@ -45,30 +45,30 @@ export function cardMove(
     if (!from || !to) { newError(["没有指定来源牌堆或目标牌堆！"]) }
 
     const index = from.findIndex(tmp => tmp.__id == card.__id)
-    if (index >= 0) {
-        const handPile = handContext?.handPile
-        const isLeavingHand = handPile && from === handPile
-        const isEnteringHand = handPile && to === handPile
-
-        // 离开来源牌堆
-        if (isLeavingHand) {
-            from.splice(index, 1)
-            card.unmountInHand()
-        } else {
-            from.splice(index, 1)
-        }
-
-        // 进入目标牌堆
-        if (isEnteringHand) {
-            enterHand(card, to, handContext!.owner)
-        } else {
-            to.push(card)
-        }
-
-        return true
+    if (index < 0) {
+        // 打出过程中点结束回合会先把牌丢进弃牌堆，afterUseCard 再搬一次。已在目标堆就算成功。
+        if (to.some(tmp => tmp.__id == card.__id)) return true
+        newError(["没有在来源牌堆找到目标卡牌！"])
     }
 
-    newError(["没有在来源牌堆找到目标卡牌！"])
+    const handPile = handContext?.handPile
+    const isLeavingHand = handPile && from === handPile
+    const isEnteringHand = handPile && to === handPile
+
+    if (isLeavingHand) {
+        from.splice(index, 1)
+        card.unmountInHand()
+    } else {
+        from.splice(index, 1)
+    }
+
+    if (isEnteringHand) {
+        enterHand(card, to, handContext!.owner)
+    } else {
+        to.push(card)
+    }
+
+    return true
 }
 
 //打乱牌堆

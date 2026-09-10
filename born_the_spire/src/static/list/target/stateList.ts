@@ -179,12 +179,12 @@ export const stateList: StateData[] = [
             }
         }
     },
-    // 蓄势：攻击时消耗全部层数，每层+1伤害，然后归零；层数由蓄力腺器官在回合结束时增加
+    // 蓄势：每层+1伤害，打完这张攻击牌才清零（多段每段都加）；层数由蓄力腺在回合结束时增加
     {
         label: "蓄势",
         key: "momentum",
         category: "buff",
-        describe: ["攻击时消耗全部层数，每层+1伤害"],
+        describe: ["攻击时每层+1伤害，打完这张攻击牌后消耗全部层数"],
         showType: "number",
         repeate: "stack",
         interaction: {
@@ -194,28 +194,31 @@ export const stateList: StateData[] = [
                     how: "make",
                     key: "attack",
                     action: "momentumBoost"
+                }, {
+                    when: "after",
+                    how: "make",
+                    key: ["useCard", "afterUseCard"],
+                    action: "momentumReset"
                 }],
                 reaction: {
-                    momentumBoost: [
-                        {
-                            key: "momentumDamage",
-                            label: "蓄势增伤",
-                            targetType: "triggerEffect",
-                            effect: [{
-                                key: "modifyDamageValue",
-                                params: { delta: "$source.stateStack()" }
-                            }]
-                        },
-                        {
-                            key: "momentumReset",
-                            label: "蓄势清零",
-                            targetType: "triggerOwner",
-                            effect: [{
-                                key: "removeState",
-                                params: { stateKey: "momentum" }
-                            }]
-                        }
-                    ]
+                    momentumBoost: [{
+                        key: "momentumDamage",
+                        label: "蓄势增伤",
+                        targetType: "triggerEffect",
+                        effect: [{
+                            key: "modifyDamageValue",
+                            params: { delta: "$source.stateStack()" }
+                        }]
+                    }],
+                    momentumReset: [{
+                        key: "momentumReset",
+                        label: "蓄势清零",
+                        targetType: "triggerOwner",
+                        effect: [{
+                            key: "consumeStateAfterAttackPlay",
+                            params: { stateKey: "momentum" }
+                        }]
+                    }]
                 }
             }
         }

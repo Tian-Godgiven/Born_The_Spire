@@ -1,7 +1,7 @@
 /**
  * 通关房间
  * 玩家通关后进入的特殊房间，展示本局统计信息
- * Mod 作者可以通过 roomComponentRegistry 注册自定义的通关页面组件
+ * Mod 作者可以通过 registerCustomRoomType / registerRoomComponent 换通关页
  */
 
 import { Room } from "./Room"

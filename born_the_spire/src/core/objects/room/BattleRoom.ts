@@ -1,8 +1,7 @@
 import { Room } from "./Room"
 import type { RoomConfig, BattleRoomType } from "./Room"
 import { startNewBattle, Battle, nowPlayerTeam, endNowBattle } from "../game/battle"
-import type { Enemy } from "../target/Enemy"
-import type { EnemyMap } from "../target/Enemy"
+import type { Enemy, EnemyMap, EnemyUiSize } from "../target/Enemy"
 import type { EnemyBehaviorConfig } from "../system/EnemyBehavior"
 import { newLog } from "@/ui/hooks/global/log"
 import { getLazyModule } from "@/core/utils/lazyLoader"
@@ -26,6 +25,7 @@ export type EnemyInstanceConfig = string | {
     key: string
     behavior?: EnemyBehaviorConfig  // 覆盖 enemyList 中的默认行为
     statusOverrides?: Record<string, number>  // 覆盖默认属性值（如血量）
+    uiSize?: EnemyUiSize  // 本场卡片尺寸；不写则 normal
 }
 
 /**
@@ -90,6 +90,7 @@ export class BattleRoom extends Room {
             const overrides: Partial<EnemyMap> = {}
             if (entry.behavior) overrides.behavior = entry.behavior
             if (entry.statusOverrides) overrides.status = { ...base.status, ...entry.statusOverrides }
+            if (entry.uiSize) overrides.uiSize = entry.uiSize
             return Object.keys(overrides).length > 0 ? { ...base, ...overrides } : base
         }).filter((c): c is EnemyMap => c !== undefined)
     }

@@ -51,13 +51,11 @@ import { computed, useTemplateRef, watch, onMounted, onBeforeUnmount } from 'vue
 
 <style scoped lang='scss'>
 .bloodLine{
-    width: 200px;
+    width: 100%;
     height: 20px;
     overflow: hidden;
     border-radius: 30px;
     position: relative;
-    left: 50%;
-    transform: translateX(-50%);
     outline: 2px solid black;
     outline-offset: 2px;
     background-color: white;
@@ -70,7 +68,7 @@ import { computed, useTemplateRef, watch, onMounted, onBeforeUnmount } from 'vue
         >div{
             line-height: 1rem;
             flex-shrink: 0;
-            width: 200px;
+            width: 100%;
             text-align: center;
         }
     }

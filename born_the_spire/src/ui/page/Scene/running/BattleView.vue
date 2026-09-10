@@ -51,12 +51,14 @@
     import HandCardSelector from '@/ui/components/interaction/HandCardSelector.vue';
     import CardFlightOverlay from '@/ui/animation/components/CardFlightOverlay.vue';
     import { handCardSelectorActive } from '@/ui/hooks/interaction/handCardSelector';
+    import { waitForPlayFlightIdle } from '@/ui/animation/cardFlight';
 
     const emit = defineEmits<{
         'battle-end': [result: 'player_win' | 'player_lose']
     }>()
 
     const hasEmitted = ref(false)
+    const endTurnQueued = ref(false)
 
     watch(() => nowBattle.value, () => {
         hasEmitted.value = false
@@ -82,6 +84,7 @@
         return nowBattle.value?.nowTurn === "player"
             && !nowBattle.value?.isTurnTransitioning   // 回合交接期间按钮立刻置灰，不等 nowTurn 翻面
             && !handCardSelectorActive.value
+            && !endTurnQueued.value
     })
     const drawNum = computed(()=>{
         return nowPlayer.cardPiles.drawPile.length
@@ -99,7 +102,13 @@
     })
     async function endTurn(){
         if (!isPlayerTurn.value) return
-        await nowBattle.value?.endPlayerTurnAndStartEnemyTurn()
+        endTurnQueued.value = true
+        try {
+            await waitForPlayFlightIdle()
+            await nowBattle.value?.endPlayerTurnAndStartEnemyTurn()
+        } finally {
+            endTurnQueued.value = false
+        }
     }
 
 </script>

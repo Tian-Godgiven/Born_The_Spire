@@ -104,7 +104,7 @@ type UIPosition =
     | "characterBottom"   // 角色底部
     | "characterLeft"     // 角色左侧
     | "characterRight"    // 角色右侧
-    | "healthBarRight"    // 血条右侧（推荐用于护甲类机制）
+    | "healthBarRight"    // 贴着血条、朝屏幕中间那侧（玩家在右，敌人在左）
     | "sidebar"           // 侧边栏
     | "topBar"            // 顶部栏
     | "custom"            // 完全自定义（需要自己处理定位）

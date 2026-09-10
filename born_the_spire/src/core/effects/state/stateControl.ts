@@ -170,3 +170,53 @@ export const setStateStack: EffectFunc = (event: ActionEvent, effect) => {
 
     return success
 }
+
+function effectLooksLikeAttack(key: string, params?: Record<string, any>): boolean {
+    if (key === "attack" || key === "damage") return true
+    if (key === "repeatEffects") {
+        const units = params?.effects as Array<{ key: string, params?: Record<string, any> }> | undefined
+        return units?.some(u => effectLooksLikeAttack(u.key, u.params)) ?? false
+    }
+    return false
+}
+
+function findCardPlayEvent(event: ActionEvent): ActionEvent | undefined {
+    let current: ActionEvent | undefined = event
+    const seen = new Set<ActionEvent>()
+    while (current && !seen.has(current)) {
+        seen.add(current)
+        if (current.key === "useCard" || current.key === "afterUseCard") return current
+        current = current.triggerContext?.triggerEvent ?? current.parentEvent
+    }
+    return undefined
+}
+
+function isAttackCardPlay(playEvent: ActionEvent): boolean {
+    if (playEvent.key === "useCard") {
+        return playEvent.effects.some(e => effectLooksLikeAttack(e.key, e.params))
+    }
+    const tags = (playEvent.medium as { tags?: string[] })?.tags
+    return Array.isArray(tags) && tags.includes("attack")
+}
+
+/**
+ * 打完一张攻击牌后清掉状态（蓄势：每段都加伤，整张牌打完才归零）
+ *
+ * 反应会 spawn 一条独立事件（key 是 momentumReset 这类），不能拿这条的 event.key 去判断。
+ * 要沿 parentEvent / triggerContext.triggerEvent 找到原来的 useCard / afterUseCard。
+ *
+ * 敌人：效果挂在 useCard 里，after useCard 时本事件已经打完所有段。
+ * 玩家：useCard 是空壳，真伤害在 cardEffect，清零要等 afterUseCard，且只在打出攻击牌时清。
+ */
+export const consumeStateAfterAttackPlay: EffectFunc = (event: ActionEvent, effect) => {
+    const stateKey = effect.params.stateKey as string
+    if (!stateKey) {
+        newError(["consumeStateAfterAttackPlay 效果缺少 stateKey 参数"])
+        return false
+    }
+
+    const playEvent = findCardPlayEvent(event)
+    if (!playEvent || !isAttackCardPlay(playEvent)) return false
+
+    return removeState(event, effect)
+}

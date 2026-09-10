@@ -1,5 +1,6 @@
 import type { ConsoleCommand, AddOutputFn } from '@/core/utils/consoleCommandRegistry'
-import { nowGameRun, nowPlayer } from '@/core/objects/game/run'
+import { consoleCommandRegistry } from '@/core/utils/consoleCommandRegistry'
+import { nowGameRun } from '@/core/objects/game/run'
 import { roomRegistry } from '@/static/registry/roomRegistry'
 import router from '@/ui/router'
 
@@ -11,10 +12,22 @@ function ensureRunning(addOutput: AddOutputFn): boolean {
     return true
 }
 
+function currentLayer(): number {
+    return nowGameRun?.currentRoom?.layer ?? nowGameRun?.towerLevel ?? 1
+}
+
 async function goToRunning() {
     if (router.currentRoute.value.path !== '/running') {
         router.replace('/running')
     }
+}
+
+/** enter 之后必须 process，否则旧战斗被清掉、新战斗起不来，场上没人 */
+async function enterCreatedRoom(room: NonNullable<ReturnType<typeof roomRegistry.createRoom>>, addOutput: AddOutputFn, label: string) {
+    await nowGameRun.enterRoom(room)
+    await room.process()
+    addOutput(`✓ 成功进入${label}`, 'result')
+    await goToRunning()
 }
 
 export const roomCommands: ConsoleCommand[] = [
@@ -23,25 +36,24 @@ export const roomCommands: ConsoleCommand[] = [
         group: '房间',
         description: '进入指定房间',
         usage: 'enterRoom("key", layer?)',
-        examples: ['enterRoom("battle_elite_hydra", 1)'],
+        examples: ['enterRoom("battle_f1_ant_swarm")', 'enterRoom("battle_f1_ant_swarm", 1)'],
         execute: async (args, addOutput) => {
-            const [roomKey, layer = 1] = args
+            const [roomKey, layer] = args
             if (!roomKey) {
                 addOutput('用法: enterRoom(roomKey, layer?)', 'error')
-                addOutput('例如: enterRoom("battle_normal_slime", 1)', 'info')
+                addOutput('例如: enterRoom("battle_f1_ant_swarm")  // 层级默认当前层', 'info')
                 return
             }
-            addOutput(`尝试进入房间: ${roomKey}, 层级: ${layer}`, 'info')
-            const room = roomRegistry.createRoom(roomKey, layer)
+            if (!ensureRunning(addOutput)) return
+            const actualLayer = layer ?? currentLayer()
+            addOutput(`尝试进入房间: ${roomKey}, 层级: ${actualLayer}`, 'info')
+            const room = roomRegistry.createRoom(roomKey, actualLayer)
             if (!room) {
                 addOutput(`创建房间失败: ${roomKey}`, 'error')
                 addOutput('使用 listRooms() 查看所有可用房间', 'info')
                 return
             }
-            if (!ensureRunning(addOutput)) return
-            await nowGameRun.enterRoom(room)
-            addOutput(`✓ 成功进入房间: ${roomKey}`, 'result')
-            await goToRunning()
+            await enterCreatedRoom(room, addOutput, `房间: ${roomKey}`)
         }
     },
     {
@@ -59,11 +71,23 @@ export const roomCommands: ConsoleCommand[] = [
                 return
             }
             addOutput(`找到 ${filtered.length} 个房间:`, 'info')
+            addOutput('点击房间名会按当前层级进入', 'info')
             filtered.forEach(room => {
-                addOutput(`  [${room.type}] ${room.key} - ${room.name || '(无名称)'}`, 'result')
+                addOutput(
+                    `  [${room.type}] ${room.key} - ${room.name || '(无名称)'}`,
+                    'result',
+                    `enterRoom("${room.key}")`,
+                    () => {
+                        const cmd = consoleCommandRegistry.getCommand('enterRoom')
+                        if (!cmd) return
+                        const layer = currentLayer()
+                        addOutput(`enterRoom("${room.key}", ${layer})`, 'command')
+                        void cmd.execute([room.key, layer], addOutput)
+                    }
+                )
             })
             addOutput('', 'info')
-            addOutput('使用 enterRoom("房间key") 进入房间', 'info')
+            addOutput('点击房间或使用 enterRoom("房间key") 进入', 'info')
         }
     },
     {
@@ -126,15 +150,13 @@ export const roomCommands: ConsoleCommand[] = [
                 return
             }
             if (!ensureRunning(addOutput)) return
-            const room = roomRegistry.createRoom(eventKey, nowGameRun.towerLevel || 1)
+            const room = roomRegistry.createRoom(eventKey, currentLayer())
             if (!room) {
                 addOutput(`创建事件房间失败: ${eventKey}`, 'error')
                 addOutput('使用 listEvents() 查看所有可用事件', 'info')
                 return
             }
-            await nowGameRun.enterRoom(room)
-            addOutput(`✓ 成功进入事件: ${eventKey}`, 'result')
-            await goToRunning()
+            await enterCreatedRoom(room, addOutput, `事件: ${eventKey}`)
         }
     },
     {
@@ -152,9 +174,7 @@ export const roomCommands: ConsoleCommand[] = [
                 addOutput('创建黑市房间失败，请确认黑市房间已注册', 'error')
                 return
             }
-            await nowGameRun.enterRoom(room)
-            addOutput('✓ 成功进入黑市', 'result')
-            await goToRunning()
+            await enterCreatedRoom(room, addOutput, '黑市')
         }
     },
     {
@@ -172,9 +192,7 @@ export const roomCommands: ConsoleCommand[] = [
                 addOutput('创建水池房间失败，请确认水池房间已注册', 'error')
                 return
             }
-            await nowGameRun.enterRoom(room)
-            addOutput('✓ 成功进入水池', 'result')
-            await goToRunning()
+            await enterCreatedRoom(room, addOutput, '水池')
         }
     },
 ]

@@ -5,6 +5,7 @@
 
 import { roomRegistry } from "../roomRegistry"
 import { BattleRoom } from "@/core/objects/room/BattleRoom"
+import BattleRoomComponent from "@/ui/page/Scene/running/Battle.vue"
 import { battleList } from "@/static/list/room/battle/battleList"
 
 /**
@@ -14,10 +15,10 @@ import { battleList } from "@/static/list/room/battle/battleList"
 export async function initBattleRooms(): Promise<void> {
 
     // 注册战斗房间类型
-    roomRegistry.registerRoomType("battle", BattleRoom)
-    roomRegistry.registerRoomType("eliteBattle", BattleRoom)
-    roomRegistry.registerRoomType("elitePlusBattle", BattleRoom)
-    roomRegistry.registerRoomType("bossBattle", BattleRoom)
+    roomRegistry.registerRoomType("battle", BattleRoom, BattleRoomComponent)
+    roomRegistry.registerRoomType("eliteBattle", BattleRoom, BattleRoomComponent)
+    roomRegistry.registerRoomType("elitePlusBattle", BattleRoom, BattleRoomComponent)
+    roomRegistry.registerRoomType("bossBattle", BattleRoom, BattleRoomComponent)
 
     // 注册战斗房间配置
     battleList.forEach(battle => {

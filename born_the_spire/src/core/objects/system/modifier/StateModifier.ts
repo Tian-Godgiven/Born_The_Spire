@@ -361,7 +361,7 @@ export class StateModifier {
                                 effectUnits: effectUnit ?? []
                             })
 
-                            // 保存触发器上下文
+                            newEvent.parentEvent = event
                             newEvent.triggerContext = event.triggerContext || {
                                 source: state as any,
                                 owner: this.owner,

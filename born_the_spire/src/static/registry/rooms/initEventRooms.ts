@@ -5,6 +5,7 @@
 
 import { roomRegistry } from "../roomRegistry"
 import { EventRoom } from "@/core/objects/room/EventRoom"
+import EventRoomComponent from "@/ui/page/Scene/running/EventRoom.vue"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 
 /**
@@ -14,7 +15,7 @@ import { getLazyModule } from "@/core/utils/lazyLoader"
 export async function initEventRooms(): Promise<void> {
 
     // 注册事件房间类型
-    roomRegistry.registerRoomType("event", EventRoom)
+    roomRegistry.registerRoomType("event", EventRoom, EventRoomComponent)
 
     // 获取事件列表
     const eventList = getLazyModule<any[]>('eventList')

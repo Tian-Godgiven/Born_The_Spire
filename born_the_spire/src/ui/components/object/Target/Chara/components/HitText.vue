@@ -73,22 +73,32 @@
     // ========== 数值采样 ==========
     // 结算量用 health / armor 前后快照做差，不读 after 时的 params.value：
     // 减伤、护甲吸收、生命上限截断都会让参数和实际对不上。
-    // incoming 是 on 阶段、护甲吸收之前的 params.value。
-    // 完全抵消时血甲都不变，只能靠它判断「本来有伤害」。
+    // incoming 必须在 before 里、抵消效果动手之前记下。完全抵消发生在 before，
+    // 到 on 时 value 已经是 0；血甲又都不变，只能靠 incoming 或 Effect.nullified。
     const snapshots = new WeakMap<Effect, { health: number, armor: number, incoming: number }>()
 
-    function takeSnapshot(effect: Effect | null) {
-        // effect 为 null 说明这是事件级触发（event.key 命中），效果级那次才是我们要的
+    function rememberIncoming(effect: Effect | null) {
         if (!effect) return
+        const prev = snapshots.get(effect)
         snapshots.set(effect, {
-            health: getCurrentValue(props.target, "health", 0),
-            armor: getCurrentValue(props.target, "armor", 0),
+            health: prev?.health ?? 0,
+            armor: prev?.armor ?? 0,
             incoming: Number(effect.params.value) || 0
         })
     }
 
-    // on 阶段快照：before 里蚀伤/易伤已经改完参数，护甲吸收还没跑。
-    // level 要高于护甲吸收的 priority（100），否则 incoming 已经是扣完甲的值。
+    function rememberVitals(effect: Effect | null) {
+        if (!effect) return
+        const prev = snapshots.get(effect)
+        snapshots.set(effect, {
+            health: getCurrentValue(props.target, "health", 0),
+            armor: getCurrentValue(props.target, "armor", 0),
+            incoming: prev?.incoming ?? (Number(effect.params.value) || 0)
+        })
+    }
+
+    // before HIGH：赶在普通内容的抵消（默认 level 0）之前记下入伤
+    // on HIGH：赶在护甲吸收（priority 100）之前记下血甲
     const SNAPSHOT_LEVEL = TriggerLevel.HIGH
 
     const removers: Array<() => void> = []
@@ -96,15 +106,25 @@
     onMounted(() => {
         const trigger = props.target.trigger
 
-        // 伤害：on 存快照（蚀伤已加、护甲未吸），after 比对
+        removers.push(trigger.appendTrigger({
+            when: "before",
+            how: "take",
+            key: ["attack", "damage"],
+            level: SNAPSHOT_LEVEL,
+            callback: async (event, effect) => {
+                if (event.simulate) return
+                rememberIncoming(effect)
+            }
+        }).remove)
+
         removers.push(trigger.appendTrigger({
             when: "on",
             how: "take",
             key: ["attack", "damage"],
             level: SNAPSHOT_LEVEL,
             callback: async (event, effect) => {
-                if (event.simulate) return   // 伤害预览不飘字
-                takeSnapshot(effect)
+                if (event.simulate) return
+                rememberVitals(effect)
             }
         }).remove)
 
@@ -124,7 +144,9 @@
 
                 if (absorbed > 0) pushText(`格挡-${absorbed}`, 'block', event)
                 if (lost > 0) pushText(`-${lost}`, 'damage', event)
-                else if (absorbed === 0 && before.incoming > 0) pushText('抵消', 'block', event)
+                else if (absorbed === 0 && (effect.nullified || before.incoming > 0)) {
+                    pushText('抵消', 'block', event)
+                }
             }
         }).remove)
 
@@ -136,7 +158,7 @@
             level: SNAPSHOT_LEVEL,
             callback: async (event, effect) => {
                 if (event.simulate) return
-                takeSnapshot(effect)
+                rememberVitals(effect)
             }
         }).remove)
 

@@ -1,5 +1,6 @@
 import { ActionEvent, doEvent, handleEventEntity } from "@/core/objects/system/ActionEvent";
 import { changeCurrentValue, getCurrentValue } from "@/core/objects/system/Current/current";
+import type { Effect } from "@/core/objects/system/effect/Effect";
 import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc";
 import { getStateModifier } from "@/core/objects/system/modifier/StateModifier";
 import { isEntity, isEffect } from "@/core/utils/typeGuards";
@@ -8,6 +9,16 @@ import { newError } from "@/ui/hooks/global/alert";
 /** 扣血但仍走受伤流水线：attack 挨打，damage 中毒等非攻击受伤 */
 export function isHurtEffectKey(key: string): boolean {
     return key === "damage" || key === "attack"
+}
+
+/**
+ * 把一次 attack/damage 置零，并打上抵消标记。
+ * 数据里用 `nullifyDamageValue`；自定义 EffectFunc 里调这个，不要直接写 params.value = 0。
+ */
+export function nullifyHurtEffect(hurtEffect: Effect): void {
+    const prev = Number(hurtEffect.params.value) || 0
+    hurtEffect.params.value = 0
+    if (prev > 0) hurtEffect.nullified = true
 }
 
 //对单个目标造成伤害
@@ -121,7 +132,7 @@ export const nullifyDamageValue: EffectFunc = (event, effect) => {
         return false
     }
 
-    target.params.value = 0
+    nullifyHurtEffect(target)
 
     return true
 }
@@ -200,7 +211,7 @@ export const checkAndSaveLethal: EffectFunc = (event, effect) => {
     if (damageValue < currentHealth) return true
 
     // 致命：置零 + 消耗器官充能
-    target.params.value = 0
+    nullifyHurtEffect(target)
     const organ = event.source
     if (isEntity(organ)) {
         const stateModifier = getStateModifier(organ as any)

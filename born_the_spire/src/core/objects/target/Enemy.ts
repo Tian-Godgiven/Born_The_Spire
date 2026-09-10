@@ -18,11 +18,14 @@ import { getStatusValue } from "../system/status/Status";
 import { beginTransaction, endTransaction } from "../game/transaction";
 import type { EffectUnit } from "../system/effect/EffectUnit";
 
+export type EnemyUiSize = "small" | "normal" | "big"
+
 export type EnemyMap = CharaMap & {
     key:string
     status:Record<string,number|boolean>,
     behavior?: EnemyBehaviorConfig  // 敌人行为配置
     cards?: string[]  // 敌人专属卡牌（不通过器官提供）
+    uiSize?: EnemyUiSize  // 战斗卡片尺寸，一般在 battleList 的这场实例上写，省略则 normal
 }
 
 const DEFAULT_MAX_ENERGY = 3
@@ -54,6 +57,7 @@ export class Enemy extends Chara{
     public behavior?: EnemyBehaviorConfig  // 敌人行为配置
     public exclusiveCards: string[] = []  // 敌人专属卡牌key列表
     public aiCursor: number = 0  // 剧本 / loop 序列指针，存在实例上以免改到共享配置
+    public uiSize: EnemyUiSize = "normal"
 
     // 双牌堆系统
     public drawPile: {
@@ -89,6 +93,8 @@ export class Enemy extends Chara{
         if (map.cards) {
             this.exclusiveCards = map.cards
         }
+
+        this.uiSize = map.uiSize ?? "normal"
     }
 
     async initialize(): Promise<void> {
@@ -381,7 +387,7 @@ export class Enemy extends Chara{
 
         const targets = this.resolveTargets(cardUse.target, target)
 
-        doEvent({
+        await doEvent({
             key: "useCard",
             source: this,
             medium: card,

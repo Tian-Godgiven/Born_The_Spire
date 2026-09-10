@@ -1,5 +1,10 @@
 <template>
-<div class="console-panel" v-if="isVisible">
+<div class="console-panel" v-if="isVisible" :style="{ height: consoleHeight + 'px', zIndex: DEV_CONSOLE_Z_INDEX }">
+    <div
+        class="resize-handle"
+        title="拖动改变高度"
+        @mousedown.prevent="startResize"
+    ></div>
     <div class="header">
         <span>开发者控制台</span>
         <button @click="close">×</button>
@@ -31,6 +36,7 @@
 import { ref, nextTick, onMounted, onUnmounted } from 'vue'
 import { consoleCommandRegistry } from '@/core/utils/consoleCommandRegistry'
 import { registerAllCommands } from './commands'
+import { DEV_CONSOLE_Z_INDEX } from '@/ui/hooks/interaction/popoverHost'
 
 interface OutputLine {
     type: 'command' | 'result' | 'error' | 'info' | 'example'
@@ -46,17 +52,45 @@ const commandHistory = ref<string[]>([])
 const historyIndex = ref(-1)
 const outputRef = ref<HTMLElement>()
 const inputRef = ref<HTMLInputElement>()
+const consoleHeight = ref(400)
 
 const HISTORY_STORAGE_KEY = 'dev-console-history'
+const HEIGHT_STORAGE_KEY = 'dev-console-height'
 const HISTORY_MAX = 20
+const HEIGHT_MIN = 160
+
+function clampHeight(h: number) {
+    const max = Math.max(HEIGHT_MIN, window.innerHeight - 48)
+    return Math.min(max, Math.max(HEIGHT_MIN, Math.round(h)))
+}
+
+function startResize(e: MouseEvent) {
+    const startY = e.clientY
+    const startH = consoleHeight.value
+    function onMove(ev: MouseEvent) {
+        consoleHeight.value = clampHeight(startH + (startY - ev.clientY))
+    }
+    function onUp() {
+        window.removeEventListener('mousemove', onMove)
+        window.removeEventListener('mouseup', onUp)
+        try {
+            localStorage.setItem(HEIGHT_STORAGE_KEY, String(consoleHeight.value))
+        } catch {}
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+}
 
 // 注册所有内置命令
 registerAllCommands()
 
 // ========== 输出 ==========
 
+let suppressOutputScroll = false
+
 function addOutput(text: string, type: OutputLine['type'] = 'result', clickable?: string, action?: () => void) {
     outputLines.value.push({ type, text, clickable, action })
+    if (suppressOutputScroll) return
     nextTick(() => {
         if (outputRef.value) {
             outputRef.value.scrollTop = outputRef.value.scrollHeight
@@ -200,50 +234,62 @@ function showHelp(filter?: string) {
         }
     }
 
-    // 如果是折叠/展开操作，原地替换帮助块
+    // 如果是折叠/展开操作，原地替换帮助块，不要滚到最底
     const isRefresh = helpBlockStart >= 0 && helpBlockStart < outputLines.value.length
+    const savedScroll = isRefresh ? outputRef.value?.scrollTop : undefined
     if (isRefresh) {
+        suppressOutputScroll = true
         outputLines.value.splice(helpBlockStart)
     } else {
         helpBlockStart = outputLines.value.length
     }
 
-    if (!effectiveFilter) {
-        addOutput('=== 可用命令 ===  提示: 点击标题收起/展开，点击命令或例子填入输入栏', 'info')
-        addOutput('可用区域: ' + grouped.map(g => g.group.key).join(' / '), 'info')
-    }
-    addOutput('', 'info')
+    try {
+        if (!effectiveFilter) {
+            addOutput('=== 可用命令 ===  提示: 点击标题收起/展开，点击命令或例子填入输入栏', 'info')
+            addOutput('可用区域: ' + grouped.map(g => g.group.key).join(' / '), 'info')
+        }
+        addOutput('', 'info')
 
-    for (const { group, commands } of sections) {
-        const isCollapsed = collapsedSections.value[group.key]
-        const collapseHint = effectiveFilter ? '' : (isCollapsed ? '[+] ' : '[-] ')
-        addOutput(`=== ${collapseHint}${group.title} ===`, 'info', undefined, () => {
-            collapsedSections.value[group.key] = !collapsedSections.value[group.key]
-            showHelp(filter)
-        })
+        for (const { group, commands } of sections) {
+            const isCollapsed = collapsedSections.value[group.key]
+            const collapseHint = effectiveFilter ? '' : (isCollapsed ? '[+] ' : '[-] ')
+            addOutput(`=== ${collapseHint}${group.title} ===`, 'info', undefined, () => {
+                collapsedSections.value[group.key] = !collapsedSections.value[group.key]
+                showHelp(filter)
+            })
 
-        if (!isCollapsed || !!effectiveFilter || showAll) {
-            for (const cmd of commands) {
-                addOutput(`  ${cmd.usage}  —  ${cmd.description}`, 'info', cmd.usage)
-                if (cmd.examples) {
-                    for (const ex of cmd.examples) {
-                        addOutput(`   示例: ${ex}`, 'example', ex)
+            if (!isCollapsed || !!effectiveFilter || showAll) {
+                for (const cmd of commands) {
+                    addOutput(`  ${cmd.usage}  —  ${cmd.description}`, 'info', cmd.usage)
+                    if (cmd.examples) {
+                        for (const ex of cmd.examples) {
+                            addOutput(`   示例: ${ex}`, 'example', ex)
+                        }
                     }
                 }
             }
+            addOutput('', 'info')
         }
-        addOutput('', 'info')
-    }
 
-    // 控制台自身的命令
-    if (!effectiveFilter) {
-        addOutput('=== 控制台命令 ===', 'info')
-        addOutput('  clear  —  清空控制台', 'info', 'clear')
-        addOutput('  help  —  显示全部帮助', 'info', 'help')
-        addOutput('  help --区域  —  只显示指定区域', 'info')
-        addOutput('  help --all  —  展开显示全部', 'info', 'help --all')
-        addOutput('', 'info')
-        addOutput('提示: 使用 ↑↓ 键浏览历史命令（跨会话保留）', 'info')
+        if (!effectiveFilter) {
+            addOutput('=== 控制台命令 ===', 'info')
+            addOutput('  clear  —  清空控制台', 'info', 'clear')
+            addOutput('  help  —  显示全部帮助', 'info', 'help')
+            addOutput('  help --区域  —  只显示指定区域', 'info')
+            addOutput('  help --all  —  展开显示全部', 'info', 'help --all')
+            addOutput('', 'info')
+            addOutput('提示: 使用 ↑↓ 键浏览历史命令（跨会话保留）', 'info')
+        }
+    } finally {
+        if (isRefresh) {
+            suppressOutputScroll = false
+            nextTick(() => {
+                if (outputRef.value && savedScroll !== undefined) {
+                    outputRef.value.scrollTop = savedScroll
+                }
+            })
+        }
     }
 }
 
@@ -310,6 +356,14 @@ onMounted(() => {
         }
     } catch {}
 
+    try {
+        const storedH = localStorage.getItem(HEIGHT_STORAGE_KEY)
+        if (storedH) {
+            const n = Number(storedH)
+            if (Number.isFinite(n)) consoleHeight.value = clampHeight(n)
+        }
+    } catch {}
+
     ;(window as any).openConsole = open
     ;(window as any).closeConsole = close
     ;(window as any).toggleConsole = toggle
@@ -336,11 +390,22 @@ defineExpose({ open, close, toggle })
     background: #1e1e1e;
     color: #d4d4d4;
     border-top: 2px solid #333;
-    z-index: 1000;
     display: flex;
     flex-direction: column;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 14px;
+
+    .resize-handle {
+        height: 8px;
+        flex-shrink: 0;
+        cursor: ns-resize;
+        background: #333;
+        border-bottom: 1px solid #444;
+
+        &:hover {
+            background: #555;
+        }
+    }
 
     .header {
         display: flex;

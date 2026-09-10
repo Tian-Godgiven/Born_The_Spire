@@ -38,6 +38,8 @@ export class Effect implements EventParticipant{
     public targetSpec?:string//独立目标规格，设置后该效果作为子事件执行
     private _owner?:EventParticipant  // 定义该 EffectUnit 的物品，仅用于 $self 表达式解析
     private _cancelled:boolean = false
+    /** 本次伤害被完全抵消（nullifyHurtEffect）。跳字看这个标记，不要给某个器官写特例 */
+    public nullified: boolean = false
     constructor({label="",key,effectFunc,params,describe=[],resultStoreAs,triggerEvent,owner}:EffectConstructor){
         this.label = label;
         this.key = key;

@@ -1,7 +1,7 @@
 <template>
 <!-- 飘字层必须挂在 CharaAnimator 外面：死亡演出会把动画容器整个淡出并 visibility: hidden，
      放在里面的话致命一击的伤害数字会跟着一起消失 -->
-<div class="chara-wrapper">
+<div class="chara-wrapper" :class="'ui-size-' + uiSize">
 <CharaAnimator ref="animator" :target="target" class="chara-body">
     <!-- 意图显示（仅敌人，死亡后隐藏）
          必须放在 Popover 触发区之外：它自己已经带了悬停详情，落在触发区里的话，
@@ -36,8 +36,11 @@
                     </div>
                     <div class="health-and-armor">
                         <BloodLine :target></BloodLine>
-                        <!-- 动态渲染所有 healthBarRight 位置的机制 -->
-                        <MechanismDisplay :entity="target" position="healthBarRight" />
+                        <MechanismDisplay
+                            :entity="target"
+                            position="healthBarRight"
+                            :align="side === 'right' ? 'left' : 'right'"
+                        />
                     </div>
                 </div>
                 <div class="states" v-if="stateList.length > 0 && !isDeadOrDying">
@@ -170,6 +173,12 @@
     // 判断是否是敌人
     const isEnemy = computed(() => props.target instanceof Enemy)
 
+    // 敌人卡片尺寸来自这场战斗的实例配置；玩家固定 normal
+    const uiSize = computed(() => {
+        if (props.target instanceof Enemy) return props.target.uiSize
+        return "normal"
+    })
+
     // 获取敌人意图对象
     const enemyIntent = computed(() => {
         if (props.target instanceof Enemy && props.target.intent) {
@@ -185,6 +194,16 @@
     width: 200px;
     height: 300px;
     overflow: visible;
+
+    &.ui-size-small {
+        width: 140px;
+        height: 210px;
+    }
+
+    &.ui-size-big {
+        width: 260px;
+        height: 390px;
+    }
 }
 
 // 动画容器撑满外层，飘字层再叠在它上面

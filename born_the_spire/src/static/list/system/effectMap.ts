@@ -10,7 +10,7 @@ import { newError } from "@/ui/hooks/global/alert"
 import { discardCard, pay_discardCard, pay_exhaustCard, pay_removeAbility, discardAllCard, discardHandOnTurnEnd } from "@/core/effects/card/discard"
 import { voidExhaust, moveInherentToHand } from "@/core/effects/card/entryEffects"
 import { fragileBreak, regenerateMass } from "@/core/effects/organ/organEntryEffects"
-import { applyState, removeState, changeStateStack, setStateStack } from "@/core/effects/state/stateControl"
+import { applyState, removeState, changeStateStack, setStateStack, consumeStateAfterAttackPlay } from "@/core/effects/state/stateControl"
 import { addStatusBase, addStatusCurrent, multiplyStatusBase, setCurrentToMax, setBaseStatus, decrementStatus, resetCooldown } from "@/core/effects/status/changeStatus"
 import { addCurrent, addStatusBaseCurrentValue } from "@/core/effects/current/changeCurrent"
 import { gainReserve, spendReserve } from "@/core/effects/reserve/reserve"
@@ -169,6 +169,11 @@ export const effectMap:EffectData[] = [
     label:"设置状态层数",
     key:"setStateStack",
     effect:setStateStack
+},
+{
+    label:"攻击牌打完后消耗状态",
+    key:"consumeStateAfterAttackPlay",
+    effect:consumeStateAfterAttackPlay
 },
 //回复生命
 {
