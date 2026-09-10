@@ -289,6 +289,12 @@ async function onNodeClick(node: MapNode & { x: number; y: number }) {
     return
   }
 
+  // 点进下一房才真正 complete 当前房间（开地图本身不结束房间）
+  const currentRoom = nowGameRun.currentRoom
+  if (currentRoom && !currentRoom.isCompleted()) {
+    await nowGameRun.completeCurrentRoom()
+  }
+
   // 移动到该节点
   const success = nowGameRun.floorManager.moveToMapNode(node.id)
   if (!success) {

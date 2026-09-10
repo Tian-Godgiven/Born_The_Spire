@@ -275,7 +275,7 @@ import { newLog } from '@/ui/hooks/global/log'
 import { showDisplayMessage } from '@/ui/hooks/global/displayMessage'
 import { getCurrentValue } from '@/core/objects/system/Current/current'
 import { getStatusValue } from '@/core/objects/system/status/Status'
-import { goToNextStep } from '@/core/hooks/step'
+import { openMapToLeave } from '@/core/hooks/step'
 import { getDescribe } from '@/ui/hooks/express/describe'
 import { getRarityColor, getRarityLabel } from '@/static/list/system/rarityPalette'
 import LeaveButton from '@/ui/components/global/LeaveButton.vue'
@@ -473,8 +473,7 @@ async function handleSellHealth() {
 // === 离开 ===
 async function handleLeave() {
     if (!currentRoom.value) return
-    await nowGameRun.completeCurrentRoom()
-    await goToNextStep()
+    await openMapToLeave()
 }
 </script>
 

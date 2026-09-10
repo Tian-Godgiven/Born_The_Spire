@@ -59,7 +59,25 @@ export async function goToNextStep(){
     showMapCallback()
 }
 
-//完成当前房间并前往下一步（最常用的组合）
+/**
+ * 打开地图并解锁下一层节点，不 complete 当前房间。
+ * 关掉地图还能继续操作；点进下一个房间时才 complete。
+ */
+export function openMapToLeave() {
+    nowGameRun.unlockLeaveFromCurrentRoom()
+    return goToNextStep()
+}
+
+/**
+ * 锁住当前房间交互，并打开地图。
+ * 成交、开完宝箱、战斗结算后用这个：不能再操作，但还能关地图再打开。
+ */
+export function finishRoomAndOpenMap() {
+    nowGameRun.currentRoom?.lockInteraction()
+    return openMapToLeave()
+}
+
+//完成当前房间并前往下一步（战斗胜利立刻收掉战斗状态等必须马上 complete 的场合）
 export async function completeAndGoNext(){
     await nowGameRun.completeCurrentRoom()
     await goToNextStep()

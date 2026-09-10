@@ -339,8 +339,8 @@ async function handleProceed() {
   if (navigateOnProceed.value) {
     hideRewardUI()
     releaseRewardWaiter()
-    const { completeAndGoNext } = await import('@/core/hooks/step')
-    await completeAndGoNext()
+    const { openMapToLeave } = await import('@/core/hooks/step')
+    await openMapToLeave()
     return
   }
 

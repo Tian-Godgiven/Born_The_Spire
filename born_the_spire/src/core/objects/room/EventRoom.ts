@@ -12,7 +12,7 @@ import { executeEventEffects } from "@/static/list/room/event/eventEffectMap"
 import { newLog } from "@/ui/hooks/global/log"
 import type { Component } from "vue"
 import { getLazyModule } from "@/core/utils/lazyLoader"
-import { completeAndGoNext } from "@/core/hooks/step"
+import { openMapToLeave, finishRoomAndOpenMap } from "@/core/hooks/step"
 import { startNewBattle, nowPlayerTeam, endNowBattle } from "../game/battle"
 import type { Enemy } from "../target/Enemy"
 import type { EnemyMap } from "../target/Enemy"
@@ -104,9 +104,6 @@ export class EventRoom extends Room {
                 choices,
                 minSelect: 1,
                 maxSelect: 1,
-                onComplete: async () => {
-                    await this.complete()
-                }
             })
         }
     }
@@ -178,6 +175,7 @@ export class EventRoom extends Room {
                     }
                 }
 
+                const peek = this.isPeekLeave(option)
                 const choice = new Choice({
                     key: option.key,
                     title: option.title,
@@ -186,6 +184,7 @@ export class EventRoom extends Room {
                     component: option.component,
                     customData: { option },
                     mutuallyExclusiveWith,
+                    repeatable: peek,
                     onSelect: async () => {
                         await this.onOptionSelected(option)
                     }
@@ -306,9 +305,9 @@ export class EventRoom extends Room {
             if (battleConfig.onWin) {
                 this.goToScene(battleConfig.onWin)
             } else {
-                // 没有下一幕，事件结束
+                // 没有下一幕：打开地图离开，不立刻 complete
                 newLog(["===== 事件结束 ====="])
-                await completeAndGoNext()
+                await finishRoomAndOpenMap()
             }
         } else {
             newLog(["===== 战斗失败 ====="])
@@ -473,20 +472,6 @@ export class EventRoom extends Room {
         // 注意：不要在这里设置 state = "completed"
         // 让 GameRun.completeCurrentRoom() 来设置，以确保地图节点正确完成
         newLog(["===== 事件结束 ====="])
-
-        // 清理所有选项
-        this.choiceGroup.choices.splice(0, this.choiceGroup.choices.length)
-
-        // 添加"离开"选项
-        const leaveChoice = new Choice({
-            title: "离开",
-            description: "前往下一层",
-            icon: "🚪",
-            onSelect: async () => {
-                await completeAndGoNext()
-            }
-        })
-        this.choiceGroup.choices.push(leaveChoice)
     }
 
     /**
@@ -547,19 +532,39 @@ export class EventRoom extends Room {
         // 6. 如果有复杂交互组件，由 UI 层处理
         // 组件会通过 choice.component 传递给 ChoiceContainer
 
-        // 7. 处理幕切换（多幕事件）
-        if (this.isMultiScene) {
-            const nextScene = dynamicNextScene ?? option.nextScene
-            if (nextScene) {
-                // 有下一幕：延迟跳转
-                setTimeout(() => {
-                    this.goToScene(nextScene)
-                }, 500)
-            } else {
-                // 没有下一幕：最后一幕，直接离开
-                newLog(["===== 事件结束 ====="])
-                await completeAndGoNext()
+        // 7. 处理幕切换 / 打开地图（多幕、单幕同一套：开地图不 complete，点进下一房才结束）
+        const nextScene = dynamicNextScene ?? option.nextScene
+        const peek = this.isPeekLeave(option)
+
+        if (this.isMultiScene && nextScene) {
+            if (nextScene !== this._currentSceneKey) {
+                this.lockOfferChoices()
             }
+            setTimeout(() => {
+                this.goToScene(nextScene)
+            }, 500)
+            return
+        }
+
+        if (!peek) this.lockOfferChoices()
+        await openMapToLeave()
+    }
+
+    /** 「无视他」这类：只开地图，成交过的选项不能再选 */
+    private isPeekLeave(option: any): boolean {
+        if (option.openMap) return true
+        if (option.nextScene) return false
+        if (option.rewards?.length) return false
+        if (option.customCallback) return false
+        if (option.component) return false
+        const effects = option.effects ?? []
+        return effects.length === 0 || effects.every((e: { key: string }) => e.key === "nothing")
+    }
+
+    private lockOfferChoices(): void {
+        this.lockInteraction()
+        for (const choice of this.choiceGroup.choices) {
+            if (choice.state !== "selected") choice.disable()
         }
     }
 

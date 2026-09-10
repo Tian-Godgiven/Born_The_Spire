@@ -116,39 +116,71 @@ async function lakeReturnOffered(data: any, extraUpgrade: boolean) {
  * 注意：游戏开始的苏生事件已移至 initList.ts，不再作为普通事件
  */
 export const eventList: EventMap[] = [
-    // 示例事件1：神秘商人
+    // 神秘商人
     {
         key: "event_mysterious_merchant",
         title: "神秘商人",
-        description: "你遇到了一个神秘的商人，他向你兜售着奇怪的商品...",
+        description: "你遇到了一个衣衫褴褛的流浪汉，他却说他曾经是个商人，如果你能给他一些金币……",
         icon: "🧙",
-        options: [
+        scenes: [
             {
-                title: "购买神秘药水（花费 50 金钱）",
-                description: "获得一瓶随机药水",
-                icon: "🧪",
-                ifAble: "$owner.reserve(gold) >= 50",
-                effects: [
-                    { key: "loseGold", params: { amount: 50 } },
-                    { key: "gainRandomPotion", params: { count: 1 } }
+                key: "offer",
+                title: "神秘商人",
+                description: "你遇到了一个衣衫褴褛的流浪汉，他却说他曾经是个商人，如果你能给他一些金币……",
+                options: [
+                    {
+                        title: "给他20金币",
+                        description: "获得一瓶随机药水",
+                        icon: "🧪",
+                        ifAble: "$owner.reserve(gold) >= 20",
+                        nextScene: "result_potion",
+                        effects: [
+                            { key: "loseGold", params: { amount: 20 } },
+                            { key: "gainRandomPotion", params: { count: 1 } }
+                        ]
+                    },
+                    {
+                        title: "给他60金币",
+                        description: "获得一个随机遗物",
+                        icon: "💎",
+                        ifAble: "$owner.reserve(gold) >= 60",
+                        nextScene: "result_relic",
+                        effects: [
+                            { key: "loseGold", params: { amount: 60 } },
+                            { key: "gainRandomRelic", params: { count: 1 } }
+                        ]
+                    },
+                    {
+                        title: "无视他",
+                        description: "离开",
+                        icon: "🚪",
+                        openMap: true,
+                        effects: [{ key: "nothing" }]
+                    }
                 ]
             },
             {
-                title: "购买神秘遗物（花费 100 金钱）",
-                description: "获得一个随机遗物",
-                icon: "💎",
-                ifAble: "$owner.reserve(gold) >= 100",
-                effects: [
-                    { key: "loseGold", params: { amount: 100 } },
-                    { key: "gainRandomRelic", params: { count: 1 } }
+                key: "result_potion",
+                title: "神秘商人",
+                description: "你吐出了一些金币，他欣喜若狂地捧了起来，随后鬼鬼祟祟地从一个脏污的布料里拿出一瓶药水交给你/br/\"又一笔买卖......嚯嚯嚯！有得赚！\"",
+                options: [
+                    {
+                        title: "离开",
+                        description: "离开",
+                        icon: "🚪"
+                    }
                 ]
             },
             {
-                title: "离开",
-                description: "什么也不做",
-                icon: "🚪",
-                effects: [
-                    { key: "nothing" }
+                key: "result_relic",
+                title: "神秘商人",
+                description: "你吐出了许多金币，他欣喜若狂地捧了起来，随后鬼鬼祟祟地从一个脏污的布料里拿出一个遗物交给你/br/\"又一笔买卖......嚯嚯嚯！有得赚！\"",
+                options: [
+                    {
+                        title: "离开",
+                        description: "离开",
+                        icon: "🚪"
+                    }
                 ]
             }
         ]

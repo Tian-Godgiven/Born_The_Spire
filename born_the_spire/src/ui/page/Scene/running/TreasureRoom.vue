@@ -23,7 +23,7 @@
 import { ref } from 'vue'
 import { nowGameRun } from '@/core/objects/game/run'
 import { TreasureRoom } from '@/core/objects/room/TreasureRoom'
-import { completeAndGoNext } from '@/core/hooks/step'
+import { openMapToLeave } from '@/core/hooks/step'
 
 const room = nowGameRun.currentRoom as TreasureRoom
 const isOpened = ref(false)
@@ -36,8 +36,8 @@ async function openChest() {
   // 调用房间完成逻辑（会显示奖励UI）
   await room.complete()
 
-  // 奖励领取完毕后，自动前往下一步
-  await completeAndGoNext()
+  // 奖励领取完毕后打开地图；关掉还能看到已开的宝箱，点进下一房才离开
+  await openMapToLeave()
 }
 </script>
 

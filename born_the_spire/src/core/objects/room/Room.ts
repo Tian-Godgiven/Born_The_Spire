@@ -40,6 +40,8 @@ export abstract class Room {
     public readonly description?: string // 房间描述
     public state: RoomState             // 房间状态
     public roomKey?: string             // 房间配置key（用于地图系统）
+    /** 交互已结束（成交、开完宝箱等）。仍可开地图离开，但不能再操作。 */
+    public interactionLocked: boolean = false
 
     constructor(config: RoomConfig) {
         this.__key = config.key || nanoid()
@@ -90,6 +92,13 @@ export abstract class Room {
      */
     isActive(): boolean {
         return this.state === "active"
+    }
+
+    /**
+     * 锁住房间交互。玩家还能开地图离开，但不能再选选项 / 再买东西。
+     */
+    lockInteraction(): void {
+        this.interactionLocked = true
     }
 
     /**

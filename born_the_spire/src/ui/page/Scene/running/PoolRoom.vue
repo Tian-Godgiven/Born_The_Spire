@@ -30,7 +30,7 @@ import { nowGameRun } from '@/core/objects/game/run'
 import { PoolRoom } from '@/core/objects/room/PoolRoom'
 import ChoiceContainer from '@/ui/components/system/ChoiceContainer.vue'
 import LeaveButton from '@/ui/components/global/LeaveButton.vue'
-import { completeAndGoNext } from '@/core/hooks/step'
+import { openMapToLeave } from '@/core/hooks/step'
 
 // 获取当前房间
 const currentRoom = computed(() => {
@@ -53,7 +53,7 @@ const choiceGroup = computed(() => {
 
 // 离开水池：行动想做几个做几个，只有这里才结束房间
 async function leavePool() {
-    await completeAndGoNext()
+    await openMapToLeave()
 }
 </script>
 

@@ -144,6 +144,20 @@ export class GameRun{
     }
 
     /**
+     * 允许从当前房间走向下一节点，但不结束房间。
+     * 关掉地图还能继续操作。真正 complete 发生在点进下一个房间时。
+     */
+    unlockLeaveFromCurrentRoom(): void {
+        const currentMap = this.floorManager.getCurrentMap()
+        if (!currentMap) return
+        const node = currentMap.getCurrentNode()
+        if (!node) return
+        if (node.state !== "completed") {
+            currentMap.completeCurrentNode()
+        }
+    }
+
+    /**
      * 离开当前房间（不完成）
      */
     async exitCurrentRoom() {

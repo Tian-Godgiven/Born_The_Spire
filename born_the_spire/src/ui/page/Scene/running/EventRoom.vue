@@ -13,9 +13,13 @@
                 <h1 class="event-title">{{ eventTitle }}</h1>
             </div>
 
-            <!-- 事件描述 -->
+            <!-- 事件描述：正文里 /br/ 换行 -->
             <div class="event-description">
-                <p>{{ eventDescription }}</p>
+                <p>
+                    <template v-for="(line, i) in descriptionLines" :key="i">
+                        <br v-if="i > 0">{{ line }}
+                    </template>
+                </p>
             </div>
 
             <!-- 自定义事件组件（如果有） -->
@@ -83,10 +87,14 @@ const eventTitle = computed(() => {
     return currentRoom.value?.currentTitle || ''
 })
 
-// 事件描述（随幕切换更新）
+// 事件描述（随幕切换更新）。正文里用 /br/ 换行
 const eventDescription = computed(() => {
     return currentRoom.value?.currentDescription || ''
 })
+
+const descriptionLines = computed(() =>
+    eventDescription.value.split(/\s*\/br\/\s*/).filter(line => line.length > 0)
+)
 
 // 选项列表
 const choices = computed(() => {
@@ -107,9 +115,6 @@ async function handleOptionClick(choice: Choice) {
     try {
         // 选择选项（会触发 onSelect 回调）
         await currentRoom.value?.choiceGroup.selectChoice(choice)
-
-        // 事件房间是单选模式，选择后自动完成
-        await currentRoom.value?.choiceGroup.complete()
     } catch (error) {
         console.error('[EventRoom] 选择失败:', error)
     }
@@ -153,7 +158,7 @@ async function onBattleEnd(result: 'player_win' | 'player_lose') {
 }
 
 .event-description {
-    text-align: center;
+    text-align: left;
     padding: 1rem 2rem;
     background: white;
 }
