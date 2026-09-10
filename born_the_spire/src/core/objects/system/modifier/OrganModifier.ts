@@ -21,6 +21,7 @@ import { showComponent } from "@/core/hooks/componentManager"
 import { getCardModifier } from "./CardModifier"
 import { isPlayer, isEnemy } from "@/core/utils/typeGuards"
 import { nowBattle } from "@/core/objects/game/battle"
+import { canRemoveOrgan } from "@/core/objects/target/canRemoveOrgan"
 
 
 
@@ -72,7 +73,11 @@ export class OrganModifier extends ItemModifier {
 
             // 如果超过限制，需要吞噬旧器官
             if (samePartOrgans.length >= maxCount) {
-                const oldOrgan = samePartOrgans[0]  // 吞噬第一个（最旧的）
+                const oldOrgan = samePartOrgans.find(canRemoveOrgan)
+                if (!oldOrgan) {
+                    newLog(["该部位已有无法舍弃的器官，不能替换"])
+                    return false
+                }
 
                 // 计算吞噬获得的物质
                 const materialGain = this.calculateDevourMaterial(oldOrgan)
@@ -234,7 +239,11 @@ export class OrganModifier extends ItemModifier {
      * 4. 可选：触发 lose 交互（一次性效果）
      */
     loseOrgan(organ: Organ, triggerLoseEffect: boolean = false) {
-        // 创建父日志
+        if (!canRemoveOrgan(organ)) {
+            newLog([organ, "无法被舍弃"])
+            return
+        }
+
         const parentLog = newLog([this.owner, "失去了器官", organ])
 
         // 1. 移除 work 触发器（在清理副作用之前）
@@ -287,6 +296,10 @@ export class OrganModifier extends ItemModifier {
      */
     getOrgans(): Organ[] {
         return this.organs.value
+    }
+
+    getRemovableOrgans(): Organ[] {
+        return this.getOrgans().filter(canRemoveOrgan)
     }
 
     /**

@@ -2,6 +2,8 @@ import type { Describe } from "@/ui/hooks/express/describe"
 import { Entity } from "@/core/objects/system/Entity"
 import { createTriggerByTriggerMap } from "@/core/objects/system/trigger/Trigger"
 import type { Chara } from "@/core/objects/target/Target"
+import { ensureStatusExists, changeStatusValue } from "@/core/objects/system/status/Status"
+import { CANNOT_REMOVE_STATUS } from "@/core/objects/target/canRemoveOrgan"
 
 /**
  * 器官专用词条定义
@@ -77,6 +79,24 @@ export const organEntryDefinitions: Record<string, OrganEntryDefinition> = {
             return [() => {
                 delete organ._isSturdy
             }]
+        }
+    },
+
+    /**
+     * 无法舍弃 = 给器官挂 cannot-remove status = 1 的语法糖。
+     * OrganModifier.loseOrgan / getRemovableOrgans 读 status，不查词条。
+     */
+    organ_cannot_remove: {
+        label: "无法舍弃",
+        describe: ["此器官无法被舍弃"],
+        onApply: (owner) => {
+            ensureStatusExists(owner, CANNOT_REMOVE_STATUS, 0)
+            const removeStatus = changeStatusValue(owner, CANNOT_REMOVE_STATUS, "organ_cannot_remove", {
+                value: 1,
+                type: "additive",
+                target: "base"
+            })
+            return [removeStatus]
         }
     },
 

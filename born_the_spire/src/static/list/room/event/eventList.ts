@@ -66,7 +66,7 @@ async function lakeOfferCard(data: any): Promise<boolean> {
 }
 
 async function lakeOfferOrgan(data: any): Promise<boolean> {
-    const organs = getOrganModifier(nowPlayer).getOrgans()
+    const organs = getOrganModifier(nowPlayer).getRemovableOrgans()
     if (organs.length === 0) return false
     const { showOrganChoice } = await import("@/ui/hooks/interaction/organChoice")
     const result = await showOrganChoice({
@@ -93,13 +93,13 @@ async function lakeOfferOrgan(data: any): Promise<boolean> {
     return true
 }
 
-async function lakeReturnOffered(data: any, extraUpgrade: boolean) {
+async function lakeReturnOffered(data: any) {
     if (data.itemType === "card" && data.cardKey) {
         await eventEffectMap.gainCard({ cardKey: data.cardKey })
         const cards = nowPlayer.getCardGroup().filter((c: Card) => c.key === data.cardKey)
         const card = cards[cards.length - 1]
         if (!card) return
-        const targetLevel = (Number(data.cardLevel) || 0) + (extraUpgrade ? 1 : 0)
+        const targetLevel = Number(data.cardLevel) || 0
         while (card.level < targetLevel) {
             if (!upgradeCard(card)) break
         }
@@ -110,7 +110,7 @@ async function lakeReturnOffered(data: any, extraUpgrade: boolean) {
         const organs = getOrganModifier(nowPlayer).getOrgans()
         const organ = [...organs].reverse().find(o => o.key === data.organKey)
         if (!organ) return
-        const targetLevel = (Number(data.organLevel) || 1) + (extraUpgrade ? 1 : 0)
+        const targetLevel = Number(data.organLevel) || 1
         const organModifier = getOrganModifier(nowPlayer)
         while (organ.level < targetLevel) {
             if (!await organModifier.upgradeOrgan(organ, { skipCost: true })) break
@@ -343,7 +343,7 @@ export const eventList: EventMap[] = [
                         title: "丢入一个器官",
                         description: "将一个器官投入湖中",
                         icon: "🫀",
-                        ifAble: "$owner.organCount() >= 1",
+                        ifAble: "$owner.removableOrganCount() >= 1",
                         nextScene: "scene2",
                         customCallback: async (data) => {
                             if (!await lakeOfferOrgan(data)) return "scene1"
@@ -407,14 +407,13 @@ export const eventList: EventMap[] = [
                 options: [
                     {
                         title: "接受奖励",
-                        description: "拿回升级后的物品，并获得 200 物质和 30 生命",
+                        description: "取回原本的物品，获得200物质",
                         icon: "✨",
                         effects: [
-                            { key: "gainMaterial", params: { amount: 200 } },
-                            { key: "healHealth", params: { amount: 30 } }
+                            { key: "gainMaterial", params: { amount: 200 } }
                         ],
                         customCallback: async (data) => {
-                            await lakeReturnOffered(data, true)
+                            await lakeReturnOffered(data)
                         }
                     }
                 ]
@@ -426,15 +425,11 @@ export const eventList: EventMap[] = [
                 options: [
                     {
                         title: "接受惩罚",
-                        description: "失去 20 生命，拿回原物品，并获得一张诅咒",
+                        description: "失去这个物品，受到10点伤害",
                         icon: "💀",
                         effects: [
-                            { key: "loseHealth", params: { amount: 20 } },
-                            { key: "gainRandomCard", params: { tags: ["curse"] } }
-                        ],
-                        customCallback: async (data) => {
-                            await lakeReturnOffered(data, false)
-                        }
+                            { key: "loseHealth", params: { amount: 10 } }
+                        ]
                     }
                 ]
             }
@@ -667,8 +662,8 @@ export const eventList: EventMap[] = [
         description: "一位衣着华丽的收藏家摊开厚厚的器官图鉴，上下打量着你。「让我看看，你身上有没有我想要的东西？」",
         icon: "🎩",
         onEnter: async (data) => {
-            const organs = (nowPlayer as any).organs
-            if (!Array.isArray(organs) || organs.length === 0) return
+            const organs = getOrganModifier(nowPlayer).getRemovableOrgans()
+            if (organs.length === 0) return
             const picked = pickCollectorTarget(organs)
             data.pickedOrgan = { key: picked.key, label: picked.label, rarity: picked.rarity }
         },
@@ -685,7 +680,7 @@ export const eventList: EventMap[] = [
                         title: "让他挑",
                         description: "交出他选中的器官，换 200 金 + 1 件稀有遗物。",
                         icon: "👉",
-                        ifAble: "$owner.organCount() >= 1",
+                        ifAble: "$owner.removableOrganCount() >= 1",
                         customCallback: async (data) => {
                             if (!data.pickedOrgan) return
                             await eventEffectMap.removeOrganByKey({ organKey: data.pickedOrgan.key })
@@ -700,7 +695,7 @@ export const eventList: EventMap[] = [
                         title: "讨价还价",
                         description: "赌一把——成功大赚一笔（400 金 + 2 件稀有遗物 + 失去器官），失败他愤然离场（无收益，器官保留）。",
                         icon: "🎲",
-                        ifAble: "$owner.organCount() >= 1",
+                        ifAble: "$owner.removableOrganCount() >= 1",
                         customCallback: async (data) => {
                             if (!data.pickedOrgan) return "haggle_lose"
                             const success = randomChance(0.5, "collectorHaggle")
@@ -921,7 +916,7 @@ export const eventList: EventMap[] = [
                 title: "献祭器官",
                 description: "自选 1 个已装器官交出（永久失去），换取遗物「浅尝辄止」（下 3 场战斗每回合开始 +1 抽牌数，3 场后禁用）",
                 icon: "🫀",
-                ifAble: "$owner.organCount() >= 1",
+                ifAble: "$owner.removableOrganCount() >= 1",
                 effects: [
                     { key: "removeOrgan", params: { count: 1, minCount: 1 } },
                     { key: "gainRelic", params: { relicKey: "original_relic_shallow_taste" } }

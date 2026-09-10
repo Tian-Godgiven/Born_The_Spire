@@ -92,6 +92,14 @@ export const statusMapList: Record<string, StatusMap> = {
         hidden: true,
         notNegative: true
     },
+    "cannot-remove": {
+        label: "无法舍弃",
+        value: 0,
+        describe: "大于 0 时，该器官无法被舍弃（事件丢弃、移除、出售、部位吞噬）",
+        category: "special",
+        hidden: true,
+        notNegative: true
+    },
     "disabled": {
         label: "已失效",
         value: 0,

@@ -636,7 +636,7 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
      * 用于"无常之神"等强制惩罚事件
      */
     "loseRandomOrgan": async () => {
-        const organs = getOrganModifier(nowPlayer).getOrgans()
+        const organs = getOrganModifier(nowPlayer).getRemovableOrgans()
         if (organs.length === 0) {
             newLog(["没有可失去的器官"])
             return
@@ -690,7 +690,7 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
         const goldNow = getReserveModifier(nowPlayer).getReserve("gold")
         const materialNow = getReserveModifier(nowPlayer).getReserve("material")
         const potionCount = getPotionModifier(nowPlayer).getPotions().length
-        const organCount = getOrganModifier(nowPlayer).getOrgans().length
+        const organCount = getOrganModifier(nowPlayer).getRemovableOrgans().length
 
         type Result = { label: string; available: boolean; run: () => void | Promise<void> }
         const eff = eventEffectMap
@@ -857,7 +857,7 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
         const eff = eventEffectMap
 
         if (params.heavy) {
-            const organCount = getOrganModifier(nowPlayer).getOrgans().length
+            const organCount = getOrganModifier(nowPlayer).getRemovableOrgans().length
             const pool: Cost[] = []
             if (organCount >= 1) {
                 pool.push({ label: "失去 1 个已装器官", run: async () => { await eff["loseRandomOrgan"]() } })

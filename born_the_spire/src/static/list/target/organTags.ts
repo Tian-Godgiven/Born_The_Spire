@@ -39,7 +39,7 @@ export const tagConfigList: TagConfig[] = [
         key: OrganTags.STARTER,
         label: "初始",
         color: "#808080",
-        description: "初始器官无法移除，是角色的核心组成部分"
+        description: "初始器官。不能丢要另写词条 organ_cannot_remove"
     },
     {
         key: OrganTags.UNIQUE,

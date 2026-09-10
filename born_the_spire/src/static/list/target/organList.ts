@@ -10,6 +10,8 @@ export const organList:OrganMap[] = [
         describe:["■"],
         rarity: OrganRarity.Common,
         part: "■■■■■■?",
+        tags: [OrganTags.STARTER],
+        entry: ["organ_cannot_remove"],
         current: ["mass"],
         interaction:{}
     },{

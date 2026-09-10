@@ -21,6 +21,7 @@ import { calculateBlackStorePrice } from "@/static/list/target/organQuality"
 import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
+import { canRemoveOrgan } from "@/core/objects/target/canRemoveOrgan"
 import {
     relicPriceByRarity, relicDefaultPrice,
     potionDefaultPrice,
@@ -535,6 +536,11 @@ export class BlackStoreRoom extends Room {
             return 0
         }
 
+        if (!canRemoveOrgan(organ)) {
+            newLog([organ, "无法被舍弃"])
+            return 0
+        }
+
         // 计算售价
         const price = this.calculateOrganSellPrice(organ)
 
@@ -601,7 +607,7 @@ export class BlackStoreRoom extends Room {
      */
     getSellableOrgans(): SellableOrgan[] {
         const organModifier = getOrganModifier(nowPlayer)
-        const playerOrgans = organModifier.getOrgans()
+        const playerOrgans = organModifier.getRemovableOrgans()
 
         return playerOrgans.map(organ => {
             const basePrice = this.calculateOrganPrice(organ as any)

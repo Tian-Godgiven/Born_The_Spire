@@ -23,6 +23,7 @@ import type { Entity } from "@/core/objects/system/Entity"
 import { getStateModifier } from "@/core/objects/system/modifier/StateModifier"
 import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifier"
 import { stateList } from "@/static/list/target/stateList"
+import { canRemoveOrgan } from "@/core/objects/target/canRemoveOrgan"
 
 export type AccessorResult = number | string | boolean
 
@@ -65,7 +66,7 @@ function callAccessorFunction(funcName: string, arg: string, entity: Entity): Ac
     if (!fn) {
         throw new Error(
             `[EntityAccessor] 未知的访问器: "${funcName}"。` +
-            `内置访问器: status, current, hasStatus, hasState, hasOrgan, hasRelic, hasCard, hasTag, state, stateStack, pileCount, reserve, itemType, isTemporary, stateCategory, organCount, cardCount, organsWithCardsCount`
+            `内置访问器: status, current, hasStatus, hasState, hasOrgan, hasRelic, hasCard, hasTag, state, stateStack, pileCount, reserve, itemType, isTemporary, stateCategory, organCount, removableOrganCount, cardCount, organsWithCardsCount`
         )
     }
     return fn(arg, entity)
@@ -99,6 +100,7 @@ const builtinAccessors = new Map<string, AccessorFunction>([
         return data?.category ?? ""
     }],
     ["organCount",           (_arg, entity) => organCount(entity)],
+    ["removableOrganCount",  (_arg, entity) => removableOrganCount(entity)],
     ["cardCount",            (_arg, entity) => cardCount(entity)],
     ["organsWithCardsCount", (_arg, entity) => organsWithCardsCount(entity)],
 ])
@@ -182,10 +184,17 @@ function hasState(key: string, entity: Entity): boolean {
     }
 }
 
+function listOrgans(entity: Entity): any[] {
+    const getOrganList = (entity as any).getOrganList
+    if (typeof getOrganList === "function") {
+        const organs = getOrganList.call(entity)
+        return Array.isArray(organs) ? organs : []
+    }
+    return []
+}
+
 function hasOrgan(key: string, entity: Entity): boolean {
-    const organs = (entity as any).organs
-    if (!organs) return false
-    return organs.some((o: any) => o.key === key)
+    return listOrgans(entity).some((o: any) => o.key === key)
 }
 
 function hasRelic(key: string, entity: Entity): boolean {
@@ -210,12 +219,12 @@ function reserve(key: string, entity: Entity): number {
     return getReserveModifier(entity).getReserve(key)
 }
 
-/**
- * 已装器官数量
- */
 function organCount(entity: Entity): number {
-    const organs = (entity as any).organs
-    return Array.isArray(organs) ? organs.length : 0
+    return listOrgans(entity).length
+}
+
+function removableOrganCount(entity: Entity): number {
+    return listOrgans(entity).filter(canRemoveOrgan).length
 }
 
 function cardCount(entity: Entity): number {
@@ -229,8 +238,7 @@ function cardCount(entity: Entity): number {
  * 已装器官中至少挂了 1 张卡的数量
  */
 function organsWithCardsCount(entity: Entity): number {
-    const organs = (entity as any).organs
-    if (!Array.isArray(organs)) return 0
+    const organs = listOrgans(entity)
     return organs.filter((o: any) => {
         const playerCards = o.cardsByOwner?.player
         if (Array.isArray(playerCards) && playerCards.length > 0) return true

@@ -94,7 +94,7 @@ export const chooseOrganRemove: EffectFunc = async (event, effect) => {
     const { count = 1, minCount = 0 } = effect.params
 
     const organModifier = getOrganModifier(target)
-    const organs = organModifier.getOrgans()
+    const organs = organModifier.getRemovableOrgans()
 
     if (organs.length === 0) {
         console.warn("[chooseOrganRemove] 玩家没有器官可移除")
