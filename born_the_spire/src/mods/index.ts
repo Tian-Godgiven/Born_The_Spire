@@ -9,7 +9,9 @@ import type { OrganMap } from '@/core/objects/target/Organ'
 import type { EnemyMap } from '@/core/objects/target/Enemy'
 import type { EffectFunc } from '@/core/objects/system/effect/EffectFunc'
 import type { EventMap } from '@/core/types/EventMapData'
+import type { EventEffectFunc } from '@/static/list/room/event/eventEffectMap'
 import { getLazyModule } from '@/core/utils/lazyLoader'
+import { registerEventEffect as registerEventEffectOnMap, registerEventEffects as registerEventEffectsOnMap } from '@/static/list/room/event/eventEffectMap'
 
 export type EffectData = {
     label?: string
@@ -71,6 +73,17 @@ export function registerEvent(event: EventMap): void {
  */
 export function registerEvents(events: EventMap[]): void {
     events.forEach(event => registerEvent(event))
+}
+
+/**
+ * 注册事件效果到 eventEffectMap。option.effects / room.runEffect 都认这张表。
+ */
+export function registerEventEffect(key: string, effect: EventEffectFunc): void {
+    registerEventEffectOnMap(key, effect)
+}
+
+export function registerEventEffects(effects: Record<string, EventEffectFunc>): void {
+    registerEventEffectsOnMap(effects)
 }
 
 /**

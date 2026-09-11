@@ -65,22 +65,17 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
-import { nowGameRun } from "@/core/objects/game/run"
-import { EventRoom } from "@/core/objects/room/EventRoom"
+import type { EventSceneProps } from "@/core/types/EventSceneProps"
 import type { Choice } from "@/core/objects/system/Choice"
-import { eventEffectMap } from "@/static/list/room/event/eventEffectMap"
 import { godOfChanceIsHouseFirst, godOfChancePromptLine, godOfChanceTableText } from "@/static/list/room/event/godOfChance"
 import { isAnimationCategoryEnabled } from "@/ui/animation/categories"
 import { settings } from "@/core/persistence/settings"
 
-const currentRoom = computed(() => {
-    const room = nowGameRun.currentRoom
-    return room instanceof EventRoom ? room : null
-})
+const props = defineProps<EventSceneProps>()
 
-const data = computed(() => currentRoom.value?.getSceneData() ?? {})
+const data = computed(() => props.sceneData)
 
-const eventTitle = computed(() => currentRoom.value?.currentTitle || "无常之神")
+const eventTitle = computed(() => props.room.currentTitle || props.event.title || "无常之神")
 
 const descriptionText = computed(() => godOfChanceTableText(data.value))
 
@@ -101,7 +96,7 @@ const showOffer = computed(() => {
 const winLabel = computed(() => data.value.winLabel || "……")
 const loseLabel = computed(() => data.value.loseLabel || "……")
 
-const choices = computed(() => currentRoom.value?.choiceGroup.choices || [])
+const choices = computed(() => props.choices)
 
 const topShow = ref("?")
 const bottomShow = ref("?")
@@ -117,16 +112,8 @@ function skipMotion(): boolean {
     return settings.skipAnimation === true || !isAnimationCategoryEnabled("ui")
 }
 
-function motionDelay(ms: number): number {
-    if (skipMotion()) return 0
-    const speed = Number(settings.animationSpeed)
-    return ms / (Number.isFinite(speed) && speed > 0 ? speed : 1)
-}
-
 function sleep(ms: number): Promise<void> {
-    const wait = motionDelay(ms)
-    if (wait <= 0) return Promise.resolve()
-    return new Promise(resolve => setTimeout(resolve, wait))
+    return props.room.wait(ms)
 }
 
 function randomPip(): string {
@@ -201,13 +188,13 @@ function isStopChoice(choice: Choice): boolean {
 async function playStopSequence() {
     const scene = data.value
     const round = scene.round ?? 1
-    scene.playerFace = await eventEffectMap["godOfChance_rollPlayer"]({ round })
+    scene.playerFace = await props.room.runEffect("godOfChance_rollPlayer", { round })
     land("bottom", scene.playerFace)
     if (unmounted) return
     if (!godOfChanceIsHouseFirst(round)) {
         await sleep(2200)
         if (unmounted) return
-        scene.houseFace = await eventEffectMap["godOfChance_rollHouse"]({ round })
+        scene.houseFace = await props.room.runEffect("godOfChance_rollHouse", { round })
         land("top", scene.houseFace)
         if (unmounted) return
         scene.houseRevealed = true
@@ -216,7 +203,7 @@ async function playStopSequence() {
 }
 
 async function handleOptionClick(choice: Choice) {
-    if (acting.value || !choice.isAvailable() || !currentRoom.value) return
+    if (acting.value || !choice.isAvailable()) return
     try {
         if (isStopChoice(choice)) {
             acting.value = true
@@ -228,7 +215,7 @@ async function handleOptionClick(choice: Choice) {
             await sleep(1600)
             if (unmounted) return
         }
-        await currentRoom.value.choiceGroup.selectChoice(choice)
+        await props.room.selectChoice(choice)
     } catch (error) {
         console.error("[GodOfChanceTable] 选择失败:", error)
         acting.value = false

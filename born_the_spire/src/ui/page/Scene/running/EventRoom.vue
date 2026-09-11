@@ -7,9 +7,10 @@
 
     <!-- 幕级整页组件：自己画标题/正文/选项 -->
     <component
-        v-else-if="sceneComponent"
+        v-else-if="sceneComponent && sceneContext"
         :is="sceneComponent"
         :key="currentSceneKey || 'scene'"
+        v-bind="sceneContext"
     />
 
     <!-- 事件阶段：渲染事件UI -->
@@ -30,8 +31,8 @@
             </div>
 
             <!-- 自定义事件组件（如果有） -->
-            <div v-if="customComponent" class="event-custom">
-                <component :is="customComponent" />
+            <div v-if="customComponent && sceneContext" class="event-custom">
+                <component :is="customComponent" v-bind="sceneContext" />
             </div>
 
             <!-- 事件选项列表（独特的展示方式） -->
@@ -48,8 +49,9 @@
                 >
                     <!-- 自定义组件渲染 -->
                     <component
-                        v-if="choice.component"
+                        v-if="choice.component && sceneContext"
                         :is="choice.component"
+                        v-bind="sceneContext"
                         :choice="choice"
                     />
 
@@ -117,6 +119,18 @@ const currentSceneKey = computed(() => {
     return currentRoom.value?.currentSceneKey || null
 })
 
+const sceneContext = computed(() => {
+    const room = currentRoom.value
+    if (!room) return null
+    return {
+        room,
+        event: room.eventConfig,
+        scene: room.getCurrentScene(),
+        sceneData: room.getSceneData(),
+        choices: room.choiceGroup.choices,
+    }
+})
+
 // 事件顶层插页组件
 const customComponent = computed(() => {
     return currentRoom.value?.getCustomComponent()
@@ -130,7 +144,7 @@ async function handleOptionClick(choice: Choice) {
 
     try {
         // 选择选项（会触发 onSelect 回调）
-        await currentRoom.value?.choiceGroup.selectChoice(choice)
+        await currentRoom.value?.selectChoice(choice)
     } catch (error) {
         console.error('[EventRoom] 选择失败:', error)
     }

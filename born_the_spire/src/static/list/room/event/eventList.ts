@@ -117,10 +117,6 @@ async function godOfChanceEnterTable(data: any) {
     data.dealId = (data.dealId ?? 0) + 1
 }
 
-async function godOfChanceStop(data: any) {
-    await eventEffectMap["godOfChance_apply"]({ data })
-}
-
 function godOfChanceCanStop(data: any): boolean {
     if (data.busy || data.resolved) return false
     const round = data.round ?? 1
@@ -514,7 +510,7 @@ export const eventList: EventMap[] = [
                         icon: "✋",
                         ifShow: (data) => (data.round ?? 1) < GOD_OF_CHANCE_MAX_ROUND,
                         ifAble: godOfChanceCanStop,
-                        customCallback: godOfChanceStop,
+                        effects: [{ key: "godOfChance_apply" }],
                         nextScene: "table"
                     },
                     {
@@ -523,7 +519,7 @@ export const eventList: EventMap[] = [
                         icon: "✋",
                         ifShow: (data) => (data.round ?? 1) === GOD_OF_CHANCE_MAX_ROUND,
                         ifAble: godOfChanceCanStop,
-                        customCallback: godOfChanceStop,
+                        effects: [{ key: "godOfChance_apply" }],
                         nextScene: "finale"
                     },
                     {

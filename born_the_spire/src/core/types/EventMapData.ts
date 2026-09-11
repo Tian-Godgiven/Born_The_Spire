@@ -5,6 +5,7 @@
 import type { Component } from "vue"
 import type { RoomAvailableCondition } from "@/static/registry/roomRegistry"
 import type { Condition } from "./ConditionSystem"
+import type { EventRoom } from "@/core/objects/room/EventRoom"
 
 /**
  * 战斗场景奖励配置
@@ -42,9 +43,10 @@ export interface EventOptionMap {
         params?: any                // 效果参数
     }>
     component?: Component | string  // 复杂交互组件（转盘、配对等）
-    // 自定义回调（多幕事件可访问 sceneData）
-    // 返回字符串时会覆盖 option.nextScene，用于动态分幕（如掷骰后跳向不同结局）
-    customCallback?: (sceneData?: any) => void | string | Promise<void | string>
+    // 自定义回调。第二个参数就是当前 EventRoom。
+    // 结算优先写 effects[]；这里只留「要等人选完才能知道下一步」的口子。
+    // 返回字符串时覆盖 option.nextScene。
+    customCallback?: (sceneData?: any, room?: EventRoom) => void | string | Promise<void | string>
     rewards?: Array<{ type: string; [key: string]: any }>  // 奖励配置列表（弹出奖励选择弹窗）
 
     // 是否可用（不满足时选项置灰，仍然显示）。
@@ -76,7 +78,8 @@ export interface EventSceneMap {
 
     /**
      * 幕级整页组件。有则 EventRoom 不再画标题/正文/选项，由组件自己排版。
-     * 选项仍从 room.choiceGroup 读，点选走 choiceGroup.selectChoice。
+     * EventRoom.vue 会传入 EventSceneProps（room / event / scene / sceneData / choices）。
+     * 点选走 room.selectChoice；非选项交互演完后走 room.apply。
      * 事件顶层 component 仍是插在正文和选项之间的小块，不要和这个混用。
      */
     component?: Component | string

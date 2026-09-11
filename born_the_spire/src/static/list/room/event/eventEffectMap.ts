@@ -977,14 +977,30 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
  * @param effectKey 效果 key
  * @param params 效果参数
  */
-export async function executeEventEffect(effectKey: string, params?: any): Promise<void> {
+export async function executeEventEffect(effectKey: string, params?: any): Promise<any> {
     const effectFunc = eventEffectMap[effectKey]
     if (!effectFunc) {
         console.error(`[EventEffect] 未找到事件效果: ${effectKey}`)
         return
     }
 
-    await effectFunc(params)
+    return await effectFunc(params)
+}
+
+/**
+ * 注册事件效果。Mod 和主游戏同一张表；key 冲突会覆盖并警告。
+ */
+export function registerEventEffect(key: string, effect: EventEffectFunc): void {
+    if (eventEffectMap[key]) {
+        console.warn(`[EventEffect] 覆盖已有事件效果: ${key}`)
+    }
+    eventEffectMap[key] = effect
+}
+
+export function registerEventEffects(effects: Record<string, EventEffectFunc>): void {
+    for (const [key, effect] of Object.entries(effects)) {
+        registerEventEffect(key, effect)
+    }
 }
 
 /**

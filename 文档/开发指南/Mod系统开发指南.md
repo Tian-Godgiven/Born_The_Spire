@@ -1,6 +1,6 @@
 # Mod系统开发指南
 
-Born The Spire 的 Mod 系统允许开发者扩展游戏内容（卡牌、器官、遗物、敌人等）。
+Born The Spire 的 Mod 系统允许开发者扩展游戏内容（卡牌、器官、遗物、敌人、事件等）。
 
 ## 基本信息
 
@@ -16,6 +16,7 @@ Mod 是游戏内容的扩展包，可以独立于主代码进行开发和维护�
 - `organs/` - 器官
 - `enemies/` - 敌人
 - `cards/` - 卡牌
+- `events/` - 事件（含独特 Vue 组件）
 
 ## 目录结构
 
@@ -27,7 +28,8 @@ src/mods/{mod-id}/
 ├── effects/         # 效果
 ├── organs/          # 器官
 ├── enemies/         # 敌人
-└── cards/           # 卡牌
+├── cards/           # 卡牌
+└── events/          # 事件
 ```
 
 ## Mod 配置
@@ -203,6 +205,45 @@ export const yourCard: CardMap = {
 
 对应注册函数 `registerCard(card)`。
 
+### 事件 (Event)
+
+```typescript
+import { markRaw } from 'vue'
+import { registerEvent, registerEventEffect } from '@/mods/index'
+import type { EventMap } from '@/core/types/EventMapData'
+import type { EventSceneProps } from '@/core/types/EventSceneProps'
+import MyTable from './MyTable.vue'
+
+registerEventEffect('my_mod_gainFoo', async (params) => {
+    // 内部走 doEvent，和主游戏 eventEffectMap 同一张表
+})
+
+registerEvent({
+    key: 'my_mod_event_000001',
+    title: '……',
+    description: '……',
+    scenes: [
+        {
+            key: 'table',
+            title: '……',
+            description: '……',
+            component: markRaw(MyTable),
+            options: [
+                { title: '停下', effects: [{ key: 'my_mod_gainFoo' }], nextScene: 'result' }
+            ]
+        }
+    ]
+})
+```
+
+组件用 `defineProps<EventSceneProps>()`，结算找 `room`：
+
+    `room.selectChoice(choice)` — 点已有选项
+    `room.apply({ effects, leave: true })` — 非选项交互演完后结算并离开
+    `room.runEffect(key, params)` / `room.wait(ms)` / `room.goToScene(key)` / `room.leave()` / `room.openMap()`
+
+要进地图，还要把事件 key 写进楼层 `roomPools.events`。独特整页组件的完整样板见《事件实现场景手册》场景 11。
+
 ### 效果 (Effect)
 
 ```typescript
@@ -319,6 +360,8 @@ load: async () => {
 ## 相关文件
 
 - `src/mods/ModLoader.ts` - Mod 加载核心
-- `src/mods/index.ts` - 注册函数接口
+- `src/mods/index.ts` - 注册函数接口（含 `registerEvent` / `registerEventEffect`）
 - `src/mods/loader.ts` - Mod 加载入口
 - `src/mods/xdnmb/` - 示例 Mod（已实现）
+- `src/mods/slayTheSpire/events/` - 事件数据样板（无独特组件）
+- `文档/开发指南/场景手册/事件实现场景手册.md` - 事件怎么写、自定义组件怎么接 `room`

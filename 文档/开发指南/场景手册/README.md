@@ -52,9 +52,8 @@
         长度约 500 行
 
     事件实现场景手册.md
-        10 场景：单幕纯 effect / ifAble 门槛 / rewards 选择弹窗 / 互斥组 / 打开选择界面 / 多幕基础 / saveData+ifShow 数据传递 / 嵌入战斗 / customCallback 兜底 / 新增 event effect
-        附 eventEffectMap 速查、字段速查、执行顺序图、8 个常见坑
-        长度约 650 行
+        11 场景：选择+结果幕 / ifAble 门槛 / rewards 选择弹窗 / 互斥组 / 打开选择界面 / 多幕基础 / saveData+ifShow / 嵌入战斗 / customCallback 兜底 / 新增 event effect / 幕级整页组件
+        附 eventEffectMap 速查、字段速查、room.apply 执行顺序、常见坑
 
 ## 使用建议
 

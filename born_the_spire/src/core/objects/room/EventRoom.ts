@@ -8,11 +8,14 @@ import { Room } from "./Room"
 import type { RoomConfig } from "./Room"
 import { Choice, ChoiceGroup } from "../system/Choice"
 import type { EventMap, EventSceneMap, BattleSceneConfig, BattleRewardConfig } from "@/core/types/EventMapData"
-import { executeEventEffects } from "@/static/list/room/event/eventEffectMap"
+import type { EventEffectUnit, EventSceneApplyOffer } from "@/core/types/EventSceneProps"
+import { executeEventEffect, executeEventEffects } from "@/static/list/room/event/eventEffectMap"
 import { newLog } from "@/ui/hooks/global/log"
 import { markRaw, reactive, type Component } from "vue"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { openMapToLeave, finishRoomAndOpenMap } from "@/core/hooks/step"
+import { settings } from "@/core/persistence/settings"
+import { isAnimationCategoryEnabled } from "@/ui/animation/categories"
 import { startNewBattle, nowPlayerTeam, endNowBattle } from "../game/battle"
 import type { Enemy } from "../target/Enemy"
 import type { EnemyMap } from "../target/Enemy"
@@ -502,21 +505,32 @@ export class EventRoom extends Room {
      */
     private async onOptionSelected(option: any): Promise<void> {
         newLog([`选择了: ${option.title}`])
+        const peek = this.isPeekLeave(option)
+        await this.apply({
+            saveData: option.saveData,
+            effects: option.effects,
+            rewards: option.rewards,
+            customCallback: option.customCallback,
+            nextScene: option.nextScene,
+            openMap: peek,
+            leave: !option.nextScene && !peek,
+        })
+    }
 
-        // 1. 保存数据到 sceneData（多幕事件）
-        if (option.saveData) {
-            await option.saveData(this.sceneData)
+    /**
+     * 选项链和自定义组件共用的结算入口。
+     */
+    async apply(offer: EventSceneApplyOffer): Promise<void> {
+        if (offer.saveData) {
+            await offer.saveData(this.sceneData)
         }
 
-        // 2. 执行简单效果（使用 eventEffectMap）
-        if (option.effects && option.effects.length > 0) {
-            await executeEventEffects(option.effects)
+        if (offer.effects && offer.effects.length > 0) {
+            await this.runEffects(offer.effects)
         }
 
-        // 3. 弹出奖励选择弹窗
-        if (option.rewards && option.rewards.length > 0) {
-            const resolvedConfigs = option.rewards.map((config: any) => {
-                // 如果有 draw 配置，用 drawItems 抽取候选列表
+        if (offer.rewards && offer.rewards.length > 0) {
+            const resolvedConfigs = offer.rewards.map((config: any) => {
                 if (config.draw) {
                     const drawn = drawItems(
                         config.type.replace("Select", "") as DrawItemType,
@@ -535,32 +549,75 @@ export class EventRoom extends Room {
             }
         }
 
-        // 4. 执行自定义回调（返回字符串时覆盖 nextScene，用于动态分幕）
         let dynamicNextScene: string | undefined
-        if (option.customCallback) {
-            const result = await option.customCallback(this.sceneData)
+        if (offer.customCallback) {
+            const result = await offer.customCallback(this.sceneData, this)
             if (typeof result === "string") dynamicNextScene = result
         }
 
-        // 6. 如果有复杂交互组件，由 UI 层处理
-        // 组件会通过 choice.component 传递给 ChoiceContainer
-
-        // 7. 处理幕切换 / 打开地图（多幕、单幕同一套：开地图不 complete，点进下一房才结束）
-        const nextScene = dynamicNextScene ?? option.nextScene
-        const peek = this.isPeekLeave(option)
+        const nextScene = dynamicNextScene ?? offer.nextScene
 
         if (this.isMultiScene && nextScene) {
             if (nextScene !== this._currentSceneKey) {
                 this.lockOfferChoices()
             }
-            setTimeout(() => {
-                void this.goToScene(nextScene)
-            }, 500)
+            await this.wait(500)
+            await this.goToScene(nextScene)
             return
         }
 
-        if (!peek) this.lockOfferChoices()
+        if (offer.leave) {
+            await this.leave()
+            return
+        }
+
+        if (offer.openMap) {
+            await this.openMap()
+        }
+    }
+
+    async selectChoice(choice: Choice): Promise<void> {
+        await this.choiceGroup.selectChoice(choice)
+    }
+
+    async runEffect(key: string, params?: any): Promise<any> {
+        return executeEventEffect(key, this.bindEffectParams(params))
+    }
+
+    async runEffects(effects: EventEffectUnit[]): Promise<void> {
+        for (const effect of effects) {
+            await executeEventEffect(effect.key, this.bindEffectParams(effect.params))
+        }
+    }
+
+    /** 锁选项并开地图（成交离开） */
+    async leave(): Promise<void> {
+        this.lockOfferChoices()
         await openMapToLeave()
+    }
+
+    /** 只开地图，不锁选项 */
+    async openMap(): Promise<void> {
+        await openMapToLeave()
+    }
+
+    /** 等待。跳过动画 / 关掉 ui 类别时立刻结束；时长跟 animationSpeed */
+    wait(ms: number): Promise<void> {
+        if (settings.skipAnimation === true || !isAnimationCategoryEnabled("ui")) {
+            return Promise.resolve()
+        }
+        const speed = Number(settings.animationSpeed)
+        const wait = ms / (Number.isFinite(speed) && speed > 0 ? speed : 1)
+        if (wait <= 0) return Promise.resolve()
+        return new Promise(resolve => setTimeout(resolve, wait))
+    }
+
+    private bindEffectParams(params?: any): any {
+        return {
+            sceneData: this.sceneData,
+            ...(params ?? {}),
+            data: params?.data ?? this.sceneData,
+        }
     }
 
     /** 「无视他」这类：只开地图，成交过的选项不能再选 */
