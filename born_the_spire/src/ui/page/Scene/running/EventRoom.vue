@@ -5,9 +5,16 @@
         <BattleView @battle-end="onBattleEnd" />
     </template>
 
+    <!-- 幕级整页组件：自己画标题/正文/选项 -->
+    <component
+        v-else-if="sceneComponent"
+        :is="sceneComponent"
+        :key="currentSceneKey || 'scene'"
+    />
+
     <!-- 事件阶段：渲染事件UI -->
     <template v-else>
-        <div class="event-content">
+    <div class="event-content">
             <!-- 事件标题 -->
             <div class="event-header">
                 <h1 class="event-title">{{ eventTitle }}</h1>
@@ -101,7 +108,16 @@ const choices = computed(() => {
     return currentRoom.value?.choiceGroup.choices || []
 })
 
-// 自定义组件
+// 幕级整页组件
+const sceneComponent = computed(() => {
+    return currentRoom.value?.getSceneComponent()
+})
+
+const currentSceneKey = computed(() => {
+    return currentRoom.value?.currentSceneKey || null
+})
+
+// 事件顶层插页组件
 const customComponent = computed(() => {
     return currentRoom.value?.getCustomComponent()
 })

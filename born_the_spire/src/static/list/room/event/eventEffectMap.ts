@@ -14,6 +14,7 @@ import { getReserveModifier } from "@/core/objects/system/modifier/ReserveModifi
 import { getPotionModifier } from "@/core/objects/system/modifier/PotionModifier"
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
 import { createOrgan } from "@/core/factories"
+import { GOD_OF_CHANCE_MAX_ROUND, godOfChanceIsHouseFirst } from "./godOfChance"
 
 /**
  * 事件效果函数类型
@@ -656,20 +657,17 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
     },
 
     /**
-     * 无常之神：单次骰子结果
-     * 按阶段的正负概率、大中小权重、结果池，抽出并应用一项结果。
-     *
+     * 无常之神：准备当前这一把的奖惩（及庄家先骰时的点数）。
      * 阶段规则见 eventList 的 event_god_of_chance，以及《事件实现场景手册》场景 11。
      */
-    "godOfChance_roll": async (params: { stage: number }) => {
-        const stage = params.stage
-        if (stage < 1 || stage > 6) {
-            throw new Error(`[godOfChance_roll] 非法阶段 ${stage}，应在 1-6 之间`)
+    "godOfChance_prepare": async (params: { data: any }) => {
+        const data = params.data
+        const round = data.round ?? 1
+        if (round < 1 || round > GOD_OF_CHANCE_MAX_ROUND) {
+            throw new Error(`[godOfChance_prepare] 非法回合 ${round}，应在 1-6 之间`)
         }
-        const idx = stage - 1
+        const idx = round - 1
 
-        // 正/负概率与大/中/小权重（暗中操作+明面递增）
-        const positiveProbs = [0.50, 0.48, 0.46, 0.44, 0.42, 0.37]
         const sizeWeights = [
             [70, 25, 5],
             [60, 30, 10],
@@ -678,108 +676,161 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
             [15, 35, 50],
             [5, 30, 65],
         ]
-
-        const isPositive = randomChance(positiveProbs[idx], `godOfChance_pn_${stage}`)
         const size = randomWeightedChoice(
             ["small", "medium", "large"] as const,
             sizeWeights[idx],
-            `godOfChance_size_${stage}`
+            `godOfChance_size_${round}`
         )
 
-        // 玩家现状（用于筛选可用负面项）
         const goldNow = getReserveModifier(nowPlayer).getReserve("gold")
         const materialNow = getReserveModifier(nowPlayer).getReserve("material")
         const potionCount = getPotionModifier(nowPlayer).getPotions().length
         const organCount = getOrganModifier(nowPlayer).getRemovableOrgans().length
 
-        type Result = { label: string; available: boolean; run: () => void | Promise<void> }
+        type Result = { label: string; tell: string; available: boolean; run: () => void | Promise<void> }
         const eff = eventEffectMap
 
         const smallPositive: Result[] = [
-            { label: "+10 金", available: true, run: () => eff["gainGold"]({ amount: 10 }) },
-            { label: "+5 物质", available: true, run: () => eff["gainMaterial"]({ amount: 5 }) },
-            { label: "+3 生命", available: true, run: () => eff["healHealth"]({ amount: 3 }) },
+            { label: "10金币", tell: "你获得了10金币", available: true, run: () => eff["gainGold"]({ amount: 10 }) },
+            { label: "5物质", tell: "你获得了5物质", available: true, run: () => eff["gainMaterial"]({ amount: 5 }) },
+            { label: "回复3点生命", tell: "你回复了3点生命", available: true, run: () => eff["healHealth"]({ amount: 3 }) },
         ]
         const mediumPositive: Result[] = [
-            { label: "+30 金", available: true, run: () => eff["gainGold"]({ amount: 30 }) },
-            { label: "+15 物质", available: true, run: () => eff["gainMaterial"]({ amount: 15 }) },
-            { label: "回复 20% 当前生命", available: true, run: async () => {
+            { label: "30金币", tell: "你获得了30金币", available: true, run: () => eff["gainGold"]({ amount: 30 }) },
+            { label: "15物质", tell: "你获得了15物质", available: true, run: () => eff["gainMaterial"]({ amount: 15 }) },
+            { label: "回复20%当前生命", tell: "你回复了20%当前生命", available: true, run: async () => {
                 const cur = Number(nowPlayer.current.health.value)
                 const amount = Math.max(1, Math.floor(cur * 0.20))
                 await eff["healHealth"]({ amount })
             } },
-            { label: "+5 最大生命", available: true, run: () => eff["gainMaxHealth"]({ amount: 5 }) },
-            { label: "1 瓶普通药水", available: true, run: () => eff["gainRandomPotion"]({ rarity: "common" }) },
+            { label: "5点最大生命", tell: "你获得了5点最大生命", available: true, run: () => eff["gainMaxHealth"]({ amount: 5 }) },
+            { label: "一瓶普通药水", tell: "你获得了一瓶普通药水", available: true, run: () => eff["gainRandomPotion"]({ rarity: "common" }) },
         ]
         const largePositive: Result[] = [
-            { label: "+60 金", available: true, run: () => eff["gainGold"]({ amount: 60 }) },
-            { label: "+30 物质", available: true, run: () => eff["gainMaterial"]({ amount: 30 }) },
-            { label: "回复 50% 当前生命", available: true, run: async () => {
+            { label: "60金币", tell: "你获得了60金币", available: true, run: () => eff["gainGold"]({ amount: 60 }) },
+            { label: "30物质", tell: "你获得了30物质", available: true, run: () => eff["gainMaterial"]({ amount: 30 }) },
+            { label: "回复50%当前生命", tell: "你回复了50%当前生命", available: true, run: async () => {
                 const cur = Number(nowPlayer.current.health.value)
                 const amount = Math.max(1, Math.floor(cur * 0.50))
                 await eff["healHealth"]({ amount })
             } },
-            { label: "+15 最大生命", available: true, run: () => eff["gainMaxHealth"]({ amount: 15 }) },
-            { label: "1 瓶稀有药水", available: true, run: () => eff["gainRandomPotion"]({ rarity: "rare" }) },
-            { label: "1 件稀有遗物", available: true, run: () => eff["gainRandomRelic"]({ rarity: "rare" }) },
-            { label: "下 3 场战斗每场开始 +3 力量+3 敏捷", available: true, run: () => eff["gainRelic"]({ relicKey: "relic_god_of_chance_blessing" }) },
-            // 【贪】卡走 10% 硬独立判定，不进本表
+            { label: "15点最大生命", tell: "你获得了15点最大生命", available: true, run: () => eff["gainMaxHealth"]({ amount: 15 }) },
+            { label: "一瓶稀有药水", tell: "你获得了一瓶稀有药水", available: true, run: () => eff["gainRandomPotion"]({ rarity: "rare" }) },
+            { label: "一件稀有遗物", tell: "你获得了一件稀有遗物", available: true, run: () => eff["gainRandomRelic"]({ rarity: "rare" }) },
+            { label: "无常的祝福", tell: "你获得了下3场战斗每场开始+3力量和+3敏捷", available: true, run: () => eff["gainRelic"]({ relicKey: "relic_god_of_chance_blessing" }) },
         ]
 
         const smallNegative: Result[] = [
-            { label: "-10 金", available: goldNow >= 10, run: () => eff["loseGold"]({ amount: 10 }) },
-            { label: "-3 生命", available: true, run: () => eff["loseHealth"]({ amount: 3 }) },
-            { label: "-5 物质", available: materialNow >= 5, run: () => eff["loseMaterial"]({ amount: 5 }) },
+            { label: "失去10金币", tell: "你失去了10金币", available: goldNow >= 10, run: () => eff["loseGold"]({ amount: 10 }) },
+            { label: "失去3点生命", tell: "你失去了3点生命", available: true, run: () => eff["loseHealth"]({ amount: 3 }) },
+            { label: "失去5物质", tell: "你失去了5物质", available: materialNow >= 5, run: () => eff["loseMaterial"]({ amount: 5 }) },
         ]
         const mediumNegative: Result[] = [
-            { label: "-30 金", available: goldNow >= 30, run: () => eff["loseGold"]({ amount: 30 }) },
-            { label: "损失 10% 当前生命", available: true, run: async () => {
+            { label: "失去30金币", tell: "你失去了30金币", available: goldNow >= 30, run: () => eff["loseGold"]({ amount: 30 }) },
+            { label: "失去10%当前生命", tell: "你失去了10%当前生命", available: true, run: async () => {
                 const cur = Number(nowPlayer.current.health.value)
                 const amount = Math.max(1, Math.floor(cur * 0.10))
                 await eff["loseHealth"]({ amount })
             } },
-            { label: "-5 最大生命", available: true, run: () => eff["loseMaxHealth"]({ amount: 5 }) },
-            { label: "随机失去 1 瓶药水", available: potionCount >= 1, run: () => eff["loseRandomPotion"]() },
-            { label: "获得 1 张普通诅咒", available: true, run: () => eff["gainRandomCard"]({ tags: ["curse"] }) },
+            { label: "失去5点最大生命", tell: "你失去了5点最大生命", available: true, run: () => eff["loseMaxHealth"]({ amount: 5 }) },
+            { label: "随机失去一瓶药水", tell: "你失去了一瓶药水", available: potionCount >= 1, run: () => eff["loseRandomPotion"]() },
+            { label: "一张普通诅咒", tell: "你获得了一张普通诅咒", available: true, run: () => eff["gainRandomCard"]({ tags: ["curse"] }) },
         ]
         const largeNegative: Result[] = [
-            { label: "-60 金", available: goldNow >= 60, run: () => eff["loseGold"]({ amount: 60 }) },
-            { label: "损失 25% 当前生命", available: true, run: async () => {
+            { label: "失去60金币", tell: "你失去了60金币", available: goldNow >= 60, run: () => eff["loseGold"]({ amount: 60 }) },
+            { label: "失去25%当前生命", tell: "你失去了25%当前生命", available: true, run: async () => {
                 const cur = Number(nowPlayer.current.health.value)
                 const amount = Math.max(1, Math.floor(cur * 0.25))
                 await eff["loseHealth"]({ amount })
             } },
-            { label: "-15 最大生命", available: true, run: () => eff["loseMaxHealth"]({ amount: 15 }) },
-            { label: "失去随机器官", available: organCount >= 1, run: () => eff["loseRandomOrgan"]() },
-            { label: "获得 1 张强诅咒", available: true, run: () => eff["gainRandomCard"]({ tags: ["curse"] }) },
-            { label: "失去所有药水", available: potionCount >= 1, run: () => eff["loseAllPotions"]() },
+            { label: "失去15点最大生命", tell: "你失去了15点最大生命", available: true, run: () => eff["loseMaxHealth"]({ amount: 15 }) },
+            { label: "失去一个器官", tell: "你失去了一个器官", available: organCount >= 1, run: () => eff["loseRandomOrgan"]() },
+            { label: "一张强诅咒", tell: "你获得了一张强诅咒", available: true, run: () => eff["gainRandomCard"]({ tags: ["curse"] }) },
+            { label: "失去所有药水", tell: "你失去了所有药水", available: potionCount >= 1, run: () => eff["loseAllPotions"]() },
         ]
 
-        // 大正面池的【贪】走硬 10% 独立判定
-        if (isPositive && size === "large" && randomChance(0.10, `godOfChance_greed_${stage}`)) {
-            newLog(["骰子给出的是：【贪】"])
-            await eff["gainCard"]({ cardKey: "card_greed" })
-            return
+        const positiveMap = { small: smallPositive, medium: mediumPositive, large: largePositive }
+        const negativeMap = { small: smallNegative, medium: mediumNegative, large: largeNegative }
+
+        let win: Result
+        if (size === "large" && randomChance(0.10, `godOfChance_greed_${round}`)) {
+            win = {
+                label: "【贪】",
+                tell: "你获得了【贪】",
+                available: true,
+                run: () => eff["gainCard"]({ cardKey: "card_greed" }),
+            }
+        } else {
+            win = randomChoice(positiveMap[size], `godOfChance_win_${round}`)
         }
 
-        const poolMap: Record<string, Result[]> = {
-            "true-small": smallPositive,
-            "true-medium": mediumPositive,
-            "true-large": largePositive,
-            "false-small": smallNegative,
-            "false-medium": mediumNegative,
-            "false-large": largeNegative,
+        const usableLose = negativeMap[size].filter(r => r.available)
+        const losePool = usableLose.length > 0 ? usableLose : smallNegative.filter(r => r.available)
+        if (losePool.length === 0) {
+            throw new Error(`[godOfChance_prepare] round ${round} 负${size} 池中无可用候选`)
         }
-        const pool = poolMap[`${isPositive}-${size}`]
-        const usable = pool.filter(r => r.available)
-        if (usable.length === 0) {
-            throw new Error(
-                `[godOfChance_roll] stage ${stage} ${isPositive ? "正" : "负"}${size} 池中无可用候选`
-            )
+        const lose = randomChoice(losePool, `godOfChance_lose_${round}`)
+
+        data.winLabel = win.label
+        data.winTell = win.tell
+        data.winRun = win.run
+        data.loseLabel = lose.label
+        data.loseTell = lose.tell
+        data.loseRun = lose.run
+        data.houseRevealed = false
+        data.playerRevealed = false
+        data.playerFace = undefined
+        data.busy = false
+
+        if (godOfChanceIsHouseFirst(round)) {
+            data.houseFace = eventEffectMap["godOfChance_rollHouse"]({ round })
+        } else {
+            data.houseFace = undefined
         }
-        const chosen = randomChoice(usable, `godOfChance_pick_${stage}`)
-        newLog([`骰子给出的是：${chosen.label}`])
-        await chosen.run()
+    },
+
+    "godOfChance_rollHouse": (params: { round: number }) => {
+        const round = params.round
+        const faces = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        const weights = [
+            [18, 16, 14, 12, 10, 9, 7, 0, 0, 0],
+            [14, 14, 13, 12, 11, 10, 8, 0, 0, 0],
+            [10, 10, 11, 12, 12, 11, 10, 9, 8, 7],
+            [7, 8, 9, 10, 11, 12, 12, 11, 10, 10],
+            [5, 6, 7, 8, 10, 12, 13, 13, 13, 13],
+            [3, 4, 5, 6, 8, 10, 12, 15, 17, 20],
+        ]
+        const idx = Math.max(0, Math.min(round, GOD_OF_CHANCE_MAX_ROUND) - 1)
+        return randomWeightedChoice(faces, weights[idx], `godOfChance_house_${round}`)
+    },
+
+    "godOfChance_rollPlayer": (params: { round: number }) => {
+        return randomInt(1, 10, `godOfChance_player_${params.round}`)
+    },
+
+    "godOfChance_apply": async (params: { data: any }) => {
+        const data = params.data
+        const playerFace = Number(data.playerFace)
+        const houseFace = Number(data.houseFace)
+        if (!Number.isFinite(playerFace) || !Number.isFinite(houseFace)) {
+            throw new Error("[godOfChance_apply] 缺少双方点数")
+        }
+        const won = playerFace > houseFace
+        const tie = playerFace === houseFace
+        if (won) {
+            await data.winRun()
+            data.lastTell = data.winTell
+        } else {
+            await data.loseRun()
+            data.lastTell = data.loseTell
+        }
+        data.lastPlayerFace = playerFace
+        data.lastHouseFace = houseFace
+        data.lastWon = won
+        data.lastTie = tie
+        data.resolved = true
+        data.busy = true
+        newLog([won ? `压过对面：${data.winLabel}` : `没能压过：${data.loseLabel}`])
     },
 
     /**

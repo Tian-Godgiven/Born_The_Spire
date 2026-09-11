@@ -10,7 +10,7 @@ import { Choice, ChoiceGroup } from "../system/Choice"
 import type { EventMap, EventSceneMap, BattleSceneConfig, BattleRewardConfig } from "@/core/types/EventMapData"
 import { executeEventEffects } from "@/static/list/room/event/eventEffectMap"
 import { newLog } from "@/ui/hooks/global/log"
-import type { Component } from "vue"
+import { markRaw, reactive, type Component } from "vue"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { openMapToLeave, finishRoomAndOpenMap } from "@/core/hooks/step"
 import { startNewBattle, nowPlayerTeam, endNowBattle } from "../game/battle"
@@ -20,7 +20,7 @@ import { createEnemy } from "@/core/factories"
 import { rewardRegistry } from "@/static/registry/rewardRegistry"
 import { nowPlayer } from "../game/run"
 import { showBattleDefeat } from "@/ui/hooks/interaction/battleDefeat"
-import { checkCondition } from "@/core/types/ConditionSystem"
+import { checkCondition, type Condition } from "@/core/types/ConditionSystem"
 import { drawItems } from "@/core/hooks/draw"
 import type { DrawItemType } from "@/core/hooks/draw"
 
@@ -45,12 +45,12 @@ export interface EventRoomConfig extends RoomConfig {
 export class EventRoom extends Room {
     public readonly eventConfig: EventMap
     public readonly choiceGroup: ChoiceGroup
-    public customComponent?: Component | string  // 自定义事件组件
+    public customComponent?: Component | string  // 事件顶层插页组件（正文和选项之间）
 
     // 多幕事件相关
     private isMultiScene: boolean = false       // 是否为多幕事件
     private _currentSceneKey: string | null = null  // 当前幕的 key
-    private sceneData: Record<string, any> = {}     // 幕间共享数据
+    private sceneData: Record<string, any> = reactive({})     // 幕间共享数据（reactive：幕级组件能盯着点数/奖惩变）
 
     // 当前显示的标题和描述（响应式，随幕切换更新）
     public currentTitle: string = ""
@@ -176,6 +176,9 @@ export class EventRoom extends Room {
                 }
 
                 const peek = this.isPeekLeave(option)
+                const sceneAble = typeof option.ifAble === "function"
+                    ? option.ifAble as (sceneData: any) => boolean
+                    : undefined
                 const choice = new Choice({
                     key: option.key,
                     title: option.title,
@@ -185,15 +188,18 @@ export class EventRoom extends Room {
                     customData: { option },
                     mutuallyExclusiveWith,
                     repeatable: peek,
+                    ifAble: sceneAble
+                        ? () => sceneAble(this.sceneData)
+                        : undefined,
                     onSelect: async () => {
                         await this.onOptionSelected(option)
                     }
                 })
 
-                // ifAble：不满足时置灰
-                if (option.ifAble) {
+                // 字符串条件 ifAble：创建时检查一次，不满足则置灰
+                if (option.ifAble && !sceneAble) {
                     const context = { owner: nowPlayer, item: nowPlayer } as any
-                    if (!checkCondition(option.ifAble, context)) {
+                    if (!checkCondition(option.ifAble as Condition, context)) {
                         choice.disable()
                     }
                 }
@@ -205,7 +211,7 @@ export class EventRoom extends Room {
     /**
      * 跳转到指定幕
      */
-    goToScene(sceneKey: string): void {
+    async goToScene(sceneKey: string): Promise<void> {
         if (!this.isMultiScene) {
             console.warn("[EventRoom] 单幕事件不支持幕切换")
             return
@@ -215,6 +221,10 @@ export class EventRoom extends Room {
         if (!scene) {
             console.error(`[EventRoom] 未找到幕: ${sceneKey}`)
             return
+        }
+
+        if (scene.onEnter) {
+            await scene.onEnter(this.sceneData)
         }
 
         this._currentSceneKey = sceneKey
@@ -303,7 +313,7 @@ export class EventRoom extends Room {
 
             // 跳转到下一场景
             if (battleConfig.onWin) {
-                this.goToScene(battleConfig.onWin)
+                await this.goToScene(battleConfig.onWin)
             } else {
                 // 没有下一幕：打开地图离开，不立刻 complete
                 newLog(["===== 事件结束 ====="])
@@ -317,7 +327,7 @@ export class EventRoom extends Room {
 
             if (battleConfig.onLose && battleConfig.onLose !== "gameOver") {
                 // 跳转到失败场景
-                this.goToScene(battleConfig.onLose)
+                await this.goToScene(battleConfig.onLose)
             } else {
                 // 游戏结束
                 showBattleDefeat()
@@ -447,9 +457,12 @@ export class EventRoom extends Room {
             await this.eventConfig.onEnter(this.sceneData)
         }
 
-        // 如果第一幕是战斗场景，直接启动战斗
         if (this.isMultiScene) {
             const firstScene = this.eventConfig.scenes![0]
+            if (firstScene.onEnter) {
+                await firstScene.onEnter(this.sceneData)
+                this.currentDescription = this.resolveDescription(firstScene)
+            }
             if (firstScene.type === "battle" && firstScene.battle) {
                 this.startBattleScene(firstScene.battle)
             }
@@ -541,7 +554,7 @@ export class EventRoom extends Room {
                 this.lockOfferChoices()
             }
             setTimeout(() => {
-                this.goToScene(nextScene)
+                void this.goToScene(nextScene)
             }, 500)
             return
         }
@@ -575,8 +588,25 @@ export class EventRoom extends Room {
         return this.choiceGroup
     }
 
+    get currentSceneKey(): string | null {
+        return this._currentSceneKey
+    }
+
+    getCurrentScene(): EventSceneMap | undefined {
+        if (!this.isMultiScene || !this._currentSceneKey) return undefined
+        return this.eventConfig.scenes!.find(s => s.key === this._currentSceneKey)
+    }
+
     /**
-     * 获取自定义事件组件
+     * 幕级整页组件。有则 EventRoom.vue 不再画默认标题/正文/选项。
+     */
+    getSceneComponent(): Component | string | undefined {
+        const component = this.getCurrentScene()?.component
+        return component ? markRaw(component as Component) : undefined
+    }
+
+    /**
+     * 事件顶层插页组件（夹在正文和选项之间）
      */
     getCustomComponent(): Component | string | undefined {
         return this.customComponent

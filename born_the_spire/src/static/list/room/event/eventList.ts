@@ -3,8 +3,15 @@
  * 定义游戏中的所有事件
  */
 
+import { markRaw } from "vue"
 import type { EventMap } from "@/core/types/EventMapData"
 import { eventEffectMap } from "./eventEffectMap"
+import GodOfChanceTable from "@/ui/components/interaction/GodOfChanceTable.vue"
+import {
+    GOD_OF_CHANCE_MAX_ROUND,
+    godOfChanceIsHouseFirst,
+    godOfChanceTableText,
+} from "./godOfChance"
 import { nowPlayer } from "@/core/objects/game/run"
 import { randomChoice, randomChance, randomInt } from "@/core/hooks/random"
 import { getCurrentValue } from "@/core/objects/system/Current/current"
@@ -91,6 +98,38 @@ async function lakeOfferOrgan(data: any): Promise<boolean> {
         effectUnits: [{ key: "removeOrgan", params: { organ } }]
     })
     return true
+}
+
+const GOD_OF_CHANCE_TABLE = markRaw(GodOfChanceTable)
+
+async function godOfChanceEnterTable(data: any) {
+    if (data.resolved) {
+        data.round = (data.round ?? 1) + 1
+        data.resolved = false
+        data.houseRevealed = false
+        data.playerRevealed = false
+        data.playerFace = undefined
+        data.houseFace = undefined
+        data.busy = false
+    }
+    if (!data.round) data.round = 1
+    await eventEffectMap["godOfChance_prepare"]({ data })
+    data.dealId = (data.dealId ?? 0) + 1
+}
+
+async function godOfChanceStop(data: any) {
+    await eventEffectMap["godOfChance_apply"]({ data })
+}
+
+function godOfChanceCanStop(data: any): boolean {
+    if (data.busy || data.resolved) return false
+    const round = data.round ?? 1
+    if (godOfChanceIsHouseFirst(round) && !data.houseRevealed) return false
+    return true
+}
+
+function godOfChanceCanLeave(data: any): boolean {
+    return !data.busy && !data.resolved
 }
 
 async function lakeReturnOffered(data: any) {
@@ -436,58 +475,75 @@ export const eventList: EventMap[] = [
         ]
     },
 
-    // 无常之神：累进赌博（每次停下骰子掷一次，6 阶后自动结束）
+    // 无常之神：十面骰对赌，幕级整页组件
     {
         key: "event_god_of_chance",
         title: "无常之神",
-        description: "废墟中，一枚骰子在无休止地旋转。",
+        description: "空无一物的废墟中央，两枚骰子在不休止地旋转……",
         icon: "🎲",
         scenes: [
             {
-                key: "roll",
+                key: "approach",
                 title: "无常之神",
-                description: (data) => {
-                    const stage = data.stage ?? 0
-                    const lines = [
-                        "一枚骰子在废墟中无休止地旋转。你【可以】停下它。",
-                        "骰子重新旋转起来。你【或许应该】停下它。",
-                        "骰子重新旋转起来。你【理应】停下它。",
-                        "骰子重新旋转起来。你【必须】停下它。",
-                        "骰子重新旋转起来。你【定将】停下它。",
-                        "骰子重新旋转起来。你【不得不】停下它。"
-                    ]
-                    return lines[stage]
-                },
+                description: "空无一物的废墟中央，两枚骰子在不休止地旋转……",
+                options: [
+                    {
+                        key: "approach",
+                        title: "接近",
+                        icon: "🎲",
+                        saveData: (data) => { data.round = 1 },
+                        nextScene: "table"
+                    },
+                    {
+                        key: "walk_away",
+                        title: "转身离开",
+                        icon: "🚪"
+                    }
+                ]
+            },
+            {
+                key: "table",
+                title: "无常之神",
+                description: (data) => godOfChanceTableText(data),
+                component: GOD_OF_CHANCE_TABLE,
+                onEnter: godOfChanceEnterTable,
                 options: [
                     {
                         key: "roll_continue",
                         title: "停下骰子",
-                        description: "让它静止一瞬，接受这次裁决",
                         icon: "✋",
-                        ifShow: (data) => (data.stage ?? 0) < 5,
-                        saveData: (data) => { data.stage = (data.stage ?? 0) + 1 },
-                        customCallback: async (data) => {
-                            await eventEffectMap["godOfChance_roll"]({ stage: data.stage })
-                        },
-                        nextScene: "roll"
+                        ifShow: (data) => (data.round ?? 1) < GOD_OF_CHANCE_MAX_ROUND,
+                        ifAble: godOfChanceCanStop,
+                        customCallback: godOfChanceStop,
+                        nextScene: "table"
                     },
                     {
                         key: "roll_final",
                         title: "停下骰子",
-                        description: "让它静止一瞬，接受这次裁决",
                         icon: "✋",
-                        ifShow: (data) => (data.stage ?? 0) === 5,
-                        saveData: (data) => { data.stage = (data.stage ?? 0) + 1 },
-                        customCallback: async (data) => {
-                            await eventEffectMap["godOfChance_roll"]({ stage: data.stage })
-                        },
+                        ifShow: (data) => (data.round ?? 1) === GOD_OF_CHANCE_MAX_ROUND,
+                        ifAble: godOfChanceCanStop,
+                        customCallback: godOfChanceStop,
                         nextScene: "finale"
                     },
                     {
-                        key: "leave",
-                        title: "让它继续转，转身离开",
-                        description: "抵抗诱惑，把骰子留给下一个人",
-                        icon: "🚪"
+                        key: "leave_early",
+                        title: "转身离开",
+                        icon: "🚪",
+                        ifShow: (data) => (data.round ?? 1) < 4,
+                        ifAble: godOfChanceCanLeave
+                    },
+                    {
+                        key: "leave_curse",
+                        title: "转身离开",
+                        description: "你会带上一张诅咒。",
+                        icon: "🚪",
+                        ifShow: (data) => (data.round ?? 1) >= 4,
+                        ifAble: godOfChanceCanLeave,
+                        effects: [
+                            { key: "gainRandomCard", params: { tags: ["curse"] } }
+                        ],
+                        nextScene: "leave_curse"
                     }
                 ]
             },
@@ -498,7 +554,16 @@ export const eventList: EventMap[] = [
                 options: [{
                     key: "leave",
                     title: "转身离开",
-                    description: "残响仍在耳边",
+                    icon: "🚪"
+                }]
+            },
+            {
+                key: "leave_curse",
+                title: "无常之神",
+                description: "你没有再伸手。转身时，有什么东西贴上了后背——你获得了一张诅咒。",
+                options: [{
+                    key: "leave",
+                    title: "转身离开",
                     icon: "🚪"
                 }]
             }

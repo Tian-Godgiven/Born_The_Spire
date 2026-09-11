@@ -35,7 +35,7 @@ export interface BattleSceneConfig {
 export interface EventOptionMap {
     key?: string                    // 选项唯一标识（用于互斥配置）
     title: string                   // 选项标题
-    description: string             // 选项描述
+    description?: string             // 选项描述。不写则只显示 title。
     icon?: string                   // 选项图标
     effects?: Array<{               // 简单效果列表（使用 eventEffectMap）
         key: string                 // 效果 key
@@ -47,8 +47,9 @@ export interface EventOptionMap {
     customCallback?: (sceneData?: any) => void | string | Promise<void | string>
     rewards?: Array<{ type: string; [key: string]: any }>  // 奖励配置列表（弹出奖励选择弹窗）
 
-    // 是否可用（不满足时选项置灰，仍然显示）
-    ifAble?: Condition
+    // 是否可用（不满足时选项置灰，仍然显示）。
+    // 字符串条件走 Condition 系统；函数则每次渲染读 sceneData（赌桌「庄家未亮点时停下不可点」）
+    ifAble?: Condition | ((sceneData: any) => boolean)
 
     // 是否显示（返回 false 则不显示此选项，多幕事件基于 sceneData）
     ifShow?: (sceneData: any) => boolean
@@ -72,6 +73,16 @@ export interface EventSceneMap {
 
     // 战斗场景配置（type 为 "battle" 时使用）
     battle?: BattleSceneConfig
+
+    /**
+     * 幕级整页组件。有则 EventRoom 不再画标题/正文/选项，由组件自己排版。
+     * 选项仍从 room.choiceGroup 读，点选走 choiceGroup.selectChoice。
+     * 事件顶层 component 仍是插在正文和选项之间的小块，不要和这个混用。
+     */
+    component?: Component | string
+
+    /** 进入此幕时调用（含从别的幕跳来、以及 nextScene 指回自己）。可在这里 prepare 本把数据。 */
+    onEnter?: (sceneData: any) => void | Promise<void>
 
     options: EventOptionMap[]       // 幕的选项列表
     mutuallyExclusiveGroups?: string[][]  // 互斥组（幕级别）
