@@ -65,6 +65,21 @@ function collectorRollPay(data: any, gift: boolean): void {
     data.giftOrgan = gift ? pickCollectorGift(data.pickedOrgan?.key) : null
 }
 
+async function runTransplantSurgery(): Promise<void> {
+    const cardMod = getCardModifier(nowPlayer)
+    const organMod = getOrganModifier(nowPlayer)
+    const allOrgans = organMod.getOrgans()
+    const groups: { organ: Organ, cards: Card[] }[] = []
+    for (const [source, cards] of cardMod.getAllSourcedCards()) {
+        if (isOrgan(source) && cards.length > 0) {
+            groups.push({ organ: source as Organ, cards })
+        }
+    }
+    if (groups.length === 0 || allOrgans.length < 2) return
+    const { card, targetOrgan } = await showTransplantSelect({ groups, allOrgans })
+    cardMod.transferCardOwnership(card, targetOrgan)
+}
+
 async function lakeOfferCard(data: any): Promise<boolean> {
     const { showCardChoice } = await import("@/ui/hooks/interaction/cardChoice")
     const selected = await showCardChoice({
@@ -841,77 +856,90 @@ export const eventList: EventMap[] = [
         ]
     },
 
-    // 移植手术：多幕循环，卡牌归属在器官间转移
-    // 数据草稿 2026-07-29：等实现前置解决后才能跑通（见任务列表.md）
-    //   1) 两阶段"选卡 + 选目标器官"UI 组件（选卡时按器官分组显示）
-    //   2) ContentModifier "改归属"通路（把卡从器官 A 移到器官 B）
-    //   ✅ ifAble 语法：organCount() / organsWithCardsCount() 已加
+    // 移植手术：巷子迷晕后绑上手术台。接受做一次移植；反抗受伤后拿到生命药剂。
+    // 只改当前归属（丢掉谁带走）；锻牌仍认当初给出这张牌的器官。
     {
         key: "event_transplant_surgery",
         title: "移植手术",
-        description: "一个自称「外科医师」的怪人邀请你上手术台。他戴着沾血的口罩，桌上摆着几件生锈的工具。",
+        description: "你走在一条昏暗的巷子里，周围死寂无声……",
         icon: "🔪",
         scenes: [
             {
-                key: "main",
-                title: "移植手术",
-                description: "医生看着你，等待你的决定。",
+                key: "alley",
+                title: "???",
+                description: "你走在一条昏暗的巷子里，周围死寂无声……",
                 options: [
                     {
-                        key: "get_on_table",
-                        title: "上手术台",
-                        description: "每次手术失当前 HP 10%，将一张已装器官上的卡改到另一个已装器官。",
-                        icon: "🩺",
-                        ifAble: "$owner.organCount() >= 2 && $owner.organsWithCardsCount() >= 1",
-                        nextScene: "operation"
-                    },
-                    {
-                        key: "leave_main",
-                        title: "离开",
-                        description: "拒绝医生的邀请。",
-                        icon: "🚪"
+                        key: "too_quiet",
+                        title: "感觉好安静，街上也没有什么人……",
+                        fadeToNext: true,
+                        nextScene: "surgery"
                     }
                 ]
             },
             {
-                key: "operation",
-                title: "手术台",
-                description: "医生示意你选择：从哪个器官取一张卡，移到哪个器官。",
+                key: "surgery",
+                title: "强行手术",
+                description: "陌生的天花板……你被死死绑在手术台上，一个“医生”和护士正死死地盯着你：“手术开始……”",
                 options: [
                     {
-                        key: "do_surgery",
-                        title: "开始手术（失当前 HP 10%）",
-                        description: "选择一张卡和目标器官，卡归属转移到目标器官（效果不变）。",
-                        icon: "🔪",
+                        key: "accept",
+                        title: "接受",
+                        description: "失去 5% 最大生命的当前生命，将一个器官提供的卡牌移植到另一个器官上",
+                        ifAble: [
+                            "$owner.organCount() >= 2",
+                            "$owner.organsWithCardsCount() >= 1"
+                        ],
                         effects: [
-                            { key: "loseHealthPercent", params: { percent: 10 } }
+                            { key: "loseHealthPercent", params: { percent: 5, notLethal: true } }
                         ],
                         customCallback: async () => {
-                            const cardMod = getCardModifier(nowPlayer)
-                            const organMod = getOrganModifier(nowPlayer)
-
-                            const allOrgans = organMod.getOrgans()
-                            const groups: { organ: Organ, cards: Card[] }[] = []
-                            for (const [source, cards] of cardMod.getAllSourcedCards()) {
-                                if (isOrgan(source) && cards.length > 0) {
-                                    groups.push({ organ: source as Organ, cards })
-                                }
-                            }
-
-                            if (groups.length === 0 || allOrgans.length < 2) return
-
-                            const { card, targetOrgan } = await showTransplantSelect({ groups, allOrgans })
-                            cardMod.transferCardOwnership(card, targetOrgan)
+                            await runTransplantSurgery()
                         },
-                        nextScene: "operation" // 回到本场景，可继续手术或离开
+                        nextScene: "done"
                     },
                     {
-                        key: "leave_table",
-                        title: "结束离开",
-                        description: "从手术台起身",
-                        icon: "🚪"
+                        key: "resist",
+                        title: "反抗",
+                        description: "受到 3～7 点伤害",
+                        effects: [
+                            { key: "loseHealth", params: { min: 3, max: 7, notLethal: true } }
+                        ],
+                        nextScene: "fled"
                     }
                 ]
+            },
+            {
+                key: "done",
+                title: "强行手术",
+                description: "医生收起了“手术很完美……你可以离开了……”",
+                options: [{
+                    key: "leave_done",
+                    title: "离开"
+                }]
+            },
+            {
+                key: "fled",
+                title: "强行手术",
+                description: "你从手术台上挣扎逃开，但药物使得你难以移动，医生很轻易地就追上了你……/br/他递给你了一瓶药水：“至少要……记得吃药……”",
+                options: [{
+                    key: "take_potion",
+                    title: "接过药水",
+                    description: "获得一瓶生命药水",
+                    rewards: [
+                        { type: "potion", potionConfig: "original_potion_00001" }
+                    ],
+                    nextScene: "fled_leave"
+                }]
+            },
+            {
+                key: "fled_leave",
+                title: "强行手术",
+                description: "你接过药水。医生没有再拦你。",
+                options: [{
+                    key: "leave_fled",
+                    title: "离开"
+                }]
             }
         ]
     },

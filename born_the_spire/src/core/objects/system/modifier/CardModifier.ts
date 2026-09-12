@@ -18,7 +18,7 @@ import { ifHaveStatus, getStatusValue } from "../status/Status"
  * 卡牌修饰器管理器
  *
  * 专门用于管理角色牌组中来自不同来源（器官、遗物等）的卡牌
- * 当来源（如器官）被移除时，自动移除对应的卡牌
+ * 当挂载来源被移除时，自动移除当前挂在它上面的卡。锻牌认 provider，不跟移植走。
  * 支持 Player 和 Enemy
  */
 export class CardModifier {
@@ -51,8 +51,8 @@ export class CardModifier {
             const cardMap = getAllCards().find(c => c.key === cardKey)
             const entries = cardMap?.entry ?? []
 
-            // 设置卡牌来源
             card.source = source
+            card.provider = source
 
             // 设置持有者（会自动应用词条）
             card.setOwner(this.owner, entries)
@@ -195,10 +195,8 @@ export class CardModifier {
     }
 
     /**
-     * 转移卡牌归属：把 card 从其当前 source 挪到 newSource
-     *
-     * 只改归属，不动 owner、不重挂词条、不动牌堆。移植手术等
-     * "改归属不改效果"的场景直接调此方法一行搞定。
+     * 转移当前归属：把 card 从其当前 source 挪到 newSource。
+     * 不改 provider、owner、词条、牌堆。移植手术走这里。
      */
     transferCardOwnership(card: Card, newSource: Entity): boolean {
         let currentSource: Entity | undefined
@@ -234,10 +232,24 @@ export class CardModifier {
     }
 
     /**
-     * 获取指定来源提供的卡牌列表
+     * 当前挂在这个来源上的卡（丢掉/损坏认这个）。移植后跟着新器官。
      */
     getCardsFromSource(source: Entity): Card[] {
         return this.cardsFromSources.get(source) || []
+    }
+
+    /**
+     * 这个来源当初给出的卡（锻牌 / 改提供牌数值认这个）。移植不改。
+     */
+    getCardsFromProvider(provider: Entity): Card[] {
+        const raw = toRaw(provider)
+        const result: Card[] = []
+        for (const cards of this.cardsFromSources.values()) {
+            for (const card of cards) {
+                if (toRaw(card.provider ?? card.source) === raw) result.push(card)
+            }
+        }
+        return result
     }
 
     /**

@@ -59,7 +59,7 @@ defineExpose({
 <style scoped lang="scss">
 .map-overlay {
   position: fixed;
-  top: 0;
+  top: var(--running-top-height, 8vh);
   left: 0;
   right: 0;
   bottom: 0;

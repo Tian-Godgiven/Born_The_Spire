@@ -104,6 +104,33 @@ export const presetAnimations: AnimationDefinition[] = [
     },
 
     {
+        key: "event_fade_out",
+        category: "ui",
+        mode: "overlay",
+        channel: "visibility",
+        interruptible: false,
+        animate: {
+            to: { opacity: 0 },
+            duration: 0.9,
+            ease: "power2.in",
+        },
+    },
+
+    {
+        key: "event_fade_in",
+        category: "ui",
+        mode: "overlay",
+        channel: "visibility",
+        interruptible: false,
+        animate: {
+            from: { opacity: 0 },
+            to: { opacity: 1 },
+            duration: 0.8,
+            ease: "power1.out",
+        },
+    },
+
+    {
         key: "scale_in",
         category: "ui",
         mode: "overlay",

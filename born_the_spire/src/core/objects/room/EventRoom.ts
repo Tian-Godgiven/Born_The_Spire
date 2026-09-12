@@ -534,6 +534,7 @@ export class EventRoom extends Room {
             await this.runEffects(offer.effects)
         }
 
+        let lootPromise: Promise<void> | undefined
         if (offer.rewards && offer.rewards.length > 0) {
             const resolvedConfigs = offer.rewards.map((config: any) => {
                 if (config.draw) {
@@ -550,7 +551,7 @@ export class EventRoom extends Room {
             const rewards = rewardRegistry.createRewards(resolvedConfigs)
             if (rewards.length > 0) {
                 const { showRewards } = await import("@/ui/hooks/interaction/rewardDisplay")
-                await showRewards(rewards, this.currentTitle, undefined, { navigate: false })
+                lootPromise = showRewards(rewards, this.currentTitle, undefined, { navigate: false })
             }
         }
 
@@ -563,6 +564,7 @@ export class EventRoom extends Room {
         const nextScene = dynamicNextScene ?? offer.nextScene
 
         if (this.isMultiScene && nextScene) {
+            if (lootPromise) await lootPromise
             if (nextScene !== this._currentSceneKey) {
                 this.lockOfferChoices()
             }
@@ -572,6 +574,7 @@ export class EventRoom extends Room {
             return
         }
 
+        if (lootPromise) await lootPromise
         await this.runAfterEffects(offer)
 
         if (offer.leave) {

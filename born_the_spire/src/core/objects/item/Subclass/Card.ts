@@ -51,7 +51,8 @@ export function formatCardDisplayName(label: string, level: number): string {
  */
 export class Card extends Item{
     public readonly itemType = 'card' as const  // 类型标识，用于类型守卫
-    public source?: Entity  // 卡牌来源（可能是器官、遗物或其他来源）
+    public source?: Entity  // 当前挂在谁身上（丢掉谁带走、损坏谁封牌）；移植会改
+    public provider?: Entity  // 当初给出这张牌的实体；锻牌认这个，移植不改
     public owner?: Entity   // 卡牌持有者（通常是 Player）
     public tags?: string[]  // 卡牌标签（用于分类和筛选）
     public level: number = 0  // 卡牌等级（用于升级系统）

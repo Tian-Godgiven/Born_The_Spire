@@ -120,9 +120,20 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
     },
 
     /**
-     * 失去生命（直接扣血，绕过伤害流水线）
+     * 失去生命（直接扣血，绕过伤害流水线）。
+     * amount 固定值；min+max 则在闭区间内随机（含两端）。
+     * notLethal：至少留 1 点当前生命。
      */
-    "loseHealth": async (params: { amount: number }) => {
+    "loseHealth": async (params: { amount?: number, min?: number, max?: number, notLethal?: boolean }) => {
+        let amount = params.amount ?? 0
+        if (params.min != null && params.max != null) {
+            amount = randomInt(params.min, params.max, "loseHealth")
+        }
+        if (params.notLethal) {
+            const hp = getCurrentValue(nowPlayer, "health", 0)
+            amount = Math.min(amount, Math.max(0, hp - 1))
+        }
+        if (amount <= 0) return
         await doEvent({
             key: "loseHealth",
             source: nowPlayer,
@@ -130,7 +141,7 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
             target: nowPlayer,
             effectUnits: [{
                 key: "loseHealth",
-                params: { value: params.amount }
+                params: { value: amount }
             }]
         })
     },
@@ -211,19 +222,16 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
     },
 
     /**
-     * 获得药水
+     * 获得药水。走战利品弹窗，栏满时领不走，可先丢掉栏里的再点领取。
      */
     "gainPotion": async (params: { potionKey: string }) => {
-        await doEvent({
-            key: "gainPotion",
-            source: nowPlayer,
-            medium: nowPlayer,
-            target: nowPlayer,
-            effectUnits: [{
-                key: "gainPotion",
-                params: { potionKey: params.potionKey }
-            }]
-        })
+        const { grantLoot } = await import("@/ui/hooks/interaction/rewardDisplay")
+        await grantLoot(
+            [{ type: "potion", potionConfig: params.potionKey }],
+            "战利品",
+            undefined,
+            { navigate: false }
+        )
     },
 
     /**
@@ -431,19 +439,13 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
 
         // 随机选择药水
         const selected = randomChoices(filtered, count, "gainRandomPotion")
-
-        for (const potionData of selected) {
-            await doEvent({
-                key: "gainPotion",
-                source: nowPlayer,
-                medium: nowPlayer,
-                target: nowPlayer,
-                effectUnits: [{
-                    key: "gainPotion",
-                    params: { potionKey: potionData.key }
-                }]
-            })
-        }
+        const { grantLoot } = await import("@/ui/hooks/interaction/rewardDisplay")
+        await grantLoot(
+            selected.map((potionData: any) => ({ type: "potion", potionConfig: potionData.key })),
+            "战利品",
+            undefined,
+            { navigate: false }
+        )
     },
 
     /**

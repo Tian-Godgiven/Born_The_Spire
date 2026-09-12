@@ -3,9 +3,10 @@ import { newError } from "../global/alert";
 import type { Status } from "@/core/objects/system/status/Status";
 import { toRaw } from "vue";
 import { resolveGlossary } from "./glossaryResolve";
-import { isStatus } from "@/core/utils/typeGuards";
+import { isStatus, isChara } from "@/core/utils/typeGuards";
 import { getLazyModule } from "@/core/utils/lazyLoader";
 import { getCardModifier } from "@/core/objects/system/modifier/CardModifier";
+import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier";
 
 //对象的描述，存储为数据，使用时翻译为对应的字符串
 // 字符串恰好为 "<br>" 时是换行分隔符，不是要显示的文字
@@ -61,6 +62,57 @@ function organCardKeys(organ: any): string[] {
     const playerCards = organ?.cardsByOwner?.player
     if (Array.isArray(playerCards)) return playerCards
     return typeof playerCards === "string" ? [playerCards] : []
+}
+
+function organIsHeld(organ: any): boolean {
+    const owner = organ?.owner
+    if (!owner || !isChara(owner)) return false
+    try {
+        return getOrganModifier(owner).getOrgans().some((item: any) => toRaw(item) === toRaw(organ))
+    } catch {
+        return false
+    }
+}
+
+function configProvideCount(organ: any, preferPlayerCards?: boolean): number {
+    const playerCards = organ?.cardsByOwner?.player
+    const playerCount = Array.isArray(playerCards) ? playerCards.length : (typeof playerCards === "string" ? 1 : 0)
+    if (preferPlayerCards && playerCount > 0) return playerCount
+    if (Array.isArray(organ?.cards) && organ.cards.length > 0) return organ.cards.length
+    const enemyCards = organ?.cardsByOwner?.enemy
+    const enemyCount = Array.isArray(enemyCards) ? enemyCards.length : (typeof enemyCards === "string" ? 1 : 0)
+    return playerCount || enemyCount
+}
+
+/** 已装备按当前挂载，未装备按 cards / cardsByOwner。 */
+function provideCardCount(organ: any, preferPlayerCards?: boolean): number {
+    if (organIsHeld(organ)) {
+        return getCardModifier(organ.owner).getCardsFromSource(organ).length
+    }
+    return configProvideCount(organ, preferPlayerCards)
+}
+
+/** 「提供N张xx卡牌」——有 cards 就自动生成，不要写进器官 describe。 */
+export function provideCardsDescribe(organ: any, options?: { preferPlayerCards?: boolean }): Describe {
+    const count = provideCardCount(organ, options?.preferPlayerCards)
+    if (count <= 0) return []
+    const parts: Describe = [`提供${count}张`]
+    for (let i = 0; i < count; i++) {
+        if (i > 0) parts.push(i === count - 1 ? "和" : "、")
+        parts.push({ "@": i })
+    }
+    parts.push("卡牌")
+    return parts
+}
+
+/** 器官正文：提供卡牌一句 + describe 里的被动。 */
+export function composeOrganDescribe(organ: any, options?: { preferPlayerCards?: boolean }): Describe {
+    if (!organ) return []
+    const provide = provideCardsDescribe(organ, options)
+    const rest = Array.isArray(organ.describe) ? organ.describe : []
+    if (provide.length === 0) return rest
+    if (rest.length === 0) return provide
+    return [...provide, "<br>", ...rest]
 }
 
 /** 里程碑只锻牌时可以不写 describe，展示为「锻造提供的xx卡牌」。 */

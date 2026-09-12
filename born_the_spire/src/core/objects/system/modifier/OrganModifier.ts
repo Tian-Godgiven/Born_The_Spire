@@ -168,21 +168,6 @@ export class OrganModifier extends ItemModifier {
             const cardModifier = getCardModifier(this.owner as Chara)
             const addedCards = await cardModifier.addCardsFromSource(organ, cardKeys, parentLog)
 
-            // 更新器官的describe，将卡牌索引替换为实例ID
-            if (addedCards.length > 0 && organ.describe) {
-                organ.describe = organ.describe.map(segment => {
-                    // 如果是卡牌引用且是索引类型
-                    if (typeof segment === 'object' && '@' in segment && typeof segment['@'] === 'number') {
-                        const index = segment['@']
-                        if (index >= 0 && index < addedCards.length) {
-                            // 替换为卡牌实例ID
-                            return { '@': addedCards[index].__id }
-                        }
-                    }
-                    return segment
-                })
-            }
-
             // 注册卡牌移除函数到 ItemModifierUnit
             if (addedCards.length > 0) {
                 unit.registerCustomRemover(() => {

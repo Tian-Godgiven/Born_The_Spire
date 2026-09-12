@@ -41,12 +41,23 @@ export interface ShowRewardsOptions {
 }
 
 /**
- * 显示奖励并等待玩家领取
- * @param rewards 奖励列表
- * @param title 奖励标题（可选）
- * @param description 奖励描述（可选）
- * @param options 额外选项
- * @returns Promise，当所有奖励领取完成后 resolve
+ * 按配置发放战利品并打开领取界面。药水栏满时领不走，可先丢掉再领。
+ * 战斗奖励已经自己组 Reward 实例，继续走 showRewards；事件/效果用这个。
+ */
+export async function grantLoot(
+    configs: any[],
+    title?: string,
+    description?: string,
+    options?: ShowRewardsOptions
+): Promise<void> {
+    const { rewardRegistry } = await import("@/static/registry/rewardRegistry")
+    const rewards = rewardRegistry.createRewards(configs)
+    if (rewards.length === 0) return
+    await showRewards(rewards, title, description, options)
+}
+
+/**
+ * 显示奖励并等待玩家领取。已有 Reward 实例时用这个（战斗结算）。
  */
 export function showRewards(
     rewards: Reward[],

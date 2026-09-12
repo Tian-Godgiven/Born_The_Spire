@@ -69,6 +69,9 @@
         <div v-if="requireAllRewards && !canProceed()" class="require-hint">
           请先领取所有奖励
         </div>
+        <div v-if="potionBarFullHint" class="require-hint">
+          药水栏已满，请先在顶部丢掉一瓶再领取
+        </div>
       </div>
     </div>
 
@@ -183,7 +186,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, markRaw, shallowRef } from 'vue'
+import { ref, computed, markRaw, shallowRef, watch } from 'vue'
 import { currentRewards, showRewardUI, navigateOnProceed, handleExclusiveGroup, canProceed, requireAllRewards, hideRewardUI, releaseRewardWaiter, settlePendingRewards } from '@/ui/hooks/interaction/rewardDisplay'
 import { organRewardActionRegistry } from '@/static/registry/organRewardActionRegistry'
 import { nowPlayer } from '@/core/objects/game/run'
@@ -200,6 +203,11 @@ import OrganPopup from '@/ui/components/interaction/OrganPopup.vue'
 import OrganMilestoneTrack from '@/ui/components/interaction/OrganMilestoneTrack.vue'
 const visible = computed(() => showRewardUI.value)
 const rewards = computed(() => currentRewards.value)
+const potionBarFullHint = ref(false)
+
+watch(visible, (v) => {
+  if (v) potionBarFullHint.value = false
+})
 
 // 器官奖励弹窗
 const showOrganReward = ref(false)
@@ -326,7 +334,12 @@ async function confirmCardChoice() {
 
 // 领取奖励
 async function claimReward(reward: any) {
+  potionBarFullHint.value = false
   await reward.claim()
+  if (reward.type === 'potion' && !reward.isClaimed()) {
+    potionBarFullHint.value = true
+    return
+  }
   handleExclusiveGroup(reward)
 }
 
@@ -351,11 +364,11 @@ async function handleProceed() {
 <style scoped lang="scss">
 .reward-modal-overlay {
   position: fixed;
-  top: 0;
+  top: var(--running-top-height, 8vh);
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -577,7 +590,7 @@ async function handleProceed() {
 // 选择弹窗样式
 .choice-overlay {
   position: fixed;
-  top: 0;
+  top: var(--running-top-height, 8vh);
   left: 0;
   right: 0;
   bottom: 0;

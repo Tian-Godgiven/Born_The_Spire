@@ -84,7 +84,6 @@ const hasOpenedMap = ref(false)
 function showMap() {
     hideRewardUI()
     mapOverlay.value?.show()
-    // 标记用户已打开过地图
     hasOpenedMap.value = true
 }
 
@@ -122,13 +121,14 @@ onMounted(() => {
 
 <style scoped lang='scss'>
 .running{
+    --running-top-height: 8vh;
     position: relative;
     width: 100%;
     height: 100%;
     display: flex;
     flex-direction: column;
     .top{
-        height: 8vh;
+        height: var(--running-top-height);
     }
     .content{
         position: relative;
@@ -150,7 +150,7 @@ onMounted(() => {
         position: absolute;
         width: 100%;
         left: 0;
-        top: 8vh;
+        top: var(--running-top-height, 8vh);
         pointer-events: none;
         *{
             pointer-events: auto;

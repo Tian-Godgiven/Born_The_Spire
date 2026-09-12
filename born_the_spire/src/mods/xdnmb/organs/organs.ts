@@ -61,8 +61,7 @@ export const venomspineOrgan: OrganMap = {
     label: '毒棘腺',
     key: 'xdnmb_organ_000003',
     describe: [
-        '提供1张', { '@': 0 }, '卡牌到牌组',
-        '\n持有者受到拥有易伤状态的敌人的伤害降低50%'
+        '持有者受到拥有易伤状态的敌人的伤害降低50%'
     ],
     rarity: OrganRarity.Uncommon,
     part: OrganPartEnum.Gland,
@@ -101,7 +100,7 @@ export const venomspineOrgan: OrganMap = {
 export const wasteHeatOrgan: OrganMap = {
     label: '余热炉',
     key: 'xdnmb_organ_000002',
-    describe: ['提供1张', { '@': 0 }, '卡牌到牌组', '获得时增加2点最大生命并治疗'],
+    describe: ['获得时增加2点最大生命并治疗'],
     rarity: OrganRarity.Uncommon,
     part: OrganPartEnum.Gland,
     status: {

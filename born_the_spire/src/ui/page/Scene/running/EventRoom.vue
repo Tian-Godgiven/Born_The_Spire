@@ -15,7 +15,7 @@
 
     <!-- 事件阶段：渲染事件UI -->
     <template v-else>
-    <div class="event-content">
+    <div class="event-content" ref="animRef">
             <!-- 事件标题 -->
             <div class="event-header">
                 <h1 class="event-title">{{ eventTitle }}</h1>
@@ -86,6 +86,9 @@ import { EventRoom } from '@/core/objects/room/EventRoom'
 import type { Choice } from '@/core/objects/system/Choice'
 import BattleView from './BattleView.vue'
 import OrganRefText from '@/ui/components/display/OrganRefText.vue'
+import { useAnimation } from '@/ui/animation/useAnimation'
+
+const { animRef, play } = useAnimation('event_room_content')
 
 
 // 获取当前房间
@@ -184,10 +187,13 @@ async function handleOptionClick(choice: Choice) {
         return
     }
 
+    const fade = !!choice.customData?.option?.fadeToNext
     try {
-        // 选择选项（会触发 onSelect 回调）
+        if (fade) await (await play('event_fade_out')).promise
         await currentRoom.value?.selectChoice(choice)
+        if (fade) await (await play('event_fade_in')).promise
     } catch (error) {
+        if (fade) await (await play('event_fade_in')).promise
         console.error('[EventRoom] 选择失败:', error)
     }
 }

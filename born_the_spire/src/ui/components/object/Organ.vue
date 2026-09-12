@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang='ts'>
-    import { getDescribe } from '@/ui/hooks/express/describe';
+    import { getDescribe, composeOrganDescribe } from '@/ui/hooks/express/describe';
 import { Organ } from '@/core/objects/target/Organ';
 import { computed, ref, useTemplateRef } from 'vue';
 import OrganDetail from '@/ui/components/interaction/OrganDetail.vue';
@@ -77,7 +77,7 @@ import type { BadgeRenderData, BadgePosition } from '@/core/types/BadgeConfig';
     }
 
     const describe = computed(()=>{
-        return getDescribe(organ.describe, organ)
+        return getDescribe(composeOrganDescribe(organ), organ)
     })
 
     // 是否在器官方块上常驻显示介绍

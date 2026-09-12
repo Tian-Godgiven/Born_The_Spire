@@ -259,9 +259,7 @@ export const repairOrgan: EffectFunc = (event, effect) => {
 }
 
 /**
- * 修改本器官提供的卡牌的 status
- *
- * 用于器官升级里程碑：只强化该器官自身提供的卡牌实例
+ * 修改本器官当初给出的卡牌的 status（移植后仍认 provider，不跟当前挂载走）
  *
  * params:
  *   statusKey: string - 要修改的 status 键
@@ -286,7 +284,7 @@ export const modifyOrganCardStatus: EffectFunc = (event, effect) => {
     if (!isEntity(owner)) return false
 
     const cardModifier = getCardModifier(owner as Chara)
-    const cards = cardModifier.getCardsFromSource(medium)
+    const cards = cardModifier.getCardsFromProvider(medium)
 
     for (const card of cards) {
         const status = card.status[statusKey]
@@ -301,8 +299,8 @@ export const modifyOrganCardStatus: EffectFunc = (event, effect) => {
 }
 
 /**
- * 把本器官提供的卡牌锻造一档（牌通常只能升一次）
- * 用于器官升级里程碑。medium 必须是器官。
+ * 把本器官当初给出的卡牌锻造一档（牌通常只能升一次）。
+ * 认 provider，不认当前挂在谁身上。移植手术不会改锻谁。
  * params.cardKey 可选：只锻这张；不填则本器官提供的牌各锻一档。
  */
 export const upgradeOrganCards: EffectFunc = (event, effect) => {
@@ -316,7 +314,7 @@ export const upgradeOrganCards: EffectFunc = (event, effect) => {
     if (!isEntity(owner)) return false
 
     const cardKey = effect.params.cardKey as string | undefined
-    let cards = getCardModifier(owner as Chara).getCardsFromSource(medium)
+    let cards = getCardModifier(owner as Chara).getCardsFromProvider(medium)
     if (cardKey) {
         cards = cards.filter(c => c.key === cardKey)
     }

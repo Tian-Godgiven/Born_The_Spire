@@ -67,6 +67,8 @@ export interface EventOptionMap {
     // 是否显示（返回 false 则不显示此选项，多幕事件基于 sceneData）
     ifShow?: (sceneData: any) => boolean
     nextScene?: string              // 选择后跳转到的幕 key
+    /** 先把标题/正文/选项渐隐，换幕后再渐显。迷晕、醒来这类换幕用。 */
+    fadeToNext?: boolean
     /** 只开地图，不锁交互。关掉地图还能选别的。不写 nextScene 且没有实质效果时默认也是这样。 */
     openMap?: boolean
     saveData?: (sceneData: any) => void | Promise<void>  // 保存数据到 sceneData

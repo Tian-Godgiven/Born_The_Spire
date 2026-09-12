@@ -37,7 +37,7 @@
     import CardRefText from '@/ui/components/display/CardRefText.vue'
     import GlossaryPanel from '@/ui/components/display/GlossaryPanel.vue'
     import Popover from '@/ui/components/global/Popover.vue'
-    import { getDescribeStructured, type Describe, type DescribeSegment } from '@/ui/hooks/express/describe'
+    import { getDescribeStructured, composeOrganDescribe, type Describe, type DescribeSegment } from '@/ui/hooks/express/describe'
     import { findCardInstance } from '@/ui/hooks/express/cardSegment'
     import { collectGlossaryItems, type ExtraGlossary } from '@/ui/hooks/express/glossary'
     import type { Organ } from '@/core/objects/target/Organ'
@@ -107,7 +107,14 @@
     watch(rootRef, () => nextTick(resolveAnchor))
     onMounted(() => { nextTick(resolveAnchor) })
 
-    const segments = computed(() => getDescribeStructured(describe, target))
+    const segments = computed(() => {
+        const t = target as any
+        const isOrganBody = t
+            && (describe === undefined || describe === t.describe)
+            && (t.targetType === "organ" || t.cards || t.cardsByOwner)
+        const resolved = isOrganBody ? composeOrganDescribe(t, { preferPlayerCards }) : describe
+        return getDescribeStructured(resolved, target)
+    })
 
     const panelItems = computed(() => collectGlossaryItems(extraGlossaries, describe))
 

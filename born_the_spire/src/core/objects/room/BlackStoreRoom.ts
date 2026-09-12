@@ -38,6 +38,7 @@ import { getRelicModifier } from "@/core/objects/system/modifier/RelicModifier"
 import { getCurrentValue } from "@/core/objects/system/Current/current"
 import { getStatusValue } from "@/core/objects/system/status/Status"
 import { doEvent } from "@/core/objects/system/ActionEvent"
+import { composeOrganDescribe, getDescribe } from "@/ui/hooks/express/describe"
 
 /**
  * 商品类型
@@ -202,7 +203,7 @@ export class BlackStoreRoom extends Room {
                 id: `organ_${index}`,
                 type: "organ",
                 name: organ.label,
-                description: organ.describe ? this.formatDescribe(organ.describe) : undefined,
+                description: getDescribe(composeOrganDescribe(organ, { preferPlayerCards: true }), organ) || undefined,
                 price: this.calculateOrganPrice(organ),
                 data: organ,
                 isPurchased: false,
