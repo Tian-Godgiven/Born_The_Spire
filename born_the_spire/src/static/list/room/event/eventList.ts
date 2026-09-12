@@ -944,35 +944,71 @@ export const eventList: EventMap[] = [
         ]
     },
 
-    // 饲主：宠物 vs 立即套现
-    // 数据草稿 2026-07-29：事件本身简单，但衍生遗物是大系统（见任务列表.md）
-    //   1) 新增遗物「饥饿的怪物」：战斗奖励占用（让/抢/强制占据）+ 好感度阶段解锁（3/6/9 三阶）
-    //   2) 战斗奖励生成流程 hook：支持"宠物看上标记"和"强制占据"三态显示
-    //   3) 挡刀致命伤拦截通路（好感度 9 阶）
+    // 巢穴（event_feeder）：睡着的小兽。接近后无视它会跟着走（遗物小兽伙伴）；吃掉换 120 物质；远离空手离开。
     {
         key: "event_feeder",
-        title: "饲主",
-        description: "一个佝偻的老人牵着一只饿肚子的怪物，怪物的目光死死盯着你。",
+        title: "巢穴",
+        description: "你意外发现了一处野兽的巢穴，一只肮脏的小兽正在其中酣睡。",
         icon: "🐕",
-        options: [
+        scenes: [
             {
-                key: "feed_beast",
-                title: "喂养它",
-                description: "获得遗物「饥饿的怪物」，它将跟你走。它会占用你的战斗奖励；喂得越多解锁越强（3/6/9 好感度三阶）。",
-                icon: "🍖",
-                effects: [
-                    { key: "gainRelic", params: { relicKey: "event_relic_hungry_beast" } }
+                key: "nest",
+                title: "巢穴",
+                description: "你意外发现了一处野兽的巢穴，一只肮脏的小兽正在其中酣睡。",
+                options: [
+                    {
+                        key: "approach",
+                        title: "接近",
+                        nextScene: "wake"
+                    },
+                    {
+                        key: "leave_nest",
+                        title: "远离"
+                    }
                 ]
             },
             {
-                key: "kill_beast",
-                title: "杀掉它",
-                description: "立即获得 60 金 + 60 物质。",
-                icon: "🗡",
-                effects: [
-                    { key: "gainGold", params: { amount: 60 } },
-                    { key: "gainMaterial", params: { amount: 60 } }
+                key: "wake",
+                title: "巢穴",
+                description: "随着你逐渐靠近，小兽醒来。",
+                options: [
+                    {
+                        key: "ignore",
+                        title: "无视它",
+                        description: "获得遗物「小兽伙伴」",
+                        effects: [
+                            { key: "gainRelic", params: { relicKey: "event_relic_hungry_beast" } }
+                        ],
+                        nextScene: "followed"
+                    },
+                    {
+                        key: "eat",
+                        title: "吃掉它",
+                        description: "获得 120 物质",
+                        effects: [
+                            { key: "gainMaterial", params: { amount: 120 } }
+                        ],
+                        nextScene: "eaten"
+                    }
                 ]
+            },
+            {
+                key: "followed",
+                title: "巢穴",
+                description: "它并不介意你的冷漠，欢快地跟在你身后。",
+                options: [{
+                    key: "leave_followed",
+                    title: "离开"
+                }]
+            },
+            {
+                key: "eaten",
+                title: "巢穴",
+                description: "它欢快地投入你的口中。虽然有点吵闹，但味道好极了。",
+                options: [{
+                    key: "leave_eaten",
+                    title: "离开"
+                }]
             }
         ]
     },

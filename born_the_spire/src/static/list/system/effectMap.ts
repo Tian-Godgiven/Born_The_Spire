@@ -542,7 +542,7 @@ export const effectMap:EffectData[] = [
     key:"accumulateAndTrigger",
     effect:accumulateAndTrigger
 },{
-    label:"饥饿的怪物：注册战斗奖励拦截触发器",
+    label:"小兽伙伴：注册战斗奖励标记触发器",
     key:"hungryBeast_registerInterceptor",
     effect:hungryBeast_registerInterceptor
 },{

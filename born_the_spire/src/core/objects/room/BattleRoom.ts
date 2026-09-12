@@ -424,8 +424,8 @@ export class BattleRoom extends Room {
 
     /**
      * 发布 beforeShowRewards 事件后显示奖励页面
-     * 遗物可在事件的 after take 触发器里 splice/push info.rewards（或整体换引用）来占用/添加奖励
-     * 触发器可以是 async（如饲主"让/抢"弹窗），因此显式开事务并 await
+     * 遗物可在事件的 after take 触发器里标记/改写 info.rewards（splice、push 或整体换引用）
+     * 触发器可以是 async，因此显式开事务并 await
      */
     private async finalizeAndShowRewards(rewards: any[], title: string, subtitle: string): Promise<void> {
         if (rewards.length === 0) return

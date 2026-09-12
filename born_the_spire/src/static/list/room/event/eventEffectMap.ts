@@ -106,7 +106,7 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
             healValue = Math.floor(maxHealth * params.percent / 100)
         }
         if (healValue <= 0) return
-        // restHeal：休息治疗事件通路，饥饿的怪物≥3陪睡等"仅休息触发"的效果监听此事件
+        // restHeal：休息治疗事件通路，小兽伙伴≥3陪睡等"仅休息触发"的效果监听此事件
         await doEvent({
             key: "restHeal",
             source: nowPlayer,

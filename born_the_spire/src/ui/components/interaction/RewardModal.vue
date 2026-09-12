@@ -4,62 +4,76 @@
       <div class="modal-title">战利品</div>
 
       <div class="rewards-list">
-        <!-- 遍历所有奖励，每个奖励一行 -->
-        <div
+        <Popover
           v-for="reward in rewards"
           :key="reward.__key"
-          class="reward-row"
-          :class="{ claimed: reward.isClaimed(), locked: reward.isLocked() }"
+          placement="bottom"
+          align="start"
+          :disabled="!showBeastMark(reward)"
         >
-          <div class="reward-info">
-            <span class="reward-icon">{{ reward.getDisplayIcon() }}</span>
-            <span class="reward-text">{{ reward.getDisplayTitle() }}</span>
+          <div
+            class="reward-row"
+            :class="{
+              claimed: reward.isClaimed(),
+              locked: reward.isLocked(),
+              'beast-wanted': showBeastMark(reward) && !isBeastForced(reward),
+              'beast-forced': showBeastMark(reward) && isBeastForced(reward)
+            }"
+          >
+            <div class="reward-info">
+              <span class="reward-icon">{{ reward.getDisplayIcon() }}</span>
+              <div class="reward-text-col">
+                <span class="reward-text">{{ reward.getDisplayTitle() }}</span>
+                <span v-if="showBeastMark(reward)" class="beast-caption">
+                  {{ isBeastForced(reward) ? '🐕 小兽霸占了这份' : '🐕 小兽想要这份' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="reward-action">
+              <button
+                v-if="reward.type === 'organSelect' && !reward.isClaimed() && !isBeastForced(reward)"
+                class="action-btn"
+                @click="openOrganChoice(reward)"
+              >
+                查看选择
+              </button>
+
+              <button
+                v-else-if="reward.type === 'relicSelect' && !reward.isClaimed() && !isBeastForced(reward)"
+                class="action-btn"
+                @click="openRelicChoice(reward)"
+              >
+                查看选择
+              </button>
+
+              <button
+                v-else-if="reward.type === 'cardSelect' && !reward.isClaimed() && !isBeastForced(reward)"
+                class="action-btn"
+                @click="openCardChoice(reward)"
+              >
+                查看选择
+              </button>
+
+              <button
+                v-else-if="!reward.isClaimed() && !isBeastForced(reward)"
+                class="action-btn"
+                @click="claimReward(reward)"
+              >
+                领取
+              </button>
+
+              <span v-else-if="isBeastForced(reward) && !reward.isClaimed()" class="locked-text">小兽叼走了</span>
+              <span v-else-if="reward.isLocked()" class="locked-text">已锁定</span>
+              <span v-else class="claimed-text">已领取</span>
+            </div>
           </div>
-
-          <div class="reward-action">
-            <!-- 器官选择 -->
-            <button
-              v-if="reward.type === 'organSelect' && !reward.isClaimed()"
-              class="action-btn"
-              @click="openOrganChoice(reward)"
-            >
-              查看选择
-            </button>
-
-            <!-- 遗物选择 -->
-            <button
-              v-else-if="reward.type === 'relicSelect' && !reward.isClaimed()"
-              class="action-btn"
-              @click="openRelicChoice(reward)"
-            >
-              查看选择
-            </button>
-
-            <!-- 卡牌选择 -->
-            <button
-              v-else-if="reward.type === 'cardSelect' && !reward.isClaimed()"
-              class="action-btn"
-              @click="openCardChoice(reward)"
-            >
-              查看选择
-            </button>
-
-            <!-- 可点击领取的奖励（金币、物质、药水等） -->
-            <button
-              v-else-if="!reward.isClaimed()"
-              class="action-btn"
-              @click="claimReward(reward)"
-            >
-              领取
-            </button>
-
-            <!-- 已锁定（互斥） -->
-            <span v-else-if="reward.isLocked()" class="locked-text">已锁定</span>
-
-            <!-- 已领取 -->
-            <span v-else class="claimed-text">已领取</span>
-          </div>
-        </div>
+          <template #content>
+            <div class="beast-tip">
+              {{ isBeastForced(reward) ? '你的小兽伙伴霸占了这个战利品' : '你的小兽伙伴想要这个战利品' }}
+            </div>
+          </template>
+        </Popover>
       </div>
 
       <div class="modal-actions">
@@ -187,7 +201,7 @@
 
 <script setup lang="ts">
 import { ref, computed, markRaw, shallowRef, watch } from 'vue'
-import { currentRewards, showRewardUI, navigateOnProceed, handleExclusiveGroup, canProceed, requireAllRewards, hideRewardUI, releaseRewardWaiter, settlePendingRewards } from '@/ui/hooks/interaction/rewardDisplay'
+import { currentRewards, showRewardUI, navigateOnProceed, handleExclusiveGroup, canProceed, requireAllRewards, hideRewardUI, releaseRewardWaiter, settlePendingRewards, isBeastMarked, isBeastForced, onRewardClaimedByPlayer } from '@/ui/hooks/interaction/rewardDisplay'
 import { organRewardActionRegistry } from '@/static/registry/organRewardActionRegistry'
 import { nowPlayer } from '@/core/objects/game/run'
 import { getOrganMilestones } from '@/static/list/target/organQuality'
@@ -204,6 +218,10 @@ import OrganMilestoneTrack from '@/ui/components/interaction/OrganMilestoneTrack
 const visible = computed(() => showRewardUI.value)
 const rewards = computed(() => currentRewards.value)
 const potionBarFullHint = ref(false)
+
+function showBeastMark(reward: any) {
+  return isBeastMarked(reward) && !reward.isClaimed()
+}
 
 watch(visible, (v) => {
   if (v) potionBarFullHint.value = false
@@ -255,6 +273,7 @@ async function executeOrganAction(actionKey: string) {
   reward.selectedActions = new Map([[selectedOrganKey.value, actionKey]])
   closeOrganReward()
   await reward.claim()
+  onRewardClaimedByPlayer(reward)
   handleExclusiveGroup(reward)
 }
 
@@ -293,6 +312,7 @@ async function confirmRelicChoice() {
   const reward = currentChoiceReward.value
   reward.selectedRelics = [selectedRelicKey.value]
   await reward.claim()
+  onRewardClaimedByPlayer(reward)
   handleExclusiveGroup(reward)
   closeRelicChoice()
 }
@@ -328,6 +348,7 @@ async function confirmCardChoice() {
   const reward = currentChoiceReward.value
   reward.selectedCards = [selectedCardKey.value]
   await reward.claim()
+  onRewardClaimedByPlayer(reward)
   handleExclusiveGroup(reward)
   closeCardChoice()
 }
@@ -340,6 +361,7 @@ async function claimReward(reward: any) {
     potionBarFullHint.value = true
     return
   }
+  onRewardClaimedByPlayer(reward)
   handleExclusiveGroup(reward)
 }
 
@@ -400,6 +422,14 @@ async function handleProceed() {
   flex-direction: column;
   gap: 0;
   border: 2px solid black;
+
+  :deep(.popover-trigger) {
+    display: block;
+  }
+
+  :deep(.popover-trigger:last-child) .reward-row {
+    border-bottom: none;
+  }
 }
 
 .reward-row {
@@ -411,11 +441,7 @@ async function handleProceed() {
   background: white;
   transition: background 0.2s;
 
-  &:last-child {
-    border-bottom: none;
-  }
-
-  &:hover:not(.claimed) {
+  &:hover:not(.claimed):not(.beast-wanted):not(.beast-forced) {
     background: rgba(0, 0, 0, 0.02);
   }
 
@@ -426,6 +452,21 @@ async function handleProceed() {
   &.locked {
     opacity: 0.4;
     background: #f5f5f5;
+  }
+
+  &.beast-wanted,
+  &.beast-forced {
+    background: rgba(0, 0, 0, 0.05);
+    outline: 2px solid black;
+    outline-offset: -4px;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.08);
+    }
+  }
+
+  &.beast-forced {
+    outline-style: dashed;
   }
 }
 
@@ -442,8 +483,28 @@ async function handleProceed() {
   text-align: center;
 }
 
+.reward-text-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .reward-text {
   font-weight: bold;
+  color: #333;
+}
+
+.beast-caption {
+  font-size: 13px;
+  font-weight: bold;
+  color: #333;
+}
+
+.beast-tip {
+  background: white;
+  border: 2px solid black;
+  padding: 8px 12px;
+  font-size: 14px;
   color: #333;
 }
 
