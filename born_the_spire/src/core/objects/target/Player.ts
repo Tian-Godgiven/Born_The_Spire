@@ -80,7 +80,7 @@ export class Player extends Chara{
 
         //获取初始拥有的卡组（来源是玩家自身）
         const cardModifier = getCardModifier(this)
-        cardModifier.addCardsFromSource(this, map.card)
+        cardModifier.addCardsFromSource(this, map.card, undefined, false)
 
         //获取初始拥有的遗物
         if(map.relic && map.relic.length > 0) {

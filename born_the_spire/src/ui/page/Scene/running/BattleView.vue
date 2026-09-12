@@ -35,7 +35,6 @@
     </div>
 
     <HandCardSelector />
-    <CardFlightOverlay />
 </div>
 </template>
 
@@ -49,7 +48,6 @@
     import Faction from '@/ui/components/object/Target/Faction.vue';
     import AllFactions from '@/ui/components/object/Target/AllFactions.vue';
     import HandCardSelector from '@/ui/components/interaction/HandCardSelector.vue';
-    import CardFlightOverlay from '@/ui/animation/components/CardFlightOverlay.vue';
     import { handCardSelectorActive } from '@/ui/hooks/interaction/handCardSelector';
     import { waitForPlayFlightIdle } from '@/ui/animation/cardFlight';
 

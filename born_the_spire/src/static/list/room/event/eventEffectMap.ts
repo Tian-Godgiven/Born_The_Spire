@@ -337,9 +337,7 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
      * 移除指定 key 的器官（定向，不走 UI 选择）
      */
     "removeOrganByKey": async (params: { organKey: string }) => {
-        const organs = (nowPlayer as any).organs
-        if (!Array.isArray(organs)) return
-        const organ = organs.find((o: any) => o.key === params.organKey)
+        const organ = getOrganModifier(nowPlayer).getOrganByKey(params.organKey)
         if (!organ) {
             console.warn(`[removeOrganByKey] 找不到器官: ${params.organKey}`)
             return
@@ -351,6 +349,23 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
             target: nowPlayer,
             effectUnits: [{ key: "removeOrgan", params: { organ } }]
         })
+    },
+
+    /**
+     * 收藏家成交：取走点名器官、给 sceneData.gold；有 giftOrgan 再装上附赠。
+     * 讨价还价失败不写 gold，这里直接返回。
+     */
+    "collectorSettle": async (params: { data?: any, sceneData?: any }) => {
+        const data = params.data ?? params.sceneData
+        if (data?.gold == null) return
+        const organKey = data.pickedOrgan?.key
+        if (organKey) {
+            await eventEffectMap["removeOrganByKey"]({ organKey })
+        }
+        await eventEffectMap["gainGold"]({ amount: data.gold })
+        if (data.giftOrgan?.key) {
+            await eventEffectMap["gainOrgan"]({ organKey: data.giftOrgan.key })
+        }
     },
 
     /**
@@ -875,7 +890,7 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
     },
 
     /**
-     * 胚胎发育：接生器官（写入 evolutionRounds 后装到玩家）
+     * 蠕动胚胎：接生器官（写入 evolutionRounds 后装到玩家）
      * 直接 createOrgan → setOriginalBaseValue 写入进化轮次 → acquireOrgan，
      * 让器官从出生起就带上正确的 evolutionRounds（reaction 里读的都是 status 值）。
      */
@@ -887,18 +902,23 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
         const organData = organListModule.find((o: any) => o.key === organKey)
         if (!organData) {
             console.error(`[deliverEmbryo] 未找到器官: ${organKey}`)
-            return
+            return false
         }
         const organ = await createOrgan(organData)
         if (rounds > 0) {
             organ.status["evolutionRounds"]?.setOriginalBaseValue(rounds)
         }
-        await getOrganModifier(nowPlayer).acquireOrgan(organ, nowPlayer)
+        const ok = await getOrganModifier(nowPlayer).acquireOrgan(organ, nowPlayer)
+        if (!ok) {
+            newLog([nowPlayer, "没能接生", organ])
+            return false
+        }
         newLog([nowPlayer, "接生了", organ, rounds > 0 ? `（已进化 ${rounds} 轮）` : ""])
+        return true
     },
 
     /**
-     * 胚胎发育：抽一张代价，返回给 costPreview 展示；玩家接受后走 applyEmbryoCost 结算。
+     * 蠕动胚胎：抽一张代价，写到选项描述上；点「发育 / 轮回」立刻 applyEmbryoCost。
      * heavy=true 走阶段 5 进化的重代价小池（2 项均分）；
      * heavy=false 走推进代价常规池（5 类均分，类内均分）。
      * 资源不足的项（无金/无药水/无器官）从池中剔除，剔空整类的类也剔掉。
@@ -957,7 +977,7 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
     },
 
     /**
-     * 胚胎发育：结算代价（跑 drawEmbryoCost 返回对象里的 run）
+     * 蠕动胚胎：结算代价（跑 drawEmbryoCost 返回对象里的 run）
      */
     "applyEmbryoCost": async (params: { cost: { label: string, run: () => Promise<void> } | null }) => {
         if (!params.cost) return

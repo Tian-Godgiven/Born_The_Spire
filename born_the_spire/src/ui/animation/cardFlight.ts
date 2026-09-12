@@ -3,7 +3,7 @@ import type { Card } from "@/core/objects/item/Subclass/Card"
 import { settings } from "@/core/persistence/settings"
 import { isAnimationCategoryEnabled } from "./categories"
 
-export type CardPileName = "draw" | "hand" | "discard" | "exhaust"
+export type CardPileName = "draw" | "hand" | "discard" | "exhaust" | "deck"
 export type CardPlayDestination = "discard" | "exhaust" | "none"
 
 export interface CardFlightRect {
@@ -32,6 +32,8 @@ export interface CardFlightJob {
 const CARD_W = 130
 const CARD_H = 200
 const PLAY_HOLD_SEC = 0.18
+/** 获得卡牌：场中停顿，比打出长一点，让人看清是哪张 */
+const GAIN_HOLD_SEC = 0.7
 /** 抽牌出发、进牌堆时的右倾角；入手/场中为 0 */
 export const CARD_FLIGHT_TILT = 14
 
@@ -104,6 +106,20 @@ function centerRect(): CardFlightRect {
         width: CARD_W,
         height: CARD_H,
     }
+}
+
+function spreadHoldRects(count: number): CardFlightRect[] {
+    const top = (window.innerHeight - CARD_H) / 2 - 48
+    if (count <= 1) return [centerRect()]
+    const maxW = Math.min(window.innerWidth - 48, count * CARD_W + (count - 1) * 16)
+    const step = (maxW - CARD_W) / (count - 1)
+    const left0 = (window.innerWidth - maxW) / 2
+    return Array.from({ length: count }, (_, i) => ({
+        left: left0 + i * step,
+        top,
+        width: CARD_W,
+        height: CARD_H,
+    }))
 }
 
 function fallbackRect(): CardFlightRect {
@@ -250,4 +266,36 @@ export function flyHandToPile(card: Card, dest: "discard" | "exhaust"): void {
         vanish: true,
         onDone: () => showHand(card.__id),
     })
+}
+
+/**
+ * 获得卡牌：场中亮出，再飞向顶部「卡组」。
+ * 多张一起亮、一起飞。没有卡组锚点时不播（开局构造、选人预览）。
+ */
+export async function flyGainedCard(card: Card): Promise<void> {
+    await flyGainedCards([card])
+}
+
+export async function flyGainedCards(cards: Card[]): Promise<void> {
+    if (!cardFlightEnabled() || cards.length === 0) return
+    const end = queryPileRect("deck")
+    if (!end) return
+    const holds = spreadHoldRects(cards.length)
+    await Promise.all(cards.map((card, i) => {
+        const start = holds[i]
+        const { promise } = pushJob({
+            card,
+            start,
+            hold: start,
+            end,
+            holdSec: GAIN_HOLD_SEC,
+            waitForFinish: false,
+            fromRot: 0,
+            toRot: CARD_FLIGHT_TILT,
+            scale: 1,
+            vanish: true,
+            onDone: () => {},
+        })
+        return promise
+    }))
 }

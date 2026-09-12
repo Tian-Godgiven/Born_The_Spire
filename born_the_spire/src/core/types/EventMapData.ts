@@ -36,11 +36,22 @@ export interface BattleSceneConfig {
 export interface EventOptionMap {
     key?: string                    // 选项唯一标识（用于互斥配置）
     title: string                   // 选项标题
-    description?: string             // 选项描述。不写则只显示 title。
+    // 选项描述。不写则只显示 title。函数每次渲染读 sceneData（发育选项上的当前代价）。
+    description?: string | ((sceneData: any) => string)
     icon?: string                   // 选项图标
+    // 有则 EventRoom 在描述后渲染可悬停的【器官名】（OrganRefText + OrganHoverContent）
+    previewOrganKey?: string | ((sceneData: any) => string)
+    // 器官名后面的尾巴（「失去器官【石芯】，获得金币」）
+    previewOrganAfter?: string | ((sceneData: any) => string)
     effects?: Array<{               // 简单效果列表（使用 eventEffectMap）
         key: string                 // 效果 key
         params?: any                // 效果参数
+    }>
+    // 换幕之后再跑。获得卡牌这种带飞牌的写这里，先进结果幕再发。
+    // 不要和战斗幕 BattleSceneConfig.afterEffects（打完再跑）混用。
+    afterEffects?: Array<{
+        key: string
+        params?: any
     }>
     component?: Component | string  // 复杂交互组件（转盘、配对等）
     // 自定义回调。第二个参数就是当前 EventRoom。

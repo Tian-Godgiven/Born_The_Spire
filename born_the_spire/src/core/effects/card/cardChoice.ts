@@ -63,7 +63,7 @@ export const discoverCard: EffectFunc = async (event, effect) => {
     } else {
       // 加入卡组
       const cardModifier = getCardModifier(target)
-      cardModifier.addCardsFromSource(target, [card.key])
+      await cardModifier.addCardsFromSource(target, [card.key])
     }
   }
 }
@@ -98,7 +98,7 @@ export const chooseRandomCard: EffectFunc = async (event, effect) => {
   // 将选中的卡牌添加到玩家卡组
   const cardModifier = getCardModifier(target)
   for (const card of selectedCards) {
-    cardModifier.addCardsFromSource(target, [card.key])
+    await cardModifier.addCardsFromSource(target, [card.key])
   }
 }
 
@@ -185,7 +185,7 @@ export const chooseCardDuplicate: EffectFunc = async (event, effect) => {
     const card = selectedCards[0]
     // 复制卡牌（添加一张相同的卡牌到卡组）
     const cardModifier = getCardModifier(target)
-    cardModifier.addCardsFromSource(target, [card.key])
+    await cardModifier.addCardsFromSource(target, [card.key])
   }
 }
 
@@ -253,7 +253,7 @@ export const customCardChoice: EffectFunc = async (event, effect) => {
   for (const card of selectedCards) {
     switch (actionStr) {
       case "gain":
-        cardModifier.addCardsFromSource(target, [card.key])
+        await cardModifier.addCardsFromSource(target, [card.key])
         break
       case "remove":
         await doEvent({
@@ -280,7 +280,7 @@ export const customCardChoice: EffectFunc = async (event, effect) => {
         })
         break
       case "duplicate":
-        cardModifier.addCardsFromSource(target, [card.key])
+        await cardModifier.addCardsFromSource(target, [card.key])
         break
       case "discard":
         await doEvent({

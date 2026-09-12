@@ -4,7 +4,7 @@
  */
 
 import { markRaw } from "vue"
-import type { EventMap } from "@/core/types/EventMapData"
+import type { EventMap, EventOptionMap } from "@/core/types/EventMapData"
 import { eventEffectMap } from "./eventEffectMap"
 import GodOfChanceTable from "@/ui/components/interaction/GodOfChanceTable.vue"
 import {
@@ -12,8 +12,10 @@ import {
     godOfChanceIsHouseFirst,
     godOfChanceTableText,
 } from "./godOfChance"
+import { OrganTags } from "@/static/list/target/organTags"
 import { nowPlayer } from "@/core/objects/game/run"
 import { randomChoice, randomChance, randomInt } from "@/core/hooks/random"
+import { getItemList, filterItems } from "@/core/hooks/draw"
 import { getCurrentValue } from "@/core/objects/system/Current/current"
 import { getCardModifier } from "@/core/objects/system/modifier/CardModifier"
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
@@ -45,6 +47,22 @@ function pickCollectorTarget(organs: any[]): any {
                 : buckets.uncommon.length ? buckets.uncommon
                 : buckets.common
     return randomChoice(bucket, "collectorPick")
+}
+
+function pickCollectorGift(excludeKey?: string): { key: string, label: string } | null {
+    const pool = filterItems(getItemList("organ"), {
+        pool: "common",
+        rarity: ["common", "uncommon"],
+        exclude: excludeKey ? [excludeKey] : [],
+    }).filter((o: any) => !(o.tags ?? []).includes(OrganTags.STARTER))
+    if (pool.length === 0) return null
+    const picked = randomChoice(pool, "collectorGift")
+    return { key: picked.key, label: picked.label }
+}
+
+function collectorRollPay(data: any, gift: boolean): void {
+    data.gold = randomInt(100, 120, "collectorGold")
+    data.giftOrgan = gift ? pickCollectorGift(data.pickedOrgan?.key) : null
 }
 
 async function lakeOfferCard(data: any): Promise<boolean> {
@@ -150,6 +168,81 @@ async function lakeReturnOffered(data: any) {
         while (organ.level < targetLevel) {
             if (!await organModifier.upgradeOrgan(organ, { skipCost: true })) break
         }
+    }
+}
+
+const EMBRYO_STAGE_NAMES = ["合子", "桑葚胚", "囊胚", "原肠胚", "神经胚"] as const
+
+function embryoStage(data: any): number {
+    return data.stage ?? 1
+}
+
+function embryoOrganKey(data: any): string {
+    return `organ_embryo_stage${embryoStage(data)}`
+}
+
+function embryoStageName(data: any): string {
+    return EMBRYO_STAGE_NAMES[embryoStage(data) - 1] ?? "合子"
+}
+
+async function embryoEnsureCost(data: any): Promise<void> {
+    if (data.pendingCost) return
+    data.pendingCost = await eventEffectMap["drawEmbryoCost"]({
+        heavy: embryoStage(data) >= 5
+    })
+}
+
+function embryoCostDescription(data: any): string {
+    const label = data.pendingCost?.label
+    return label
+        ? `它需要一些……营养……/br/${label}`
+        : "它需要一些……营养……"
+}
+
+function embryoBirthOption(stayScene: string): EventOptionMap {
+    return {
+        key: "deliver",
+        title: "接生",
+        description: "获得",
+        previewOrganKey: (data) => embryoOrganKey(data),
+        customCallback: async (data) => {
+            const ok = await eventEffectMap["deliverEmbryo"]({
+                stage: embryoStage(data),
+                evolutionRounds: data.evolutionRounds ?? 0
+            })
+            if (!ok) return stayScene
+        }
+    }
+}
+
+function embryoDevelopOption(): EventOptionMap {
+    return {
+        key: "develop",
+        title: "发育",
+        description: embryoCostDescription,
+        ifShow: (data) => embryoStage(data) < 5,
+        customCallback: async (data) => {
+            await eventEffectMap["applyEmbryoCost"]({ cost: data.pendingCost })
+            data.pendingCost = null
+            data.stage = embryoStage(data) + 1
+        },
+        nextScene: "jar"
+    }
+}
+
+function embryoCycleOption(): EventOptionMap {
+    return {
+        key: "cycle",
+        title: "轮回",
+        description: embryoCostDescription,
+        ifShow: (data) => embryoStage(data) === 5,
+        customCallback: async (data) => {
+            await eventEffectMap["applyEmbryoCost"]({ cost: data.pendingCost })
+            data.pendingCost = null
+            data.evolutionRounds = (data.evolutionRounds ?? 0) + 1
+            data.stage = 1
+        },
+        nextScene: "cycle"
     }
 }
 
@@ -536,7 +629,7 @@ export const eventList: EventMap[] = [
                         icon: "🚪",
                         ifShow: (data) => (data.round ?? 1) >= 4,
                         ifAble: godOfChanceCanLeave,
-                        effects: [
+                        afterEffects: [
                             { key: "gainRandomCard", params: { tags: ["curse"] } }
                         ],
                         nextScene: "leave_curse"
@@ -566,117 +659,52 @@ export const eventList: EventMap[] = [
         ]
     },
 
-    // 胚胎发育：轮回赌博（多次代价推进器官阶段，第 5 阶段可"进化"重置 + evolutionRounds +1）
+    // 蠕动胚胎：起始幕接生/发育；发育后直接中间幕；第五阶段发育换成轮回
     {
         key: "event_embryogenesis",
-        title: "胚胎发育",
-        description: "一枚微微跳动的胚胎悬浮在你面前——还未成形，却仿佛在等待被塑造。",
+        title: "蠕动胚胎",
+        description: "在垃圾堆中，一个散发着荧光的厚玻璃罐内，小小的生命正在无休止地孕育",
         icon: "🥚",
+        onEnter: (data) => {
+            if (!data.stage) data.stage = 1
+        },
         scenes: [
             {
-                key: "main",
-                title: "胚胎发育",
-                description: (data) => {
-                    const stage = data.stage ?? 1
-                    const rounds = data.evolutionRounds ?? 0
-                    const stageNames = ["合子", "桑葚胚", "囊胚", "原肠胚", "神经胚"]
-                    const stageDescs = [
-                        "只是一枚受精卵。战斗结束回复 8 生命。",
-                        "细胞开始分裂堆聚。每场战斗第一张攻击卡额外触发 1 次。",
-                        "内里生成腔体。回合开始 +5 格挡；每场战斗塞入一张【分化】卡到抽牌堆。",
-                        "开始向内折叠分化。每场战斗塞入一张【分化】卡直接进手牌（不进抽牌堆）。",
-                        "神经系统雏形浮现。每场战斗胜利 +5 最大生命并回复 5 生命；每场战斗塞入一张【分化】卡。"
-                    ]
-                    const roundLine = rounds > 0
-                        ? `\n已进化 ${rounds} 轮，效果按轮次强化。`
-                        : ""
-                    return `胚胎已发育至【${stageNames[stage - 1]}】。\n${stageDescs[stage - 1]}${roundLine}`
-                },
+                key: "start",
+                title: "蠕动胚胎",
+                description: "在垃圾堆中，一个散发着荧光的厚玻璃罐内，小小的生命正在无休止地孕育",
+                onEnter: embryoEnsureCost,
                 options: [
-                    // 接生：结束事件，装当前阶段器官
-                    {
-                        key: "deliver",
-                        title: "接生",
-                        description: "把它从悬浮中取下，让它成为你身体的一部分",
-                        icon: "🍼",
-                        customCallback: async (data) => {
-                            await eventEffectMap["deliverEmbryo"]({
-                                stage: data.stage ?? 1,
-                                evolutionRounds: data.evolutionRounds ?? 0
-                            })
-                        }
-                    },
-                    // 让它发育（阶段 1-4）：抽代价 → 跳 costPreview
-                    {
-                        key: "develop",
-                        title: "让它发育",
-                        description: "它跳动得更急，仿佛在等你付出什么",
-                        icon: "🧬",
-                        ifShow: (data) => (data.stage ?? 1) < 5,
-                        customCallback: async (data) => {
-                            data.pendingCost = await eventEffectMap["drawEmbryoCost"]({ heavy: false })
-                        },
-                        nextScene: "costPreview"
-                    },
-                    // 让它进化（阶段 5）：抽重代价 → 跳 costPreview
-                    {
-                        key: "evolve",
-                        title: "让它进化",
-                        description: "让它将自己拆散，重新开始——但这次它会记得",
-                        icon: "🌀",
-                        ifShow: (data) => (data.stage ?? 1) === 5,
-                        customCallback: async (data) => {
-                            data.pendingCost = await eventEffectMap["drawEmbryoCost"]({ heavy: true })
-                        },
-                        nextScene: "costPreview"
-                    }
+                    embryoBirthOption("start"),
+                    embryoDevelopOption(),
+                    embryoCycleOption(),
                 ]
             },
             {
-                key: "costPreview",
-                title: "胚胎发育",
+                key: "jar",
+                title: "蠕动胚胎",
                 description: (data) => {
-                    const label = data.pendingCost?.label ?? "……"
-                    const isEvolve = (data.stage ?? 1) === 5
-                    const next = isEvolve
-                        ? "接受它，胚胎将拆散重生，进化轮次 +1。"
-                        : "接受它，胚胎将推进至下一阶段。"
-                    return `胚胎需要吸取：【${label}】\n${next}\n拒绝它，你只能就此接生它。`
+                    const name = embryoStageName(data)
+                    const rounds = data.evolutionRounds ?? 0
+                    const roundLine = rounds > 0 ? `/br/它已经轮回过 ${rounds} 次。` : ""
+                    return `罐子里已经是【${name}】了。${roundLine}`
                 },
+                onEnter: embryoEnsureCost,
                 options: [
-                    // 接受代价：付代价 + 阶段推进/进化 → 回 main
+                    embryoBirthOption("jar"),
+                    embryoDevelopOption(),
+                    embryoCycleOption(),
+                ]
+            },
+            {
+                key: "cycle",
+                title: "蠕动胚胎",
+                description: "它把自己拆开，又缩回最初的那一点光。",
+                options: [
                     {
-                        key: "acceptCost",
-                        title: "接受",
-                        description: "让它汲取",
-                        icon: "✅",
-                        saveData: (data) => {
-                            const currentStage = data.stage ?? 1
-                            if (currentStage === 5) {
-                                data.evolutionRounds = (data.evolutionRounds ?? 0) + 1
-                                data.stage = 1
-                            } else {
-                                data.stage = currentStage + 1
-                            }
-                        },
-                        customCallback: async (data) => {
-                            await eventEffectMap["applyEmbryoCost"]({ cost: data.pendingCost })
-                            data.pendingCost = null
-                        },
-                        nextScene: "main"
-                    },
-                    // 拒绝代价：等同接生（结束事件）
-                    {
-                        key: "refuseCost",
-                        title: "拒绝",
-                        description: "太重了。你决定就此接生它",
-                        icon: "🚪",
-                        customCallback: async (data) => {
-                            await eventEffectMap["deliverEmbryo"]({
-                                stage: data.stage ?? 1,
-                                evolutionRounds: data.evolutionRounds ?? 0
-                            })
-                        }
+                        key: "continue",
+                        title: "……",
+                        nextScene: "jar"
                     }
                 ]
             }
@@ -709,18 +737,11 @@ export const eventList: EventMap[] = [
         ]
     },
 
-    // 收藏家：NPC 点名要器官，让/谈/拒
-    // 数据草稿 2026-07-29：见任务列表.md，前置全部完成 ✅
-    //   ✅ NPC 点名 pickCollectorTarget（本文件顶部 helper，rare > uncommon > common 稀有度优先）
-    //   ✅ removeOrganByKey event effect（eventEffectMap.ts）
-    //   ✅ ifAble organCount()
-    //   ✅ let_him_pick / haggle 已接通
-    //   ✅ haggle 掷骰分支（customCallback 返回 nextScene，EventRoom 扩展已支持）
-    //   ✅ onEnter 预 pick + 函数式 description 插值（main 场景就展示"他盯上了 X"）
+    // 收藏家：点名可移除器官，卖 100～120 金；讨价还价成功再附赠普通/罕见通用器官
     {
         key: "event_collector",
         title: "收藏家",
-        description: "一位衣着华丽的收藏家摊开厚厚的器官图鉴，上下打量着你。「让我看看，你身上有没有我想要的东西？」",
+        description: "你遇到一个衣衫褴褛的流浪汉，他一看到你就兴奋起来。他自称是收藏家。",
         icon: "🎩",
         onEnter: async (data) => {
             const organs = getOrganModifier(nowPlayer).getRemovableOrgans()
@@ -733,78 +754,89 @@ export const eventList: EventMap[] = [
                 key: "main",
                 title: "收藏家",
                 description: (data) => data.pickedOrgan
-                    ? `他的目光在你身上梭巡，最后一眼盯上了「${data.pickedOrgan.label}」。「就是它了。」`
-                    : "他上下打量了你一番，微微皱起眉：「……你身上似乎没什么值得我出手的。」",
+                    ? `你遇到一个衣衫褴褛的流浪汉，他一看到你就兴奋起来。/br/他自称是收藏家，希望能从你身上采集一些有价值的样本……例如【${data.pickedOrgan.label}】/br/报酬自然是不会少。`
+                    : "你遇到一个衣衫褴褛的流浪汉，他一看到你就兴奋起来。/br/他自称是收藏家，上下打量了你一番，却微微皱起眉：「……你身上似乎没什么值得我出手的。」",
                 options: [
                     {
                         key: "let_him_pick",
-                        title: "让他挑",
-                        description: "交出他选中的器官，换 200 金 + 1 件稀有遗物。",
-                        icon: "👉",
+                        title: "给他",
+                        description: "失去器官",
+                        previewOrganKey: (data) => data.pickedOrgan?.key,
+                        previewOrganAfter: "，获得金币",
+                        ifShow: (data) => !!data.pickedOrgan,
                         ifAble: "$owner.removableOrganCount() >= 1",
                         customCallback: async (data) => {
                             if (!data.pickedOrgan) return
-                            await eventEffectMap.removeOrganByKey({ organKey: data.pickedOrgan.key })
+                            collectorRollPay(data, false)
                         },
-                        effects: [
-                            { key: "gainGold", params: { amount: 200 } },
-                            { key: "gainRandomRelic", params: { rarity: "rare" } }
-                        ]
+                        afterEffects: [{ key: "collectorSettle" }],
+                        nextScene: "sold"
                     },
                     {
                         key: "haggle",
                         title: "讨价还价",
-                        description: "赌一把——成功大赚一笔（400 金 + 2 件稀有遗物 + 失去器官），失败他愤然离场（无收益，器官保留）。",
-                        icon: "🎲",
+                        ifShow: (data) => !!data.pickedOrgan,
                         ifAble: "$owner.removableOrganCount() >= 1",
                         customCallback: async (data) => {
                             if (!data.pickedOrgan) return "haggle_lose"
-                            const success = randomChance(0.5, "collectorHaggle")
-                            if (success) {
-                                await eventEffectMap.removeOrganByKey({ organKey: data.pickedOrgan.key })
-                                return "haggle_win"
-                            }
-                            return "haggle_lose"
+                            if (!randomChance(0.5, "collectorHaggle")) return "haggle_lose"
+                            collectorRollPay(data, true)
+                            return "haggle_win"
                         }
                     },
                     {
                         key: "refuse",
-                        title: "拒绝",
-                        description: "客气地送走收藏家。",
-                        icon: "🚪"
+                        title: "无视它",
+                        nextScene: "ignored"
                     }
                 ]
+            },
+            {
+                key: "sold",
+                title: "收藏家",
+                description: (data) => {
+                    const name = data.pickedOrgan?.label ?? "器官"
+                    return `他兴高采烈地将【${name}】隆重地装进一个玻璃罐里，就这样死死地盯着它看：“咦嘻嘻嘻嘻……”/br/他怪异的声音在你身后回荡`
+                },
+                options: [{
+                    key: "leave",
+                    title: "离开"
+                }]
             },
             {
                 key: "haggle_win",
-                title: "讨价还价·成功",
-                description: (data) => `收藏家哈哈大笑：「痛快！」他甩出双倍的金钱和两件稀奇玩意，从你身上取走了「${data.pickedOrgan?.label ?? "器官"}」。`,
-                options: [
-                    {
-                        key: "haggle_win_done",
-                        title: "收下",
-                        description: "收下奖励，与收藏家道别。",
-                        icon: "💰",
-                        effects: [
-                            { key: "gainGold", params: { amount: 400 } },
-                            { key: "gainRandomRelic", params: { rarity: "rare" } },
-                            { key: "gainRandomRelic", params: { rarity: "rare" } }
-                        ]
-                    }
-                ]
+                title: "收藏家",
+                description: "他十分不舍地拿出另一件「藏品」和你做交换，当然报酬一分也没少，看来他确实很想要来自你身上的东西……",
+                options: [{
+                    key: "claim",
+                    title: "赚到了",
+                    description: (data) => {
+                        const gold = data.gold ?? 0
+                        return data.giftOrgan
+                            ? `获得了${gold}金币，获得了`
+                            : `获得了${gold}金币`
+                    },
+                    previewOrganKey: (data) => data.giftOrgan?.key,
+                    afterEffects: [{ key: "collectorSettle" }]
+                }]
             },
             {
                 key: "haggle_lose",
-                title: "讨价还价·失败",
-                description: "收藏家冷哼一声：「不识抬举。」拂袖而去。",
-                options: [
-                    {
-                        key: "haggle_lose_done",
-                        title: "目送他离开",
-                        description: "无奈地目送他离开。",
-                        icon: "🚪"
-                    }
-                ]
+                title: "收藏家",
+                description: "他拿不出更多报酬，整个人看起来沮丧极了，但这和你无关。",
+                options: [{
+                    key: "leave",
+                    title: "离开"
+                }]
+            },
+            {
+                key: "ignored",
+                title: "收藏家",
+                description: "它看起来沮丧极了，但这和你无关。",
+                options: [{
+                    key: "leave",
+                    title: "离开"
+                }]
             }
         ]
     },

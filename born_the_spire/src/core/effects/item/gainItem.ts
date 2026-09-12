@@ -47,7 +47,7 @@ export const gainCard: EffectFunc = async (event, effect) => {
     }
 
     const cardModifier = getCardModifier(target)
-    cardModifier.addCardsFromSource(target, [cardKey])
+    await cardModifier.addCardsFromSource(target, [cardKey])
 
     newLog([target, "获得了卡牌", cardKey])
 }

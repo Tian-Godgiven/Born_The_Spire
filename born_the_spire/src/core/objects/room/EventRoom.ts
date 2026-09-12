@@ -11,7 +11,7 @@ import type { EventMap, EventSceneMap, BattleSceneConfig, BattleRewardConfig } f
 import type { EventEffectUnit, EventSceneApplyOffer } from "@/core/types/EventSceneProps"
 import { executeEventEffect, executeEventEffects } from "@/static/list/room/event/eventEffectMap"
 import { newLog } from "@/ui/hooks/global/log"
-import { markRaw, reactive, type Component } from "vue"
+import { markRaw, reactive, nextTick, type Component } from "vue"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { openMapToLeave, finishRoomAndOpenMap } from "@/core/hooks/step"
 import { settings } from "@/core/persistence/settings"
@@ -185,7 +185,9 @@ export class EventRoom extends Room {
                 const choice = new Choice({
                     key: option.key,
                     title: option.title,
-                    description: option.description,
+                    description: typeof option.description === "function"
+                        ? () => option.description(this.sceneData)
+                        : option.description,
                     icon: option.icon,
                     component: option.component,
                     customData: { option },
@@ -245,13 +247,12 @@ export class EventRoom extends Room {
             return
         }
 
-        // 文本场景：更新选项
         this.currentPhase = "event"
+        this.replaceSceneChoices(scene)
+    }
 
-        // 清理当前选项
+    private replaceSceneChoices(scene: EventSceneMap): void {
         this.choiceGroup.choices.splice(0, this.choiceGroup.choices.length)
-
-        // 创建新幕的选项
         const newChoices = this.createChoicesFromOptions(scene.options, scene.mutuallyExclusiveGroups)
         newChoices.forEach(choice => this.choiceGroup.choices.push(choice))
     }
@@ -464,8 +465,11 @@ export class EventRoom extends Room {
             const firstScene = this.eventConfig.scenes![0]
             if (firstScene.onEnter) {
                 await firstScene.onEnter(this.sceneData)
-                this.currentDescription = this.resolveDescription(firstScene)
             }
+            // 构造时 sceneData 还是空的。onEnter 写完再画正文和选项，
+            // 否则 ifShow 依赖预 pick 的选项会整场藏起来（收藏家「瞧不上你」）。
+            this.currentDescription = this.resolveDescription(firstScene)
+            this.replaceSceneChoices(firstScene)
             if (firstScene.type === "battle" && firstScene.battle) {
                 this.startBattleScene(firstScene.battle)
             }
@@ -509,6 +513,7 @@ export class EventRoom extends Room {
         await this.apply({
             saveData: option.saveData,
             effects: option.effects,
+            afterEffects: option.afterEffects,
             rewards: option.rewards,
             customCallback: option.customCallback,
             nextScene: option.nextScene,
@@ -563,8 +568,11 @@ export class EventRoom extends Room {
             }
             await this.wait(500)
             await this.goToScene(nextScene)
+            await this.runAfterEffects(offer)
             return
         }
+
+        await this.runAfterEffects(offer)
 
         if (offer.leave) {
             await this.leave()
@@ -588,6 +596,12 @@ export class EventRoom extends Room {
         for (const effect of effects) {
             await executeEventEffect(effect.key, this.bindEffectParams(effect.params))
         }
+    }
+
+    private async runAfterEffects(offer: EventSceneApplyOffer): Promise<void> {
+        if (!offer.afterEffects?.length) return
+        await nextTick()
+        await this.runEffects(offer.afterEffects)
     }
 
     /** 锁选项并开地图（成交离开） */
@@ -625,6 +639,7 @@ export class EventRoom extends Room {
         if (option.openMap) return true
         if (option.nextScene) return false
         if (option.rewards?.length) return false
+        if (option.afterEffects?.length) return false
         if (option.customCallback) return false
         if (option.component) return false
         const effects = option.effects ?? []

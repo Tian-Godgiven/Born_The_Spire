@@ -32,6 +32,8 @@
     <!-- 地图覆盖层 -->
     <MapOverlay ref="mapOverlay" />
 
+    <CardFlightOverlay />
+
     <!-- 回到地图按钮 -->
     <button
         v-if="showBackToMapButton"
@@ -54,6 +56,7 @@ import TransplantSelectModal from "@/ui/components/interaction/TransplantSelectM
 import MapOverlay from "@/ui/components/interaction/MapOverlay.vue"
 import CardGroupModal from '@/ui/components/interaction/CardGroupModal.vue'
 import GlobalMessage from '@/ui/components/display/GlobalMessage.vue'
+import CardFlightOverlay from '@/ui/animation/components/CardFlightOverlay.vue'
 import { nowGameRun } from '@/core/objects/game/run'
 import { getRoomComponent } from '@/ui/registry/roomComponentRegistry'
 import { setShowMapCallback } from '@/core/hooks/step'

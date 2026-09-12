@@ -31,9 +31,12 @@
             <div>进阶：{{ nowGameRun.towerFire ?? 0 }}</div>
         </div>
         <div class="ability flex">
-            <Button v-for="ability in abilities"
-                :click="ability.click"
-                :label="ability.label"/>
+            <template v-for="ability in abilities" :key="ability.label">
+                <div v-if="ability.pile" :data-card-pile="ability.pile">
+                    <Button :click="ability.click" :label="ability.label"/>
+                </div>
+                <Button v-else :click="ability.click" :label="ability.label"/>
+            </template>
         </div>
 
     <!-- 遗物栏 - 在 topBar 下方单独一行 -->
@@ -61,6 +64,7 @@
     import { getShowMapCallback } from '@/core/hooks/step';
     import { getCardModifier } from '@/core/objects/system/modifier/CardModifier';
     import { showRelicList } from '@/ui/interaction/relicList';
+    import type { CardPileName } from '@/ui/animation/cardFlight';
 
     // 打开地图（用于战斗中查看地图）
     function openMap() {
@@ -126,9 +130,9 @@
 
     const showSettings = ref(false)
 
-    const abilities = [
+    const abilities: Array<{ label: string, click: () => void, pile?: CardPileName }> = [
         {label:"地图",click:()=>openMap()},
-        {label:"卡组",click:()=>showDeck()},
+        {label:"卡组",click:()=>showDeck(), pile: "deck"},
         {label:"遗物",click:()=>showRelicList()},
         {label:"设置",click:()=>showSettings.value = true},
         {label:"返回",click:()=>endRun()}

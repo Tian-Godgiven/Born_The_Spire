@@ -20,6 +20,7 @@ export type EventEffectUnit = {
 export interface EventSceneApplyOffer {
     saveData?: EventOptionMap["saveData"]
     effects?: EventEffectUnit[]
+    afterEffects?: EventEffectUnit[]
     rewards?: EventOptionMap["rewards"]
     customCallback?: EventOptionMap["customCallback"]
     nextScene?: string

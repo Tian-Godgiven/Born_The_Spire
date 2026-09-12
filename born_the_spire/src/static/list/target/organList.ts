@@ -2208,7 +2208,8 @@ export const organList:OrganMap[] = [
 },
 
 // ========== 胚胎发育事件产出：5 阶段线性器官 ==========
-// 事件 event_embryogenesis 逐阶段接生所得；evolutionRounds 记录事件内"进化"次数，接生时写入器官 status
+// 事件 event_embryogenesis 逐阶段接生所得；pool: ["event"]，不进通用随机池
+// evolutionRounds 记录事件内"进化"次数，接生时写入器官 status
 
 // 阶段 1 · 合子（Zygote）
 {
@@ -2216,6 +2217,7 @@ export const organList:OrganMap[] = [
     key: "organ_embryo_stage1",
     describe: ["战斗结束时回复 8 生命", "<br>", "每完成一轮进化，额外回复 2 生命"],
     rarity: OrganRarity.Common,
+    pool: ["event"],
     part: OrganPartEnum.Core,
     status: {
         "max-mass": 20,
@@ -2236,14 +2238,14 @@ export const organList:OrganMap[] = [
     },
     reaction: {
         zygoteHeal: [{
-            key: "healHealth",
+            key: "heal",
             label: "合子：赛后回复",
             targetType: "owner",
             effect: [
-                { key: "healHealth", params: { amount: 8 } },
+                { key: "heal", params: { value: 8 } },
                 { key: "repeatEffects", params: {
                     times: "$item.status(evolutionRounds)",
-                    effects: [{ key: "healHealth", params: { amount: 2 } }]
+                    effects: [{ key: "heal", params: { value: 2 } }]
                 }}
             ]
         }]
@@ -2256,6 +2258,7 @@ export const organList:OrganMap[] = [
 {
     label: "桑葚胚",
     key: "organ_embryo_stage2",
+    pool: ["event"],
     describe: ["每场战斗第一张攻击卡额外触发 1 次", "<br>", "每完成一轮进化，额外多触发 1 次"],
     rarity: OrganRarity.Uncommon,
     part: OrganPartEnum.Core,
@@ -2326,6 +2329,7 @@ export const organList:OrganMap[] = [
     key: "organ_embryo_stage3",
     describe: ["提供1张", { "@": 0 }, "卡牌", "<br>", "回合开始时获得 5 ", {$:"护甲"}, "<br>", "每完成一轮进化，额外获得 1 ", {$:"护甲"}],
     rarity: OrganRarity.Uncommon,
+    pool: ["event"],
     part: OrganPartEnum.Core,
     status: {
         "max-mass": 30,
@@ -2367,6 +2371,7 @@ export const organList:OrganMap[] = [
     key: "organ_embryo_stage4",
     describe: ["战斗开始时，将一张【分化】卡塞入手牌（不进牌组）"],
     rarity: OrganRarity.Rare,
+    pool: ["event"],
     part: OrganPartEnum.Core,
     status: {
         "max-mass": 35,
@@ -2386,15 +2391,14 @@ export const organList:OrganMap[] = [
     },
     reaction: {
         gastrulaSeedHand: [{
-            key: "addRandomCardsToPile",
+            key: "addCardToHand",
             label: "原肠胚：即时分化",
             targetType: "owner",
             effect: [{
-                key: "addRandomCardsToPile",
+                key: "addCardToHand",
                 params: {
                     cardKey: "card_embryo_differentiation",
-                    count: 1,
-                    pileName: "handPile"
+                    count: 1
                 }
             }]
         }]
@@ -2407,6 +2411,7 @@ export const organList:OrganMap[] = [
     key: "organ_embryo_stage5",
     describe: ["提供1张", { "@": 0 }, "卡牌", "<br>", "每场战斗胜利后获得 5 最大生命并回复 5 生命", "<br>", "每完成一轮进化，额外获得 2 最大生命"],
     rarity: OrganRarity.Rare,
+    pool: ["event"],
     part: OrganPartEnum.Core,
     status: {
         "max-mass": 40,
@@ -2422,14 +2427,12 @@ export const organList:OrganMap[] = [
                 when: "after",
                 how: "take",
                 key: "battleEnd",
-                // TODO(trigger): condition 需限定 event.info.result === "win"；当前不判胜负
+                condition: "$event.info(result) == win",
                 action: "neurulaGrow"
             }]
         }
     },
     reaction: {
-        // TODO(condition): 战斗失败时也会触发 battleEnd；理论上应加 condition 判 event.info.result === "win"
-        // 现有 $expr 语法不支持读取 event.info.*，先不判胜负——失败时 gameOver 弹窗压住，增益不会实际影响
         neurulaGrow: [{
             key: "addMaxHealthAndHeal",
             label: "神经胚：永久成长",

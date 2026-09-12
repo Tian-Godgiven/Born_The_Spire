@@ -58,8 +58,18 @@
                     <!-- 默认渲染 -->
                     <div v-else class="option-content">
                         <div class="option-title">{{ choice.title }}</div>
-                        <div v-if="choice.description" class="option-description">
-                            {{ choice.description }}
+                        <div v-if="hasOptionDescription(choice)" class="option-description">
+                            <template v-if="optionPreviewOrganKey(choice)">
+                                {{ choice.getDescription() }}<OrganRefText
+                                    :organ-key="optionPreviewOrganKey(choice) ?? ''"
+                                    :evolution-rounds="optionEvolutionRounds()"
+                                />{{ optionPreviewOrganAfter(choice) }}
+                            </template>
+                            <template v-else>
+                                <template v-for="(line, i) in optionDescriptionLines(choice)" :key="i">
+                                    <br v-if="i > 0">{{ line }}
+                                </template>
+                            </template>
                         </div>
                     </div>
                 </div>
@@ -75,6 +85,7 @@ import { nowGameRun } from '@/core/objects/game/run'
 import { EventRoom } from '@/core/objects/room/EventRoom'
 import type { Choice } from '@/core/objects/system/Choice'
 import BattleView from './BattleView.vue'
+import OrganRefText from '@/ui/components/display/OrganRefText.vue'
 
 
 // 获取当前房间
@@ -135,6 +146,37 @@ const sceneContext = computed(() => {
 const customComponent = computed(() => {
     return currentRoom.value?.getCustomComponent()
 })
+
+function optionPreviewOrganKey(choice: Choice): string | undefined {
+    const option = choice.customData?.option
+    if (!option?.previewOrganKey) return undefined
+    const data = currentRoom.value?.getSceneData()
+    const key = typeof option.previewOrganKey === "function"
+        ? option.previewOrganKey(data)
+        : option.previewOrganKey
+    return key || undefined
+}
+
+function optionPreviewOrganAfter(choice: Choice): string {
+    const option = choice.customData?.option
+    if (!option?.previewOrganAfter) return ""
+    const data = currentRoom.value?.getSceneData()
+    return typeof option.previewOrganAfter === "function"
+        ? (option.previewOrganAfter(data) ?? "")
+        : option.previewOrganAfter
+}
+
+function optionEvolutionRounds(): number {
+    return Number(currentRoom.value?.getSceneData()?.evolutionRounds ?? 0)
+}
+
+function optionDescriptionLines(choice: Choice): string[] {
+    return choice.getDescription().split(/\s*\/br\/\s*/).filter(line => line.length > 0)
+}
+
+function hasOptionDescription(choice: Choice): boolean {
+    return optionDescriptionLines(choice).length > 0 || !!optionPreviewOrganKey(choice)
+}
 
 // 处理选项点击
 async function handleOptionClick(choice: Choice) {

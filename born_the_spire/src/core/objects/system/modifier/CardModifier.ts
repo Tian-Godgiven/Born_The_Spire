@@ -35,9 +35,9 @@ export class CardModifier {
      * @param source 来源实体（器官、遗物或玩家自身）
      * @param cardKeys 要添加的卡牌 key 列表
      * @param parentLog 可选的父日志，用于嵌套显示
-     * @returns 添加的卡牌对象数组
+     * @param announce 是否播「获得飞向卡组」。开局自带牌传 false。
      */
-    async addCardsFromSource(source: Entity, cardKeys: string[], parentLog?: LogUnit): Promise<Card[]> {
+    async addCardsFromSource(source: Entity, cardKeys: string[], parentLog?: LogUnit, announce: boolean = true): Promise<Card[]> {
         const addedCards: Card[] = []
 
         // 检查是否在战斗中
@@ -74,6 +74,11 @@ export class CardModifier {
             if (parentLog) {
                 newLog(["添加卡牌:", card], parentLog)
             }
+        }
+
+        if (announce && isPlayer(this.owner) && addedCards.length > 0) {
+            const { flyGainedCards } = await import("@/ui/animation/cardFlight")
+            await flyGainedCards(addedCards)
         }
 
         return addedCards
