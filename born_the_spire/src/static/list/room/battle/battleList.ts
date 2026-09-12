@@ -121,14 +121,7 @@ export const battleList: BattleRoomConfig[] = [
         encounterPool: "easy",
         enemyConfigs: [
             {
-                key: "enemy_spore_fungus",
-                behavior: {
-                    patterns: [],
-                    fallback: {
-                        action: { selector: { tags: ["skill"] }, mode: "random" },
-                        describe: "毒孢或硬化"
-                    }
-                }
+                key: "enemy_spore_fungus"
             }
         ]
     },
@@ -287,14 +280,7 @@ export const battleList: BattleRoomConfig[] = [
         battleType: "normal",
         enemyConfigs: [
             {
-                key: "enemy_spore_fungus",
-                behavior: {
-                    patterns: [],
-                    fallback: {
-                        action: { selector: { tags: ["skill"] }, mode: "random" },
-                        describe: "毒孢或硬化"
-                    }
-                }
+                key: "enemy_spore_fungus"
             },
             {
                 key: "enemy_poison_toad",

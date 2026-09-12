@@ -327,7 +327,16 @@ export const enemyList:EnemyMap[] = [
         organ: [
             "enemy_organ_fungal_cap",
             "enemy_organ_spore_sac"
-        ]
+        ],
+        behavior: {
+            moves: {
+                mode: "loop",
+                list: [
+                    { cards: ["enemy_card_toxic_spore"], describe: "毒孢" },
+                    { cards: ["enemy_card_harden"], describe: "硬化" }
+                ]
+            }
+        }
     },
 
     {
