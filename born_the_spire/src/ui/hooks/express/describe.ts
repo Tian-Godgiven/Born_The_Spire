@@ -159,10 +159,31 @@ function isDescribeEmpty(describe?: Describe): boolean {
  * hover / 列表用的效果正文。
  * 写了 effect 就用 effect；没写则沿用 describe（旧数据把效果写在 describe 里）。
  */
-export function getEffectDescribe(entity: { effect?: Describe, describe?: Describe } | null | undefined): Describe {
+export function getEffectDescribe(entity: { effect?: Describe, describe?: Describe, effectTiers?: Array<{ statusKey: string, min: number, describe: Describe }>, status?: any } | null | undefined): Describe {
     if (!entity) return []
-    if (!isDescribeEmpty(entity.effect)) return entity.effect as Describe
-    return Array.isArray(entity.describe) ? entity.describe : []
+    const base = !isDescribeEmpty(entity.effect)
+        ? entity.effect as Describe
+        : (Array.isArray(entity.describe) ? entity.describe : [])
+    const tiers = composeEffectTiers(entity)
+    if (tiers.length === 0) return base
+    if (base.length === 0) return tiers
+    return [...base, "<br>", ...tiers]
+}
+
+/** status 达标的档位，每档一行。 */
+function composeEffectTiers(entity: { effectTiers?: Array<{ statusKey: string, min: number, describe: Describe }>, status?: any }): Describe {
+    const tiers = entity.effectTiers
+    if (!Array.isArray(tiers) || tiers.length === 0) return []
+    const parts: Describe = []
+    for (const tier of tiers) {
+        if (!tier?.statusKey || !Array.isArray(tier.describe) || tier.describe.length === 0) continue
+        const status = entity.status?.[tier.statusKey]
+        const value = Number(status?.value ?? 0)
+        if (value < Number(tier.min ?? 0)) continue
+        if (parts.length > 0) parts.push("<br>")
+        parts.push(...tier.describe)
+    }
+    return parts
 }
 
 /**

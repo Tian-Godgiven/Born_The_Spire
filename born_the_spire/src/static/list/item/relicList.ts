@@ -942,7 +942,7 @@ export const relicList: RelicMap[] = [
     // ===== Boss 遗物 =====
     {
         label: "炽热之心",
-        describe: ["能量上限 +1", "战斗结束时", "失去 3 点生命"],
+        effect: ["能量上限 +1，战斗结束时失去 3 点生命"],
         key: "original_relic_flaming_heart",
         rarity: "rare",
         pool: ["boss"],
@@ -1018,11 +1018,7 @@ export const relicList: RelicMap[] = [
     },
     {
         label: "先知之瞳",
-        describe: [
-            "获得时能量上限 +2",
-            "第 1 回合抽牌 +5",
-            "第 3 回合起每回合抽牌 -1"
-        ],
+        effect: ["能量上限 +2，战斗开始后的第 1 回合抽牌 +4，第 2 回合起每回合抽牌 -1"],
         key: "original_relic_prophet_eye",
         rarity: "rare",
         pool: ["boss"],
@@ -1030,19 +1026,32 @@ export const relicList: RelicMap[] = [
             possess: {
                 target: { key: "owner" },
                 effects: [
-                    { key: "addStatusBase", params: { statusKey: "max-energy", value: 2, type: "additive" } },
-                    { key: "addTurnDraw", params: { turn: 1, value: 5 } }
+                    { key: "addStatusBase", params: { statusKey: "max-energy", value: 2, type: "additive" } }
                 ],
-                triggers: [{
-                    when: "before",
-                    how: "take",
-                    key: "turnStartDrawCard",
-                    condition: "$battle.turn >= 3",
-                    action: "reduceTurnDraw"
-                }]
+                triggers: [
+                    {
+                        when: "before",
+                        how: "take",
+                        key: "turnStartDrawCard",
+                        condition: "$battle.turn == 1",
+                        action: "bonusDraw"
+                    },
+                    {
+                        when: "before",
+                        how: "take",
+                        key: "turnStartDrawCard",
+                        condition: "$battle.turn >= 2",
+                        action: "reduceTurnDraw"
+                    }
+                ]
             }
         },
         reaction: {
+            bonusDraw: [{
+                targetType: "triggerEffect",
+                key: "modifyDrawValue",
+                effect: [{ key: "modifyDrawValue", params: { delta: 4 } }]
+            }],
             reduceTurnDraw: [{
                 targetType: "triggerEffect",
                 key: "modifyDrawValue",
@@ -1052,11 +1061,7 @@ export const relicList: RelicMap[] = [
     },
     {
         label: "空茧",
-        describe: [
-            "获得时，从牌组中",
-            "永久移除 2 张牌",
-            "最大生命 -10%"
-        ],
+        effect: ["获得时，最大生命 -10%，从牌组中永久移除 2 张牌"],
         key: "original_relic_empty_cocoon",
         rarity: "rare",
         pool: ["boss"],
@@ -1072,10 +1077,7 @@ export const relicList: RelicMap[] = [
     },
     {
         label: "有生命活铁",
-        describe: [
-            "每 3 回合，回合开始时",
-            "获得 10 点护甲（跨战斗累计）"
-        ],
+        effect: ["每 3 回合，回合开始时获得 10 点护甲"],
         key: "original_relic_living_iron",
         rarity: "rare",
         pool: ["boss"],
@@ -1226,11 +1228,7 @@ export const relicList: RelicMap[] = [
     },
     {
         label: "金铸头骨",
-        describe: [
-            "受致命伤害时消耗 200 金币复活",
-            "并回复 50% 最大生命",
-            "本次运行仅 1 次"
-        ],
+        effect: ["受致命伤害时消耗 100 金币复活并回复 50% 最大生命，随后该遗物失效"],
         key: "original_relic_gilded_skull",
         rarity: "rare",
         pool: ["shop"],
@@ -1250,7 +1248,7 @@ export const relicList: RelicMap[] = [
                     key: "dead",
                     condition: [
                         "$item.status(used) == 0",
-                        "$owner.reserve(gold) >= 200"
+                        "$owner.reserve(gold) >= 100"
                     ],
                     action: "goldenSalvation"
                 }]
@@ -1273,7 +1271,7 @@ export const relicList: RelicMap[] = [
                     key: "payGold",
                     effect: [{
                         key: "spendReserve",
-                        params: { reserveKey: "gold", amount: 200 }
+                        params: { reserveKey: "gold", amount: 100 }
                     }]
                 },
                 {
@@ -1289,18 +1287,17 @@ export const relicList: RelicMap[] = [
     },
     {
         label: "心跳鼓",
-        describe: [
+        effect: [
             "本回合累计受到",
             { key: ["status", "maxPoint"] },
-            "点伤害时",
-            "下回合开始额外获得 1 能量"
+            "点未格挡的伤害时，下回合开始额外获得 1 能量"
         ],
         key: "original_relic_heartbeat_drum",
         rarity: "uncommon",
         pool: ["shop"],
         status: {
             "point": 0,
-            "maxPoint": 8,
+            "maxPoint": 5,
             "chargeReady": 0
         },
         badges: [
@@ -1315,7 +1312,7 @@ export const relicList: RelicMap[] = [
                         pointKey: "point",
                         on: { when: "after", how: "take", key: ["attack", "damage"] },
                         gain: "$triggerEffect.params(value)",
-                        threshold: 8,
+                        threshold: 5,
                         consume: "all",
                         maxRepeat: 1,
                         targetType: "triggerSource",
@@ -1365,10 +1362,7 @@ export const relicList: RelicMap[] = [
     },
     {
         label: "锋刃靴",
-        describe: [
-            "本战斗内首次打出攻击牌时",
-            "该次伤害 +6"
-        ],
+        effect: ["本战斗内，首次打出攻击牌时，其造成的伤害 +6"],
         key: "original_relic_edge_boots",
         rarity: "uncommon",
         pool: ["shop"],
@@ -1430,10 +1424,7 @@ export const relicList: RelicMap[] = [
     },
     {
         label: "预言之骰",
-        describe: [
-            "战斗开始时从 4 个预言中选择 1 个立即生效",
-            "力量 / 敏捷 / 抽牌 / 能量"
-        ],
+        effect: ["战斗开始时从 4 个预言中选择 1 个立即生效"],
         key: "original_relic_prophecy_dice",
         rarity: "rare",
         pool: ["shop"],
@@ -1474,20 +1465,20 @@ export const relicList: RelicMap[] = [
     },
     {
         label: "无常之神的祝福",
-        describe: [
-            "接下来 ", { key: ["status", "battles-remaining"] }, " 场战斗，",
-            "战斗开始时获得 3 层力量和 3 层敏捷"
+        effect: [
+            "接下来（", { key: ["status", "battles-done"] }, "/", { key: ["status", "maxBattles"] }, "）场战斗，",
+            "战斗开始时获得 3 层", {$:"力量"}, "和 3 层", {$:"敏捷"}
         ],
         key: "relic_god_of_chance_blessing",
         rarity: "rare",
         pool: ["exclusive"],
         status: {
-            "battles-remaining": 3,
+            "battles-done": 0,
             "maxBattles": 3,
             "disabled": 0
         },
         badges: [
-            { type: "cooldown", status: "battles-remaining" }
+            { type: "counter", status: "battles-done", maxStatus: "maxBattles" }
         ],
         interaction: {
             possess: {
@@ -1498,7 +1489,10 @@ export const relicList: RelicMap[] = [
                         how: "take",
                         key: "battleStart",
                         level: 1,
-                        condition: "$source.status(disabled) == 0",
+                        condition: [
+                            "$source.status(disabled) == 0",
+                            "$source.status(battles-done) < $source.status(maxBattles)"
+                        ],
                         action: "grantBlessing"
                     },
                     {
@@ -1506,7 +1500,7 @@ export const relicList: RelicMap[] = [
                         how: "take",
                         key: "battleStart",
                         level: 0,
-                        condition: "$source.status(battles-remaining) <= 0",
+                        condition: "$source.status(battles-done) >= $source.status(maxBattles)",
                         action: "markDisabled"
                     }
                 ]
@@ -1524,10 +1518,10 @@ export const relicList: RelicMap[] = [
                 },
                 {
                     targetType: "triggerSource",
-                    key: "decrementRemaining",
+                    key: "incrementBattles",
                     effect: [{
-                        key: "decrementStatus",
-                        params: { statusKey: "battles-remaining", amount: 1 }
+                        key: "incrementStatus",
+                        params: { statusKey: "battles-done", amount: 1 }
                     }]
                 }
             ],
@@ -1544,24 +1538,25 @@ export const relicList: RelicMap[] = [
     // 孵化中的胚胎（孵化室事件专属，图标: 🪱）：3 场战斗后按累计受伤孵化成共生之种 / 饥饿之种
     {
         label: "孵化中的胚胎",
-        describe: [
-            "接下来 ", { key: ["status", "battles-remaining"] }, " 场战斗，",
-            "战斗开始 +2 力量；每回合结束受到 1/2/3/… 递增伤害。",
-            "累计受伤 ", { key: ["status", "damage-taken"] }, "/30。",
-            "孵化时：≤30 → 共生之种；>30 → 饥饿之种。"
+        effect: [
+            "接下来（", { key: ["status", "battles-done"] }, "/", { key: ["status", "maxBattles"] }, "）场战斗开始时获得 2 层", {$:"力量"},
+            "<br>",
+            "每回合结束时受到递增伤害。",
+            "<br>",
+            "3场战斗后，根据累计的伤害值孵化。"
         ],
         key: "event_relic_incubating_embryo",
         rarity: "rare",
         pool: ["exclusive"],
         status: {
-            "battles-remaining": 3,
+            "battles-done": 0,
             "maxBattles": 3,
             "damage-taken": 0,
             "turn-count": 0,
             "disabled": 0
         },
         badges: [
-            { type: "cooldown", status: "battles-remaining" }
+            { type: "counter", status: "battles-done", maxStatus: "maxBattles" }
         ],
         interaction: {
             possess: {
@@ -1610,7 +1605,7 @@ export const relicList: RelicMap[] = [
                         level: 5,
                         condition: [
                             "$source.status(disabled) == 0",
-                            "$source.status(battles-remaining) <= 0",
+                            "$source.status(battles-done) >= $source.status(maxBattles)",
                             "$source.status(damage-taken) <= 30"
                         ],
                         action: "hatchSymbiote"
@@ -1622,7 +1617,7 @@ export const relicList: RelicMap[] = [
                         level: 5,
                         condition: [
                             "$source.status(disabled) == 0",
-                            "$source.status(battles-remaining) <= 0",
+                            "$source.status(battles-done) >= $source.status(maxBattles)",
                             "$source.status(damage-taken) > 30"
                         ],
                         action: "hatchHungry"
@@ -1657,8 +1652,8 @@ export const relicList: RelicMap[] = [
             ],
             embryoTick: [{
                 targetType: "triggerSource",
-                key: "decrementBattles",
-                effect: [{ key: "decrementStatus", params: { statusKey: "battles-remaining", amount: 1 } }]
+                key: "incrementBattles",
+                effect: [{ key: "incrementStatus", params: { statusKey: "battles-done", amount: 1 } }]
             }],
             // 先 disable 再孵化：防止同事件栈内后续触发器再次进入
             hatchSymbiote: [
@@ -1697,10 +1692,10 @@ export const relicList: RelicMap[] = [
             ]
         }
     },
-    // 共生之种（孵化室事件专属）：每场战斗开始 +2 力量，每回合开始 +5 护甲
+    // 共生之种（孵化室事件专属）：每场战斗开始 +1 力量
     {
         label: "共生之种",
-        describe: ["每场战斗开始 +2 力量，每回合开始 +5 护甲"],
+        effect: ["战斗开始时获得 1 层", {$:"力量"}],
         key: "event_relic_symbiote_seed",
         rarity: "rare",
         pool: ["exclusive"],
@@ -1713,12 +1708,6 @@ export const relicList: RelicMap[] = [
                         how: "take",
                         key: "battleStart",
                         action: "symbioteBoost"
-                    },
-                    {
-                        when: "after",
-                        how: "make",
-                        key: "turnStart",
-                        action: "symbioteArmor"
                     }
                 ]
             }
@@ -1729,23 +1718,19 @@ export const relicList: RelicMap[] = [
                 key: "applyState",
                 effect: [{
                     key: "applyState",
-                    params: { stateKey: "power", stacks: 2 }
-                }]
-            }],
-            symbioteArmor: [{
-                targetType: "owner",
-                key: "gainArmor",
-                effect: [{
-                    key: "gainArmor",
-                    params: { value: 5 }
+                    params: { stateKey: "power", stacks: 1 }
                 }]
             }]
         }
     },
-    // 饥饿之种（孵化室事件专属）：每场战斗开始 +2 虚弱；获得时永久塞 1 张「寄生」
+    // 饥饿之种（孵化室事件专属）：每场战斗开始 +1 虚弱；获得时永久塞 1 张「寄生」
     {
         label: "饥饿之种",
-        describe: ["每场战斗开始使自己获得 2 层虚弱。获得时永久往牌组塞入 1 张「寄生」。"],
+        effect: [
+            "战斗开始时获得 1 层", {$:"虚弱"},
+            "<br>",
+            "获得时永久往牌组塞入 1 张", { "#": "original_card_parasite" }
+        ],
         key: "event_relic_hungry_seed",
         rarity: "rare",
         pool: ["exclusive"],
@@ -1772,7 +1757,7 @@ export const relicList: RelicMap[] = [
                 key: "applyState",
                 effect: [{
                     key: "applyState",
-                    params: { stateKey: "weak", stacks: 2 }
+                    params: { stateKey: "weak", stacks: 1 }
                 }]
             }]
         }
@@ -1794,23 +1779,23 @@ export const relicList: RelicMap[] = [
             }
         }
     },
-    // 浅尝辄止（杯之祭坛事件专属）：3 场内每回合开始 +1 抽牌，3 场后禁用
+    // 浅尝辄止（杯之祭坛事件专属）：3 场内每回合开始 +1 抽牌，3 场后失效
     {
         label: "浅尝辄止",
-        describe: [
-            "接下来 ", { key: ["status", "battles-remaining"] }, " 场战斗，",
+        effect: [
+            "接下来（", { key: ["status", "battles-done"] }, "/", { key: ["status", "maxBattles"] }, "）场战斗，",
             "每回合开始时额外抽 1 张牌"
         ],
         key: "original_relic_shallow_taste",
         rarity: "rare",
         pool: ["exclusive"],
         status: {
-            "battles-remaining": 3,
+            "battles-done": 0,
             "maxBattles": 3,
             "disabled": 0
         },
         badges: [
-            { type: "cooldown", status: "battles-remaining" }
+            { type: "counter", status: "battles-done", maxStatus: "maxBattles" }
         ],
         interaction: {
             possess: {
@@ -1827,15 +1812,16 @@ export const relicList: RelicMap[] = [
                         when: "after",
                         how: "take",
                         key: "battleEnd",
+                        level: 10,
                         condition: "$source.status(disabled) == 0",
                         action: "consumeBattle"
                     },
                     {
                         when: "after",
                         how: "take",
-                        key: "battleStart",
+                        key: "battleEnd",
                         level: 0,
-                        condition: "$source.status(battles-remaining) <= 0",
+                        condition: "$source.status(battles-done) >= $source.status(maxBattles)",
                         action: "markDisabled"
                     }
                 ]
@@ -1852,10 +1838,10 @@ export const relicList: RelicMap[] = [
             }],
             consumeBattle: [{
                 targetType: "triggerSource",
-                key: "decrementBattles",
+                key: "incrementBattles",
                 effect: [{
-                    key: "decrementStatus",
-                    params: { statusKey: "battles-remaining", amount: 1 }
+                    key: "incrementStatus",
+                    params: { statusKey: "battles-done", amount: 1 }
                 }]
             }],
             markDisabled: [{
@@ -1871,13 +1857,26 @@ export const relicList: RelicMap[] = [
     // 小兽伙伴（巢穴事件专属）：跟着你走的宠物，每场战斗结束盯上一份战利品（🐕）
     {
         label: "小兽伙伴",
-        describe: [
-            "一只跟着你走的肮脏小兽。",
-            "每场战斗结束，它盯上一份战利品（🐕）。没领这份就算喂给它（好感度 +1）；领了就算抢走（未喂 +1）。",
-            "连抢 3 次后，下一份它看上的不能领。",
-            "好感度 ≥ 3：陪睡 —— 每次休息治疗额外 +10 HP。",
-            "好感度 ≥ 6：共战 —— 每回合结束对随机敌人造成 5 伤害。",
-            "好感度 ≥ 9：挡刀 —— 每场战斗第 1 次致命伤挡下，留 1 HP。"
+        describe: ["一只跟着你走的肮脏小兽"],
+        effect: [
+            "战斗结束时，小兽伙伴会渴望一份战利品（🐕），你可以不领取该战利品以喂食给它。喂食将提供小兽伙伴的好感度。"
+        ],
+        effectTiers: [
+            {
+                statusKey: "hungry-beast-favor",
+                min: 3,
+                describe: ["陪睡：每次休息治疗额外 +10 HP"]
+            },
+            {
+                statusKey: "hungry-beast-favor",
+                min: 6,
+                describe: ["共战：每回合结束对随机敌人造成 5 伤害"]
+            },
+            {
+                statusKey: "hungry-beast-favor",
+                min: 9,
+                describe: ["挡刀：替你挡下一次致命伤并留 1 点生命，随后该遗物失效"]
+            }
         ],
         key: "event_relic_hungry_beast",
         rarity: "rare",
@@ -1885,7 +1884,7 @@ export const relicList: RelicMap[] = [
         status: {
             "hungry-beast-favor": 0,
             "hungry-beast-refuse-count": 0,
-            "hungry-beast-blocked-once": 0
+            "disabled": 0
         },
         badges: [
             { type: "counter", status: "hungry-beast-favor" }
@@ -1901,14 +1900,20 @@ export const relicList: RelicMap[] = [
                         when: "after",
                         how: "take",
                         key: "restHeal",
-                        condition: "$source.status(hungry-beast-favor) >= 3",
+                        condition: [
+                            "$source.status(disabled) == 0",
+                            "$source.status(hungry-beast-favor) >= 3"
+                        ],
                         action: "petHeal"
                     },
                     {
                         when: "after",
                         how: "take",
                         key: "turnEnd",
-                        condition: "$source.status(hungry-beast-favor) >= 6",
+                        condition: [
+                            "$source.status(disabled) == 0",
+                            "$source.status(hungry-beast-favor) >= 6"
+                        ],
                         action: "coFightStrike"
                     },
                     {
@@ -1916,16 +1921,10 @@ export const relicList: RelicMap[] = [
                         how: "take",
                         key: "dead",
                         condition: [
-                            "$source.status(hungry-beast-favor) >= 9",
-                            "$source.status(hungry-beast-blocked-once) == 0"
+                            "$source.status(disabled) == 0",
+                            "$source.status(hungry-beast-favor) >= 9"
                         ],
                         action: "petBlock"
-                    },
-                    {
-                        when: "after",
-                        how: "take",
-                        key: "battleStart",
-                        action: "resetPetBlock"
                     }
                 ]
             }
@@ -1946,21 +1945,13 @@ export const relicList: RelicMap[] = [
                 { targetType: "owner", key: "healOne", effect: [{ key: "heal", params: { value: 1 } }] },
                 {
                     targetType: "triggerSource",
-                    key: "markBlocked",
+                    key: "markDisabled",
                     effect: [{
                         key: "setBaseStatus",
-                        params: { statusKey: "hungry-beast-blocked-once", value: 1 }
+                        params: { statusKey: "disabled", value: 1 }
                     }]
                 }
-            ],
-            resetPetBlock: [{
-                targetType: "triggerSource",
-                key: "resetBlocked",
-                effect: [{
-                    key: "setBaseStatus",
-                    params: { statusKey: "hungry-beast-blocked-once", value: 0 }
-                }]
-            }]
+            ]
         }
     },
 ]

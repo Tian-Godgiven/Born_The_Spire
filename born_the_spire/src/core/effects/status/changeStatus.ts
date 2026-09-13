@@ -100,6 +100,28 @@ export const decrementStatus: EffectFunc = (event, effect) => {
     })
 }
 
+/** 递增属性值（直接设置为 value + amount，默认 +1） */
+export const incrementStatus: EffectFunc = (event, effect) => {
+    const { target } = event
+    const { statusKey, amount = 1 } = effect.params
+
+    if (!statusKey) {
+        newError(["效果缺少目标属性的key"])
+        return
+    }
+
+    handleEventEntity(target, (e) => {
+        if (!isEntity(e)) return
+        const status = e.status[String(statusKey)]
+        if (!status) {
+            console.warn(`实体 ${e.label} 没有属性 ${statusKey}`)
+            return
+        }
+        const baseValueNum = typeof status.baseValue === 'number' ? status.baseValue : Number(status.baseValue ?? 0)
+        status.setOriginalBaseValue(baseValueNum + Number(amount))
+    })
+}
+
 /**
  * 乘法修改属性基础值
  * 支持条件参数：onlyIfElite, onlyIfBoss

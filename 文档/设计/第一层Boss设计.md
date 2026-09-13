@@ -276,7 +276,7 @@ Boss 击败后额外给予的强力遗物（`pool: ["boss"]`、`rarity: "rare"`�
 ### 已实现 5 个
 
 炽热之心（original_relic_flaming_heart）
-    描述：能量上限 +1；战斗结束时失去 3 点生命
+    描述：能量上限 +1，战斗结束时失去 3 点生命
     机制：possess 时 addStatusBase max-energy +1；battleEnd 触发 loseHealth 3
     设计定位：能量+代价，稳定持续消耗，前中期强、后期需回血支撑
 
@@ -286,17 +286,17 @@ Boss 击败后额外给予的强力遗物（`pool: ["boss"]`、`rarity: "rare"`�
     设计定位：纯收益，鼓励能量节奏优化（能量牌/打小怪保能量）
 
 先知之瞳（original_relic_prophet_eye）
-    描述：获得时能量上限 +2；第 1 回合抽牌 +5；第 3 回合起每回合抽牌 -1
-    机制：possess 加 max-energy +2 + addTurnDraw{turn:1, value:5}；turnStartDrawCard 触发条件 $battle.turn >= 3 时 modifyDrawValue -1
+    描述：能量上限 +2；战斗开始后的第 1 回合抽牌 +4；第 2 回合起每回合抽牌 -1
+    机制：possess 加 max-energy +2；每场 turnStartDrawCard 第 1 回合 +4、第 2 回合起 -1
     设计定位：前爆发后衰减，鼓励打 combo / 速攻构筑
 
 空茧（original_relic_empty_cocoon）
-    描述：获得时从牌组中永久移除 2 张牌；最大生命 -10%
+    描述：获得时，最大生命 -10%，从牌组中永久移除 2 张牌
     机制：possess.effects 挂 addMaxHealthAndHeal{percent:-0.1} + chooseCardRemove{count:2, minCount:2}
     设计定位：一次性交易，用生命换牌组精简；策略 = 挑基础打击/防御删掉换构筑纯度
 
 有生命活铁（original_relic_living_iron）
-    描述：每 3 回合，回合开始时获得 10 点护甲（跨战斗累计）
+    描述：每 3 回合，回合开始时获得 10 点护甲
     机制：status.point/maxPoint=3；accumulateAndTrigger on=turnStart, gain=1, threshold=3, consume=3, effects=gainArmor{value:10}；不设 maxTriggerPerBattle → point 天然跨战斗保留
     UI：badges counter 显示 "point/maxPoint" 进度圈
     设计定位：跨战斗节奏防御。玩家可有意识地控制回合数对齐"3 的倍数"，让"欠的那份"延续到下场兑现；纯收益无代价，靠"节奏运营"的策略深度立起 Boss 遗物档位

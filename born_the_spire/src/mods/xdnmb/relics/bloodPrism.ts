@@ -5,37 +5,39 @@
 import type { RelicMap } from '@/core/objects/item/Subclass/Relic'
 import type { BadgeConfig } from '@/core/types/BadgeConfig'
 
-export const bloodPrismRelic: RelicMap = {
-    label: '血偿棱镜',
-    describe: ['在战斗中右键使用，选择一个友方非器官单位，对其造成', '6~12', '点随机伤害，然后对所有敌人造成该伤害的', '2', '倍'],
-    key: 'xdnmb_relic_000001',
-    rarity: 'rare',
-    activeAbilities: [{
-        key: 'prismaticSacrifice',
-        label: '棱镜献祭',
-        describe: ['选择一个友方非器官单位，对其造成6~12点随机伤害，然后对所有敌人造成该伤害的2倍'],
-        usage: {
-            type: 'selectTarget',
-            target: { faction: 'player', key: 'nonOrgan' }
-        },
-        restrictions: {
-            conditions: {
-                scene: 'combat'
-            }
-        },
-        effects: [{
-            key: 'bloodPrismChainDamage',
-            params: { min: 6, max: 12, multiplier: 2 }
-        }]
-    }],
-    interaction: {}
-}
+// 器官血量系统未做，血偿棱镜暂时停用
+// export const bloodPrismRelic: RelicMap = {
+//     label: '血偿棱镜',
+//     describe: ['在战斗中右键使用，选择一个友方非器官单位，对其造成', '6~12', '点随机伤害，然后对所有敌人造成该伤害的', '2', '倍'],
+//     key: 'xdnmb_relic_000001',
+//     rarity: 'rare',
+//     activeAbilities: [{
+//         key: 'prismaticSacrifice',
+//         label: '棱镜献祭',
+//         describe: ['选择一个友方非器官单位，对其造成6~12点随机伤害，然后对所有敌人造成该伤害的2倍'],
+//         usage: {
+//             type: 'selectTarget',
+//             target: { faction: 'player', key: 'nonOrgan' }
+//         },
+//         restrictions: {
+//             conditions: {
+//                 scene: 'combat'
+//             }
+//         },
+//         effects: [{
+//             key: 'bloodPrismChainDamage',
+//             params: { min: 6, max: 12, multiplier: 2 }
+//         }]
+//     }],
+//     interaction: {}
+// }
 
 export const wheelOfFateRelic: RelicMap = {
     label: "命运之轮",
     describe: [
         "偶数回合：每抽", {key:["status","drawThreshold"]}, "张牌，为抽牌堆随机2张牌添加效果（打出时抽2张牌）",
-        "\n奇数回合：随机禁用所有敌人1个器官"
+        "<br>",
+        "奇数回合：随机禁用所有敌人1个器官"
     ],
     key: "xdnmb_relic_000002",
     rarity: "rare",

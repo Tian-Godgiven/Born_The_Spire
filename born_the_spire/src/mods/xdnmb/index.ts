@@ -4,13 +4,13 @@
 
 import type { Mod } from '../ModLoader'
 import { xdnmbModConfig } from './mod'
-import { registerRelic, registerEffect, registerOrgan, registerEnemy, registerCard } from '../index'
+import { registerRelic, registerOrgan, registerEnemy, registerCard } from '../index'
 
 // 导入遗物
-import { bloodPrismRelic, wheelOfFateRelic } from './relics/bloodPrism'
-
-// 导入效果
-import { bloodPrismChainDamageEffect } from './effects/relicEffects'
+import { wheelOfFateRelic } from './relics/bloodPrism'
+// 器官血量系统未做，血偿棱镜暂时不注册
+// import { bloodPrismRelic } from './relics/bloodPrism'
+// import { bloodPrismChainDamageEffect } from './effects/relicEffects'
 
 // 导入卡牌
 import { venomspinePierceCard } from './cards/organCards'
@@ -30,11 +30,11 @@ export const xdnmbMod: Mod = {
         // 注册卡牌
         registerCard(venomspinePierceCard)
 
-        // 注册效果
-        registerEffect(bloodPrismChainDamageEffect)
+        // 器官血量系统未做，血偿棱镜暂时不注册
+        // registerEffect(bloodPrismChainDamageEffect)
+        // registerRelic(bloodPrismRelic)
 
         // 注册遗物
-        registerRelic(bloodPrismRelic)
         registerRelic(wheelOfFateRelic)
 
         // 注册器官

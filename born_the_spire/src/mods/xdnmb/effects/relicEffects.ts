@@ -1,5 +1,7 @@
 /**
  * xdnmb Mod - 遗物专属效果
+ *
+ * 器官血量系统未做，血偿棱镜暂时不注册（见 index.ts）
  */
 
 import type { EffectFunc } from '@/core/objects/system/effect/EffectFunc'

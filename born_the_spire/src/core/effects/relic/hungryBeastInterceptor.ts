@@ -25,6 +25,8 @@ export const hungryBeast_registerInterceptor: EffectFunc = (event, effect) => {
             how: "take",
             key: "beforeShowRewards",
             callback: (triggerEvent: any) => {
+                if (relic.isDisabled || Number(relic.status?.disabled?.value ?? 0) > 0) return
+
                 const info: any = triggerEvent.info
                 const rewards = info?.rewards
                 if (!Array.isArray(rewards) || rewards.length === 0) return

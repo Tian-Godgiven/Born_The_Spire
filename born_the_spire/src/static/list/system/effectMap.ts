@@ -11,7 +11,7 @@ import { discardCard, pay_discardCard, pay_exhaustCard, pay_removeAbility, disca
 import { voidExhaust, moveInherentToHand } from "@/core/effects/card/entryEffects"
 import { fragileBreak, regenerateMass } from "@/core/effects/organ/organEntryEffects"
 import { applyState, removeState, changeStateStack, setStateStack, consumeStateAfterAttackPlay } from "@/core/effects/state/stateControl"
-import { addStatusBase, addStatusCurrent, multiplyStatusBase, setCurrentToMax, setBaseStatus, decrementStatus, resetCooldown } from "@/core/effects/status/changeStatus"
+import { addStatusBase, addStatusCurrent, multiplyStatusBase, setCurrentToMax, setBaseStatus, decrementStatus, incrementStatus, resetCooldown } from "@/core/effects/status/changeStatus"
 import { addCurrent, addStatusBaseCurrentValue } from "@/core/effects/current/changeCurrent"
 import { gainReserve, spendReserve, modifyReserveByPercent } from "@/core/effects/reserve/reserve"
 import { killTarget, reviveTarget, loseHp } from "@/core/effects/life/lifeControl"
@@ -251,6 +251,10 @@ export const effectMap:EffectData[] = [
     label:"基础属性递减",
     key:"decrementStatus",
     effect:decrementStatus
+},{
+    label:"基础属性递增",
+    key:"incrementStatus",
+    effect:incrementStatus
 },{
     label:"重置冷却",
     key:"resetCooldown",

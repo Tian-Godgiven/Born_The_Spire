@@ -26,6 +26,7 @@ export class Entity implements EventParticipant{
     public current:Record<string,Current> = {}
     public describe:Describe = [] //可选风味，只在详情里展示
     public effect:Describe = [] //效果描述，hover / 列表始终展示
+    public effectTiers: Array<{ statusKey: string, min: number, describe: Describe }> = []
     //触发器
     public trigger:Trigger
     //游戏机制管理器
@@ -62,6 +63,7 @@ export class Entity implements EventParticipant{
         //初始化描述（使用 markRaw 避免 Vue 递归转换数组内的对象）
         this.describe = markRaw(map.describe ?? [])
         this.effect = markRaw(map.effect ?? [])
+        this.effectTiers = markRaw(map.effectTiers ?? [])
     }
 
     /**
@@ -111,6 +113,11 @@ export type EntityMap<T extends Entity = Entity> = {
     trigger?:TriggerMap;
     describe?:Describe; //可选风味，只在详情里展示。没写 effect 时仍当效果（旧数据）
     effect?:Describe; //效果描述，hover / 列表始终展示
+    /**
+     * 按 status 阈值追加的效果行（现行：小兽伙伴好感度档位）。
+     * min 达标才拼进 hover 正文，每档一行。
+     */
+    effectTiers?: Array<{ statusKey: string, min: number, describe: Describe }>
     current?:any//需要挂载的当前值对象的key及其起始值 - 改用 any 避免导入 CurrentMapData
 }
 

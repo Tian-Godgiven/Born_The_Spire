@@ -1,6 +1,6 @@
 <template>
 <div class="relic"
-    :class="{ 'has-abilities': hasActiveAbilities, 'is-disabled': relic.isDisabled || isUsedUp }"
+    :class="{ 'has-abilities': hasActiveAbilities, 'is-disabled': relic.isDisabled || isUsedUp || isStatusDisabled }"
     ref="relicRef"
     @click="handleClick"
     @contextmenu.prevent="handleRightClick">
@@ -78,6 +78,8 @@
         }
         return false
     })
+
+    const isStatusDisabled = computed(() => Number(relic.status?.disabled?.value ?? 0) > 0)
 
     // 统一角标计算
     const resolvedBadges = computed(() => {

@@ -8,7 +8,7 @@
     <div class="tooltip-body">
         <div class="relic-description">
             <DescribeText
-                :describe="getEffectDescribe(relic)"
+                :describe="effectDescribe"
                 :target="relic"
                 :glossary-anchor="tooltipRef"
                 :glossary-order="1"
@@ -41,6 +41,8 @@ const { relic } = defineProps<{
 }>()
 
 const tooltipRef = ref<HTMLElement>()
+
+const effectDescribe = computed(() => getEffectDescribe(relic))
 
 const hasMultipleAbilities = computed(() => {
     return (relic.activeAbilities?.length ?? 0) > 1

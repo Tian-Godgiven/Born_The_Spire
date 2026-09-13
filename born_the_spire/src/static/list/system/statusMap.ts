@@ -111,7 +111,7 @@ export const statusMapList: Record<string, StatusMap> = {
     "hungry-beast-favor": {
         label: "宠物好感度",
         value: 0,
-        describe: "小兽伙伴 - 好感度计数（≥3 陪睡 / ≥6 共战 / ≥9 挡刀）",
+        describe: "小兽伙伴 - 好感度计数（≥3 陪睡 / ≥6 共战 / ≥9 挡刀一次后遗物失效）",
         category: "special",
         hidden: true,
         notNegative: true
@@ -124,14 +124,6 @@ export const statusMapList: Record<string, StatusMap> = {
         hidden: true,
         notNegative: true
     },
-    "hungry-beast-blocked-once": {
-        label: "宠物本场已挡刀",
-        value: 0,
-        describe: "小兽伙伴 - 大于 0 表示本场战斗已消耗挡刀（每场 battleStart 时清零，由遗物 possess.triggers 负责）",
-        category: "special",
-        hidden: true,
-        notNegative: true
-    }
 } as const
 
 // 获取 statusMapList 中键的类型
