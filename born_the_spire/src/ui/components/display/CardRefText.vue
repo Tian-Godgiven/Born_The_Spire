@@ -1,8 +1,8 @@
 <template>
 <Popover
     inline
-    placement="bottom"
-    align="trigger"
+    :placement="placement"
+    :align="align"
     :anchor="anchor"
     :close-delay="300"
     @update:show="handleShow"
@@ -33,7 +33,16 @@
      * 点击打开详情弹窗，可对照锻造前后。
      * 卡牌实例在首次悬停或点击时才解析，描述里写了多少张牌都不会在渲染时就把它们全建出来。
      */
-    const { segment, text, organ, hoverTarget, preferPlayerCards = false, anchor = null } = defineProps<{
+    const {
+        segment,
+        text,
+        organ,
+        hoverTarget,
+        preferPlayerCards = false,
+        anchor = null,
+        placement = "bottom",
+        align = "trigger"
+    } = defineProps<{
         segment: DescribeSegment,
         /** 覆盖显示文本，不传就用片段自带的 */
         text?: string,
@@ -47,7 +56,9 @@
          * 卡面贴在这块的外边缘，不要用外层浮层整块（介绍+状态并排时那块比介绍框高）。
          * DescribeText 把术语板锚点传过来：器官介绍框 / 卡面本身。
          */
-        anchor?: HTMLElement | null
+        anchor?: HTMLElement | null,
+        placement?: "left" | "right" | "top" | "bottom",
+        align?: "start" | "center" | "trigger" | number
     }>()
 
     const card = shallowRef<CardType | null>(null)

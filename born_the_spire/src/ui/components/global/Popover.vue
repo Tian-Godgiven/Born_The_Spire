@@ -76,8 +76,8 @@
         /** 指针停多久才弹出。不传则用全局 `$popover-hover-open-delay` */
         openDelay?: number,
         /**
-         * 定位基准。不传时：触发区在别的浮层里就以那个浮层为基准（浮层落在它外侧，不会盖住
-         * 触发它的文字），否则以触发区自身为基准
+         * 定位基准。不传时：触发区在别的浮层里就以那个浮层的内容盒为基准
+         * （`.popover-inner`，不含间隙 padding），否则以触发区自身为基准
          */
         anchor?: HTMLElement | null,
         /**
@@ -343,7 +343,11 @@
      */
     function getAnchorRect(): DOMRect | null {
         if (anchor) return anchor.getBoundingClientRect()
-        if (hostLayer.value) return hostLayer.value.getBoundingClientRect()
+        if (hostLayer.value) {
+            const inner = hostLayer.value.querySelector(".popover-inner")
+            const box = inner instanceof HTMLElement ? inner : hostLayer.value
+            return box.getBoundingClientRect()
+        }
         return getTriggerRect()
     }
 

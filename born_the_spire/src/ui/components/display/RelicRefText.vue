@@ -1,7 +1,9 @@
 <template>
 <Popover
     inline
-    placement="right"
+    :placement="placement"
+    :align="align"
+    :anchor="anchor"
     :max-width="350"
     @update:show="handleShow"
 >
@@ -23,9 +25,15 @@ import type { Relic } from "@/core/objects/item/Subclass/Relic"
  * 描述文本里的遗物名引用。悬停展开 RelicHoverContent，不要另写浮层。
  * 标签先从表里读；完整实例在首次悬停时才 create。
  */
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     relicKey: string
-}>()
+    anchor?: HTMLElement | null
+    placement?: "left" | "right" | "top" | "bottom"
+    align?: "start" | "center" | "trigger" | number
+}>(), {
+    anchor: null,
+    placement: "right"
+})
 
 const relic = shallowRef<Relic | null>(null)
 

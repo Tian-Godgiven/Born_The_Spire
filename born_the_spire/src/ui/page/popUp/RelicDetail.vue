@@ -8,30 +8,43 @@
         </div>
 
         <!-- 遗物详情 -->
-        <div class="content">
+        <div class="content" ref="contentRef">
+            <div class="close-x" @click="closePopUp(popUp)">×</div>
             <div class="header">
                 <span class="relic-name">{{ currentRelic.label }}</span>
                 <span class="relic-rarity" v-if="currentRelic.rarity" :style="{ color: getRarityColor(currentRelic.rarity) }">[{{ getRarityLabel(currentRelic.rarity) }}]</span>
-                <span class="ability-badge" v-if="hasActiveAbilities(currentRelic)">⚡ 主动</span>
+                <span class="ability-badge" v-if="hasMultipleAbilities(currentRelic)">⚡ 主动</span>
             </div>
 
             <div class="body">
                 <div class="relic-description">
-                    {{ getDescribe(currentRelic.describe, currentRelic) }}
+                    <DescribeText
+                        :describe="getEffectDescribe(currentRelic)"
+                        :target="currentRelic"
+                        :glossary-anchor="contentRef"
+                    />
+                </div>
+                <div class="relic-flavor" v-if="getFlavorDescribe(currentRelic).length > 0">
+                    <DescribeText
+                        :describe="getFlavorDescribe(currentRelic)"
+                        :target="currentRelic"
+                        glossary-disabled
+                    />
                 </div>
 
-                <div class="relic-abilities" v-if="hasActiveAbilities(currentRelic)">
+                <div class="relic-abilities" v-if="hasMultipleAbilities(currentRelic)">
                     <div class="abilities-title">主动能力：</div>
                     <div v-for="(ability, index) in currentRelic.activeAbilities" :key="index" class="ability-item">
                         <div class="ability-label">{{ ability.label }}</div>
-                        <div class="ability-desc">{{ getDescribe(ability.describe, currentRelic) }}</div>
+                        <div class="ability-desc">
+                            <DescribeText :describe="ability.describe" :target="currentRelic" glossary-disabled />
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="footer">
                 <div class="index-indicator">{{ currentIndex + 1 }} / {{ relics.length }}</div>
-                <div class="close" @click="closePopUp(popUp)">关闭</div>
             </div>
         </div>
 
@@ -48,7 +61,8 @@
     import { closePopUp } from '@/ui/hooks/global/popUp'
     import type { PopUp } from '@/ui/hooks/global/popUp'
     import Mask from '@/ui/components/global/Mask.vue'
-    import { getDescribe } from '@/ui/hooks/express/describe'
+    import DescribeText from '@/ui/components/display/DescribeText.vue'
+    import { getEffectDescribe, getFlavorDescribe } from '@/ui/hooks/express/describe'
     import { getRarityColor, getRarityLabel } from '@/static/list/system/rarityPalette'
     import { ref, computed } from 'vue'
 
@@ -60,9 +74,10 @@
 
     const currentIndex = ref(initialIndex)
     const currentRelic = computed(() => relics[currentIndex.value])
+    const contentRef = ref<HTMLElement>()
 
-    function hasActiveAbilities(relic: Relic): boolean {
-        return !!(relic.activeAbilities && relic.activeAbilities.length > 0)
+    function hasMultipleAbilities(relic: Relic): boolean {
+        return (relic.activeAbilities?.length ?? 0) > 1
     }
 
     function prevRelic() {
@@ -117,9 +132,30 @@
         width: 400px;
         display: flex;
         flex-direction: column;
+        position: relative;
+
+        .close-x {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 28px;
+            height: 28px;
+            border: 2px solid black;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+
+            &:hover {
+                background: rgba(0, 0, 0, 0.05);
+            }
+        }
 
         .header {
-            padding: 12px 16px;
+            padding: 12px 44px 12px 16px;
             border-bottom: 2px solid black;
             display: flex;
             align-items: center;
@@ -150,6 +186,15 @@
                 font-size: 14px;
                 line-height: 1.6;
                 margin-bottom: 12px;
+            }
+
+            .relic-flavor {
+                border-top: 1px solid #ccc;
+                padding-top: 12px;
+                margin-bottom: 12px;
+                font-size: 13px;
+                line-height: 1.6;
+                color: #666;
             }
 
             .relic-abilities {
@@ -187,24 +232,10 @@
         .footer {
             padding: 12px 16px;
             border-top: 2px solid black;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
 
             .index-indicator {
                 font-size: 13px;
                 color: #666;
-            }
-
-            .close {
-                padding: 6px 20px;
-                border: 2px solid black;
-                cursor: pointer;
-                font-weight: bold;
-
-                &:hover {
-                    background: rgba(0, 0, 0, 0.05);
-                }
             }
         }
     }

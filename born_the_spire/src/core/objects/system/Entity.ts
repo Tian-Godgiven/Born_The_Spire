@@ -24,7 +24,8 @@ export class Entity implements EventParticipant{
     public status:Record<string,Status> = {}
     //当前值：非常动态的，范围内频繁变化的值
     public current:Record<string,Current> = {}
-    public describe:Describe = [] //描述
+    public describe:Describe = [] //可选风味，只在详情里展示
+    public effect:Describe = [] //效果描述，hover / 列表始终展示
     //触发器
     public trigger:Trigger
     //游戏机制管理器
@@ -60,6 +61,7 @@ export class Entity implements EventParticipant{
 
         //初始化描述（使用 markRaw 避免 Vue 递归转换数组内的对象）
         this.describe = markRaw(map.describe ?? [])
+        this.effect = markRaw(map.effect ?? [])
     }
 
     /**
@@ -107,7 +109,8 @@ export type EntityMap<T extends Entity = Entity> = {
     key:string,//唯一识别码，决定这个对象是什么对象/哪种对象（同一种对象可以有多个）
     status?:Record<string,StatusMap|number|null>;//值为 null 表示该属性"无此概念"，区别于 0
     trigger?:TriggerMap;
-    describe?:Describe;
+    describe?:Describe; //可选风味，只在详情里展示。没写 effect 时仍当效果（旧数据）
+    effect?:Describe; //效果描述，hover / 列表始终展示
     current?:any//需要挂载的当前值对象的key及其起始值 - 改用 any 避免导入 CurrentMapData
 }
 

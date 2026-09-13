@@ -11,12 +11,12 @@
                 <div class="relic-header">
                     <span class="relic-name">{{ relic.label }}</span>
                     <span class="relic-rarity" v-if="relic.rarity" :style="{ color: getRarityColor(relic.rarity) }">[{{ getRarityLabel(relic.rarity) }}]</span>
-                    <span class="ability-badge" v-if="hasActiveAbilities(relic)">⚡</span>
+                    <span class="ability-badge" v-if="hasMultipleAbilities(relic)">⚡</span>
                 </div>
                 <div class="relic-description">
-                    {{ getDescribe(relic.describe, relic) }}
+                    <DescribeText :describe="getEffectDescribe(relic)" :target="relic" />
                 </div>
-                <div class="relic-abilities" v-if="hasActiveAbilities(relic)">
+                <div class="relic-abilities" v-if="hasMultipleAbilities(relic)">
                     <div class="abilities-title">主动能力：</div>
                     <div v-for="(ability, index) in relic.activeAbilities" :key="index" class="ability-item">
                         <span class="ability-label">{{ ability.label }}</span>
@@ -35,7 +35,8 @@
     import { closePopUp } from '@/ui/hooks/global/popUp'
     import type { PopUp } from '@/ui/hooks/global/popUp'
     import Mask from '@/ui/components/global/Mask.vue'
-    import { getDescribe } from '@/ui/hooks/express/describe'
+    import DescribeText from '@/ui/components/display/DescribeText.vue'
+    import { getDescribe, getEffectDescribe } from '@/ui/hooks/express/describe'
     import { getRarityColor, getRarityLabel } from '@/static/list/system/rarityPalette'
 
     const { popUp, props } = defineProps<{
@@ -44,8 +45,8 @@
     }>()
     const { relics } = props
 
-    function hasActiveAbilities(relic: Relic): boolean {
-        return !!(relic.activeAbilities && relic.activeAbilities.length > 0)
+    function hasMultipleAbilities(relic: Relic): boolean {
+        return (relic.activeAbilities?.length ?? 0) > 1
     }
 </script>
 

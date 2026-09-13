@@ -40,7 +40,7 @@ export const relicList: RelicMap[] = [
     // 主动遗物 - 单个 use
     {
         label: "爆炸药瓶",
-        describe: ["使用时", "对所有敌人造成", { key: ["status", "damage"] }, "伤害"],
+        describe: ["右键使用，对所有敌人造成", { key: ["status", "damage"] }, "点伤害"],
         key: "original_relic_00002",
         rarity: "uncommon",
         pool: ["common"],
@@ -50,7 +50,7 @@ export const relicList: RelicMap[] = [
         activeAbilities: [{
             key: "throw",
             label: "投掷",
-            describe: ["对所有敌人造成10点伤害"],
+            describe: ["右键使用，对所有敌人造成10点伤害"],
             usage: {
                 type: "allTargets",
                 target: { faction: "enemy", number: "all" }
@@ -65,9 +65,9 @@ export const relicList: RelicMap[] = [
     },
     {
         label: "学者之戒",
-        describe: ["第1回合多抽2张", "第2回合多抽1张"],
+        describe: ["每场战斗的第1回合额外抽取2张卡牌，第2回合额外抽取1张卡牌"],
         key: "original_relic_00004",
-        rarity: "common",
+        rarity: "uncommon",
         pool: ["common"],
         interaction: {
             possess: {
@@ -93,13 +93,13 @@ export const relicList: RelicMap[] = [
     },
     // 第一回合额外抽牌
     {
-        label: "先手之戒",
-        describe: ["第一回合", "额外抽", { key: ["status", "first-turn-draw"] }, "张牌"],
+        label: "学徒之戒",
+        describe: ["每场战斗的第1回合额外抽取1张卡牌"],
         key: "original_relic_00005",
         rarity: "common",
         pool: ["common"],
         status: {
-            "first-turn-draw": 2
+            "first-turn-draw": 1
         },
         interaction: {
             possess: {
@@ -119,21 +119,21 @@ export const relicList: RelicMap[] = [
                 key: "applyFirstTurnDraw",
                 effect: [{
                     key: "addTurnDraw",
-                    params: { turn: 1, value: 2 }
+                    params: { turn: 1, value: 1 }
                 }]
             }]
         }
     },
     {
         label: "袖珍手枪",
-        describe: ["战斗中右键使用：对指定敌人造成10点伤害", "3回合冷却（跨战斗）"],
+        describe: ["在战斗中右键使用，选中一个敌人，对其造成10点伤害", "<br>", "冷却时间：3回合"],
         key: "original_relic_pistol",
         rarity: "uncommon",
         pool: ["common"],
         activeAbilities: [{
             key: "shoot",
             label: "射击",
-            describe: ["对指定敌人造成10点伤害"],
+            describe: ["在战斗中右键使用，选中一个敌人，对其造成10点伤害"],
 
             usage: {
                 type: "selectTarget",
@@ -172,7 +172,7 @@ export const relicList: RelicMap[] = [
     },
     {
         label: "金刚杵",
-        describe: ["战斗开始时", "获得力量1层"],
+        describe: ["战斗开始时获得1层", {$:"力量"}],
         key: "original_relic_vajra",
         rarity: "uncommon",
         pool: ["common"],
@@ -200,7 +200,7 @@ export const relicList: RelicMap[] = [
     },
     {
         label: "荆棘手套",
-        describe: ["每次打出卡牌时", "对随机一个敌人造成3点伤害"],
+        describe: ["每打出1张卡牌，对随机1个敌人造成3点伤害"],
         key: "original_relic_thorns_glove",
         rarity: "uncommon",
         pool: ["common"],
@@ -294,9 +294,7 @@ export const relicList: RelicMap[] = [
     {
         label: "祸福轮",
         describe: [
-            "每3回合，回合开始时",
-            "对场上随机一个目标造成", { key: ["status", "damage"] }, "点伤害，",
-            "对另一个随机目标回复", { key: ["status", "heal"] }, "点生命"
+            "每3回合，回合开始时对任意的1个目标造成", { key: ["status", "damage"] }, "点伤害，对任意另1个目标回复", { key: ["status", "heal"] }, "点生命"
         ],
         key: "original_relic_weal_and_woe",
         rarity: "uncommon",
@@ -369,17 +367,26 @@ export const relicList: RelicMap[] = [
         }
     },
     {
-        label: "吸血徽章",
-        describe: ["每累积", { key: ["status", "point"] }, "/", { key: ["status", "maxPoint"] }, "点伤害", "回复1生命"],
+        label: "献血徽章",
+        effect: [
+            "每累计受到（", { key: ["status", "point"] }, "/", { key: ["status", "maxPoint"] }, "）点未被格挡的伤害，回复1生命",
+            "<br>",
+            "触发（", { key: ["status", "used"] }, "/", { key: ["status", "maxUse"] }, "）次后转变为",
+            { relic: "original_relic_blood_donor_cert" }
+        ],
         key: "original_relic_vampiric_badge",
         rarity: "uncommon",
         pool: ["common"],
         status: {
             "point": 0,
-            "maxPoint": 10
+            "maxPoint": 5,
+            "used": 0,
+            "maxUse": 5,
+            "disabled": 0
         },
         badges: [
-            { type: "counter", status: "point", maxStatus: "maxPoint" }
+            { type: "counter", status: "point", maxStatus: "maxPoint" },
+            { type: "counter", status: "used", maxStatus: "maxUse", position: "top-right" }
         ],
         interaction: {
             possess: {
@@ -388,13 +395,62 @@ export const relicList: RelicMap[] = [
                     key: "accumulateAndTrigger",
                     params: {
                         pointKey: "point",
-                        on: { when: "after", how: "take", key: ["attack", "damage"] },
+                        usedKey: "used",
+                        on: { when: "after", how: "take", key: "attack" },
                         gain: "$triggerEffect.params(value)",
-                        threshold: 10,
-                        consume: 10,
+                        threshold: 5,
+                        consume: 5,
+                        maxTriggerTotal: 5,
                         targetType: "owner",
                         effects: [{ key: "heal", params: { value: 1 } }]
                     }
+                }],
+                triggers: [{
+                    when: "after",
+                    how: "take",
+                    key: "attack",
+                    level: -1000,
+                    condition: [
+                        "$item.status(disabled) == 0",
+                        "$item.status(used) >= $item.status(maxUse)"
+                    ],
+                    action: "hatchDonorCard"
+                }]
+            }
+        },
+        reaction: {
+            hatchDonorCard: [
+                {
+                    targetType: "item",
+                    key: "markDisabled",
+                    effect: [{ key: "setBaseStatus", params: { statusKey: "disabled", value: 1 } }]
+                },
+                {
+                    targetType: "owner",
+                    key: "gainDonorCard",
+                    effect: [{ key: "gainRelic", params: { relicKey: "original_relic_blood_donor_cert" } }]
+                },
+                {
+                    targetType: "owner",
+                    key: "selfDestroy",
+                    effect: [{ key: "removeRelicByKey", params: { relicKey: "original_relic_vampiric_badge" } }]
+                }
+            ]
+        }
+    },
+    {
+        label: "献血证",
+        effect: ["获得10最大生命"],
+        describe: ["谢谢你的贡献！"],
+        key: "original_relic_blood_donor_cert",
+        rarity: "uncommon",
+        pool: ["exclusive"],
+        interaction: {
+            possess: {
+                target: { key: "owner" },
+                effects: [{
+                    key: "addMaxHealthAndHeal",
+                    params: { value: 10 }
                 }]
             }
         }

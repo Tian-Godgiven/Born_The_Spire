@@ -1,7 +1,9 @@
 <template>
 <Popover
     inline
-    placement="right"
+    :placement="placement"
+    :align="align"
+    :anchor="anchor"
     :max-width="hoverMaxWidth"
     @update:show="handleShow"
 >
@@ -26,8 +28,13 @@
     const props = withDefaults(defineProps<{
         organKey: string
         evolutionRounds?: number
+        anchor?: HTMLElement | null
+        placement?: "left" | "right" | "top" | "bottom"
+        align?: "start" | "center" | "trigger" | number
     }>(), {
-        evolutionRounds: 0
+        evolutionRounds: 0,
+        anchor: null,
+        placement: "right"
     })
 
     const organ = shallowRef<Organ | null>(null)

@@ -186,41 +186,11 @@
                 v-if="tooltipItem.type === 'organ' && getPreview(tooltipItem.id)"
                 :organ="getPreview(tooltipItem.id)"
             />
-            <!-- 遗物详情：复用 Relic.vue 的 tooltip 结构 -->
-            <div
-                v-if="tooltipItem.type === 'relic' && getPreview(tooltipItem.id)"
-                class="relic-tooltip"
-            >
-                <div class="tooltip-header">
-                    <span class="relic-name">{{ getPreview(tooltipItem.id).label }}</span>
-                    <span
-                        class="relic-rarity"
-                        v-if="getPreview(tooltipItem.id).rarity"
-                        :style="{ color: getRarityColor(getPreview(tooltipItem.id).rarity) }"
-                    >
-                        [{{ getRarityLabel(getPreview(tooltipItem.id).rarity) }}]
-                    </span>
-                </div>
-                <div class="tooltip-body">
-                    <div class="relic-description">
-                        {{ getRelicDesc(tooltipItem.id) }}
-                    </div>
-                    <div
-                        class="relic-abilities"
-                        v-if="getPreview(tooltipItem.id).activeAbilities?.length"
-                    >
-                        <div class="abilities-title">主动能力：</div>
-                        <div
-                            v-for="(ability, index) in getPreview(tooltipItem.id).activeAbilities"
-                            :key="index"
-                            class="ability-item"
-                        >
-                            <div class="ability-label">{{ ability.label }}</div>
-                            <div class="ability-desc">{{ getAbilityDesc(tooltipItem.id, ability) }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <!-- 遗物详情 -->
+            <RelicHoverContent
+                v-else-if="tooltipItem.type === 'relic' && getPreview(tooltipItem.id)"
+                :relic="getPreview(tooltipItem.id)"
+            />
             <!-- 卡牌详情 -->
             <Card
                 v-if="tooltipItem.type === 'card' && getPreview(tooltipItem.id)"
@@ -277,9 +247,9 @@ import { getCurrentValue } from '@/core/objects/system/Current/current'
 import { getStatusValue } from '@/core/objects/system/status/Status'
 import { openMapToLeave } from '@/core/hooks/step'
 import { getDescribe } from '@/ui/hooks/express/describe'
-import { getRarityColor, getRarityLabel } from '@/static/list/system/rarityPalette'
 import LeaveButton from '@/ui/components/global/LeaveButton.vue'
 import OrganHoverContent from '@/ui/components/interaction/OrganHoverContent.vue'
+import RelicHoverContent from '@/ui/components/interaction/RelicHoverContent.vue'
 import Card from '@/ui/components/object/Card.vue'
 import Popover from '@/ui/components/global/Popover.vue'
 
@@ -356,18 +326,6 @@ let hideTimeout: ReturnType<typeof setTimeout> | null = null
 
 function getPreview(itemId: string): any {
     return currentRoom.value?.getPreviewInstance(itemId) ?? null
-}
-
-function getRelicDesc(itemId: string): string {
-    const instance = getPreview(itemId)
-    if (!instance || !instance.describe) return ''
-    return getDescribe(instance.describe, instance)
-}
-
-function getAbilityDesc(itemId: string, ability: any): string {
-    const instance = getPreview(itemId)
-    if (!ability.describe) return ''
-    return getDescribe(ability.describe, instance)
 }
 
 function getPotionDesc(itemId: string): string {
@@ -764,77 +722,8 @@ async function handleLeave() {
     color: red;
 }
 
-// 商品详情 tooltip（与 Relic.vue 的 tooltip 样式一致）
+// 商品详情 tooltip
 .store-tooltip {
-    .relic-tooltip {
-        background: white;
-        border: 2px solid black;
-        min-width: 200px;
-        max-width: 350px;
-
-        .tooltip-header {
-            padding: 8px 12px;
-            border-bottom: 2px solid black;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-
-            .relic-name {
-                font-weight: bold;
-                font-size: 14px;
-            }
-
-            .relic-rarity {
-                font-size: 12px;
-            }
-        }
-
-        .tooltip-body {
-            padding: 8px 12px;
-
-            .relic-description {
-                font-size: 13px;
-                line-height: 1.5;
-                margin-bottom: 8px;
-            }
-
-            .relic-abilities {
-                border-top: 1px solid #ccc;
-                padding-top: 8px;
-                margin-top: 8px;
-
-                .abilities-title {
-                    font-weight: bold;
-                    margin-bottom: 6px;
-                    font-size: 12px;
-                }
-
-                .ability-item {
-                    margin-bottom: 6px;
-                    padding: 6px;
-                    border: 1px solid #ccc;
-                    background: #f9f9f9;
-
-                    &:last-child {
-                        margin-bottom: 0;
-                    }
-
-                    .ability-label {
-                        font-weight: bold;
-                        margin-bottom: 2px;
-                        font-size: 12px;
-                    }
-
-                    .ability-desc {
-                        font-size: 11px;
-                        color: #666;
-                        line-height: 1.4;
-                    }
-                }
-            }
-        }
-    }
-
     .potion-tooltip {
         background: white;
         border: 2px solid black;

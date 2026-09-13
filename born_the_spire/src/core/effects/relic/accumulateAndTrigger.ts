@@ -29,9 +29,11 @@ import { resolveTriggerMountTargets } from "@/core/utils/resolveTriggerMountTarg
  * - maxRepeat:  单次事件最多触发次数（默认不限）
  * - targetType: 触发效果的目标（默认 "owner"，可选 "triggerSource"、"eventTarget"、"eventSource"）
  *
- * === 限流参数（可选，成对使用）===
- * - maxTriggerPerBattle: 每场战斗最多触发次数
- * - usedKey:             记录已触发次数的 status key（使用 maxTriggerPerBattle 时必填）
+ * === 限流参数（可选）===
+ * - usedKey:             记录已触发次数的 status key
+ * - maxTriggerPerBattle: 每场战斗最多触发次数（需 usedKey；战斗开始会重置 used 和 point）
+ * - maxTriggerTotal:     跨战斗累计最多触发次数（需 usedKey；不重置）
+ *                        两个上限可同时写，先撞到哪个算哪个
  *
  * === 挂载目标（可选）===
  * - triggerTarget: 将触发器挂到指定目标上而非 owner（默认挂在 owner 上）
@@ -58,7 +60,9 @@ export const accumulateAndTrigger: EffectFunc = (event, effect) => {
 
     // 限流参数
     const maxTriggerPerBattle = params.maxTriggerPerBattle !== undefined ? Number(params.maxTriggerPerBattle) : undefined
+    const maxTriggerTotal = params.maxTriggerTotal !== undefined ? Number(params.maxTriggerTotal) : undefined
     const usedKey = params.usedKey !== undefined ? String(params.usedKey) : undefined
+    const hasTriggerCap = maxTriggerPerBattle !== undefined || maxTriggerTotal !== undefined
 
     // 挂载目标
     const triggerTargetKey = params.triggerTarget as string | undefined
@@ -70,8 +74,8 @@ export const accumulateAndTrigger: EffectFunc = (event, effect) => {
     if (effects.length === 0) {
         console.warn("[accumulateAndTrigger] effects 为空，将不会触发任何效果")
     }
-    if (maxTriggerPerBattle !== undefined && !usedKey) {
-        console.error("[accumulateAndTrigger] 使用 maxTriggerPerBattle 时必须提供 usedKey")
+    if (hasTriggerCap && !usedKey) {
+        console.error("[accumulateAndTrigger] 使用 maxTriggerPerBattle / maxTriggerTotal 时必须提供 usedKey")
         return
     }
 
@@ -95,10 +99,16 @@ export const accumulateAndTrigger: EffectFunc = (event, effect) => {
         if (gainAmount === 0) return
         if (minGain !== undefined && gainAmount < minGain) return
 
-        if (maxTriggerPerBattle !== undefined && usedKey) {
-            const usedStatus = item.status?.[usedKey]
-            if (usedStatus && usedStatus.value >= maxTriggerPerBattle) return
+        const usedStatus = usedKey ? item.status?.[usedKey] : undefined
+        const usedValue = () => Number(usedStatus?.value ?? 0)
+        const atCap = () => {
+            if (!usedKey || usedStatus === undefined) return false
+            const used = usedValue()
+            if (maxTriggerTotal !== undefined && used >= maxTriggerTotal) return true
+            if (maxTriggerPerBattle !== undefined && used >= maxTriggerPerBattle) return true
+            return false
         }
+        if (atCap()) return
 
         const pointStatus = item.status?.[pointKey]
         if (!pointStatus) return
@@ -111,6 +121,7 @@ export const accumulateAndTrigger: EffectFunc = (event, effect) => {
 
         let count = 0
         while (pointStatus.value >= currentThreshold && (repeat || count === 0) && count < maxRepeat) {
+            if (atCap()) break
             const consumeAmount = consumeParam === "all"
                 ? pointStatus.value
                 : consumeParam === "threshold"
@@ -136,10 +147,7 @@ export const accumulateAndTrigger: EffectFunc = (event, effect) => {
                 effectUnits: effects
             })
 
-            if (maxTriggerPerBattle !== undefined && usedKey) {
-                const usedStatus = item.status?.[usedKey]
-                if (usedStatus) usedStatus.setOriginalBaseValue(usedStatus.value + 1)
-            }
+            if (usedStatus) usedStatus.setOriginalBaseValue(usedValue() + 1)
         }
     }
 

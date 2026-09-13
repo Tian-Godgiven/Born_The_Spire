@@ -7,7 +7,7 @@ import type { BadgeConfig } from '@/core/types/BadgeConfig'
 
 export const bloodPrismRelic: RelicMap = {
     label: '血偿棱镜',
-    describe: ['主动使用：选择一个友方非器官单位，对其造成', '6~12', '点随机伤害，然后对所有敌人造成该伤害的', '2', '倍'],
+    describe: ['在战斗中右键使用，选择一个友方非器官单位，对其造成', '6~12', '点随机伤害，然后对所有敌人造成该伤害的', '2', '倍'],
     key: 'xdnmb_relic_000001',
     rarity: 'rare',
     activeAbilities: [{

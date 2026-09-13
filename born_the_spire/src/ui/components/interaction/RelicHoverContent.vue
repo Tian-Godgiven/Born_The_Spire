@@ -1,18 +1,28 @@
 <template>
-<div class="relic-tooltip">
+<div class="relic-tooltip" ref="tooltipRef">
     <div class="tooltip-header">
         <span class="relic-name">{{ relic.label }}</span>
         <span class="relic-rarity" v-if="relic.rarity" :style="{ color: getRarityColor(relic.rarity) }">[{{ rarityText }}]</span>
+        <span class="ability-badge" v-if="hasMultipleAbilities">⚡ 主动</span>
     </div>
     <div class="tooltip-body">
         <div class="relic-description">
-            {{ getDescribe(relic.describe, relic) }}
+            <DescribeText
+                :describe="getEffectDescribe(relic)"
+                :target="relic"
+                :glossary-anchor="tooltipRef"
+                :glossary-order="1"
+                ref-placement="right"
+                ref-align="start"
+            />
         </div>
-        <div class="relic-abilities" v-if="hasActiveAbilities">
+        <div class="relic-abilities" v-if="hasMultipleAbilities">
             <div class="abilities-title">主动能力：</div>
             <div v-for="(ability, index) in relic.activeAbilities" :key="index" class="ability-item">
                 <div class="ability-label">{{ ability.label }}</div>
-                <div class="ability-desc">{{ getDescribe(ability.describe, relic) }}</div>
+                <div class="ability-desc">
+                    <DescribeText :describe="ability.describe" :target="relic" glossary-disabled />
+                </div>
             </div>
         </div>
     </div>
@@ -20,17 +30,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, ref } from "vue"
 import type { Relic } from "@/core/objects/item/Subclass/Relic"
-import { getDescribe } from "@/ui/hooks/express/describe"
+import DescribeText from "@/ui/components/display/DescribeText.vue"
+import { getEffectDescribe } from "@/ui/hooks/express/describe"
 import { getRarityColor, getRarityLabel } from "@/static/list/system/rarityPalette"
 
 const { relic } = defineProps<{
     relic: Relic
 }>()
 
-const hasActiveAbilities = computed(() => {
-    return relic.activeAbilities && relic.activeAbilities.length > 0
+const tooltipRef = ref<HTMLElement>()
+
+const hasMultipleAbilities = computed(() => {
+    return (relic.activeAbilities?.length ?? 0) > 1
 })
 
 const rarityText = computed(() => getRarityLabel(relic.rarity))
@@ -57,6 +70,14 @@ const rarityText = computed(() => getRarityLabel(relic.rarity))
 
         .relic-rarity {
             font-size: 12px;
+        }
+
+        .ability-badge {
+            margin-left: auto;
+            background-color: #3b82f6;
+            color: white;
+            font-size: 11px;
+            padding: 1px 6px;
         }
     }
 

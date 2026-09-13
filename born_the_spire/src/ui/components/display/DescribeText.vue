@@ -9,15 +9,23 @@
             :hoverTarget="hoverTarget"
             :preferPlayerCards="preferPlayerCards"
             :anchor="anchorEl"
+            :placement="refPlacement"
+            :align="refAlign"
         />
         <OrganRefText
             v-else-if="segment.type === 'organ' && segment.organKey"
             :organ-key="segment.organKey"
             :evolution-rounds="segment.evolutionRounds ?? 0"
+            :anchor="anchorEl"
+            :placement="refPlacement"
+            :align="refAlign"
         />
         <RelicRefText
             v-else-if="segment.type === 'relic' && segment.relicKey"
             :relic-key="segment.relicKey"
+            :anchor="anchorEl"
+            :placement="refPlacement"
+            :align="refAlign"
         />
         <DescribeFxText
             v-else-if="segment.type === 'fx'"
@@ -81,7 +89,9 @@
         glossaryAlign,
         glossaryOrder,
         glossaryDisabled = false,
-        extraGlossaries
+        extraGlossaries,
+        refPlacement,
+        refAlign
     } = defineProps<{
         describe?: Describe,
         /** 描述里取值的对象（器官/卡牌/遗物自身） */
@@ -103,7 +113,14 @@
         glossaryOrder?: number,
         glossaryDisabled?: boolean,
         /** 词条、一次性名词。不要让本组件去翻 target.entry */
-        extraGlossaries?: ExtraGlossary[]
+        extraGlossaries?: ExtraGlossary[],
+        /**
+         * 描述里卡名 / 遗物名 / 器官名预览的落点。
+         * 不传则各组件用自己的默认（卡名 bottom + trigger，遗物/器官 right + start）。
+         * 遗物介绍框传 right + start，让嵌套窗口和介绍框顶边对齐。
+         */
+        refPlacement?: "left" | "right" | "top" | "bottom",
+        refAlign?: "start" | "center" | "trigger" | number
     }>()
 
     const rootRef = ref<HTMLElement | null>(null)

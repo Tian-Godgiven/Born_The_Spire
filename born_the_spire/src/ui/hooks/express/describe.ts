@@ -148,11 +148,36 @@ export function provideCardsDescribe(organ: any, options?: { preferPlayerCards?:
     return parts
 }
 
-/** 器官正文：提供卡牌一句 + describe 里的被动。 */
+function isDescribeEmpty(describe?: Describe): boolean {
+    if (!describe || describe.length === 0) return true
+    return describe.length === 1 && (describe[0] === "" || describe[0] == null)
+}
+
+/**
+ * hover / 列表用的效果正文。
+ * 写了 effect 就用 effect；没写则沿用 describe（旧数据把效果写在 describe 里）。
+ */
+export function getEffectDescribe(entity: { effect?: Describe, describe?: Describe } | null | undefined): Describe {
+    if (!entity) return []
+    if (!isDescribeEmpty(entity.effect)) return entity.effect as Describe
+    return Array.isArray(entity.describe) ? entity.describe : []
+}
+
+/**
+ * 详情里效果下面的可选风味。只有同时写了 effect 和 describe 时才有。
+ */
+export function getFlavorDescribe(entity: { effect?: Describe, describe?: Describe } | null | undefined): Describe {
+    if (!entity) return []
+    if (isDescribeEmpty(entity.effect)) return []
+    if (isDescribeEmpty(entity.describe)) return []
+    return entity.describe as Describe
+}
+
+/** 器官正文：提供卡牌一句 + 效果（effect，没有则用 describe）。 */
 export function composeOrganDescribe(organ: any, options?: { preferPlayerCards?: boolean }): Describe {
     if (!organ) return []
     const provide = provideCardsDescribe(organ, options)
-    const rest = Array.isArray(organ.describe) ? organ.describe : []
+    const rest = getEffectDescribe(organ)
     if (provide.length === 0) return rest
     if (rest.length === 0) return provide
     return [...provide, "<br>", ...rest]

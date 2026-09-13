@@ -38,6 +38,13 @@
                     :hoverTarget="hoverTarget"
                     :extra-glossaries="organ.entry"
                 />
+                <div class="organ-flavor" v-if="getFlavorDescribe(organ).length > 0">
+                    <DescribeText
+                        :describe="getFlavorDescribe(organ)"
+                        :target="organ"
+                        glossary-disabled
+                    />
+                </div>
             </div>
 
             <!-- 器官自身的状态：内部计数标记（损耗、充能、预算等）都挂在器官上 -->
@@ -61,7 +68,7 @@
 <script setup lang="ts">
 import { computed, shallowRef, markRaw, type PropType } from 'vue'
 import { Organ } from '@/core/objects/target/Organ'
-import { getDescribe } from '@/ui/hooks/express/describe'
+import { getDescribe, getFlavorDescribe } from '@/ui/hooks/express/describe'
 import { createCardFromKey } from '@/ui/hooks/express/cardSegment'
 import { getStatusValue, ifHaveStatus } from '@/core/objects/system/status/Status'
 import { getPartLabel } from '@/static/list/target/organPart'
@@ -211,6 +218,14 @@ const currentMass = computed(() => {
     overflow-y: auto;
     flex: 1;
     line-height: 1.6;
+}
+
+.organ-flavor {
+    border-top: 1px solid #ccc;
+    margin-top: 12px;
+    padding-top: 12px;
+    color: #666;
+    font-size: 13px;
 }
 
 .entries {

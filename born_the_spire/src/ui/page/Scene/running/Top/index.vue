@@ -39,10 +39,7 @@
             </template>
         </div>
 
-    <!-- 遗物栏 - 在 topBar 下方单独一行 -->
-    <div class="relics-bar" v-if="relics.length > 0">
-        <Relic v-for="relic in relics" :relic="relic" :key="relic.key" />
-    </div>
+    <RelicBar v-if="relics.length > 0" :relics="relics" />
 
     <SettingsModal v-if="showSettings" @close="showSettings = false" />
 </div>
@@ -55,7 +52,7 @@
     import SettingsModal from "@/ui/components/interaction/SettingsModal.vue"
     import ReserveDisplay from "@/ui/components/display/ReserveDisplay.vue"
     import PotionVue from "@/ui/components/object/Potion.vue"
-    import Relic from "@/ui/components/object/Relic.vue"
+    import RelicBar from "./RelicBar.vue"
     import { showCardGroup } from '@/ui/hooks/interaction/cardGroupModal';
     import { getStatusValue } from '@/core/objects/system/status/Status';
     import type { Potion } from '@/core/objects/item/Subclass/Potion';
@@ -160,18 +157,6 @@
         display: grid;
         grid-template-columns: repeat(2,1fr);
     }
-}
-.relics-bar{
-    position:absolute;
-    // bottom: 100%;
-    transform: translateY(calc(100% + 10px));
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px;
-    flex-wrap: wrap;
-    box-sizing: border-box;
-    z-index: 100;
 }
 .name{
     display: flex;

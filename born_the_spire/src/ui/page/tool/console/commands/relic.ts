@@ -56,6 +56,46 @@ export const relicCommands: ConsoleCommand[] = [
         }
     },
     {
+        name: 'gainAllRelics',
+        group: '遗物',
+        description: '获取所有遗物',
+        usage: 'gainAllRelics()',
+        execute: async (_args, addOutput) => {
+            if (!nowGameRun) {
+                addOutput('游戏未开始，请先点击"开始游戏"', 'error')
+                return
+            }
+            try {
+                const { getAllRelics, getRelicByKey } = await import('@/static/list/item/relicList')
+                const { getRelicModifier } = await import('@/core/objects/system/modifier/RelicModifier')
+                const { getRelic } = await import('@/core/objects/item/Subclass/Relic')
+                const relicModifier = getRelicModifier(nowPlayer)
+                const allRelics = getAllRelics()
+                let gained = 0
+                let skipped = 0
+                let failed = 0
+                for (const relicMap of allRelics) {
+                    if (relicModifier.hasRelic(relicMap.key)) {
+                        skipped++
+                        continue
+                    }
+                    try {
+                        const relic = await getRelicByKey(relicMap.key)
+                        getRelic(nowPlayer, nowPlayer, relic)
+                        gained++
+                        addOutput(`  [${relic.rarity || 'common'}] ${relic.label} (${relic.key})`, 'result')
+                    } catch (error: any) {
+                        failed++
+                        addOutput(`  失败 ${relicMap.label} (${relicMap.key}): ${error.message}`, 'error')
+                    }
+                }
+                addOutput(`✓ 获取所有遗物：新增 ${gained}，已有跳过 ${skipped}，失败 ${failed}`, 'info')
+            } catch (error: any) {
+                addOutput(`获取所有遗物失败: ${error.message}`, 'error')
+            }
+        }
+    },
+    {
         name: 'gainRelic',
         group: '遗物',
         description: '获得指定遗物',
