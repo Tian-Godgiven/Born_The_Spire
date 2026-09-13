@@ -6,6 +6,7 @@ import type { Component } from "vue"
 import type { RoomAvailableCondition } from "@/static/registry/roomRegistry"
 import type { Condition } from "./ConditionSystem"
 import type { EventRoom } from "@/core/objects/room/EventRoom"
+import type { Describe } from "@/ui/hooks/express/describe"
 
 /**
  * 战斗场景奖励配置
@@ -36,13 +37,9 @@ export interface BattleSceneConfig {
 export interface EventOptionMap {
     key?: string                    // 选项唯一标识（用于互斥配置）
     title: string                   // 选项标题
-    // 选项描述。不写则只显示 title。函数每次渲染读 sceneData（发育选项上的当前代价）。
-    description?: string | ((sceneData: any) => string)
+    // 选项描述。不写则只显示 title。字符串、Describe 数组、或每次渲染读 sceneData 的函数。
+    description?: string | Describe | ((sceneData: any) => string | Describe)
     icon?: string                   // 选项图标
-    // 有则 EventRoom 在描述后渲染可悬停的【器官名】（OrganRefText + OrganHoverContent）
-    previewOrganKey?: string | ((sceneData: any) => string)
-    // 器官名后面的尾巴（「失去器官【石芯】，获得金币」）
-    previewOrganAfter?: string | ((sceneData: any) => string)
     effects?: Array<{               // 简单效果列表（使用 eventEffectMap）
         key: string                 // 效果 key
         params?: any                // 效果参数
@@ -80,8 +77,8 @@ export interface EventOptionMap {
 export interface EventSceneMap {
     key: string                     // 幕的唯一标识
     title: string                   // 幕标题
-    // 幕描述。静态字符串或函数——函数式描述在渲染时接收 sceneData，用于随剧情累进变化的文本
-    description: string | ((sceneData: any) => string)
+    // 幕描述。字符串、Describe 数组、或每次渲染读 sceneData 的函数。正文换行用 `"<br>"` 或 `/br/`。
+    description: string | Describe | ((sceneData: any) => string | Describe)
 
     // 场景类型："text"（默认）为文本选择，"battle" 为嵌入战斗
     type?: "text" | "battle"

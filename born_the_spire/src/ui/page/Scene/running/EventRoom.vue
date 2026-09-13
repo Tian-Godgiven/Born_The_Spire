@@ -21,12 +21,10 @@
                 <h1 class="event-title">{{ eventTitle }}</h1>
             </div>
 
-            <!-- 事件描述：正文里 /br/ 换行 -->
+            <!-- 事件描述：Describe 正文 -->
             <div class="event-description">
                 <p>
-                    <template v-for="(line, i) in descriptionLines" :key="i">
-                        <br v-if="i > 0">{{ line }}
-                    </template>
+                    <DescribeText :key="currentSceneKey || 'scene'" :describe="sceneDescribe" />
                 </p>
             </div>
 
@@ -59,17 +57,10 @@
                     <div v-else class="option-content">
                         <div class="option-title">{{ choice.title }}</div>
                         <div v-if="hasOptionDescription(choice)" class="option-description">
-                            <template v-if="optionPreviewOrganKey(choice)">
-                                {{ choice.getDescription() }}<OrganRefText
-                                    :organ-key="optionPreviewOrganKey(choice) ?? ''"
-                                    :evolution-rounds="optionEvolutionRounds()"
-                                />{{ optionPreviewOrganAfter(choice) }}
-                            </template>
-                            <template v-else>
-                                <template v-for="(line, i) in optionDescriptionLines(choice)" :key="i">
-                                    <br v-if="i > 0">{{ line }}
-                                </template>
-                            </template>
+                            <DescribeText
+                                :describe="choice.getDescribeData()"
+                                bracket-cards
+                            />
                         </div>
                     </div>
                 </div>
@@ -85,8 +76,9 @@ import { nowGameRun } from '@/core/objects/game/run'
 import { EventRoom } from '@/core/objects/room/EventRoom'
 import type { Choice } from '@/core/objects/system/Choice'
 import BattleView from './BattleView.vue'
-import OrganRefText from '@/ui/components/display/OrganRefText.vue'
+import DescribeText from '@/ui/components/display/DescribeText.vue'
 import { useAnimation } from '@/ui/animation/useAnimation'
+import { normalizeDescribe } from '@/ui/hooks/express/describe'
 
 const { animRef, play } = useAnimation('event_room_content')
 
@@ -110,14 +102,15 @@ const eventTitle = computed(() => {
     return currentRoom.value?.currentTitle || ''
 })
 
-// 事件描述（随幕切换更新）。正文里用 /br/ 换行
-const eventDescription = computed(() => {
-    return currentRoom.value?.currentDescription || ''
+const sceneDescribe = computed(() => {
+    const room = currentRoom.value
+    if (!room) return []
+    const scene = room.getCurrentScene()
+    const raw = scene
+        ? (typeof scene.description === "function" ? scene.description(room.getSceneData()) : scene.description)
+        : room.eventConfig.description
+    return normalizeDescribe(raw)
 })
-
-const descriptionLines = computed(() =>
-    eventDescription.value.split(/\s*\/br\/\s*/).filter(line => line.length > 0)
-)
 
 // 选项列表
 const choices = computed(() => {
@@ -150,35 +143,8 @@ const customComponent = computed(() => {
     return currentRoom.value?.getCustomComponent()
 })
 
-function optionPreviewOrganKey(choice: Choice): string | undefined {
-    const option = choice.customData?.option
-    if (!option?.previewOrganKey) return undefined
-    const data = currentRoom.value?.getSceneData()
-    const key = typeof option.previewOrganKey === "function"
-        ? option.previewOrganKey(data)
-        : option.previewOrganKey
-    return key || undefined
-}
-
-function optionPreviewOrganAfter(choice: Choice): string {
-    const option = choice.customData?.option
-    if (!option?.previewOrganAfter) return ""
-    const data = currentRoom.value?.getSceneData()
-    return typeof option.previewOrganAfter === "function"
-        ? (option.previewOrganAfter(data) ?? "")
-        : option.previewOrganAfter
-}
-
-function optionEvolutionRounds(): number {
-    return Number(currentRoom.value?.getSceneData()?.evolutionRounds ?? 0)
-}
-
-function optionDescriptionLines(choice: Choice): string[] {
-    return choice.getDescription().split(/\s*\/br\/\s*/).filter(line => line.length > 0)
-}
-
 function hasOptionDescription(choice: Choice): boolean {
-    return optionDescriptionLines(choice).length > 0 || !!optionPreviewOrganKey(choice)
+    return choice.getDescribeData().length > 0
 }
 
 // 处理选项点击

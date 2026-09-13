@@ -53,8 +53,11 @@
             >
                 <div class="option-content">
                     <div class="option-title">{{ choice.title }}</div>
-                    <div v-if="choice.getDescription()" class="option-description">
-                        {{ choice.getDescription() }}
+                    <div v-if="choice.getDescribeData().length" class="option-description">
+                        <DescribeText
+                            :describe="choice.getDescribeData()"
+                            bracket-cards
+                        />
                     </div>
                 </div>
             </div>
@@ -67,6 +70,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import type { EventSceneProps } from "@/core/types/EventSceneProps"
 import type { Choice } from "@/core/objects/system/Choice"
+import DescribeText from "@/ui/components/display/DescribeText.vue"
 import { godOfChanceIsHouseFirst, godOfChancePromptLine, godOfChanceTableText } from "@/static/list/room/event/godOfChance"
 import { isAnimationCategoryEnabled } from "@/ui/animation/categories"
 import { settings } from "@/core/persistence/settings"

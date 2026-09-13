@@ -10,6 +10,22 @@
             :preferPlayerCards="preferPlayerCards"
             :anchor="anchorEl"
         />
+        <OrganRefText
+            v-else-if="segment.type === 'organ' && segment.organKey"
+            :organ-key="segment.organKey"
+            :evolution-rounds="segment.evolutionRounds ?? 0"
+        />
+        <RelicRefText
+            v-else-if="segment.type === 'relic' && segment.relicKey"
+            :relic-key="segment.relicKey"
+        />
+        <DescribeFxText
+            v-else-if="segment.type === 'fx'"
+            :text="segment.text"
+            :fx-keys="segment.fxKeys ?? []"
+            :beat-start="segment.beatStart"
+            :beat-char="segment.beatChar"
+        />
         <br v-else-if="segment.type === 'break'">
         <span
             v-else
@@ -35,6 +51,9 @@
 <script setup lang='ts'>
     import { computed, nextTick, onMounted, ref, watch } from 'vue'
     import CardRefText from '@/ui/components/display/CardRefText.vue'
+    import OrganRefText from '@/ui/components/display/OrganRefText.vue'
+    import RelicRefText from '@/ui/components/display/RelicRefText.vue'
+    import DescribeFxText from '@/ui/components/display/DescribeFxText.vue'
     import GlossaryPanel from '@/ui/components/display/GlossaryPanel.vue'
     import Popover from '@/ui/components/global/Popover.vue'
     import { getDescribeStructured, composeOrganDescribe, type Describe, type DescribeSegment } from '@/ui/hooks/express/describe'

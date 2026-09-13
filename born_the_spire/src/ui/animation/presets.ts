@@ -2,6 +2,7 @@ import gsap from "gsap"
 import type { AnimationDefinition } from "./types"
 import { animationManager } from "./AnimationManager"
 import { registerAnimationCategories, presetAnimationCategories } from "./categories"
+import { registerPresetDescribeFx } from "./describeFx"
 import { markRaw } from "vue"
 import HitTextItem from "./components/HitTextItem.vue"
 
@@ -263,4 +264,5 @@ export const presetAnimations: AnimationDefinition[] = [
 export function registerPresetAnimations(): void {
     registerAnimationCategories(presetAnimationCategories)
     animationManager.registerAll(presetAnimations)
+    registerPresetDescribeFx()
 }

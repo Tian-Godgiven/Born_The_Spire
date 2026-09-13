@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid"
 import { reactive } from "vue"
 import type { Component } from "vue"
+import { getDescribe, normalizeDescribe, type Describe } from "@/ui/hooks/express/describe"
 
 /**
  * 选项状态
@@ -13,8 +14,8 @@ export type ChoiceState = "available" | "selected" | "locked" | "disabled"
 export interface ChoiceConfig {
     key?: string                    // 选项唯一标识（可选，自动生成）
     title: string                   // 选项标题
-    // 选项描述。传函数则每次渲染时求值，用于描述里含会变的数值（如水池里的当前物质）
-    description?: string | (() => string)
+    // 选项描述。字符串、Describe 数组、或每次渲染求值的函数（事件选项里的器官/卡牌引用走 Describe）
+    description?: string | Describe | (() => string | Describe)
     icon?: string                   // 选项图标
     component?: Component | string  // 自定义 Vue 组件（可选）
     onSelect?: () => void | Promise<void>  // 选择时的回调
@@ -32,7 +33,7 @@ export interface ChoiceConfig {
 export class Choice {
     public readonly __key: string
     public readonly title: string
-    public readonly description?: string | (() => string)
+    public readonly description?: string | Describe | (() => string | Describe)
     public readonly icon?: string
     public readonly component?: Component | string
     public readonly customData?: Record<string, any>
@@ -82,11 +83,18 @@ export class Choice {
     }
 
     /**
-     * 取得描述文本。description 传的是函数时在这里求值，
-     * 模板里调用即可随依赖的数据自动更新
+     * 结构化描述。事件选项用 DescribeText 渲染这个，不要直接印 description。
+     */
+    getDescribeData(): Describe {
+        const raw = typeof this.description === "function" ? this.description() : this.description
+        return normalizeDescribe(raw)
+    }
+
+    /**
+     * 取得描述纯文本。description 传的是函数时在这里求值。
      */
     getDescription(): string {
-        return typeof this.description === "function" ? this.description() : (this.description ?? "")
+        return getDescribe(this.getDescribeData())
     }
 
     /**

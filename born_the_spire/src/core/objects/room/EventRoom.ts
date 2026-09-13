@@ -23,6 +23,7 @@ import { createEnemy } from "@/core/factories"
 import { rewardRegistry } from "@/static/registry/rewardRegistry"
 import { nowPlayer } from "../game/run"
 import { showBattleDefeat } from "@/ui/hooks/interaction/battleDefeat"
+import { getDescribe, normalizeDescribe } from "@/ui/hooks/express/describe"
 import { checkCondition, type Condition } from "@/core/types/ConditionSystem"
 import { drawItems } from "@/core/hooks/draw"
 import type { DrawItemType } from "@/core/hooks/draw"
@@ -112,12 +113,13 @@ export class EventRoom extends Room {
     }
 
     /**
-     * 解析幕描述：字符串直接返回；函数则以当前 sceneData 求值
+     * 解析幕描述：字符串 / Describe / 函数都收成纯文本（日志、ChoiceGroup 用）
      */
     private resolveDescription(scene: EventSceneMap): string {
-        return typeof scene.description === "function"
+        const raw = typeof scene.description === "function"
             ? scene.description(this.sceneData)
             : scene.description
+        return getDescribe(normalizeDescribe(raw))
     }
 
     /**

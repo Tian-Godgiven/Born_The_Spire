@@ -7,6 +7,7 @@ import { isStatus, isChara } from "@/core/utils/typeGuards";
 import { getLazyModule } from "@/core/utils/lazyLoader";
 import { getCardModifier } from "@/core/objects/system/modifier/CardModifier";
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier";
+import { fxHasKind, normalizeFxKeys } from "@/ui/animation/describeFx";
 
 //对象的描述，存储为数据，使用时翻译为对应的字符串
 // 字符串恰好为 "<br>" 时是换行分隔符，不是要显示的文字
@@ -21,18 +22,60 @@ export type Describe = (
     "@":string|number //卡牌实例引用（实例ID或索引）
 }|{
     "#":string //卡牌key预览（用于临时效果）
+}|{
+    organ:string //器官 key 预览（事件选项「将会获得某某器官」）
+    evolutionRounds?:number
+}|{
+    relic:string //遗物 key 预览
+}|{
+    text:string //这段要演出的正文
+    fx:string | string[] // describeFx 注册表里的特效 key。reveal（beat）和 motion（shake）可叠
+    wait?:number //上一段 beat 打完后再等几秒再开始；第一段从正文出现时算。不写当作 0
+    char?:number //beat 每个字间隔秒数。不写当作 0.08
 })[]
+
+export const DEFAULT_BEAT_CHAR = 0.08
 
 /**
  * 描述片段类型
  */
 export type DescribeSegment = {
     text: string
-    type: 'plain' | 'value' | 'glossary' | 'card' | 'break'
+    type: 'plain' | 'value' | 'glossary' | 'card' | 'break' | 'organ' | 'relic' | 'fx'
     glossaryKey?: string  // 如果是glossary类型
     cardRef?: string | number  // 如果是card类型（实例ID、key或索引）
     cardRefType?: 'instance' | 'key'  // card引用类型
+    organKey?: string
+    evolutionRounds?: number
+    relicKey?: string
+    fxKeys?: string[]
+    beatStart?: number
+    beatChar?: number
     style?: Record<string, string>
+}
+
+function listItemLabel(moduleKey: "organList" | "relicList", key: string, fallback: string): string {
+    try {
+        const list = getLazyModule<{ key: string, label?: string }[]>(moduleKey)
+        return list.find(item => item.key === key)?.label ?? fallback
+    } catch {
+        return fallback
+    }
+}
+
+/** 字符串（含事件选项的 /br/）或 Describe 都收成同一套数组。 */
+export function normalizeDescribe(value: Describe | string | number | undefined | null): Describe {
+    if (value == null || value === "") return []
+    if (Array.isArray(value)) return value
+    if (typeof value === "number") return [String(value)]
+    const parts = String(value).split(/\s*\/br\/\s*/).filter(part => part.length > 0)
+    if (parts.length <= 1) return parts.length ? [parts[0]] : []
+    const out: Describe = []
+    parts.forEach((part, index) => {
+        if (index > 0) out.push("<br>")
+        out.push(part)
+    })
+    return out
 }
 
 function formatCardLabel(label: string, level: number): string {
@@ -233,6 +276,21 @@ export function getDescribe(describe:Describe|undefined,target?:Object){
                 }
                 text += cardLabel
             }
+            else if("organ" in value){
+                const organKey = value.organ
+                if (organKey) {
+                    text += `【${listItemLabel("organList", organKey, "器官")}】`
+                }
+            }
+            else if("relic" in value){
+                const relicKey = value.relic
+                if (relicKey) {
+                    text += `【${listItemLabel("relicList", relicKey, "遗物")}】`
+                }
+            }
+            else if("text" in value && "fx" in value){
+                if (value.text) text += value.text
+            }
             //这是一个数组，并且会尝试访问target的key属性
             else if("key" in value && target){
                 const statusValue = getStatusDescribe(value.key,target)
@@ -252,6 +310,7 @@ export function getDescribe(describe:Describe|undefined,target?:Object){
 export function getDescribeStructured(describe:Describe|undefined,target?:Object): DescribeSegment[]{
     const segments: DescribeSegment[] = []
     if(!describe) return segments
+    let beatCursor = 0
 
     describe.forEach(value=>{
         //纯字符串或数字
@@ -346,6 +405,47 @@ export function getDescribeStructured(describe:Describe|undefined,target?:Object
                     cardRef: cardKey,
                     cardRefType: 'key'
                 })
+            }
+            else if("organ" in value){
+                const organKey = value.organ
+                if (organKey) {
+                    segments.push({
+                        text: `【${listItemLabel("organList", organKey, "器官")}】`,
+                        type: 'organ',
+                        organKey,
+                        evolutionRounds: value.evolutionRounds
+                    })
+                }
+            }
+            else if("relic" in value){
+                const relicKey = value.relic
+                if (relicKey) {
+                    segments.push({
+                        text: `【${listItemLabel("relicList", relicKey, "遗物")}】`,
+                        type: 'relic',
+                        relicKey
+                    })
+                }
+            }
+            else if("text" in value && "fx" in value){
+                if (value.text) {
+                    const fxKeys = normalizeFxKeys(value.fx)
+                    const hasReveal = fxHasKind(fxKeys, "reveal")
+                    const segment: DescribeSegment = {
+                        text: value.text,
+                        type: 'fx',
+                        fxKeys
+                    }
+                    if (hasReveal) {
+                        const wait = typeof value.wait === "number" ? value.wait : 0
+                        const char = typeof value.char === "number" && value.char > 0 ? value.char : DEFAULT_BEAT_CHAR
+                        const start = beatCursor + wait
+                        segment.beatStart = start
+                        segment.beatChar = char
+                        beatCursor = start + Array.from(value.text).length * char
+                    }
+                    segments.push(segment)
+                }
             }
             //访问对象属性
             else if("key" in value && target){

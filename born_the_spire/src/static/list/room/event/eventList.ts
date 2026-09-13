@@ -218,8 +218,7 @@ function embryoBirthOption(stayScene: string): EventOptionMap {
     return {
         key: "deliver",
         title: "接生",
-        description: "获得",
-        previewOrganKey: (data) => embryoOrganKey(data),
+        description: (data) => ["获得", { organ: embryoOrganKey(data), evolutionRounds: data.evolutionRounds ?? 0 }],
         customCallback: async (data) => {
             const ok = await eventEffectMap["deliverEmbryo"]({
                 stage: embryoStage(data),
@@ -726,28 +725,55 @@ export const eventList: EventMap[] = [
         ]
     },
 
-    // 废弃神龛：牌库单发赌博（无离开选项，二选一都必须承担后果）
+    // 废弃神龛（event_abandoned_shrine）：祈祷随机抽走一张牌；亵渎随机复制一张。没有空手离开。
     {
         key: "event_abandoned_shrine",
         title: "废弃神龛",
         description: "斜倚的石壁间藏着一座早被遗忘的神龛。神像面目模糊，供台上残留着几缕熄灭的香灰——它似乎仍在等待着什么。",
         icon: "⛩️",
-        options: [
+        scenes: [
             {
-                title: "祈祷",
-                description: "你合十低语，一段不知归属的旋律在耳边回响。牌库中随机一张卡将被神灵取走。",
-                icon: "🙏",
-                effects: [
-                    { key: "removeRandomCard", params: { count: 1 } }
+                key: "shrine",
+                title: "废弃神龛",
+                description: "斜倚的石壁间藏着一座早被遗忘的神龛。神像面目模糊，供台上残留着几缕熄灭的香灰——它似乎仍在等待着什么。",
+                options: [
+                    {
+                        key: "pray",
+                        title: "祈祷",
+                        description: "随机移除一张牌",
+                        effects: [
+                            { key: "removeRandomCard", params: { count: 1 } }
+                        ],
+                        nextScene: "prayed"
+                    },
+                    {
+                        key: "desecrate",
+                        title: "亵渎",
+                        description: "随机复制一张牌",
+                        effects: [
+                            { key: "duplicateRandomCard", params: { count: 1 } }
+                        ],
+                        nextScene: "desecrated"
+                    }
                 ]
             },
             {
-                title: "亵渎",
-                description: "你将手按上神像冰凉的额头。一阵刺骨的寒意涌上，牌库中随机一张卡被诡异地复刻。",
-                icon: "🩸",
-                effects: [
-                    { key: "duplicateRandomCard", params: { count: 1 } }
-                ]
+                key: "prayed",
+                title: "废弃神龛",
+                description: "一段不知归属的旋律在耳边回响。你的牌库轻了一点。",
+                options: [{
+                    key: "leave_prayed",
+                    title: "离开"
+                }]
+            },
+            {
+                key: "desecrated",
+                title: "废弃神龛",
+                description: "一阵刺骨的寒意涌上。你的牌库里多了一张熟悉的牌。",
+                options: [{
+                    key: "leave_desecrated",
+                    title: "离开"
+                }]
             }
         ]
     },
@@ -775,9 +801,9 @@ export const eventList: EventMap[] = [
                     {
                         key: "let_him_pick",
                         title: "给他",
-                        description: "失去器官",
-                        previewOrganKey: (data) => data.pickedOrgan?.key,
-                        previewOrganAfter: "，获得金币",
+                        description: (data) => data.pickedOrgan
+                            ? ["失去器官", { organ: data.pickedOrgan.key }, "，获得金币"]
+                            : "失去器官",
                         ifShow: (data) => !!data.pickedOrgan,
                         ifAble: "$owner.removableOrganCount() >= 1",
                         customCallback: async (data) => {
@@ -828,10 +854,9 @@ export const eventList: EventMap[] = [
                     description: (data) => {
                         const gold = data.gold ?? 0
                         return data.giftOrgan
-                            ? `获得了${gold}金币，获得了`
+                            ? [`获得了${gold}金币，获得了`, { organ: data.giftOrgan.key }]
                             : `获得了${gold}金币`
                     },
-                    previewOrganKey: (data) => data.giftOrgan?.key,
                     afterEffects: [{ key: "collectorSettle" }]
                 }]
             },
@@ -975,7 +1000,7 @@ export const eventList: EventMap[] = [
                     {
                         key: "ignore",
                         title: "无视它",
-                        description: "获得遗物「小兽伙伴」",
+                        description: ["获得", { relic: "event_relic_hungry_beast" }],
                         effects: [
                             { key: "gainRelic", params: { relicKey: "event_relic_hungry_beast" } }
                         ],
@@ -1013,80 +1038,143 @@ export const eventList: EventMap[] = [
         ]
     },
 
-    // 孵化室：跨战斗延迟结算，孵化好坏由 3 场承受伤害决定
-    // 前置状态 2026-07-29 ✅（可 playtest）：
-    //   ✅ 孵化中的胚胎 遗物（event_relic_incubating_embryo）：3 场战斗跨战斗跟踪伤害
-    //   ✅ 共生之种 / 饥饿之种 两遗物已入 relicList.ts（event_relic_symbiote_seed / event_relic_hungry_seed）
-    //   ✅ 寄生 诅咒卡已入 cardList.ts（original_card_parasite）
-    //   剩余(可选): 寄生卡的"被转化/移除时 -3 最大生命"通路（当前 card 触发器系统未验证；卡本身"cannot-play"已生效）
+    // 孵化室（event_hatchery）：地洞里的卵。拿走得遗物孵化中的胚胎（3 场后按受伤孵化）；碾碎回 10% 生命。
     {
         key: "event_hatchery",
         title: "孵化室",
-        description: "桌上放着一枚微微跳动的透明卵，隐隐能感到心跳。",
+        description: "你意外掉进一个隐秘的地洞里，一枚透明的卵摆放在地洞中央，隐约能感受到跳动……",
         icon: "🥚",
-        options: [
+        scenes: [
             {
-                key: "take_and_parasite",
-                title: "拿走并寄生",
-                description: "获得「孵化中的胚胎」遗物。接下来 3 场战斗每场开始 +2 力量，但每回合末受递增伤害。3 场后按累计承受伤害孵化：≤30 → 共生之种，>30 → 饥饿之种（附带 1 张寄生诅咒）。",
-                icon: "🐣",
-                effects: [
-                    { key: "gainRelic", params: { relicKey: "event_relic_incubating_embryo" } }
+                key: "lab",
+                title: "孵化室",
+                description: "你意外掉进一个隐秘的地洞里，一枚透明的卵摆放在地洞中央，隐约能感受到跳动……",
+                options: [
+                    {
+                        key: "take",
+                        title: "拿走",
+                        description: ["获得", { relic: "event_relic_incubating_embryo" }],
+                        effects: [
+                            { key: "gainRelic", params: { relicKey: "event_relic_incubating_embryo" } }
+                        ],
+                        nextScene: "taken"
+                    },
+                    {
+                        key: "crush",
+                        title: "碾碎",
+                        description: "恢复 10% 最大生命",
+                        effects: [
+                            { key: "healHealth", params: { percent: 10 } }
+                        ],
+                        nextScene: "crushed"
+                    }
                 ]
             },
             {
-                key: "crush_egg",
-                title: "碾碎",
-                description: "恢复 10% 最大生命",
-                icon: "💥",
-                effects: [
-                    { key: "healHealth", params: { percent: 10 } }
-                ]
+                key: "taken",
+                title: "孵化室",
+                description: "卵融入了你的体内，不断地移动，像是在找一个合适的巢……",
+                options: [{
+                    key: "leave_taken",
+                    title: "离开"
+                }]
+            },
+            {
+                key: "crushed",
+                title: "孵化室",
+                description: "汁液迸溅开来，其中的营养融入你的体内，修复了你的伤口。",
+                options: [{
+                    key: "leave_crushed",
+                    title: "离开"
+                }]
             }
         ]
     },
 
-    // 献祭祭坛：永久属性 tradeoff（离开也要付代价，"不允许空手而归"）
-    // 前置状态 2026-07-29 全部齐 ✅（可 playtest）：
-    //   ✅ 秀色可餐 / 浅尝辄止 两遗物已入 relicList.ts
-    //   ✅ 事件专属池：直接用 pool: ["exclusive"]
-    //   ✅ N 场后禁用通路：沿用无常之神的祝福模板
-    //   ✅ ifAble 语法：新增 organCount() accessor（EntityAccessor.ts）
+    // 杯之祭坛（event_sacrifice_altar）：血肉换秀色可餐，器官换浅尝辄止；逃离也要挨打。
     {
         key: "event_sacrifice_altar",
-        title: "献祭祭坛",
-        description: "一座石制祭坛，中央刻着凹陷的槽。它低语着，不允许你空手而归。",
+        title: "杯之祭坛",
+        description: "你冥冥之中被吸引到一座荒废许久的石质祭坛前，上面铭刻着一个杯子，里面的红色液体满到溢出，隐隐约约能够闻到血腥气息，祭坛中央的缺口仿佛饥渴的大嘴，而身后的道路不知何时变得模糊……",
         icon: "🗿",
-        options: [
+        scenes: [
             {
-                key: "sacrifice_flesh",
-                title: "献祭血肉",
-                description: "永久失去 50% 最大生命，换取遗物「秀色可餐」（永久 +1 能量上限）",
-                icon: "🩸",
-                effects: [
-                    { key: "loseMaxHealthPercent", params: { percent: 50 } },
-                    { key: "gainRelic", params: { relicKey: "original_relic_delectable_feast" } }
+                key: "altar",
+                title: "杯之祭坛",
+                description: "你冥冥之中被吸引到一座荒废许久的石质祭坛前，上面铭刻着一个杯子，里面的红色液体满到溢出，隐隐约约能够闻到血腥气息，祭坛中央的缺口仿佛饥渴的大嘴，而身后的道路不知何时变得模糊……",
+                options: [
+                    {
+                        key: "sacrifice_flesh",
+                        title: "献上血肉",
+                        description: ["失去 50% 最大生命，获得", { relic: "original_relic_delectable_feast" }],
+                        effects: [
+                            { key: "loseMaxHealthPercent", params: { percent: 50 } },
+                            { key: "gainRelic", params: { relicKey: "original_relic_delectable_feast" } }
+                        ],
+                        nextScene: "flesh"
+                    },
+                    {
+                        key: "sacrifice_organ",
+                        title: "献上器官",
+                        description: ["失去一个器官，获得", { relic: "original_relic_shallow_taste" }],
+                        ifAble: "$owner.removableOrganCount() >= 1",
+                        effects: [
+                            { key: "removeOrgan", params: { count: 1, minCount: 1 } },
+                            { key: "gainRelic", params: { relicKey: "original_relic_shallow_taste" } }
+                        ],
+                        nextScene: "organ"
+                    },
+                    {
+                        key: "leave_altar",
+                        title: "逃离",
+                        description: "受到 10% 最大生命的伤害",
+                        effects: [
+                            { key: "loseHealthPercent", params: { percent: 10 } }
+                        ],
+                        nextScene: "refused"
+                    }
                 ]
             },
             {
-                key: "sacrifice_organ",
-                title: "献祭器官",
-                description: "自选 1 个已装器官交出（永久失去），换取遗物「浅尝辄止」（下 3 场战斗每回合开始 +1 抽牌数，3 场后禁用）",
-                icon: "🫀",
-                ifAble: "$owner.removableOrganCount() >= 1",
-                effects: [
-                    { key: "removeOrgan", params: { count: 1, minCount: 1 } },
-                    { key: "gainRelic", params: { relicKey: "original_relic_shallow_taste" } }
-                ]
+                key: "flesh",
+                title: "杯之祭坛",
+                description: [
+                    "你的躯体陷进祭坛的凹槽中",
+                    "<br>",
+                    { text: "咔嚓", fx: "shake" },
+                    "<br>",
+                    "它狠狠地咬了你一口，发出了满足的嗡嗡声，看来你十分美味……"
+                ],
+                options: [{
+                    key: "leave_flesh",
+                    title: "离开"
+                }]
             },
             {
-                key: "leave_altar",
-                title: "离开",
-                description: "祭坛不允许你空手而归——你失去当前生命值等于最大生命的 10%。",
-                icon: "🚪",
-                effects: [
-                    { key: "loseHealthPercent", params: { percent: 10 } }
-                ]
+                key: "organ",
+                title: "杯之祭坛",
+                description: [
+                    "你将一个器官放入祭坛的凹槽中",
+                    "<br>",
+                    { text: "嚼……", fx: ["beat", "shake"], wait: 0.3, char: 0.1 },
+                    { text: "嚼……", fx: ["beat", "shake"], wait: 0.45 },
+                    { text: "嚼……", fx: ["beat", "shake"], wait: 0.6 },
+                    "<br>",
+                    "它似乎还有些意犹未尽……"
+                ],
+                options: [{
+                    key: "leave_organ",
+                    title: "离开"
+                }]
+            },
+            {
+                key: "refused",
+                title: "杯之祭坛",
+                description: "你转身逃离，但在穿过那猩红的迷雾时不知何时被咬了一口……",
+                options: [{
+                    key: "leave_refused",
+                    title: "离开"
+                }]
             }
         ]
     },
