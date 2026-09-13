@@ -37,6 +37,14 @@ export const glossaryMap: Record<string, GlossaryEntry> = {
             color: "#06b6d4",
             fontWeight: "bold"
         }
+    },
+    "临时": {
+        label: "临时",
+        describe: ["回合结束时失去同等层数的状态效果"]
+    },
+    "临时器官": {
+        label: "临时器官",
+        describe: ["战斗结束后消失"]
     }
 }
 

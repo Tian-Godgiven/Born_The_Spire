@@ -17,7 +17,7 @@
             :key="card.__id"
             @click.stop="showCardDetail(card)"
           >
-            <Card :card="card" :side="'left'" />
+            <Card :card="card" :side="'left'" :show-relic-marks-on-hover="title === '卡组'" />
           </div>
         </div>
       </div>

@@ -28,6 +28,8 @@ export type Describe = (
 }|{
     relic:string //遗物 key 预览
 }|{
+    markedCard:string //遗物 status 里记下的卡牌实例 id；未选显示「一张牌」，选完变成可预览的 {"@": id}
+}|{
     text:string //这段要演出的正文
     fx:string | string[] // describeFx 注册表里的特效 key。reveal（beat）和 motion（shake）可叠
     wait?:number //上一段 beat 打完后再等几秒再开始；第一段从正文出现时算。不写当作 0
@@ -173,6 +175,17 @@ export function getFlavorDescribe(entity: { effect?: Describe, describe?: Descri
     return entity.describe as Describe
 }
 
+/** 遗物 { markedCard: storeKey }：status 有实例 id 才返回，否则空字符串。 */
+function markedCardIdFromTarget(target: any, storeKey: string): string {
+    if (!target || !storeKey) return ""
+    const status = target.status?.[storeKey]
+    if (!status) return ""
+    const raw = toRaw(status)
+    const value = isStatus(raw) ? raw.value : status.value
+    if (value == null || value === "") return ""
+    return String(value)
+}
+
 /** 器官正文：提供卡牌一句 + 效果（effect，没有则用 describe）。 */
 export function composeOrganDescribe(organ: any, options?: { preferPlayerCards?: boolean }): Describe {
     if (!organ) return []
@@ -313,6 +326,10 @@ export function getDescribe(describe:Describe|undefined,target?:Object){
                     text += `【${listItemLabel("relicList", relicKey, "遗物")}】`
                 }
             }
+            else if("markedCard" in value){
+                const cardId = markedCardIdFromTarget(target, value.markedCard)
+                text += cardId ? "[卡牌]" : "一张牌"
+            }
             else if("text" in value && "fx" in value){
                 if (value.text) text += value.text
             }
@@ -449,6 +466,22 @@ export function getDescribeStructured(describe:Describe|undefined,target?:Object
                         text: `【${listItemLabel("relicList", relicKey, "遗物")}】`,
                         type: 'relic',
                         relicKey
+                    })
+                }
+            }
+            else if("markedCard" in value){
+                const cardId = markedCardIdFromTarget(target, value.markedCard)
+                if (cardId) {
+                    segments.push({
+                        text: "[卡牌]",
+                        type: 'card',
+                        cardRef: cardId,
+                        cardRefType: 'instance'
+                    })
+                } else {
+                    segments.push({
+                        text: "一张牌",
+                        type: 'plain'
                     })
                 }
             }

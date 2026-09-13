@@ -32,6 +32,11 @@
             :glossary-disabled="card.isDisabled"
         />
     </div>
+    <CardRelicMarksHover
+        v-if="showRelicMarksOnHover"
+        :card="card"
+        :anchor="cardRef"
+    />
 </div>
 </template>
 
@@ -46,11 +51,13 @@ import { getEntryModifier } from '@/core/objects/system/modifier/EntryModifier';
 import { nowPlayer } from '@/core/objects/game/run';
 import { previewCardEffects } from '@/core/utils/effectPreview';
 import { getTemporaryEffectDescribe } from '@/core/effects/card/addTemporaryEffect';
+import CardRelicMarksHover from '@/ui/components/interaction/CardRelicMarksHover.vue';
 
-const {card, side, hoverTarget} = defineProps({
+const {card, side, hoverTarget, showRelicMarksOnHover} = defineProps({
     card: { type: Object as PropType<Card>, required: true },
     side: { type: String as PropType<'left' | 'right'>, required: false },
-    hoverTarget: { type: Object as PropType<Entity | Entity[] | undefined>, required: false }
+    hoverTarget: { type: Object as PropType<Entity | Entity[] | undefined>, required: false },
+    showRelicMarksOnHover: { type: Boolean, required: false, default: false }
 })
 
 // 预览卡牌效果

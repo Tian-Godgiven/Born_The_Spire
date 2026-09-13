@@ -167,14 +167,15 @@
     })
 
     function getCardText(segment: DescribeSegment): string | undefined {
-        if (!bracketCards) return undefined
-        if (segment.text && segment.text !== '[卡牌]') return `【${segment.text}】`
-
-        // describe 阶段没解析出名字，再按实例 ID 去持有者牌堆里找一次
+        let name = segment.text
         if (segment.cardRefType === 'instance' && typeof segment.cardRef === 'string') {
             const card = findCardInstance(segment.cardRef, organ.value)
-            if (card) return `【${card.displayName}】`
+            if (card) name = card.displayName
         }
+        if (!bracketCards) {
+            return name !== segment.text ? name : undefined
+        }
+        if (name && name !== '[卡牌]') return `【${name}】`
         return '【卡牌】'
     }
 </script>

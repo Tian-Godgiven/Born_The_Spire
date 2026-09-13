@@ -22,6 +22,8 @@
                         :describe="getEffectDescribe(currentRelic)"
                         :target="currentRelic"
                         :glossary-anchor="contentRef"
+                        ref-placement="right"
+                        ref-align="start"
                     />
                 </div>
                 <div class="relic-flavor" v-if="getFlavorDescribe(currentRelic).length > 0">

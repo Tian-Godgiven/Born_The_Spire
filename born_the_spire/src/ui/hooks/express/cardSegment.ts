@@ -55,7 +55,7 @@ export async function previewCardAtLevel(source: CardType, level: number): Promi
 /**
  * 按实例 ID 查找已存在的卡牌实例
  * 先在器官持有者名下、由该器官提供的卡牌中查找（敌人器官同样有效），
- * 找不到再退回玩家的四个牌堆
+ * 找不到再退回玩家的四个牌堆，再退回卡组（战斗外选牌记下来的实例）
  */
 export function findCardInstance(cardId: string, organ?: Organ): CardType | null {
     const owner = organ?.owner
@@ -70,15 +70,25 @@ export function findCardInstance(cardId: string, organ?: Organ): CardType | null
     }
 
     const piles = nowPlayer?.cardPiles
-    if (!piles) return null
+    if (piles) {
+        const allCards = [
+            ...piles.handPile,
+            ...piles.drawPile,
+            ...piles.discardPile,
+            ...piles.exhaustPile
+        ]
+        const fromPiles = allCards.find((card: any) => card.__id === cardId)
+        if (fromPiles) return fromPiles
+    }
 
-    const allCards = [
-        ...piles.handPile,
-        ...piles.drawPile,
-        ...piles.discardPile,
-        ...piles.exhaustPile
-    ]
-    return allCards.find((card: any) => card.__id === cardId) || null
+    try {
+        const fromDeck = nowPlayer?.getCardGroup?.().find((card: any) => card.__id === cardId)
+        if (fromDeck) return fromDeck
+    } catch {
+        // 卡牌管理器尚未初始化
+    }
+
+    return null
 }
 
 /**

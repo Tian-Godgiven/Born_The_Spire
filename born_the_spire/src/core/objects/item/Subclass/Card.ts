@@ -11,6 +11,7 @@ import { getStatusValue } from "@/core/objects/system/status/Status";
 import { getCardModifier } from "@/core/objects/system/modifier/CardModifier";
 import { getEntryModifier } from "@/core/objects/system/modifier/EntryModifier";
 import type { TemporaryEffectConfig } from "@/core/effects/card/addTemporaryEffect";
+import type { CardMark } from "@/core/effects/card/cardMark";
 import { createTriggerByTriggerMap } from "@/core/objects/system/trigger/Trigger";
 
 export type CardMap = ItemMap & {
@@ -59,6 +60,7 @@ export class Card extends Item{
     public isTemporary: boolean = false  // 是否为临时卡牌
     public temporaryRemoveOn?: "battleEnd" | "turnEnd" | "floorEnd"  // 临时卡牌的移除时机
     public _temporaryEffects?: TemporaryEffectConfig[]  // 临时效果列表
+    public _cardMarks: CardMark[] = []  // 展示用标记（口香糖等），不参与结算
     private _inHandCleanups: (() => void)[] = []  // inHand 交互的清理函数
 
     constructor(map:CardMap){

@@ -457,7 +457,10 @@ export const relicList: RelicMap[] = [
     },
     {
         label: "过载电池",
-        describe: ["每场战斗一次", "受到超过", { key: ["status", "minDamage"] }, "点伤害时", "回复", { key: ["status", "healAmount"] }, "生命"],
+        effect: [
+            "每场战斗1次，每当你受到超过", { key: ["status", "minDamage"] }, "点未格挡的伤害时，回复",
+            { key: ["status", "healAmount"] }, "生命"
+        ],
         key: "original_relic_overload_battery",
         rarity: "uncommon",
         pool: ["common"],
@@ -466,7 +469,7 @@ export const relicList: RelicMap[] = [
             "used": 0,
             "maxUse": 1,
             "minDamage": 10,
-            "healAmount": 8
+            "healAmount": 4
         },
         badges: [
             { type: "counter", status: "used", maxStatus: "maxUse" }
@@ -479,7 +482,7 @@ export const relicList: RelicMap[] = [
                     params: {
                         pointKey: "point",
                         usedKey: "used",
-                        on: { when: "after", how: "take", key: ["attack", "damage"] },
+                        on: { when: "after", how: "take", key: "attack" },
                         gain: "$triggerEffect.params(value)",
                         minGain: 10,
                         threshold: 1,
@@ -487,7 +490,7 @@ export const relicList: RelicMap[] = [
                         repeat: false,
                         maxTriggerPerBattle: 1,
                         targetType: "owner",
-                        effects: [{ key: "heal", params: { value: 8 } }]
+                        effects: [{ key: "heal", params: { value: 4 } }]
                     }
                 }]
             }
@@ -496,7 +499,7 @@ export const relicList: RelicMap[] = [
     // 战前仪式：战斗开始时获得3层力量
     {
         label: "战前仪式",
-        describe: ["战斗开始时", "获得3层力量"],
+        effect: ["战斗开始时获得3层", {$:"力量"}],
         key: "original_relic_pre_battle_ritual",
         rarity: "uncommon",
         pool: ["common"],
@@ -526,7 +529,7 @@ export const relicList: RelicMap[] = [
     // 怒气结晶：每次受到伤害，获得1层力量
     {
         label: "怒气结晶",
-        describe: ["每次受到伤害", "获得1层力量"],
+        effect: ["每当你受到未被格挡的伤害时，获得1层", {$:"力量"}],
         key: "original_relic_rage_crystal",
         rarity: "uncommon",
         pool: ["common"],
@@ -536,7 +539,7 @@ export const relicList: RelicMap[] = [
                 triggers: [{
                     when: "after",
                     how: "take",
-                    key: ["attack", "damage"],
+                    key: "attack",
                     action: "gainPowerOnDamage"
                 }]
             }
@@ -554,7 +557,7 @@ export const relicList: RelicMap[] = [
     },
     {
         label: "低血战旗",
-        describe: ["每回合开始，当生命低于50%时", "获得2层力量"],
+        effect: ["每回合开始，当生命低于50%时，获得2层", {$:"力量"}],
         key: "original_relic_low_health_banner",
         rarity: "rare",
         pool: ["common"],
@@ -584,7 +587,7 @@ export const relicList: RelicMap[] = [
     // 热血腰带：每回合开始获得3层临时力量（回合结束失去）
     {
         label: "热血腰带",
-        describe: ["每回合开始", "获得3层临时力量"],
+        effect: ["每回合开始时获得3层", {$:"临时"}, {$:"力量"}],
         key: "original_relic_hot_belt",
         rarity: "rare",
         pool: ["common"],
@@ -704,7 +707,7 @@ export const relicList: RelicMap[] = [
     },
     {
         label: "尖针",
-        describe: ["每当你施加 debuff 时,", "对目标造成 5 点伤害"],
+        effect: ["每当你对目标施加负面效果时，对该目标造成5点伤害"],
         key: "original_relic_needle",
         rarity: "uncommon",
         pool: ["uncommon"],
@@ -733,7 +736,7 @@ export const relicList: RelicMap[] = [
     },
     {
         label: "鹫发",
-        describe: ["每回合首次,", "你的非临时器官被摧毁时", "回复 5 生命"],
+        effect: ["每回合1次，你的非", {$:"临时器官"}, "被摧毁时，其回复5质量"],
         key: "original_relic_vulture_plume",
         rarity: "uncommon",
         pool: ["uncommon"],
@@ -750,7 +753,8 @@ export const relicList: RelicMap[] = [
                         key: "breakOrgan",
                         condition: [
                             "$item.status(used) == 0",
-                            { not: "$medium.isTemporary()" }
+                            { not: "$medium.isTemporary()" },
+                            "$medium.hasStatus(max-mass)"
                         ],
                         action: "healAndLock"
                     },
@@ -766,11 +770,11 @@ export const relicList: RelicMap[] = [
         reaction: {
             healAndLock: [
                 {
-                    targetType: "owner",
-                    key: "heal",
+                    targetType: "eventMedium",
+                    key: "restoreMass",
                     effect: [{
-                        key: "heal",
-                        params: { value: 5 }
+                        key: "addCurrent",
+                        params: { currentKey: "mass", value: 5 }
                     }]
                 },
                 {
@@ -794,7 +798,7 @@ export const relicList: RelicMap[] = [
     },
     {
         label: "祈愿石",
-        describe: ["第 1 回合,", "你的能量归零时,", "获得 2 点能量"],
+        effect: ["战斗开始后的第1回合，当能量耗尽时，获得2能量"],
         key: "original_relic_wish_stone",
         rarity: "uncommon",
         pool: ["uncommon"],
@@ -827,6 +831,12 @@ export const relicList: RelicMap[] = [
     },
     {
         label: "口香糖",
+        effect: [
+            "获得时选择",
+            { markedCard: "markedCardId" },
+            "<br>",
+            "每场战斗第2回合开始时，将其从抽牌堆、弃牌堆或消耗堆移入手牌"
+        ],
         describe: ["伸缩自如的爱❤️"],
         key: "original_relic_bubble_gum",
         rarity: "rare",
@@ -840,10 +850,11 @@ export const relicList: RelicMap[] = [
                 effects: [{
                     key: "chooseAndMarkCard",
                     params: {
-                        title: "选一张牌作为记号",
-                        description: "第 2 回合开始时，它会从抽/弃/消耗牌堆移入你的手牌",
+                        title: "选一张牌",
+                        description: "每场战斗第2回合开始时，它会从抽牌堆、弃牌堆或消耗堆移入你的手牌",
                         fromPile: "deck",
-                        storeKey: "markedCardId"
+                        storeKey: "markedCardId",
+                        markRelics: ["original_relic_bubble_gum"]
                     }
                 }],
                 triggers: [{
@@ -872,7 +883,9 @@ export const relicList: RelicMap[] = [
     },
     {
         label: "第六指",
-        describe: ["每抽", { key: ["status", "maxPoint"] }, "张牌", "再抽1张"],
+        effect: [
+            "每当你抽（", { key: ["status", "point"] }, "/", { key: ["status", "maxPoint"] }, "）张牌，额外抽1张牌"
+        ],
         key: "original_relic_sixth_finger",
         rarity: "rare",
         pool: ["rare"],

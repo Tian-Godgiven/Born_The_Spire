@@ -21,6 +21,7 @@ import type { Effect } from "../effect/Effect"
 import type { TriggerEventConfig, TriggerMapItemWithAction, ImportantTriggerMapItem, TriggerCondition, TriggerMapItem } from "@/core/types/object/trigger"
 import type { TargetContext } from "@/core/types/TargetSpec"
 import { modifierManager } from "@/core/managers/ModifierManager"
+import { clearCardMarksFromSource } from "@/core/effects/card/cardMark"
 
 /**
  * 构建条件检查上下文
@@ -637,6 +638,8 @@ export class ItemModifier {
      */
     protected loseItem(item: Item, parentLog?: LogUnit): boolean {
         const log = parentLog || newLog([this.owner, "失去了", item])
+
+        clearCardMarksFromSource(item, this.owner)
 
         // 1. 找到并清理副作用
         const removed = this.removeByItem(item, log)

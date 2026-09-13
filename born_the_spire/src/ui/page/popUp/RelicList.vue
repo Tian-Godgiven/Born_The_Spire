@@ -14,7 +14,7 @@
                     <span class="ability-badge" v-if="hasMultipleAbilities(relic)">⚡</span>
                 </div>
                 <div class="relic-description">
-                    <DescribeText :describe="getEffectDescribe(relic)" :target="relic" />
+                    <DescribeText :describe="getEffectDescribe(relic)" :target="relic" ref-placement="right" ref-align="start" />
                 </div>
                 <div class="relic-abilities" v-if="hasMultipleAbilities(relic)">
                     <div class="abilities-title">主动能力：</div>
