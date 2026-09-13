@@ -13,7 +13,7 @@ import { fragileBreak, regenerateMass } from "@/core/effects/organ/organEntryEff
 import { applyState, removeState, changeStateStack, setStateStack, consumeStateAfterAttackPlay } from "@/core/effects/state/stateControl"
 import { addStatusBase, addStatusCurrent, multiplyStatusBase, setCurrentToMax, setBaseStatus, decrementStatus, resetCooldown } from "@/core/effects/status/changeStatus"
 import { addCurrent, addStatusBaseCurrentValue } from "@/core/effects/current/changeCurrent"
-import { gainReserve, spendReserve } from "@/core/effects/reserve/reserve"
+import { gainReserve, spendReserve, modifyReserveByPercent } from "@/core/effects/reserve/reserve"
 import { killTarget, reviveTarget, loseHp } from "@/core/effects/life/lifeControl"
 import { replaceOrgan, chooseOrganRemove, damageOrgan, healOrgan, modifyOrganCardStatus, repairOrgan, upgradeOrganCards } from "@/core/effects/organ/organEffects"
 import { removeOrganEffect } from "@/core/effects/organ/organRemoveEffect"
@@ -279,6 +279,10 @@ export const effectMap:EffectData[] = [
     label:"消耗储备",
     key:"spendReserve",
     effect:spendReserve
+},{
+    label:"按百分比修改储备数量",
+    key:"modifyReserveByPercent",
+    effect:modifyReserveByPercent
 },{
     label:"虚无：若在手牌则消耗",
     key:"voidExhaust",

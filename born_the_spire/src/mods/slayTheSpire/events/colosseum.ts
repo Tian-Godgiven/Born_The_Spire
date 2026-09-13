@@ -1,6 +1,7 @@
 /**
  * 竞技场事件
- * 多幕事件，包含两场嵌入式战斗
+ * 多幕事件，包含两场嵌入式战斗。
+ * 先不 registerEvent：两场怎么打还没定，地图和事件列表都不会出现。
  */
 
 import type { EventMap } from "@/core/types/EventMapData"

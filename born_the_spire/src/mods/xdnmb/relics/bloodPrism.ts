@@ -108,7 +108,7 @@ export const wheelOfFateRelic: RelicMap = {
                 key: "countAndTrigger",
                 params: {
                     countKey: "drawCount",
-                    threshold: "$target.status.drawThreshold",
+                    threshold: "$target.status(drawThreshold)",
                     onTrigger: {
                         key: "giveTemporaryEffectToRandomCards",
                         targetType: "self",

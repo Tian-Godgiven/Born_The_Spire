@@ -1595,7 +1595,7 @@ export const organList:OrganMap[] = [
             key: "initLifeStealBudget",
             label: "腐食再生：初始化预算",
             targetType: "triggerOwner",
-            effect: [{ key: "applyState", params: { stateKey: "lifeStealBudget", stacks: "$owner.status(max-health)" } }]
+            effect: [{ key: "applyState", params: { stateKey: "lifeStealBudget", stacks: "$target.status(max-health)" } }]
         }],
         lifeStealHeal: [{
             key: "lifeStealHeal",

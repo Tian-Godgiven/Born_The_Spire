@@ -1,6 +1,6 @@
 /**
  * SlayTheSpire Mod - 换脸商面具遗物
- * 来自换脸商事件的5种面具
+ * 来自换脸商事件的5种面具。pool: exclusive，不进通用遗物奖励。
  */
 
 import type { RelicMap } from '@/core/objects/item/Subclass/Relic'
@@ -15,6 +15,7 @@ export const clericFaceRelic: RelicMap = {
     describe: ["每场战斗结束后", "最大生命值+1"],
     key: "sts_relic_cleric_face",
     rarity: "common",
+    pool: ["exclusive"],
     interaction: {
         possess: {
             target: { key: "owner" },
@@ -48,6 +49,7 @@ export const serpentHeadRelic: RelicMap = {
     describe: ["每次进入？房间时", "获得50金币"],
     key: "sts_relic_serpent_head",
     rarity: "common",
+    pool: ["exclusive"],
     interaction: {
         possess: {
             target: { key: "owner" },
@@ -82,6 +84,7 @@ export const cultistMaskRelic: RelicMap = {
     describe: ["你觉得自己有开腔的欲望"],
     key: "sts_relic_cultist_mask",
     rarity: "common",
+    pool: ["exclusive"],
     interaction: {
         possess: {
             target: { key: "owner" },
@@ -100,6 +103,7 @@ export const gremlinFaceRelic: RelicMap = {
     describe: ["每场战斗开始时", "获得1层虚弱"],
     key: "sts_relic_gremlin_face",
     rarity: "common",
+    pool: ["exclusive"],
     interaction: {
         possess: {
             target: { key: "owner" },
@@ -133,6 +137,7 @@ export const nlothFaceRelic: RelicMap = {
     describe: ["你打开的下一个宝箱将是空的"],
     key: "sts_relic_nloth_face",
     rarity: "common",
+    pool: ["exclusive"],
     interaction: {
         possess: {
             target: { key: "owner" },

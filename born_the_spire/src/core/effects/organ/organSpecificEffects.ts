@@ -527,14 +527,14 @@ export const organ_powerAmplify: EffectFunc = (event, effect) => {
  * 预算通过 lifeStealBudget 状态层数追踪（初始值 = maxHp×50%）
  */
 export const organ_lifeSteal: EffectFunc = (event, effect) => {
-    const source = event.source
-    if (!isEntity(source)) return false
+    const target = Array.isArray(event.target) ? event.target[0] : event.target
+    if (!isEntity(target)) return false
 
-    const maxHp = (source as any).status?.["max-health"]?.value ?? 0
-    const currentHp = getCurrentValue(source as any, "health", 0)
+    const maxHp = (target as any).status?.["max-health"]?.value ?? 0
+    const currentHp = getCurrentValue(target as any, "health", 0)
     if (maxHp <= 0 || currentHp >= maxHp) return false
 
-    const stateModifier = getStateModifier(source as any)
+    const stateModifier = getStateModifier(target as any)
     const budgetState = stateModifier.getState("lifeStealBudget")
     if (!budgetState) return false
 
@@ -547,9 +547,9 @@ export const organ_lifeSteal: EffectFunc = (event, effect) => {
     const healAmount = Math.max(1, Math.round(missingPercent * coefficient * maxHp))
     const actualHeal = Math.min(healAmount, budget)
 
-    changeCurrentValue(source as any, "health", currentHp + actualHeal, event)
+    changeCurrentValue(target as any, "health", currentHp + actualHeal, event)
     if (defaultStack) defaultStack.stack = Math.max(0, defaultStack.stack - actualHeal)
 
-    newLog([source, `腐食再生：回复 ${actualHeal} 点生命，剩余预算 ${budget - actualHeal}`])
+    newLog([target, `腐食再生：回复 ${actualHeal} 点生命，剩余预算 ${budget - actualHeal}`])
     return true
 }

@@ -1,6 +1,7 @@
 /**
  * SlayTheSpire Mod - 金神像遗物
  * 原作效果：敌人掉落的金币增加25%
+ * pool: exclusive，只从金神像事件获得，不进通用遗物奖励
  */
 
 import type { RelicMap } from '@/core/objects/item/Subclass/Relic'
@@ -11,11 +12,12 @@ export const goldenIdolRelic: RelicMap = {
     describe: ["获得的金币增加25%"],
     key: "sts_relic_golden_idol",
     rarity: "common",
+    pool: ["exclusive"],
     interaction: {
         possess: {
             target: { key: "owner" },
             triggers: [{
-                when: "after",
+                when: "before",
                 how: "take",
                 key: "gainReserve",
                 condition: "$triggerEffect.params(reserveKey) == gold",
@@ -27,10 +29,10 @@ export const goldenIdolRelic: RelicMap = {
         bonusGold: [{
             key: "bonusGold",
             label: "金神像：额外金币",
-            targetType: "owner",
+            targetType: "triggerEffect",
             effect: [{
-                key: "gainReserve",
-                params: { reserveKey: "gold", amount: "$triggerEffect.params(amount) * 0.25" }
+                key: "modifyReserveByPercent",
+                params: { percent: 0.25 }
             }]
         }]
     }
