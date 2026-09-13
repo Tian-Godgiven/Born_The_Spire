@@ -12,6 +12,19 @@
         </div>
     </div>
 
+    <div class="corner-left">
+        <Popover trigger="click" placement="top" align="start">
+            <div class="about-btn">关于我们</div>
+            <template #content>
+                <div class="about-tip">
+                    <div>QQ群</div>
+                    <div class="qq-number">{{ QQ_GROUP }}</div>
+                </div>
+            </template>
+        </Popover>
+    </div>
+    <div class="corner-right">v{{ GAME_VERSION }}</div>
+
     <SettingsModal v-if="showSettings" @close="showSettings = false" />
 </div>
 </template>
@@ -20,6 +33,8 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import SettingsModal from '@/ui/components/interaction/SettingsModal.vue'
+import Popover from '@/ui/components/global/Popover.vue'
+import { GAME_VERSION, QQ_GROUP } from '@/ui/hooks/global/creatorEasterEgg'
 
 const router = useRouter()
 
@@ -33,6 +48,7 @@ const buttonList: { label: string, click: () => void }[] = [
 
 <style scoped lang='scss'>
 .home-page {
+    position: relative;
     width: 100%;
     height: 100%;
     display: flex;
@@ -69,5 +85,46 @@ const buttonList: { label: string, click: () => void }[] = [
     &:active {
         background: rgba(0, 0, 0, 0.1);
     }
+}
+
+.corner-left,
+.corner-right {
+    position: absolute;
+    bottom: 24px;
+}
+
+.corner-left {
+    left: 24px;
+}
+
+.corner-right {
+    right: 24px;
+    font-size: 16px;
+}
+
+.about-btn {
+    padding: 8px 16px;
+    font-size: 16px;
+    border: 2px solid #000;
+    background: #fff;
+    cursor: pointer;
+
+    &:hover {
+        background: rgba(0, 0, 0, 0.05);
+    }
+}
+
+.about-tip {
+    background: #fff;
+    border: 2px solid #000;
+    padding: 12px 16px;
+    font-size: 16px;
+}
+
+.qq-number {
+    margin-top: 4px;
+    font-size: 20px;
+    font-weight: bold;
+    user-select: all;
 }
 </style>

@@ -1,16 +1,13 @@
-/** 给打开控制台的人看的彩蛋。GitHub 没有留言板，Issue 就是留言处。 */
-export const GITHUB_REPO = "https://github.com/Tian-Godgiven/Born_The_Spire"
-export const GITHUB_ISSUES = `${GITHUB_REPO}/issues`
+export const GAME_VERSION = "0.1.0"
+export const QQ_GROUP = "782816134"
 
 export const CREATOR_EGG_LINES = [
-    "看见这里的话：蘇生尖塔很期待更多创作者。",
-    "做 Mod、改内容、或和我们一起写，都欢迎到 GitHub 开 Issue 留言。",
-    GITHUB_ISSUES,
+    "哦你打开了控制台！",
+    "是你遇到了一个bug吗？还是说你在开发新东西？无论怎么样我都希望你知道我们有个QQ群！ 欢迎加入一起来讨论后续的更新/bug修复/mod开发！",
+    `这是我们的群号：${QQ_GROUP}`,
 ]
 
 export function printBrowserCreatorEgg() {
-    console.log("%c蘇生尖塔", "font-size: 20px; font-weight: bold; padding: 8px 0;")
-    console.log("%c你打开了控制台。这里欢迎创作者。", "font-size: 13px;")
     for (const line of CREATOR_EGG_LINES) {
         console.log(line)
     }
