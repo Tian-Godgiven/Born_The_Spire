@@ -13,8 +13,8 @@ import { reactive, watch } from "vue"
 /** LocalStorage key */
 const SETTINGS_KEY = "born_the_spire_settings"
 
-/** 设置格式版本 */
-const CURRENT_VERSION = 1
+/** 设置格式版本。从 1 升到 2：默认关闭测试模式，旧存档整份重读默认 */
+const CURRENT_VERSION = 2
 
 // ========== 类型定义 ==========
 
@@ -22,7 +22,7 @@ const CURRENT_VERSION = 1
  * 设置结构 V1
  */
 export interface GameSettingsV1 {
-    version: 1
+    version: 1 | 2
 
     /** 是否在器官方块上直接显示器官介绍（关闭时改为悬停查看） */
     showOrganDescribe: boolean
@@ -95,7 +95,7 @@ export function createDefaultSettings(): GameSettings {
         animationSpeed: 1,
         skipAnimation: false,
         animationCategories: {},
-        testMode: true
+        testMode: false
     }
 }
 
