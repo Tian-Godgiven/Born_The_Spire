@@ -112,6 +112,16 @@ function loadSettings(): GameSettings {
 
         const parsed = JSON.parse(raw) as Partial<GameSettings>
 
+        // v1 默认把 testMode 写成了 true，公开页会带着秒杀开局。升到 v2 时强制关掉。
+        if (parsed.version === 1) {
+            return {
+                ...defaults,
+                ...parsed,
+                testMode: false,
+                version: CURRENT_VERSION
+            }
+        }
+
         if (parsed.version !== CURRENT_VERSION) {
             console.warn(`[Settings] 设置版本不匹配: ${parsed.version} vs ${CURRENT_VERSION}，使用默认设置`)
             return defaults
