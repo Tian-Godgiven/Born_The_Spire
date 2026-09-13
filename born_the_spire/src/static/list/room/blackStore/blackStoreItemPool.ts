@@ -162,9 +162,14 @@ export function initBlackStoreItemPools(): void {
 
     // 加载药水（使用懒加载）
     const potionList = getLazyModule<PotionMap[]>('potionList')
-    blackStorePotionPool.items = [...potionList]
-    // 药水暂无稀有度系统，使用默认权重
-    blackStorePotionPool.weights = potionList.map(() => 1)
+    const obtainable = potionList.filter(potion => {
+        const pool = potion.pool && potion.pool.length > 0 ? potion.pool : ["common"]
+        return pool.includes("common") || pool.includes("shop")
+    })
+    blackStorePotionPool.items = [...obtainable]
+    blackStorePotionPool.weights = obtainable.map(potion =>
+        getRarityWeight(potion.rarity as Rarity, blackStorePotionPool.rarityWeights)
+    )
 
     // 加载商店限定卡牌（使用懒加载）
     const cardList = getLazyModule<CardMap[]>('cardList')

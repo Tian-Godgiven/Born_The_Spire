@@ -421,15 +421,19 @@ export const eventEffectMap: Record<string, EventEffectFunc> = {
     "gainRandomPotion": async (params?: { count?: number, rarity?: string }) => {
         const count = params?.count || 1
         const potionList = getLazyModule<any[]>('potionList')
+        const obtainable = potionList.filter((p: any) => {
+            const pool = p.pool && p.pool.length > 0 ? p.pool : ["common"]
+            return pool.includes("common") || pool.includes("shop")
+        })
 
-        // 按稀有度筛选（如果指定）——若筛选空，退回全池并警告（用于内容未打 rarity 时兜底）
-        let filtered = potionList
+        // 按稀有度筛选（如果指定）——若筛选空，退回可获得池并警告
+        let filtered = obtainable
         if (params?.rarity) {
-            const byRarity = potionList.filter((p: any) => p.rarity === params.rarity)
+            const byRarity = obtainable.filter((p: any) => p.rarity === params.rarity)
             if (byRarity.length > 0) {
                 filtered = byRarity
             } else {
-                newLog([`没有 ${params.rarity} 稀有度的药水，退回随机全池`])
+                newLog([`没有 ${params.rarity} 稀有度的药水，退回随机可获得池`])
             }
         }
         if (filtered.length === 0) {

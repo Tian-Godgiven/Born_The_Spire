@@ -7,12 +7,14 @@ import type { LogUnit } from "@/ui/hooks/global/log";
 export type PotionMap = ItemMap & {
     targetType:"player"|"enemy"|"all",
     canDrop?: boolean  // 是否可丢弃，默认 true
+    rarity?: "common" | "uncommon" | "rare"
 }
 
 export class Potion extends Item{
     public readonly itemType = 'potion' as const  // 类型标识
     public targetType:"player"|"enemy"|"all"
     public canDrop:boolean // 是否可丢弃
+    public rarity?: "common" | "uncommon" | "rare"
 
     constructor(
         map:PotionMap
@@ -20,6 +22,7 @@ export class Potion extends Item{
         super(map)
         this.targetType = map.targetType;
         this.canDrop = map.canDrop ?? true; // 默认可丢弃
+        this.rarity = map.rarity
     }
 }
 

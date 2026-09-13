@@ -24,9 +24,16 @@
     <!-- 描述弹窗 -->
     <Popover v-if="potion" inline trigger="manual" :show="showDescPopover" :anchor="wrapperRef" placement="bottom" align="start">
         <template #content>
-            <div class="potion-popover description">
+            <div class="potion-popover description" ref="tooltipRef">
                 <div class="potion-name">{{ potion.label }}</div>
-                <div class="potion-desc">{{ description }}</div>
+                <DescribeText
+                    :describe="effectDescribe"
+                    :target="potion"
+                    :glossary-anchor="tooltipRef"
+                    :glossary-order="1"
+                    ref-placement="right"
+                    ref-align="start"
+                />
             </div>
         </template>
     </Popover>
@@ -64,7 +71,8 @@ import type { Potion } from '@/core/objects/item/Subclass/Potion'
 import { usePotion, discardPotion } from '@/core/objects/item/Subclass/Potion'
 import { nowPlayer } from '@/core/objects/game/run'
 import type { Target } from '@/core/objects/target/Target'
-import { getDescribe } from '@/ui/hooks/express/describe'
+import { getEffectDescribe } from '@/ui/hooks/express/describe'
+import DescribeText from '@/ui/components/display/DescribeText.vue'
 import ChooseSource from '@/ui/components/interaction/chooseTarget/ChooseSource.vue'
 import Popover from '@/ui/components/global/Popover.vue'
 
@@ -73,6 +81,7 @@ const props = defineProps<{
 }>()
 
 const wrapperRef = useTemplateRef('wrapperRef')
+const tooltipRef = useTemplateRef('tooltipRef')
 const chooseSourceRef = useTemplateRef('chooseSourceRef')
 const showDescPopover = ref(false)
 const showMenuPopover = ref(false)
@@ -83,11 +92,7 @@ const potionLabel = computed(() => {
     return props.potion ? `[${props.potion.label}]` : '[空]'
 })
 
-// 药水描述
-const description = computed(() => {
-    if (!props.potion || !props.potion.describe) return ''
-    return getDescribe(props.potion.describe, props.potion)
-})
+const effectDescribe = computed(() => getEffectDescribe(props.potion))
 
 // 是否可以使用
 const canUse = computed(() => {
@@ -229,7 +234,6 @@ onBeforeUnmount(() => {
         }
 
         .potion-desc {
-            white-space: pre-wrap;
             line-height: 1.4;
         }
     }

@@ -546,11 +546,15 @@ export class BattleRoom extends Room {
 
         // 随机选择一个药水
         const potionList = getLazyModule<any[]>('potionList')
-        if (potionList.length === 0) {
+        const obtainable = potionList.filter((p: any) => {
+            const pool = p.pool && p.pool.length > 0 ? p.pool : ["common"]
+            return pool.includes("common") || pool.includes("shop")
+        })
+        if (obtainable.length === 0) {
             return null
         }
 
-        const randomPotion = potionList[Math.floor(Math.random() * potionList.length)]
+        const randomPotion = obtainable[Math.floor(Math.random() * obtainable.length)]
 
         
         return rewardRegistry.createReward({
