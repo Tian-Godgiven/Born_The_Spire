@@ -2,7 +2,7 @@
 <div @pointerenter="handlePointerEnter"
      @pointerleave="handlePointerLeave" 
      class="chooseSource"
-     :class="state"
+     :class="[state, { 'no-scale': disableScale }]"
      ref="source">
     <slot></slot>
 </div>
@@ -15,7 +15,7 @@ import type { TargetType } from '@/static/list/registry/chooseTargetType';
 import { startChooseTarget } from '@/ui/interaction/target/chooseTarget';
     import { reactive, ref, useTemplateRef } from 'vue';
 
-    const {onStop,onHover,onSuccess} = defineProps<{onStop?:()=>void,onHover?:(target?:Target)=>void,onSuccess:(targets:Target[])=>void}>()
+    const {onStop,onHover,onSuccess,disableScale} = defineProps<{onStop?:()=>void,onHover?:(target?:Target)=>void,onSuccess:(targets:Target[])=>void, disableScale?: boolean}>()
 
     defineExpose({
         startChoose:startChoose
@@ -75,7 +75,8 @@ import { startChooseTarget } from '@/ui/interaction/target/chooseTarget';
 
 <style scoped lang='scss'>
 .chooseSource{
-    &.hovering,&.choosing{
+    &.hovering:not(.no-scale),
+    &.choosing:not(.no-scale){
         transform: scale(1.2);
     }
 }

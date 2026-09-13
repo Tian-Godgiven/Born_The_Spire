@@ -236,7 +236,7 @@ export function chooseWrongTarget(){
     onStop?.([...nowChooseAction.value.chosenTargets] as any)
 }
 //自动选择目标
-function autoChooseTarget(){
+export function autoChooseTarget(){
     //自动获取场上的对象
     tmp()
     //完成选择

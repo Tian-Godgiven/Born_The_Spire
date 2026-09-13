@@ -15,7 +15,7 @@ import { gainMark } from "@/core/hooks/mark"
 import { nowPlayer } from "@/core/objects/game/run"
 import { doEvent } from "@/core/objects/system/ActionEvent"
 import { GoldReward } from "@/core/objects/reward/GoldReward"
-import { RelicSelectReward } from "@/core/objects/reward/RelicSelectReward"
+import { RelicReward } from "@/core/objects/reward/RelicReward"
 
 /**
  * 宝箱房间配置
@@ -150,17 +150,17 @@ export class TreasureRoom extends Room {
         })
         rewards.push(goldReward)
 
-        // 2. 遗物奖励（带过滤）
+        // 2. 遗物奖励：先抽好，直接放进战利品点领取。
+        // 三选一用 RelicSelectReward，那是精英/Boss 结算，不是宝箱。
         const selectedRelics = selectRelicsWithFilter(this.relicFilter)
 
         if (selectedRelics.length > 0) {
-            const relicReward = new RelicSelectReward({
-                type: "relicSelect",
-                relicOptions: selectedRelics,
-                selectCount: 1,
-                title: "选择遗物"
-            })
-            rewards.push(relicReward)
+            for (const relicConfig of selectedRelics) {
+                rewards.push(new RelicReward({
+                    type: "relic",
+                    relicConfig
+                }))
+            }
         } else {
             newLog(["宝箱中没有遗物"])
         }

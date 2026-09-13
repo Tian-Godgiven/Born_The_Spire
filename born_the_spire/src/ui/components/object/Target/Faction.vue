@@ -1,5 +1,6 @@
 <template>
 <div class="faction"
+    :data-battle-faction="factionName"
     @mouseenter="onHover" @mouseleave="onLeave" @click="onClick">
     <ChooseBox :chooseState="chooseState.chooseState"></ChooseBox>
     <div class="faction-members">

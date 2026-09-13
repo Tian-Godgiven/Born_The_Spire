@@ -37,6 +37,7 @@ import { ref, nextTick, onMounted, onUnmounted } from 'vue'
 import { consoleCommandRegistry } from '@/core/utils/consoleCommandRegistry'
 import { registerAllCommands } from './commands'
 import { DEV_CONSOLE_Z_INDEX } from '@/ui/hooks/interaction/popoverHost'
+import { CREATOR_EGG_LINES } from '@/ui/hooks/global/creatorEasterEgg'
 
 interface OutputLine {
     type: 'command' | 'result' | 'error' | 'info' | 'example'
@@ -322,6 +323,10 @@ function open() {
     if (outputLines.value.length === 0) {
         addOutput('开发者控制台已启动', 'info')
         addOutput('输入 help 查看可用命令', 'info')
+        addOutput('', 'info')
+        for (const line of CREATOR_EGG_LINES) {
+            addOutput(line, 'info')
+        }
     }
 }
 

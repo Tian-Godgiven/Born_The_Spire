@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "born_the_spire",
+  "productName": "蘇生尖塔",
   "version": "0.1.0",
   "identifier": "com.born_the_spire.app",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "born_the_spire",
+        "title": "蘇生尖塔",
         "width": 800,
         "height": 600
       }

@@ -1,5 +1,5 @@
 <template>
-<div class="handPile center">
+<div class="handPile center" data-hand-pile>
     <div
         v-for="(card, index) in visibleHandPile"
         :key="card.__id"

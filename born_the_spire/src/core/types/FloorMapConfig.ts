@@ -233,6 +233,12 @@ export interface LayerLayout {
    * 如果指定且大于列表长度，剩余节点将按默认规则生成
    */
   nodeCount?: number
+
+  /**
+   * 整层所有节点都是这个类型（宝箱层、Boss 门前水池）。
+   * 有 fillType 时忽略 roomTypes 列表长度，每个节点都铺上。
+   */
+  fillType?: RoomType
 }
 
 /**
@@ -414,11 +420,11 @@ export const defaultFloorMapConfig: FloorMapConfig = {
   },
 
   layerLayouts: {
-    7: {
-      roomTypes: ["treasure"]  // 第8层：宝箱房
+    6: {
+      fillType: "treasure"  // 第7层：整层宝箱
     },
     13: {
-      roomTypes: ["pool", "pool", "pool"]
+      fillType: "pool"  // Boss 门前：整层水池
     },
     14: {
       roomTypes: ["bossBattle"]

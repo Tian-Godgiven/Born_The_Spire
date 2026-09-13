@@ -88,6 +88,10 @@ Promise.all([
             .use(router)
             .mount("#app");
 
+        import("@/ui/hooks/global/creatorEasterEgg").then(({ printBrowserCreatorEgg }) => {
+            printBrowserCreatorEgg()
+        })
+
     }).catch(error => {
         console.error('[Main] 数据预加载失败:', error)
     });

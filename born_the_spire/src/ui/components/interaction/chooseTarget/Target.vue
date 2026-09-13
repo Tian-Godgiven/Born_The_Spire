@@ -1,5 +1,6 @@
 <template>
-<div class="target" 
+<div class="target"
+    :data-battle-target-id="target.__id"
     @mouseenter="onHover" @mouseleave="onLeave" @click="onClick">
     <ChooseBox class="chooseBox" :chooseState="targetState.chooseState"></ChooseBox>
     <slot></slot>

@@ -26,21 +26,14 @@ interface Violation {
 export class MapGenerator {
   private config: FloorMapConfig
   private rng: SeededRandom
-  private usedRooms: Map<RoomType, Set<string>> = new Map()
+  /** 本图已经发出去的房间 key。池耗尽前不重复，reset 只清当前池里的 key。 */
+  private assignedRoomKeys = new Set<string>()
   /** 本图已实际进入（分配过 key）的普通战斗次数。精英/Boss 不计 */
   private hallwayBattlesFought = 0
 
   constructor(config: FloorMapConfig) {
     this.config = config
     this.rng = new SeededRandom(config.seed || Date.now())
-
-    // 初始化已使用房间追踪
-    if (config.roomAssignmentStrategy?.trackUsedRooms !== false) {
-      const lazyTypes = config.roomAssignmentStrategy?.lazyTypes || ["battle", "event"]
-      for (const type of lazyTypes) {
-        this.usedRooms.set(type as RoomType, new Set())
-      }
-    }
   }
 
   /**
@@ -282,6 +275,13 @@ export class MapGenerator {
    * 应用层级布局配置
    */
   private applyLayerLayout(nodes: MapNode[], layout: LayerLayout): void {
+    if (layout.fillType) {
+      for (const node of nodes) {
+        node.roomType = layout.fillType
+      }
+      return
+    }
+
     // 模式1：指定具体房间key列表
     if (layout.roomKeys) {
       for (let i = 0; i < Math.min(nodes.length, layout.roomKeys.length); i++) {
@@ -481,15 +481,8 @@ export class MapGenerator {
       }
 
       // 从房间池中选择
-      const pool = this.getRoomPool(node.roomType)
-      if (pool.length > 0) {
-        // 使用种子随机数生成器
-        const nodeRng = this.rng.derive(node.id)
-        node.roomKey = nodeRng.choice(pool)
-      } else {
-        console.warn(`[MapGenerator] 房间池为空: ${node.roomType}`)
-        node.roomKey = `${node.roomType}_default`
-      }
+      node.roomKey = this.pickRoomKey(node, this.getRoomPool(node.roomType))
+        ?? `${node.roomType}_default`
     }
   }
 
@@ -521,7 +514,7 @@ export class MapGenerator {
   }
 
   /**
-   * 从给定池抽一个未用过的房间 key，写入 usedRooms[node.roomType]
+   * 从给定池抽一个未用过的房间 key。池耗尽才按 exhaustionStrategy 重置该池。
    */
   private pickRoomKey(
     node: MapNode,
@@ -535,38 +528,34 @@ export class MapGenerator {
     }
 
     const trackUsed = this.config.roomAssignmentStrategy?.trackUsedRooms !== false
-    const usedSet = this.usedRooms.get(node.roomType)
+    const nodeRng = this.rng.derive(node.id)
 
-    if (trackUsed && usedSet) {
-      const availablePool = pool.filter(key => !usedSet.has(key))
-
-      if (availablePool.length === 0) {
-        if (options?.fallbackOnEmpty) return null
-
-        const strategy = this.config.roomAssignmentStrategy?.exhaustionStrategy?.[node.roomType] || "reset"
-
-        if (strategy === "reset") {
-          usedSet.clear()
-          const nodeRng = this.rng.derive(node.id)
-          const roomKey = nodeRng.choice(pool)
-          usedSet.add(roomKey)
-          return roomKey
-        } else if (strategy === "allow-repeat") {
-          const nodeRng = this.rng.derive(node.id)
-          return nodeRng.choice(pool)
-        } else {
-          throw new Error(`${node.roomType} 房间池耗尽且策略为 error`)
-        }
-      }
-
-      const nodeRng = this.rng.derive(node.id)
-      const roomKey = nodeRng.choice(availablePool)
-      usedSet.add(roomKey)
-      return roomKey
+    if (!trackUsed) {
+      return nodeRng.choice(pool)
     }
 
-    const nodeRng = this.rng.derive(node.id)
-    return nodeRng.choice(pool)
+    const availablePool = pool.filter(key => !this.assignedRoomKeys.has(key))
+
+    if (availablePool.length === 0) {
+      if (options?.fallbackOnEmpty) return null
+
+      const strategy = this.config.roomAssignmentStrategy?.exhaustionStrategy?.[node.roomType] || "reset"
+
+      if (strategy === "reset") {
+        for (const key of pool) this.assignedRoomKeys.delete(key)
+        const roomKey = nodeRng.choice(pool)
+        this.assignedRoomKeys.add(roomKey)
+        return roomKey
+      }
+      if (strategy === "allow-repeat") {
+        return nodeRng.choice(pool)
+      }
+      throw new Error(`${node.roomType} 房间池耗尽且策略为 error`)
+    }
+
+    const roomKey = nodeRng.choice(availablePool)
+    this.assignedRoomKeys.add(roomKey)
+    return roomKey
   }
 
   /**

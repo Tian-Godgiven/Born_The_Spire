@@ -123,6 +123,7 @@ onMounted(() => {
     height: 100%;
     display: flex;
     flex-direction: column;
+    user-select: none;
     .top{
         height: var(--running-top-height);
     }

@@ -9,7 +9,7 @@
           :key="reward.__key"
           placement="bottom"
           align="start"
-          :disabled="!showBeastMark(reward)"
+          :disabled="reward.type === 'relic' || !showBeastMark(reward)"
         >
           <div
             class="reward-row"
@@ -23,7 +23,19 @@
             <div class="reward-info">
               <span class="reward-icon">{{ reward.getDisplayIcon() }}</span>
               <div class="reward-text-col">
-                <span class="reward-text">{{ reward.getDisplayTitle() }}</span>
+                <Popover
+                  v-if="relicPreviewOf(reward)"
+                  inline
+                  placement="right"
+                  align="start"
+                  :max-width="360"
+                >
+                  <span class="reward-text relic-hover-name">{{ reward.getDisplayTitle() }}</span>
+                  <template #content>
+                    <RelicHoverContent :relic="relicPreviewOf(reward)!" />
+                  </template>
+                </Popover>
+                <span v-else class="reward-text">{{ reward.getDisplayTitle() }}</span>
                 <span v-if="showBeastMark(reward)" class="beast-caption">
                   {{ isBeastForced(reward) ? '🐕 小兽霸占了这份' : '🐕 小兽想要这份' }}
                 </span>
@@ -211,6 +223,7 @@ import type { OrganRewardAction } from '@/core/types/organRewardAction'
 import Card from '@/ui/components/object/Card.vue'
 import type { Card as CardType } from '@/core/objects/item/Subclass/Card'
 import Relic from '@/ui/components/object/Relic.vue'
+import RelicHoverContent from '@/ui/components/interaction/RelicHoverContent.vue'
 import type { Relic as RelicType } from '@/core/objects/item/Subclass/Relic'
 import Popover from '@/ui/components/global/Popover.vue'
 import OrganPopup from '@/ui/components/interaction/OrganPopup.vue'
@@ -218,6 +231,26 @@ import OrganMilestoneTrack from '@/ui/components/interaction/OrganMilestoneTrack
 const visible = computed(() => showRewardUI.value)
 const rewards = computed(() => currentRewards.value)
 const potionBarFullHint = ref(false)
+const relicPreviews = shallowRef<Record<string, RelicType>>({})
+let relicPreviewSeq = 0
+
+function relicPreviewOf(reward: any): RelicType | undefined {
+  return relicPreviews.value[reward.__key]
+}
+
+watch(rewards, async (list) => {
+  const seq = ++relicPreviewSeq
+  const entries: [string, RelicType][] = []
+  const { createRelic } = await import('@/core/factories')
+  for (const reward of list) {
+    if (reward.type !== 'relic' || !reward.relicConfig) continue
+    const relic = await createRelic(reward.relicConfig)
+    if (seq !== relicPreviewSeq) return
+    entries.push([reward.__key, markRaw(relic as RelicType)])
+  }
+  if (seq !== relicPreviewSeq) return
+  relicPreviews.value = Object.fromEntries(entries)
+}, { immediate: true })
 
 function showBeastMark(reward: any) {
   return isBeastMarked(reward) && !reward.isClaimed()
@@ -492,6 +525,10 @@ async function handleProceed() {
 .reward-text {
   font-weight: bold;
   color: #333;
+}
+
+.relic-hover-name {
+  border-bottom: 1px solid black;
 }
 
 .beast-caption {

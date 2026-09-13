@@ -1,5 +1,5 @@
 <template>
-<div class="allFactions" @mouseenter="onHover" @mouseleave="onLeave" @click="onClick">
+<div class="allFactions" data-battle-faction="all" @mouseenter="onHover" @mouseleave="onLeave" @click="onClick">
     <ChooseBox :choose-state="state.chooseState"></ChooseBox>
     <slot></slot>
     
