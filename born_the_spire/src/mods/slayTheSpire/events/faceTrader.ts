@@ -4,35 +4,45 @@
  */
 
 import type { EventMap } from '@/core/types/EventMapData'
+import type { Describe } from '@/ui/hooks/express/describe'
 
-const desc_main = [
+function describeLines(...lines: string[]): Describe {
+    const out: Describe = []
+    lines.forEach((line, index) => {
+        if (index > 0) out.push("<br>")
+        out.push(line)
+    })
+    return out
+}
+
+const desc_main = describeLines(
     "你经过一尊举着许多不同面具的奇怪雕像，但没走几步……",
     "你就听见身后传来一个轻柔的声音：",
     "「请留步。」",
     "你回了回头，却发现那尊雕像也已经转向了你！",
     "仔细一看，原来这并不是一尊雕像，只是一个肤色如同雕像的消瘦男人……他是不是根本没有在呼吸？",
     "「你的脸，让我碰碰？或者，想要交易？」"
-].join("\n")
+)
 
-const desc_touch = [
+const desc_touch = describeLines(
     "「补偿吗？当然了」",
     "他动作机械地伸出手来，将一叠金币放进了你的钱袋里。",
     "「真是张好脸，啊啊，多好的脸。」",
     "当他触碰你的脸颊时，你觉得自己的生命好像正在流失！",
     "突然之间，只见他带着的面具掉落了下来在地上摔得粉碎，他立即尖叫起来，六只手飞快地捂住了自己的脸，这下那些面具全都摔落下来了！在这凄厉的尖叫和众多面具粉碎的声音中，你赶紧逃离了这里。",
     "你在不经意间瞥到了他面具下的样子：他的脸是一片空白。"
-].join("\n")
+)
 
-const desc_trade = [
+const desc_trade = describeLines(
     "「和我？和我吗？啊，当然了……可以。可以……唔嗯……」",
     "你看见他的一根手臂抖动了一下，突然你的脸出现在了他的手里！似乎你的脸和那个面具交换了。",
     "「很好的脸，唔，很好的脸。」"
-].join("\n")
+)
 
-const desc_leave = [
+const desc_leave = describeLines(
     "「留步，留步啊，请留步，请留步，请留步。」",
     "你觉得自己做出了正确的选择。"
-].join("\n")
+)
 
 export const faceTraderEvent: EventMap = {
     key: "sts_event_face_trader",
@@ -57,7 +67,19 @@ export const faceTraderEvent: EventMap = {
                 },
                 {
                     title: "交易",
-                    description: "50%获得好脸；50%获得坏脸。",
+                    description: [
+                        "50%获得",
+                        { relic: "sts_relic_cleric_face" },
+                        "或",
+                        { relic: "sts_relic_serpent_head" },
+                        "；50%获得",
+                        { relic: "sts_relic_cultist_mask" },
+                        "、",
+                        { relic: "sts_relic_gremlin_face" },
+                        "或",
+                        { relic: "sts_relic_nloth_face" },
+                        "。"
+                    ],
                     icon: "🔄",
                     nextScene: "trade_result",
                     effects: [
@@ -79,7 +101,6 @@ export const faceTraderEvent: EventMap = {
                 },
                 {
                     title: "离开",
-                    description: "",
                     icon: "🚪",
                     nextScene: "leave_result"
                 }
@@ -90,8 +111,7 @@ export const faceTraderEvent: EventMap = {
             title: "触碰",
             description: desc_touch,
             options: [{
-                title: "离开",
-                description: ""
+                title: "离开"
             }]
         },
         {
@@ -99,8 +119,7 @@ export const faceTraderEvent: EventMap = {
             title: "交易",
             description: desc_trade,
             options: [{
-                title: "离开",
-                description: ""
+                title: "离开"
             }]
         },
         {
@@ -108,8 +127,7 @@ export const faceTraderEvent: EventMap = {
             title: "离开",
             description: desc_leave,
             options: [{
-                title: "离开",
-                description: ""
+                title: "离开"
             }]
         }
     ]

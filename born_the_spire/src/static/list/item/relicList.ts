@@ -925,11 +925,12 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             storeEnergy: [{
+                sourceTargetType: "triggerOwner",
                 targetType: "triggerSource",
                 key: "store",
                 effect: [{
                     key: "setBaseStatus",
-                    params: { statusKey: "storedEnergy", value: "$owner.current(energy)" }
+                    params: { statusKey: "storedEnergy", value: "$source.current(energy)" }
                 }]
             }],
             releaseEnergy: [

@@ -12,12 +12,15 @@ export const colosseumEvent: EventMap = {
     icon: "⚔️",
 
     scenes: [
-        // 第一幕：进入竞技场
         {
             key: "intro",
             type: "text",
             title: "竞技场",
-            description: "你走进一座巨大的竞技场，看台上的观众们发出震耳欲聋的欢呼声。一个声音从高处传来：「勇士！证明你的实力吧！」",
+            description: [
+                "你走进一座巨大的竞技场，看台上的观众们发出震耳欲聋的欢呼声。",
+                "<br>",
+                "一个声音从高处传来：「勇士！证明你的实力吧！」"
+            ],
             options: [
                 {
                     key: "fight",
@@ -28,7 +31,6 @@ export const colosseumEvent: EventMap = {
             ]
         },
 
-        // 第二幕：第一场战斗
         {
             key: "battle_1",
             type: "battle",
@@ -42,12 +44,15 @@ export const colosseumEvent: EventMap = {
             options: []
         },
 
-        // 第三幕：第一场战斗后的选择
         {
             key: "post_battle",
             type: "text",
             title: "竞技场 - 中场",
-            description: "观众们为你的胜利欢呼！主持人再次开口：「精彩！你愿意继续挑战更强大的对手吗？奖赏将更加丰厚！」",
+            description: [
+                "观众们为你的胜利欢呼！",
+                "<br>",
+                "主持人再次开口：「精彩！你愿意继续挑战更强大的对手吗？奖赏将更加丰厚！」"
+            ],
             options: [
                 {
                     key: "continue",
@@ -66,7 +71,6 @@ export const colosseumEvent: EventMap = {
             ]
         },
 
-        // 第四幕：第二场战斗（更难，有奖励）
         {
             key: "battle_2",
             type: "battle",
@@ -87,12 +91,15 @@ export const colosseumEvent: EventMap = {
             options: []
         },
 
-        // 第五幕：胜利
         {
             key: "victory",
             type: "text",
             title: "竞技场 - 冠军",
-            description: "观众们疯狂地欢呼！你被授予竞技场冠军的称号。主持人向你深深鞠躬：「无人能挡！今天的冠军——就是你！」",
+            description: [
+                "观众们疯狂地欢呼！你被授予竞技场冠军的称号。",
+                "<br>",
+                "主持人向你深深鞠躬：「无人能挡！今天的冠军——就是你！」"
+            ],
             options: [
                 {
                     key: "leave_victory",
