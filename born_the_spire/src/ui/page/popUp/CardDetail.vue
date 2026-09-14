@@ -95,9 +95,5 @@
         margin: 0;
         accent-color: #000;
     }
-
-    &:hover {
-        background: rgba(0, 0, 0, 0.05);
-    }
 }
 </style>

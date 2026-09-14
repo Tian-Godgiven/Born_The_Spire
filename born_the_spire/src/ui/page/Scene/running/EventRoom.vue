@@ -186,24 +186,24 @@ async function onBattleEnd(result: 'player_win' | 'player_lose') {
     max-width: 800px;
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: var(--layout-event-gap);
 }
 
 .event-header {
     text-align: left;
     border-bottom: 2px solid black;
-    padding-bottom: 1rem;
+    padding-bottom: var(--layout-gap-sm);
 }
 
 .event-title {
-    font-size: 2.5rem;
+    font-size: var(--layout-event-title-size);
     margin: 0;
     font-weight: bold;
 }
 
 .event-description {
     text-align: left;
-    padding: 1rem 2rem;
+    padding: var(--layout-event-option-pad);
     background: white;
 }
 
@@ -223,7 +223,7 @@ async function onBattleEnd(result: 'player_win' | 'player_lose') {
 .event-options {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: var(--layout-event-option-gap);
 }
 
 .event-option {
@@ -243,13 +243,13 @@ async function onBattleEnd(result: 'player_win' | 'player_lose') {
 }
 
 .option-content {
-    padding: 1.5rem 2rem;
+    padding: var(--layout-event-option-pad);
 }
 
 .option-title {
-    font-size: 1.5rem;
+    font-size: var(--layout-event-option-title-size);
     font-weight: bold;
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--layout-gap-sm);
 }
 
 .option-description {

@@ -23,7 +23,6 @@
       </div>
 
       <div class="card-group-footer">
-        <span class="card-count">共 {{ cards.length }} 张卡牌</span>
         <button class="action-btn" @click="handleClose">关闭</button>
       </div>
     </div>
@@ -78,7 +77,7 @@ function handleClose() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 20px;
+  padding: var(--layout-modal-chrome-pad);
   border-bottom: 2px solid black;
 }
 
@@ -107,9 +106,9 @@ function handleClose() {
 
 .card-group-content {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 20px;
-  max-height: 70vh;
 }
 
 .card-list {
@@ -132,15 +131,10 @@ function handleClose() {
 
 .card-group-footer {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  padding: 15px 20px;
+  padding: var(--layout-modal-chrome-pad);
   border-top: 2px solid #ddd;
-}
-
-.card-count {
-  font-size: 14px;
-  color: #666;
 }
 
 .action-btn {

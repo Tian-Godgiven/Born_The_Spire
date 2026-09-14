@@ -1,5 +1,8 @@
 <template>
   <main class="main" @mousemove="onMousemove">
+    <div v-if="needsLandscapePrompt" class="landscape-prompt">
+      请横屏游玩
+    </div>
     <div class="router">
       <RouterView></RouterView>
     </div>
@@ -23,6 +26,11 @@ import { onMounted, defineAsyncComponent } from 'vue';
 import { RouterView } from 'vue-router';
 import router from './ui/router';
 import { onMousemove } from './ui/hooks/global/mousePosition';
+import { initLayoutMode, needsLandscapePrompt } from './ui/hooks/global/layoutMode';
+import './ui/styles/layout/pc.scss';
+import './ui/styles/layout/mobile.scss';
+
+initLayoutMode()
 
 // 使用异步组件避免在 preload 之前加载核心类
 const PopUpContainer = defineAsyncComponent(() =>
@@ -60,11 +68,28 @@ body{
   margin: 0;
 }
 .main{
-  padding: 10px;
+  padding: var(--layout-page-padding);
+  padding-top: calc(var(--layout-page-padding) + var(--layout-safe-top));
+  padding-right: calc(var(--layout-page-padding) + var(--layout-safe-right));
+  padding-bottom: calc(var(--layout-page-padding) + var(--layout-safe-bottom));
+  padding-left: calc(var(--layout-page-padding) + var(--layout-safe-left));
   box-sizing: border-box;
   width: 100%;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
+}
+.landscape-prompt{
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: #000;
+  font-size: 24px;
+  border: 2px solid #000;
 }
 .router{
   width: 100%;

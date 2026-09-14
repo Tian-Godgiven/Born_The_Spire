@@ -66,7 +66,7 @@ const buttonList: { label: string, click: () => void }[] = [
 .control {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: var(--layout-gap-md);
 }
 
 .menu-btn {

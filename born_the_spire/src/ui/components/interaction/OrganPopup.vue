@@ -57,9 +57,9 @@ function getEntryLabel(entryKey: string): string {
     background: white;
     border: 2px solid black;
     padding: 12px;
-    width: 270px;
+    width: var(--layout-organ-popup-width);
     box-sizing: border-box;
-    flex-shrink: 0;
+    max-width: 100%;
 
     .popup-header {
         display: flex;

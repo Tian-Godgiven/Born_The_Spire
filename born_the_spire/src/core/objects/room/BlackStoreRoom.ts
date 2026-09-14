@@ -707,7 +707,7 @@ export class BlackStoreRoom extends Room {
     static readonly HEALTH_SELL_AMOUNT = 10
 
     /**
-     * 出售生命值（每次固定消耗 10 点）
+     * 出售当前生命（每次固定消耗 10 点，不扣最大生命）
      */
     async sellHealth(): Promise<number> {
         if (!this.allowSellHealth) {
@@ -728,21 +728,16 @@ export class BlackStoreRoom extends Room {
         // 计算售价（随着售出次数增加不断贬值）
         const price = this.calculateHealthSellPrice(amount)
 
-        newLog([`出售了 ${amount} 生命值，获得 ${price} 金钱`])
+        newLog([`出售了 ${amount} 当前生命，获得 ${price} 金钱`])
 
-        // 扣除最大生命值和当前生命值
-        doEvent({
-            key: "loseMaxHealth",
+        await doEvent({
+            key: "loseHealth",
             source: nowPlayer,
             medium: nowPlayer,
             target: nowPlayer,
             effectUnits: [{
-                key: "addStatusBaseCurrentValue",
-                params: {
-                    value: -amount,
-                    statusKey: "max-health",
-                    currentKey: "health"
-                }
+                key: "loseHealth",
+                params: { value: amount }
             }]
         })
 

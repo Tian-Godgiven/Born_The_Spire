@@ -1,7 +1,8 @@
 <template>
 <div class="battle-view">
     <div class="energy center">
-       能量：{{ energys.now +"/"+energys.max }}
+        <span class="energy-label">能量</span>
+        <span class="energy-value">{{ energys.now }}/{{ energys.max }}</span>
     </div>
 
     <AllFactions>
@@ -123,25 +124,39 @@
     }
 }
 .energy{
-    width: 100px;
-    height: 100px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    width: max-content;
+    min-width: var(--layout-energy-size);
+    height: max-content;
+    min-height: var(--layout-energy-size);
+    padding: 4px 8px;
+    box-sizing: border-box;
+    white-space: nowrap;
+    font-size: var(--layout-pile-font);
     position: absolute;
-    left: 130px;
-    bottom: 100px;
+    left: var(--layout-energy-left);
+    bottom: var(--layout-energy-bottom);
     z-index: 100;
 }
 .endTurn{
-    width: 120px;
-    height: 50px;
+    width: var(--layout-end-turn-width);
+    min-width: max-content;
+    height: var(--layout-end-turn-height);
+    padding: 0 12px;
+    box-sizing: border-box;
+    white-space: nowrap;
     position: absolute;
-    right: 200px;
-    bottom: 120px;
+    right: var(--layout-end-turn-right);
+    bottom: var(--layout-end-turn-bottom);
     z-index: 100;
     background: #f0f0f0;
     border: 2px solid black;
     cursor: pointer;
     font-weight: bold;
-    font-size: 16px;
+    font-size: var(--layout-pile-font);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -163,33 +178,35 @@
     z-index: 10;
     position: absolute;
     bottom: 0;
-    height: 300px;
+    height: var(--layout-hand-height);
     left: 50%;
     transform: translateX(-50%);
-    max-width: calc(100% - 400px);
+    max-width: calc(100% - var(--layout-hand-side-gap));
+}
+.drawPile,
+.discardPile,
+.exhaustPile{
+    width: max-content;
+    min-width: var(--layout-pile-size);
+    height: max-content;
+    min-height: var(--layout-pile-size);
+    padding: 4px 8px;
+    box-sizing: border-box;
+    white-space: nowrap;
+    font-size: var(--layout-pile-font);
+    position: absolute;
+    z-index: 100;
 }
 .drawPile{
-    height: 100px;
-    width: 100px;
-    position: absolute;
-    left: 50px;
-    bottom: 40px;
-    z-index: 100;
+    left: var(--layout-draw-left);
+    bottom: var(--layout-draw-bottom);
 }
 .discardPile{
-    height: 100px;
-    width: 100px;
-    position: absolute;
-    right: 50px;
-    bottom: 40px;
-    z-index: 100;
+    right: var(--layout-discard-right);
+    bottom: var(--layout-discard-bottom);
 }
 .exhaustPile{
-    height: 100px;
-    width: 100px;
-    position: absolute;
-    right: 50px;
-    bottom: 120px;
-    z-index: 100;
+    right: var(--layout-exhaust-right);
+    bottom: var(--layout-exhaust-bottom);
 }
 </style>

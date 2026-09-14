@@ -73,32 +73,32 @@ async function leavePool() {
     max-width: 800px;
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: var(--layout-event-gap);
 }
 
 .pool-header {
     text-align: center;
     border-bottom: 2px solid black;
-    padding-bottom: 1rem;
+    padding-bottom: var(--layout-gap-sm);
 }
 
 .pool-title {
-    font-size: 2.5rem;
+    font-size: var(--layout-event-title-size);
     margin: 0;
     font-weight: bold;
 }
 
 .pool-description {
     text-align: center;
-    padding: 1rem 2rem;
+    padding: var(--layout-event-option-pad);
     border: 2px solid black;
     background: white;
 }
 
 .pool-description p {
-    font-size: 1.2rem;
+    font-size: var(--layout-event-body-size);
     margin: 0;
-    line-height: 1.6;
+    line-height: 1.5;
 }
 
 </style>

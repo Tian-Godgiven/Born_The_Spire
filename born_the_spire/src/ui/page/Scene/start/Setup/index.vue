@@ -265,29 +265,33 @@ onMounted(async () => {
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 40px;
-    gap: 40px;
+    padding: var(--layout-setup-padding);
+    gap: var(--layout-gap-lg);
     box-sizing: border-box;
 }
 
 .header{
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
+    gap: var(--layout-gap-sm);
 }
 
 .center{
     display: flex;
-    gap: 10px;
+    gap: var(--layout-gap-sm);
     flex-grow: 1;
     min-height: 0;
-    >*{ flex-grow: 1; }
+    >*{
+        flex-grow: 1;
+        min-width: 0;
+        min-height: 0;
+    }
     .preview-panel {
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 20px;
+        gap: var(--layout-gap-md);
 
         .deck-btn {
             padding: 10px 20px;
@@ -304,12 +308,12 @@ onMounted(async () => {
 }
 
 .bottom-actions {
-    position: absolute;
-    bottom: 40px;
-    width: calc(100% - 100px);
+    position: relative;
+    flex-shrink: 0;
+    width: 100%;
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: var(--layout-gap-md);
     >:nth-child(2){ flex: 1; }
 }
 
@@ -321,7 +325,7 @@ onMounted(async () => {
     .section-label {
         font-size: 18px;
         font-weight: bold;
-        margin-bottom: 10px;
+        margin-bottom: var(--layout-gap-sm);
         color: #333;
     }
 
@@ -329,8 +333,8 @@ onMounted(async () => {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 15px;
-        margin-bottom: 10px;
+        gap: var(--layout-gap-md);
+        margin-bottom: var(--layout-gap-sm);
     }
 
     .arrow-btn {

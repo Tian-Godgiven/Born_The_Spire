@@ -1,5 +1,6 @@
 <template>
-<div class="top-container top">
+<div class="top-container">
+    <div class="top-main">
             <div class="playerData">
             <div class="name">
                 <div class="text">{{ nowPlayer.label }}</div>
@@ -38,6 +39,7 @@
                 <Button v-else :click="ability.click" :label="ability.label"/>
             </template>
         </div>
+    </div>
 
     <RelicBar v-if="relics.length > 0" :relics="relics" />
 
@@ -143,19 +145,24 @@
 .top-container {
     display: flex;
     flex-direction: column;
+    height: 100%;
+    border-bottom: 2px solid black;
 }
-.top{
+.top-main{
+    flex: 1;
+    min-height: 0;
     display: grid;
     align-items: center;
     grid-template-columns: 4fr 2fr 1fr;
-    border-bottom: 2px solid black;
     .playerData{
         display: grid;
         grid-template-columns: repeat(4,1fr);
+        align-items: center;
     }
     .gameRunData{
         display: grid;
         grid-template-columns: repeat(2,1fr);
+        align-items: center;
     }
 }
 .name{

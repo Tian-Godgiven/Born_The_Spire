@@ -111,6 +111,13 @@ function handleOverlayClick() {
       max-width: 90vw;
       max-height: 90vh;
       overflow: auto;
+
+      &:has(.card-choice) {
+        background: transparent;
+        border: none;
+        overflow: visible;
+        max-height: none;
+      }
     }
   }
 

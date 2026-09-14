@@ -2,6 +2,7 @@
   <div class="organ-upgrade-choice">
     <div class="header">
       <h2>选择要升级的器官</h2>
+      <div class="material">物质：{{ currentMaterial }}</div>
       <button class="close-btn" @click="handleCancel">返回</button>
     </div>
 
@@ -10,56 +11,38 @@
     </div>
 
     <div v-else class="organ-list">
-      <Popover
-        v-for="organ in organs"
-        :key="organ.key"
-        placement="right"
-        align="start"
-        :max-width="organHoverMaxWidth(organ)"
-      >
-        <div
-          class="organ-item"
-          :class="{ disabled: !canUpgrade(organ) }"
-          @click="handleSelectOrgan(organ)"
+      <div v-for="organ in organs" :key="organ.key" class="organ-item">
+        <Popover
+          trigger="click"
+          placement="right"
+          align="start"
+          :max-width="organHoverMaxWidth(organ)"
         >
-          <div class="organ-header">
-            <span class="organ-name" :style="{ color: getRarityColor(organ.rarity) }">
-              {{ organ.label }}
-            </span>
+          <div class="organ-summary">
+            <span class="organ-name">{{ organ.label }}</span>
             <span class="organ-level">Lv.{{ organ.level }}</span>
-          </div>
-
-          <div class="organ-info">
-            <div class="organ-part" v-if="organ.part">
-              部位: {{ getPartLabel(organ.part) }}
-            </div>
-            <div class="organ-quality">
-              稀有度: {{ getRarityLabel(organ.rarity) }}
-            </div>
-            <div class="organ-mass" v-if="hasMaxMass(organ)">
-              质量: {{ getCurrentMass(organ) }} / {{ getMaxMass(organ) }}
-            </div>
-          </div>
-
-          <div class="upgrade-cost">
-            <span v-if="canUpgrade(organ)">
-              升级消耗: {{ getUpgradeCost(organ) }} 物质
+            <span class="organ-part" v-if="organ.part">[{{ getPartLabel(organ.part) }}]</span>
+            <span class="organ-rarity" :style="{ color: getRarityColor(organ.rarity) }">
+              {{ getRarityLabel(organ.rarity) }}
             </span>
-            <span v-else class="error">
-              {{ getUpgradeError(organ) }}
+            <span class="organ-mass" v-if="hasMaxMass(organ)">
+              质量：{{ getCurrentMass(organ) }}/{{ getMaxMass(organ) }}
             </span>
           </div>
-        </div>
+          <template #content>
+            <OrganHoverContent :organ="organ" />
+          </template>
+        </Popover>
 
-        <template #content>
-          <OrganHoverContent :organ="organ" />
-        </template>
-      </Popover>
-    </div>
-
-    <div class="player-info">
-      <div class="health-info">
-        当前物质: {{ currentMaterial }}
+        <button
+          class="cost-block"
+          :class="{ error: !canUpgrade(organ) }"
+          :disabled="!canUpgrade(organ)"
+          @click.stop="handleSelectOrgan(organ)"
+        >
+          <template v-if="canUpgrade(organ)">升级消耗 {{ getUpgradeCost(organ) }} 物质</template>
+          <template v-else>{{ getUpgradeError(organ) }}</template>
+        </button>
       </div>
     </div>
   </div>
@@ -150,26 +133,39 @@ function handleCancel() {
 
 <style scoped lang="scss">
 .organ-upgrade-choice {
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
   min-width: 600px;
   max-width: 800px;
+  max-height: 80vh;
   background: white;
+  overflow: hidden;
 
   .header {
+    flex-shrink: 0;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
+    gap: 12px;
+    padding: 12px 16px;
     border-bottom: 2px solid black;
 
     h2 {
       margin: 0;
-      font-size: 24px;
+      font-size: var(--layout-modal-title-size);
+      flex: 1;
+      min-width: 0;
+    }
+
+    .material {
+      flex-shrink: 0;
+      font-size: 14px;
+      font-weight: bold;
+      white-space: nowrap;
     }
 
     .close-btn {
-      padding: 8px 16px;
+      flex-shrink: 0;
+      padding: 6px 12px;
       border: 2px solid black;
       background: white;
       cursor: pointer;
@@ -182,78 +178,73 @@ function handleCancel() {
   }
 
   .empty {
-    margin-bottom: 20px;
+    margin: 16px;
     padding: 16px;
     border: 2px solid black;
   }
 
   .organ-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 12px;
-    margin-bottom: 20px;
-    max-height: 500px;
-    overflow-y: auto;
-
-    > :deep(.popover-trigger) {
-      display: block;
-    }
+    padding: 16px;
 
     .organ-item {
-      padding: 16px;
+      display: flex;
+      align-items: stretch;
+      gap: 12px;
+      padding: 12px;
       border: 2px solid black;
-      cursor: pointer;
-
-      &:hover:not(.disabled) {
-        background: rgba(0, 0, 0, 0.05);
-      }
-
-      &.disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-
-      .organ-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 8px;
-
-        .organ-name {
-          font-size: 18px;
-          font-weight: bold;
-        }
-
-        .organ-level {
-          font-size: 16px;
-        }
-      }
-
-      .organ-info {
-        display: flex;
-        gap: 16px;
-        margin-bottom: 8px;
-        font-size: 14px;
-      }
-
-      .upgrade-cost {
-        font-size: 14px;
-
-        .error {
-          color: red;
-        }
-      }
     }
-  }
 
-  .player-info {
-    padding: 12px;
-    border: 2px solid black;
-    background: rgba(0, 0, 0, 0.02);
+    :deep(.popover-trigger) {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+    }
 
-    .health-info {
+    .organ-summary {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 10px;
+      font-size: 14px;
+      cursor: pointer;
+      line-height: 1.4;
+    }
+
+    .organ-name {
       font-size: 16px;
       font-weight: bold;
+    }
+
+    .cost-block {
+      flex-shrink: 0;
+      align-self: center;
+      border: 2px solid black;
+      background: black;
+      color: white;
+      padding: 8px 12px;
+      font-size: 13px;
+      white-space: nowrap;
+      cursor: pointer;
+
+      &:hover:not(:disabled) {
+        background: #222;
+      }
+
+      &:disabled,
+      &.error {
+        background: white;
+        color: red;
+        cursor: not-allowed;
+      }
     }
   }
 }

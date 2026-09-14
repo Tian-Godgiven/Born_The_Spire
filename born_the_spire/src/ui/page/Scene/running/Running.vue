@@ -117,7 +117,7 @@ onMounted(() => {
 
 <style scoped lang='scss'>
 .running{
-    --running-top-height: 8vh;
+    --running-top-height: var(--layout-top-bar-height);
     position: relative;
     width: 100%;
     height: 100%;
@@ -126,10 +126,12 @@ onMounted(() => {
     user-select: none;
     .top{
         height: var(--running-top-height);
+        flex-shrink: 0;
     }
     .content{
         position: relative;
-        height: 92vh;
+        flex: 1;
+        min-height: 0;
         width: 100%;
         .battle{
             z-index: 0;
@@ -143,7 +145,7 @@ onMounted(() => {
     }
     .tool{
         z-index: 100;
-        height: 92vh;
+        height: calc(100% - var(--running-top-height, 8vh));
         position: absolute;
         width: 100%;
         left: 0;

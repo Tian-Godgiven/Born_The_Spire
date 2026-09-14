@@ -1,34 +1,34 @@
 <template>
   <div class="card-choice">
-    <div class="header">
-      <h2>{{ title }}</h2>
-      <button v-if="cancelable" class="close-btn" @click="handleCancel">取消</button>
-    </div>
+    <div class="card-panel">
+      <div class="header">
+        <h2>{{ title }}</h2>
+        <button v-if="cancelable" class="close-btn" @click="handleCancel">取消</button>
+      </div>
 
-    <div class="card-list">
-      <div
-        v-for="card in availableCards"
-        :key="card.__id"
-        class="card-item"
-        :class="{
-          selected: isSelected(card),
-          disabled: !canSelect(card)
-        }"
-        @click="handleSelectCard(card)"
-      >
-        <CardVue :card="card" />
+      <div class="card-list">
+        <div
+          v-for="card in availableCards"
+          :key="card.__id"
+          class="card-item"
+          :class="{
+            selected: isSelected(card),
+            disabled: !canSelect(card)
+          }"
+          @click="handleSelectCard(card)"
+        >
+          <CardVue :card="card" />
+        </div>
       </div>
     </div>
 
-    <div class="footer">
-      <button
-        class="confirm-btn"
-        @click="handleConfirm"
-        :disabled="!canConfirm"
-      >
-        确认
-      </button>
-    </div>
+    <button
+      class="confirm-btn"
+      @click="handleConfirm"
+      :disabled="!canConfirm"
+    >
+      确认
+    </button>
   </div>
 </template>
 
@@ -123,100 +123,115 @@ function handleCancel() {
 
 <style scoped lang="scss">
 .card-choice {
-  padding: 20px;
-  min-width: 600px;
-  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: min(900px, 92vw);
+  max-height: 90vh;
+  background: transparent;
+}
+
+.card-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: min(600px, 100%);
+  width: 100%;
+  min-height: 0;
+  max-height: calc(90vh - 72px);
   background: white;
+  border: 2px solid black;
+  overflow: hidden;
+}
 
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
+.header {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 2px solid black;
 
-    h2 {
-      margin: 0;
-      font-size: 20px;
-    }
-
-    .close-btn {
-      padding: 8px 16px;
-      border: 2px solid black;
-      background: white;
-      cursor: pointer;
-      font-size: 14px;
-
-      &:hover {
-        background: rgba(0, 0, 0, 0.05);
-      }
-    }
+  h2 {
+    margin: 0;
+    font-size: var(--layout-modal-title-size);
   }
 
-  .card-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 16px;
-    max-height: 500px;
-    overflow-y: auto;
-    padding: 20px;
+  .close-btn {
+    padding: 6px 12px;
+    border: 2px solid black;
+    background: white;
+    cursor: pointer;
+    font-size: 14px;
 
-    .card-item {
-      position: relative;
-      cursor: pointer;
-      transition: transform 0.2s;
-
-      &:hover:not(.disabled) {
-        transform: scale(1.05);
-      }
-
-      &.selected {
-        &::after {
-          content: '✓';
-          position: absolute;
-          top: 5px;
-          right: 5px;
-          width: 30px;
-          height: 30px;
-          background: black;
-          color: white;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 20px;
-          font-weight: bold;
-        }
-      }
-
-      &.disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
+    &:hover {
+      background: rgba(0, 0, 0, 0.05);
     }
   }
+}
 
-  .footer {
-    display: flex;
-    justify-content: flex-end;
+.card-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px;
+  justify-content: center;
 
-    .confirm-btn {
-      padding: 10px 20px;
-      border: 2px solid black;
-      background: white;
-      cursor: pointer;
-      font-size: 16px;
-      font-weight: bold;
+  .card-item {
+    position: relative;
+    cursor: pointer;
 
-      &:hover:not(:disabled) {
-        background: rgba(0, 0, 0, 0.05);
-      }
+    &.selected {
+      outline: 2px solid black;
+      outline-offset: 2px;
 
-      &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
+      &::after {
+        content: '✓';
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        width: 30px;
+        height: 30px;
+        background: black;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        font-weight: bold;
       }
     }
+
+    &.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.confirm-btn {
+  flex-shrink: 0;
+  padding: 10px 32px;
+  border: 2px solid black;
+  background: black;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+
+  &:hover:not(:disabled) {
+    background: #222;
+  }
+
+  &:disabled {
+    background: #999;
+    border-color: #999;
+    color: #eee;
+    cursor: not-allowed;
   }
 }
 </style>

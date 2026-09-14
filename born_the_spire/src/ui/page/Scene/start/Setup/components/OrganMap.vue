@@ -147,45 +147,58 @@ function closeOrganDetail() {
 .organ-map {
     display: flex;
     flex-direction: column;
-    padding: 15px;
+    min-height: 0;
+    height: 100%;
+    padding: var(--layout-gap-sm);
     border: 2px solid black;
-    height: calc(100% - 160px);
+    box-sizing: border-box;
 
     .organ-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 15px;
+        flex-shrink: 0;
+        margin-bottom: var(--layout-gap-sm);
 
         .budget-display {
             font-size: 16px;
 
             .budget-warning {
                 color: #c00;
-                margin-left: 10px;
+                margin-left: var(--layout-gap-sm);
             }
         }
     }
 
-    // 器官网格
+    // 器官网格。格子是方块；手机端只露出 3 排，多的滚动。
     .organ-grid {
         flex: 1;
+        min-height: 0;
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-        gap: 10px;
+        grid-template-columns: repeat(var(--layout-organ-cols), minmax(var(--layout-organ-tile-min), 1fr));
+        gap: var(--layout-organ-grid-gap);
         overflow-y: auto;
+        container-type: inline-size;
+
+        :deep(.popover-trigger) {
+            aspect-ratio: 1;
+            min-width: 0;
+            width: 100%;
+        }
     }
 
     .organ-item {
         border: 2px solid #000;
-        padding: 15px;
+        padding: var(--layout-organ-tile-pad);
         cursor: pointer;
         position: relative;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        min-height: 80px;
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
 
         &:hover:not(.disabled):not(.locked) {
             background: rgba(0, 0, 0, 0.05);
@@ -223,6 +236,10 @@ function closeOrganDetail() {
         .organ-name {
             font-size: 14px;
             text-align: center;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .organ-part {

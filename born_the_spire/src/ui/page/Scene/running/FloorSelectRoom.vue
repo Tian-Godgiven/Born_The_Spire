@@ -68,34 +68,34 @@ async function confirmSelection() {
 
 .floor-select-container {
   max-width: 800px;
-  padding: 40px;
+  padding: var(--layout-setup-padding);
   text-align: center;
 }
 
 .title {
-  font-size: 32px;
+  font-size: var(--layout-event-title-size);
   font-weight: bold;
-  margin-bottom: 16px;
+  margin-bottom: var(--layout-gap-sm);
   color: black;
 }
 
 .description {
   font-size: 18px;
-  margin-bottom: 40px;
+  margin-bottom: var(--layout-gap-lg);
   color: #666;
 }
 
 .floor-options {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  margin-bottom: 40px;
+  gap: var(--layout-event-option-gap);
+  margin-bottom: var(--layout-gap-lg);
 }
 
 .floor-option {
   display: flex;
   align-items: center;
-  padding: 24px;
+  padding: var(--layout-event-option-pad);
   border: 2px solid black;
   background: white;
   cursor: pointer;

@@ -158,8 +158,8 @@ const cardRef = ref<HTMLElement>()
     background-color:white;
     position: relative;
     flex-shrink: 0;
-    width: 130px;
-    height: 200px;
+    width: var(--layout-card-width);
+    height: var(--layout-card-height);
     border: 2px solid rgb(38, 38, 38);
 
     // 临时卡牌样式

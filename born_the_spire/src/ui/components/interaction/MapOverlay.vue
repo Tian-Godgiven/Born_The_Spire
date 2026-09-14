@@ -86,22 +86,22 @@ defineExpose({
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 20px;
+  padding: var(--layout-modal-chrome-pad);
   border-bottom: 2px solid #333;
   background: #f5f5f5;
 
   h2 {
     margin: 0;
-    font-size: 24px;
+    font-size: var(--layout-modal-title-size);
   }
 }
 
 .close-btn {
   background: none;
   border: 2px solid #333;
-  font-size: 24px;
-  width: 40px;
-  height: 40px;
+  font-size: var(--layout-modal-title-size);
+  width: var(--layout-modal-close-size);
+  height: var(--layout-modal-close-size);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -119,7 +119,7 @@ defineExpose({
 }
 
 .map-footer {
-  padding: 15px 20px;
+  padding: var(--layout-modal-chrome-pad);
   border-top: 2px solid #333;
   background: #f5f5f5;
   text-align: center;

@@ -263,6 +263,7 @@ await completeAndGoNext()   // 完成当前房间，显示地图让玩家选择�
 - **`文档/开发指南/敌人AI系统.md`** — behavior/pattern/condition 格式、双牌堆、多阶段Boss
 - **`文档/参考/实现参考手册.md`** — Effect拦截、$triggerEffect语法、inHand交互、StateModifier API 等关键机制
 - **`文档/参考/字段值枚举手册.md`** — rarity/tags/targetType/faction 等跨内容列表的魔法字符串清单，防止拼错或引入新变体
+- **`文档/子系统/UI/布局适配.md`** — PC / 横屏手机共用布局，两套 CSS 变量；`data-layout` 判定
 - **`文档/子系统/UI/浮层系统.md`** — Popover 属性表、定位基准选取、三种触发模式、triggerElement、DescribeText/CardRefText、层级约定与踩坑
 - **`文档/开发指南/描述撰写手册.md`** — effect / describe、进度、术语、卡名引用、effectTiers；整理遗物时沉淀
 

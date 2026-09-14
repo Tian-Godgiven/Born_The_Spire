@@ -11,7 +11,7 @@
         <div class="side-panel">
             <!-- 金钱信息 -->
             <div class="currency-box">
-                <div class="currency-title">持有金钱</div>
+                <div class="currency-title">持有</div>
                 <div
                     v-for="[key, value] in allReserves"
                     :key="key"
@@ -80,18 +80,22 @@
             <!-- 上方：器官（横排一行） -->
             <div v-if="organItems.length > 0" class="store-category">
                 <h2 class="section-title">器官</h2>
-                <div class="items-row">
+                <div class="items-row organs-row">
                     <div
                         v-for="item in organItems"
                         :key="item.id"
                         class="store-item"
-                        :class="{ 'can-afford': canAfford(item), 'sold': item.isPurchased }"
-                        @click="handlePurchase(item)"
-                        @mouseenter="showItemTooltip(item, $event)"
-                        @mouseleave="startHideTooltip"
+                        :class="{ 'can-afford': canAfford(item), 'sold': item.isPurchased, 'selected': isSelected(item) }"
+                        @click="selectStoreItem(item, $event)"
                     >
-                        <div class="item-name">{{ item.name }}</div>
-                        <div v-if="item.rarity" class="item-rarity">{{ item.rarity }}</div>
+                        <div class="item-headline">
+                            <div class="item-name">{{ item.name }}</div>
+                            <div
+                                v-if="item.rarity"
+                                class="item-rarity"
+                                :style="{ color: rarityColor(item.rarity) }"
+                            >{{ rarityLabel(item.rarity) }}</div>
+                        </div>
                         <div class="item-price">{{ item.price }} 金</div>
                         <div v-if="item.isPurchased" class="sold-overlay">已售出</div>
                     </div>
@@ -108,12 +112,17 @@
                             v-for="item in cardItems"
                             :key="item.id"
                             class="store-item"
-                            :class="{ 'can-afford': canAfford(item), 'sold': item.isPurchased }"
-                            @click="handlePurchase(item)"
-                            @mouseenter="showItemTooltip(item, $event)"
-                            @mouseleave="startHideTooltip"
+                            :class="{ 'can-afford': canAfford(item), 'sold': item.isPurchased, 'selected': isSelected(item) }"
+                            @click="selectStoreItem(item, $event)"
                         >
-                            <div class="item-name">{{ item.name }}</div>
+                            <div class="item-headline">
+                                <div class="item-name">{{ item.name }}</div>
+                                <div
+                                    v-if="item.rarity"
+                                    class="item-rarity"
+                                    :style="{ color: rarityColor(item.rarity) }"
+                                >{{ rarityLabel(item.rarity) }}</div>
+                            </div>
                             <div class="item-price">{{ item.price }} 金</div>
                             <div v-if="item.isPurchased" class="sold-overlay">已售出</div>
                         </div>
@@ -128,17 +137,22 @@
                             <div
                                 v-for="item in relicItems"
                                 :key="item.id"
-                                class="store-item"
-                                :class="{ 'can-afford': canAfford(item), 'sold': item.isPurchased }"
-                                @click="handlePurchase(item)"
-                                @mouseenter="showItemTooltip(item, $event)"
-                                @mouseleave="startHideTooltip"
-                            >
+                            class="store-item"
+                            :class="{ 'can-afford': canAfford(item), 'sold': item.isPurchased, 'selected': isSelected(item) }"
+                            @click="selectStoreItem(item, $event)"
+                        >
+                            <div class="item-headline">
                                 <div class="item-name">{{ item.name }}</div>
-                                <div class="item-price">{{ item.price }} 金</div>
-                                <div v-if="item.isPurchased" class="sold-overlay">已售出</div>
+                                <div
+                                    v-if="item.rarity"
+                                    class="item-rarity"
+                                    :style="{ color: rarityColor(item.rarity) }"
+                                >{{ rarityLabel(item.rarity) }}</div>
                             </div>
+                            <div class="item-price">{{ item.price }} 金</div>
+                            <div v-if="item.isPurchased" class="sold-overlay">已售出</div>
                         </div>
+                    </div>
                     </div>
 
                     <div v-if="potionItems.length > 0" class="store-category">
@@ -147,28 +161,33 @@
                             <div
                                 v-for="item in potionItems"
                                 :key="item.id"
-                                class="store-item"
-                                :class="{ 'can-afford': canAfford(item), 'sold': item.isPurchased }"
-                                @click="handlePurchase(item)"
-                                @mouseenter="showItemTooltip(item, $event)"
-                                @mouseleave="startHideTooltip"
-                            >
+                            class="store-item"
+                            :class="{ 'can-afford': canAfford(item), 'sold': item.isPurchased, 'selected': isSelected(item) }"
+                            @click="selectStoreItem(item, $event)"
+                        >
+                            <div class="item-headline">
                                 <div class="item-name">{{ item.name }}</div>
-                                <div class="item-price">{{ item.price }} 金</div>
-                                <div v-if="item.isPurchased" class="sold-overlay">已售出</div>
+                                <div
+                                    v-if="item.rarity"
+                                    class="item-rarity"
+                                    :style="{ color: rarityColor(item.rarity) }"
+                                >{{ rarityLabel(item.rarity) }}</div>
                             </div>
+                            <div class="item-price">{{ item.price }} 金</div>
+                            <div v-if="item.isPurchased" class="sold-overlay">已售出</div>
                         </div>
+                    </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 商品详情悬浮框：一个浮层被四组商品共用，靠 anchor 跟着当前悬停的那件走 -->
+    <!-- 商品详情：点选后弹出，四组商品共用一个浮层 -->
     <Popover
         inline
         trigger="manual"
-        :show="tooltipVisible && !!tooltipItem"
+        :show="!!selectedItem"
         :anchor="tooltipAnchor"
         placement="bottom"
         align="start"
@@ -176,33 +195,31 @@
     >
         <template #content>
         <div
-            v-if="tooltipItem"
+            v-if="selectedItem"
             class="store-tooltip"
-            @mouseenter="cancelHideTooltip"
-            @mouseleave="startHideTooltip"
         >
             <!-- 器官详情 -->
             <OrganHoverContent
-                v-if="tooltipItem.type === 'organ' && getPreview(tooltipItem.id)"
-                :organ="getPreview(tooltipItem.id)"
+                v-if="selectedItem.type === 'organ' && getPreview(selectedItem.id)"
+                :organ="getPreview(selectedItem.id)"
             />
             <!-- 遗物详情 -->
             <RelicHoverContent
-                v-else-if="tooltipItem.type === 'relic' && getPreview(tooltipItem.id)"
-                :relic="getPreview(tooltipItem.id)"
+                v-else-if="selectedItem.type === 'relic' && getPreview(selectedItem.id)"
+                :relic="getPreview(selectedItem.id)"
             />
             <!-- 卡牌详情 -->
             <Card
-                v-if="tooltipItem.type === 'card' && getPreview(tooltipItem.id)"
-                :card="getPreview(tooltipItem.id)"
+                v-if="selectedItem.type === 'card' && getPreview(selectedItem.id)"
+                :card="getPreview(selectedItem.id)"
             />
             <!-- 药水详情 -->
             <div
-                v-if="tooltipItem.type === 'potion' && getPreview(tooltipItem.id)"
+                v-if="selectedItem.type === 'potion' && getPreview(selectedItem.id)"
                 class="potion-tooltip"
             >
-                <div class="potion-tooltip-name">{{ getPreview(tooltipItem.id).label }}</div>
-                <div class="potion-tooltip-desc">{{ getPotionDesc(tooltipItem.id) }}</div>
+                <div class="potion-tooltip-name">{{ getPreview(selectedItem.id).label }}</div>
+                <div class="potion-tooltip-desc">{{ getPotionDesc(selectedItem.id) }}</div>
             </div>
         </div>
         </template>
@@ -210,6 +227,14 @@
 
     <!-- 离开按钮 -->
     <LeaveButton @leave="handleLeave">离开黑市</LeaveButton>
+
+    <button
+        v-if="selectedItem"
+        type="button"
+        class="store-buy-button"
+        :style="{ zIndex: ROOM_ACTION_Z_INDEX }"
+        @click="confirmPurchase"
+    >购买 {{ selectedItem.price }} 金</button>
 
     <!-- 出售器官弹窗 -->
     <div v-if="showSellOrganModal" class="modal-overlay" @click="closeSellOrganModal">
@@ -252,6 +277,8 @@ import OrganHoverContent from '@/ui/components/interaction/OrganHoverContent.vue
 import RelicHoverContent from '@/ui/components/interaction/RelicHoverContent.vue'
 import Card from '@/ui/components/object/Card.vue'
 import Popover from '@/ui/components/global/Popover.vue'
+import { getRarityColor, getRarityLabel } from '@/static/list/system/rarityPalette'
+import { ROOM_ACTION_Z_INDEX } from '@/ui/hooks/interaction/popoverHost'
 
 // 金钱类型显示名映射
 const RESERVE_LABELS: Record<string, string> = {
@@ -271,10 +298,18 @@ const currentRoom = computed(() => {
 
 const storeTitle = computed(() => currentRoom.value?.getDisplayName() || '黑市')
 
+function rarityLabel(rarity: string): string {
+    return getRarityLabel(rarity)
+}
+
+function rarityColor(rarity: string): string {
+    return getRarityColor(rarity)
+}
+
 // 金钱
 const allReserves = computed(() => {
     const reserveModifier = getReserveModifier(nowPlayer)
-    return reserveModifier.getAllReserves()
+    return [...reserveModifier.getAllReserves()].filter(([key]) => key !== 'soul')
 })
 
 // 商品
@@ -318,11 +353,9 @@ const canSellHealthNow = computed(() => currentRoom.value?.canSellHealth() ?? fa
 // 弹窗状态
 const showSellOrganModal = ref(false)
 
-// === 商品详情 tooltip ===
-const tooltipVisible = ref(false)
-const tooltipItem = ref<StoreItem | null>(null)
+// === 商品详情：点选后弹出 ===
+const selectedItem = ref<StoreItem | null>(null)
 const tooltipAnchor = ref<HTMLElement | null>(null)
-let hideTimeout: ReturnType<typeof setTimeout> | null = null
 
 function getPreview(itemId: string): any {
     return currentRoom.value?.getPreviewInstance(itemId) ?? null
@@ -334,33 +367,23 @@ function getPotionDesc(itemId: string): string {
     return getDescribe(instance.describe, instance)
 }
 
-function showItemTooltip(item: StoreItem, event: MouseEvent) {
+function isSelected(item: StoreItem): boolean {
+    return selectedItem.value?.id === item.id
+}
+
+function clearSelection() {
+    selectedItem.value = null
+    tooltipAnchor.value = null
+}
+
+function selectStoreItem(item: StoreItem, event: MouseEvent) {
     if (item.isPurchased) return
-
-    // 清除隐藏定时器
-    if (hideTimeout) {
-        clearTimeout(hideTimeout)
-        hideTimeout = null
+    if (isSelected(item)) {
+        clearSelection()
+        return
     }
-
-    tooltipItem.value = item
+    selectedItem.value = item
     tooltipAnchor.value = event.currentTarget as HTMLElement
-    tooltipVisible.value = true
-}
-
-function startHideTooltip() {
-    hideTimeout = setTimeout(() => {
-        tooltipVisible.value = false
-        tooltipItem.value = null
-        tooltipAnchor.value = null
-    }, 200)
-}
-
-function cancelHideTooltip() {
-    if (hideTimeout) {
-        clearTimeout(hideTimeout)
-        hideTimeout = null
-    }
 }
 
 // === 购买 ===
@@ -379,10 +402,12 @@ const cantAffordLines = [
     '命，换，钱。',
 ]
 
-async function handlePurchase(item: StoreItem) {
-    if (!currentRoom.value) return
+async function confirmPurchase() {
+    const item = selectedItem.value
+    if (!currentRoom.value || !item) return
     if (item.isPurchased) {
         newLog(['该商品已售出'])
+        clearSelection()
         return
     }
     if (!canAfford(item)) {
@@ -391,6 +416,7 @@ async function handlePurchase(item: StoreItem) {
         return
     }
     await currentRoom.value.purchaseItem(item.id)
+    clearSelection()
 }
 
 // === 出售器官 ===
@@ -449,19 +475,19 @@ async function handleLeave() {
 // 标题
 .blackstore-header {
     text-align: center;
-    padding: 1.5rem 2rem 1rem;
+    padding: 0.6rem 1.2rem 0.5rem;
     border-bottom: 2px solid black;
 }
 
 .blackstore-title {
-    font-size: 2.2rem;
+    font-size: 1.5rem;
     margin: 0;
     font-weight: bold;
 }
 
 .blackstore-desc {
-    margin: 0.5rem 0 0;
-    font-size: 1rem;
+    margin: 0.25rem 0 0;
+    font-size: 0.9rem;
     color: #666;
 }
 
@@ -667,6 +693,16 @@ async function handleLeave() {
     gap: 0.8rem;
 }
 
+.organs-row {
+    flex-wrap: nowrap;
+
+    .store-item {
+        flex: 1;
+        min-width: 0;
+        max-width: none;
+    }
+}
+
 .items-col {
     display: flex;
     flex-direction: column;
@@ -686,6 +722,11 @@ async function handleLeave() {
         background: rgba(0, 0, 0, 0.05);
     }
 
+    &.selected:not(.sold) {
+        background: black;
+        color: white;
+    }
+
     &.can-afford {
         border-color: green;
     }
@@ -696,15 +737,22 @@ async function handleLeave() {
     }
 }
 
+.item-headline {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px;
+}
+
 .item-name {
     font-weight: bold;
     font-size: 1rem;
-    margin-bottom: 0.3rem;
+    min-width: 0;
 }
 
 .item-rarity {
+    flex-shrink: 0;
     font-size: 0.75rem;
-    color: #888;
 }
 
 .item-price {
@@ -720,6 +768,28 @@ async function handleLeave() {
     font-size: 1.2rem;
     font-weight: bold;
     color: red;
+}
+
+.store-buy-button {
+    position: absolute;
+    right: var(--layout-leave-right);
+    bottom: var(--layout-leave-bottom);
+    padding: var(--layout-store-buy-pad);
+    font-size: var(--layout-store-buy-font);
+    font-weight: bold;
+    background: black;
+    color: white;
+    border: 2px solid black;
+    cursor: pointer;
+    white-space: nowrap;
+
+    &:hover {
+        background: #222;
+    }
+
+    &:active {
+        background: #444;
+    }
 }
 
 // 商品详情 tooltip

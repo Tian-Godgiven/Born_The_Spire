@@ -78,7 +78,7 @@ function clear(){
     top: 10%;
     border:1px solid black;
     padding: 10px;
-    width: 400px;
+    width: var(--layout-log-width);
     height: 60%;
     overflow-y: auto;
     background-color: white;

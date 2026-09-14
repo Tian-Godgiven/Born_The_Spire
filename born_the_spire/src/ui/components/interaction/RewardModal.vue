@@ -433,16 +433,19 @@ async function handleProceed() {
 .reward-modal {
   background: white;
   border: 2px solid black;
-  padding: 40px;
-  min-width: 600px;
-  max-width: 800px;
+  padding: var(--layout-reward-pad);
+  min-width: var(--layout-reward-min-width);
+  max-width: var(--layout-reward-max-width);
+  min-height: var(--layout-reward-min-height);
+  max-height: var(--layout-reward-max-height);
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: var(--layout-reward-gap);
+  box-sizing: border-box;
 }
 
 .modal-title {
-  font-size: 28px;
+  font-size: var(--layout-reward-title-size);
   font-weight: bold;
   text-align: center;
   color: #2d5016;
@@ -469,7 +472,7 @@ async function handleProceed() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 20px;
+  padding: var(--layout-reward-row-pad);
   border-bottom: 2px solid black;
   background: white;
   transition: background 0.2s;
@@ -507,12 +510,12 @@ async function handleProceed() {
   display: flex;
   align-items: center;
   gap: 15px;
-  font-size: 18px;
+  font-size: var(--layout-reward-font);
 }
 
 .reward-icon {
-  font-size: 24px;
-  width: 30px;
+  font-size: var(--layout-reward-icon-size);
+  width: 1.25em;
   text-align: center;
 }
 
@@ -641,7 +644,7 @@ async function handleProceed() {
 
   > :deep(.popover-trigger) {
     display: block;
-    flex: 0 0 270px;
+    flex: 0 0 var(--layout-organ-popup-width);
   }
 }
 

@@ -191,8 +191,8 @@
 <style scoped lang='scss'>
 .chara-wrapper {
     position: relative;
-    width: 200px;
-    height: 300px;
+    width: var(--layout-chara-width);
+    height: var(--layout-chara-height);
     overflow: visible;
 
     &.ui-size-small {

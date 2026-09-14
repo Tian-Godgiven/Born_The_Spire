@@ -12,18 +12,17 @@ defineEmits<{
 
 <style scoped lang="scss">
 .leave-button {
-    position: fixed;
-    right: 15%;
-    top: 75%;
-    transform: translateY(-50%);
-    padding: 1rem 2rem;
-    font-size: 1.2rem;
+    position: absolute;
+    right: var(--layout-leave-right);
+    bottom: var(--layout-leave-bottom);
+    padding: var(--layout-leave-pad);
+    font-size: var(--layout-leave-font);
     font-weight: bold;
     background: white;
     border: 2px solid black;
     cursor: pointer;
-    transition: background 0.2s;
     z-index: 10;
+    white-space: nowrap;
 
     &:hover {
         background: rgba(0, 0, 0, 0.05);

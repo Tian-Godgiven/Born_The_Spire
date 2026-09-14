@@ -116,10 +116,10 @@ async function handleConfirm() {
 <style scoped lang='scss'>
 .choice-container {
     width: 100%;
-    padding: 2rem;
+    padding: var(--layout-event-option-pad);
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: var(--layout-event-gap);
 }
 
 .choice-header {
@@ -127,12 +127,12 @@ async function handleConfirm() {
 }
 
 .choice-title {
-    font-size: 2rem;
+    font-size: var(--layout-event-title-size);
     margin: 0 0 1rem 0;
 }
 
 .choice-description {
-    font-size: 1.2rem;
+    font-size: var(--layout-event-body-size);
     color: #666;
     margin: 0;
 }
@@ -140,7 +140,7 @@ async function handleConfirm() {
 .choice-list {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--layout-event-option-gap);
 }
 
 .choice-item {
@@ -168,15 +168,16 @@ async function handleConfirm() {
 .choice-default {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 1.5rem;
+    gap: var(--layout-gap-md);
+    padding: var(--layout-event-option-pad);
     position: relative;
 }
 
 .choice-icon {
-    font-size: 3rem;
-    min-width: 4rem;
+    font-size: var(--layout-choice-icon-size);
+    min-width: var(--layout-choice-icon-min);
     text-align: center;
+    line-height: 1;
 }
 
 .choice-info {
@@ -187,12 +188,12 @@ async function handleConfirm() {
 }
 
 .choice-name {
-    font-size: 1.5rem;
+    font-size: var(--layout-choice-name-size);
     font-weight: bold;
 }
 
 .choice-desc {
-    font-size: 1rem;
+    font-size: var(--layout-choice-desc-size);
     color: #666;
 }
 

@@ -22,9 +22,10 @@
     import HandCard from './HandCard.vue';
     import { handCardSelectorActive, isCardSelected } from '@/ui/hooks/interaction/handCardSelector';
     import { hiddenHandCardIds } from '@/ui/animation/cardFlight';
+    import { layoutMode } from '@/ui/hooks/global/layoutMode';
 
-    const CARD_WIDTH = 130
-    const MAX_HAND_WIDTH = 1000
+    const CARD_WIDTH = computed(() => layoutMode.value === 'mobile' ? 100 : 130)
+    const MAX_HAND_WIDTH = computed(() => layoutMode.value === 'mobile' ? 640 : 1000)
 
     const visibleHandPile = computed(()=>{
         const pile = nowPlayer.cardPiles.handPile
@@ -35,10 +36,10 @@
     const cardMargin = computed(() => {
         const count = visibleHandPile.value.length
         if (count <= 1) return 0
-        const totalNeeded = count * CARD_WIDTH
-        const available = MAX_HAND_WIDTH
-        const gap = (available - CARD_WIDTH) / (count - 1) - CARD_WIDTH
-        return Math.min(15, gap)
+        const available = MAX_HAND_WIDTH.value
+        const gap = (available - CARD_WIDTH.value) / (count - 1) - CARD_WIDTH.value
+        const maxGap = layoutMode.value === 'mobile' ? -18 : 15
+        return Math.min(maxGap, gap)
     })
 </script>
 

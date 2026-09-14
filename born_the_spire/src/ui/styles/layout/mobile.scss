@@ -1,0 +1,335 @@
+// 横屏移动端：同一组变量，更矮更贴边。结构 class 不改。
+html[data-layout="mobile"] {
+    --layout-page-padding: 0px;
+    --layout-top-bar-height: 52px;
+    --layout-hand-height: 22vh;
+    --layout-hand-sink: calc(var(--layout-card-height) - var(--layout-hand-height) + 12px);
+    --layout-hand-side-gap: 180px;
+    --layout-card-width: 100px;
+    --layout-card-height: 154px;
+    --layout-chara-width: 180px;
+    --layout-chara-height: 230px;
+    --layout-pile-size: 0px;
+    --layout-pile-font: 13px;
+    --layout-draw-left: 8px;
+    --layout-draw-bottom: 8px;
+    --layout-discard-right: 8px;
+    --layout-discard-bottom: 8px;
+    --layout-exhaust-right: 8px;
+    --layout-exhaust-bottom: 36px;
+    --layout-energy-size: 0px;
+    --layout-energy-left: 8px;
+    --layout-energy-bottom: calc(var(--layout-hand-height) + 8px);
+    --layout-end-turn-width: auto;
+    --layout-end-turn-height: 40px;
+    --layout-end-turn-right: 8px;
+    --layout-end-turn-bottom: calc(var(--layout-hand-height) + 8px);
+    --layout-log-width: 260px;
+    --layout-gap-lg: 12px;
+    --layout-gap-md: 10px;
+    --layout-gap-sm: 8px;
+    --layout-setup-padding: 20px;
+    --layout-organ-tile-min: 0px;
+    --layout-organ-tile-pad: 6px;
+    --layout-organ-grid-gap: 8px;
+    --layout-organ-cols: 5;
+    --layout-organ-visible-rows: 3;
+    --layout-modal-chrome-pad: 6px 12px;
+    --layout-modal-title-size: 16px;
+    --layout-modal-close-size: 28px;
+    --layout-reward-pad: 12px 20px;
+    --layout-reward-min-width: 0px;
+    --layout-reward-max-width: min(540px, 72vw);
+    --layout-reward-min-height: 56%;
+    --layout-reward-max-height: calc(100% - 12px);
+    --layout-reward-gap: 10px;
+    --layout-reward-title-size: 16px;
+    --layout-reward-row-pad: 8px 12px;
+    --layout-reward-font: 14px;
+    --layout-reward-icon-size: 18px;
+    --layout-dialog-pad: 10px 14px;
+    --layout-dialog-max-width: min(680px, 88vw);
+    --layout-event-gap: 0.5rem;
+    --layout-event-option-gap: 0.4rem;
+    --layout-event-option-pad: 8px 12px;
+    --layout-event-title-size: 1.1rem;
+    --layout-event-option-title-size: 0.95rem;
+    --layout-event-body-size: 0.9rem;
+    --layout-choice-icon-size: 1.5rem;
+    --layout-choice-icon-min: 2.2rem;
+    --layout-choice-name-size: 1rem;
+    --layout-choice-desc-size: 0.85rem;
+    --layout-leave-right: 8px;
+    --layout-leave-bottom: 8px;
+    --layout-leave-pad: 6px 12px;
+    --layout-leave-font: 13px;
+    --layout-store-buy-pad: 12px 24px;
+    --layout-store-buy-font: 18px;
+    --layout-organ-popup-width: min(200px, calc((94vw - 48px) / 3));
+}
+
+html[data-layout="mobile"] .organ-grid {
+    flex: none;
+    grid-template-columns: repeat(var(--layout-organ-cols), minmax(0, 1fr));
+    height: calc(
+        var(--layout-organ-visible-rows) * ((100cqi - (var(--layout-organ-cols) - 1) * var(--layout-organ-grid-gap)) / var(--layout-organ-cols))
+        + (var(--layout-organ-visible-rows) - 1) * var(--layout-organ-grid-gap)
+    );
+}
+
+html[data-layout="mobile"] .map-footer {
+    display: none;
+}
+
+html[data-layout="mobile"] .top-container {
+    overflow: hidden;
+    font-size: 14px;
+    line-height: 1.2;
+    height: 100%;
+}
+
+html[data-layout="mobile"] .top-main .playerData,
+html[data-layout="mobile"] .top-main .gameRunData,
+html[data-layout="mobile"] .top-main .ability {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+html[data-layout="mobile"] .top-main .ability {
+    justify-content: flex-end;
+}
+
+html[data-layout="mobile"] .energy {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    line-height: 1.15;
+    white-space: normal;
+}
+
+html[data-layout="mobile"] .energy-value {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+html[data-layout="mobile"] .relics-bar {
+    position: absolute;
+    top: var(--running-top-height, 8vh);
+    left: 0;
+    right: 0;
+    height: auto;
+    min-height: 36px;
+    padding: 4px 8px;
+}
+
+html[data-layout="mobile"] .relics-track {
+    padding: 4px 0;
+    gap: 6px;
+}
+
+html[data-layout="mobile"] .relics-track .relic {
+    white-space: nowrap;
+    font-size: 14px;
+    padding: 6px 10px;
+}
+
+html[data-layout="mobile"] .allFactions {
+    height: calc(100% - var(--layout-hand-height));
+    align-items: end;
+}
+
+html[data-layout="mobile"] .faction {
+    align-items: flex-end;
+}
+
+html[data-layout="mobile"] .faction .faction-members {
+    gap: 12px;
+    align-items: flex-end;
+}
+
+html[data-layout="mobile"] .faction .target {
+    top: auto;
+    transform: none;
+}
+
+html[data-layout="mobile"] .chara-wrapper {
+    width: var(--layout-chara-width);
+    height: var(--layout-chara-height);
+    max-height: 100%;
+    transform: translateY(-22px);
+}
+
+html[data-layout="mobile"] .intent-display {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 2px;
+}
+
+html[data-layout="mobile"] .states {
+    top: auto;
+    bottom: 22px;
+}
+
+html[data-layout="mobile"] .hand-card-wrapper {
+    transform: translateY(var(--layout-hand-sink));
+}
+
+html[data-layout="mobile"] .hand-card-wrapper:hover:not(.aiming):not(.click-selected),
+html[data-layout="mobile"] .hand-card-wrapper.hovering:not(.aiming):not(.click-selected),
+html[data-layout="mobile"] .hand-card-wrapper:active:not(.aiming):not(.click-selected) {
+    transform: translateY(0) scale(1.06);
+    z-index: 200;
+}
+
+html[data-layout="mobile"] .reward-modal {
+    width: var(--layout-reward-max-width);
+}
+
+html[data-layout="mobile"] .reward-modal .modal-title {
+    padding-bottom: 8px;
+}
+
+html[data-layout="mobile"] .rewards-list {
+    overflow-y: auto;
+    min-height: 0;
+    flex: 1;
+}
+
+html[data-layout="mobile"] .reward-info {
+    gap: 8px;
+}
+
+html[data-layout="mobile"] .reward-modal .action-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+html[data-layout="mobile"] .reward-modal .action-btn.primary {
+    padding: 8px 20px;
+}
+
+html[data-layout="mobile"] .choice-modal,
+html[data-layout="mobile"] .organ-choice-panel,
+html[data-layout="mobile"] .transplant-modal,
+html[data-layout="mobile"] .confirm-modal,
+html[data-layout="mobile"] .defeat-modal,
+html[data-layout="mobile"] .seed-dialog,
+html[data-layout="mobile"] .ability-menu {
+    min-width: 0;
+    width: var(--layout-dialog-max-width);
+    max-width: var(--layout-dialog-max-width);
+    max-height: calc(100% - 16px);
+    padding: var(--layout-dialog-pad);
+    box-sizing: border-box;
+    overflow: auto;
+}
+
+html[data-layout="mobile"] .choice-title,
+html[data-layout="mobile"] .confirm-title,
+html[data-layout="mobile"] .transplant-title,
+html[data-layout="mobile"] .defeat-modal .modal-title {
+    font-size: var(--layout-modal-title-size);
+}
+
+html[data-layout="mobile"] .choice-grid,
+html[data-layout="mobile"] .choice-cards-row {
+    max-height: min(220px, 52vh);
+}
+
+html[data-layout="mobile"] .card-choice {
+    width: min(92vw, 900px);
+    max-width: 92vw;
+    max-height: calc(100% - 16px);
+    padding: 0;
+    overflow: visible;
+    background: transparent;
+}
+
+html[data-layout="mobile"] .card-choice .card-panel {
+    min-width: 0;
+}
+
+html[data-layout="mobile"] .organ-upgrade-choice {
+    min-width: 0;
+    width: var(--layout-dialog-max-width);
+    max-width: var(--layout-dialog-max-width);
+    max-height: calc(100% - 16px);
+    padding: 0;
+    overflow: hidden;
+}
+
+html[data-layout="mobile"] .organ-reward-modal {
+    min-width: 0;
+    width: min(920px, 94vw);
+    max-width: 94vw;
+    max-height: calc(100% - 16px);
+    padding: 8px 12px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+html[data-layout="mobile"] .organ-cards-row {
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+}
+
+html[data-layout="mobile"] .organ-cards-row > * {
+    flex: 0 0 var(--layout-organ-popup-width);
+    min-width: 0;
+}
+
+html[data-layout="mobile"] .card-group-modal {
+    width: 92%;
+    max-width: 92vw;
+    height: calc(100% - 12px);
+    max-height: calc(100% - 12px);
+}
+
+html[data-layout="mobile"] .deck-modal {
+    width: min(720px, 92vw);
+    height: auto;
+    max-height: calc(100% - 16px);
+}
+
+html[data-layout="mobile"] .card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(var(--layout-card-width), 1fr));
+}
+
+html[data-layout="mobile"] .settings-modal {
+    width: min(480px, 92vw);
+    height: auto;
+    max-height: calc(100% - 16px);
+}
+
+html[data-layout="mobile"] .blackstore-header {
+    padding: 10px 12px 10px;
+}
+
+html[data-layout="mobile"] .blackstore-title {
+    font-size: 1.1rem;
+}
+
+html[data-layout="mobile"] .blackstore-desc {
+    display: none;
+}
+
+html[data-layout="mobile"] .organs-row {
+    flex-wrap: nowrap;
+}
+
+html[data-layout="mobile"] .organs-row .store-item {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+}
+
+html[data-layout="mobile"] .organ-detail-modal {
+    width: min(420px, 92vw);
+    max-height: calc(100% - 16px);
+}
