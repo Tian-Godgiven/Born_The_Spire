@@ -255,6 +255,7 @@ export class Battle {
 //当前的玩家队伍
 export const nowPlayerTeam:(Player|Chara)[] = []
 export function addToPlayerTeam(Target:Player|Chara){
+    if (nowPlayerTeam.some(member => member.__id === Target.__id)) return
     nowPlayerTeam.push(Target)
 }
 //当前的敌方队伍

@@ -65,6 +65,7 @@
 import { ref, computed, onMounted, watch, shallowRef } from 'vue'
 import { useRouter } from 'vue-router'
 import { startNewRun } from '@/core/objects/game/run'
+import { requestGameFullscreen } from '@/ui/hooks/global/layoutMode'
 import {
     loadMetaProgress,
     getInitialOrganBudget,
@@ -228,7 +229,7 @@ async function startGame() {
         return
     }
 
-    // 使用预创建的 Player 开始游戏（已包含所有选中的器官）
+    requestGameFullscreen()
     await startNewRun(seed.value || undefined, ascensionLevel.value, undefined, previewPlayer.value)
 }
 

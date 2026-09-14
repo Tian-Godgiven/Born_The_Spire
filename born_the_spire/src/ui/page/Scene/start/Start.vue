@@ -35,13 +35,17 @@ import { useRouter } from 'vue-router'
 import SettingsModal from '@/ui/components/interaction/SettingsModal.vue'
 import Popover from '@/ui/components/global/Popover.vue'
 import { GAME_VERSION, QQ_GROUP } from '@/ui/hooks/global/creatorEasterEgg'
+import { requestGameFullscreen } from '@/ui/hooks/global/layoutMode'
 
 const router = useRouter()
 
 const showSettings = ref(false)
 
 const buttonList: { label: string, click: () => void }[] = [
-    { label: "开始游戏", click: () => router.push('/setup') },
+    { label: "开始游戏", click: () => {
+        requestGameFullscreen()
+        router.push('/setup')
+    } },
     { label: "设置", click: () => showSettings.value = true }
 ]
 </script>

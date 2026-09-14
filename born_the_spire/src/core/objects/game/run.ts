@@ -156,6 +156,9 @@ export async function initDefaultGameObjects() {
 
 //开始一局新游戏
 export async function startNewRun(seed?: string, ascensionLevel: number = 0, initialOrgans?: string[], existingPlayer?: Player){
+    nowPlayerTeam.length = 0
+    nowBattle.value = null
+
     //创建本局（可选传入种子）
     const gameRun = new GameRun(seed)
     Object.assign(nowGameRun, gameRun)

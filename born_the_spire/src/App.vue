@@ -1,8 +1,5 @@
 <template>
   <main class="main" @mousemove="onMousemove">
-    <div v-if="needsLandscapePrompt" class="landscape-prompt">
-      请横屏游玩
-    </div>
     <div class="router">
       <RouterView></RouterView>
     </div>
@@ -26,7 +23,7 @@ import { onMounted, defineAsyncComponent } from 'vue';
 import { RouterView } from 'vue-router';
 import router from './ui/router';
 import { onMousemove } from './ui/hooks/global/mousePosition';
-import { initLayoutMode, needsLandscapePrompt } from './ui/hooks/global/layoutMode';
+import { initLayoutMode } from './ui/hooks/global/layoutMode';
 import './ui/styles/layout/pc.scss';
 import './ui/styles/layout/mobile.scss';
 
@@ -78,18 +75,6 @@ body{
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
-}
-.landscape-prompt{
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #fff;
-  color: #000;
-  font-size: 24px;
-  border: 2px solid #000;
 }
 .router{
   width: 100%;
