@@ -31,7 +31,16 @@ export class Target extends Entity{
     }
 }
 
-export type OrganEntry = string | { key: string, level?: number }
+export type OrganEntry = string | { key: string, level?: number, drop?: boolean }
+
+function dataFromOrganEntry(organData: any, entry: OrganEntry) {
+    if (typeof entry === "string") return organData
+    return {
+        ...organData,
+        ...(entry.level !== undefined ? { level: entry.level } : {}),
+        ...(entry.drop === false ? { drop: false } : {}),
+    }
+}
 
 export type CharaMap = TargetMap & {
     organ: OrganEntry[]
@@ -63,16 +72,12 @@ export class Chara extends Target{
 
                 for(let entry of map.organ){
                     const key = typeof entry === 'string' ? entry : entry.key
-                    const levelOverride = typeof entry === 'string' ? undefined : entry.level
                     const organData = organList.find((o: any) => o.key === key)
                     if (!organData) {
                         console.error(`[Chara] 未找到器官: ${key}`)
                         continue
                     }
-                    const organDataWithLevel = levelOverride !== undefined
-                        ? { ...organData, level: levelOverride }
-                        : organData
-                    const organ = await createOrgan(organDataWithLevel)
+                    const organ = await createOrgan(dataFromOrganEntry(organData, entry))
                     getOrgan(chara, chara, organ)
                 }
             }
@@ -114,16 +119,12 @@ export class Chara extends Target{
 
             for(let entry of organEntries){
                 const key = typeof entry === 'string' ? entry : entry.key
-                const levelOverride = typeof entry === 'string' ? undefined : entry.level
                 const organData = organList.find((o: any) => o.key === key)
                 if (!organData) {
                     console.error(`[Chara] 未找到器官: ${key}`)
                     continue
                 }
-                const organDataWithLevel = levelOverride !== undefined
-                    ? { ...organData, level: levelOverride }
-                    : organData
-                const organ = await createOrgan(organDataWithLevel)
+                const organ = await createOrgan(dataFromOrganEntry(organData, entry))
                 getOrgan(this, this, organ)
             }
         }

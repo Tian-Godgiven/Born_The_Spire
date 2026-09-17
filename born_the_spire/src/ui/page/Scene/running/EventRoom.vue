@@ -175,6 +175,8 @@ async function onBattleEnd(result: 'player_win' | 'player_lose') {
     position: relative;
     width: 100%;
     height: 100%;
+    min-height: 0;
+    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;

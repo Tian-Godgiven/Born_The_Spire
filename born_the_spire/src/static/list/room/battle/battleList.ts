@@ -575,19 +575,54 @@ export const battleList: BattleRoomConfig[] = [
                 key: "enemy_plague_mother",
                 uiSize: "big",
                 behavior: {
-                    patterns: [
-                        {
-                            priority: 10,
-                            intent: "unknown",
-                            condition: { turn: { mod: [3, 1] } },
-                            action: { selector: { key: "boss2_card_spore_burst" }, mode: "random" },
-                            describe: "每3回合（第1、4、7...）：孢子爆发"
-                        }
-                    ],
+                    moves: {
+                        mode: "loop",
+                        list: [
+                            {
+                                condition: { selfHealth: { above: 30 } },
+                                cards: ["boss2_card_spore_burst"],
+                                describe: "常规1：孢子爆发"
+                            },
+                            {
+                                condition: { selfHealth: { above: 30 } },
+                                cards: ["boss2_card_mycelium_spread"],
+                                describe: "常规2：菌丝蔓延"
+                            },
+                            {
+                                condition: { selfHealth: { above: 30 } },
+                                cards: [["boss2_card_infection_strike", "enemy_card_harden"]],
+                                describe: "常规3：感染或硬化"
+                            },
+                            {
+                                condition: { selfHealth: { above: 30 } },
+                                cards: [["boss2_card_infection_strike", "enemy_card_harden"]],
+                                describe: "常规4：感染或硬化"
+                            },
+                            {
+                                condition: { selfHealth: { below: 31 } },
+                                cards: ["boss2_card_spore_burst", "boss2_card_mycelium_spread"],
+                                describe: "狂暴1：爆发+蔓延"
+                            },
+                            {
+                                condition: { selfHealth: { below: 31 } },
+                                cards: ["boss2_card_mycelium_spread", "enemy_card_harden"],
+                                describe: "狂暴2：蔓延+硬化"
+                            },
+                            {
+                                condition: { selfHealth: { below: 31 } },
+                                cards: ["boss2_card_mycelium_spread", "enemy_card_harden"],
+                                describe: "狂暴3：蔓延+硬化"
+                            },
+                            {
+                                condition: { selfHealth: { below: 31 } },
+                                cards: ["boss2_card_mycelium_spread", "enemy_card_harden"],
+                                describe: "狂暴4：蔓延+硬化"
+                            }
+                        ]
+                    },
                     fallback: {
-                        intent: "attack",
                         action: { selector: { key: "boss2_card_infection_strike" }, mode: "random" },
-                        describe: "感染打击"
+                        describe: "剧本筛空时：感染打击"
                     }
                 }
             }

@@ -241,6 +241,18 @@ export const stateList: StateData[] = [
         showType: "number",
         repeate: "stack",
     },
+    // 菌丝：菌丝蔓延打在目标上，本场随层把那张牌打得更疼、更厚
+    {
+        label: "菌丝",
+        key: "mycelium",
+        category: "debuff",
+        describe: ["菌丝蔓延随层数变强"],
+        showType: "number",
+        repeate: "stack",
+        stackChange: [
+            { timing: "battleEnd", delta: "all" }
+        ]
+    },
     // 充能：通用层数资源。谁消耗、怎么结算，写在那张卡自己的 describe 里
     {
         label: "充能",

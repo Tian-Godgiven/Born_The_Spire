@@ -249,55 +249,62 @@ onBeforeUnmount(() => {
 
 <style scoped lang="scss">
 .god-of-chance {
-    width: auto;
-    height: 500px;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    box-sizing: border-box;
+    padding: var(--layout-gap-md);
     display: flex;
-    gap: 1.5rem;
+    gap: var(--layout-gap-lg);
     align-items: stretch;
 }
 
 .board {
-    width: 500px;
-    height: 500px;
+    width: min(var(--layout-chance-board), 42%, 48vh);
+    max-height: 100%;
+    aspect-ratio: 1;
     box-sizing: border-box;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 3rem;
+    gap: var(--layout-gap-lg);
     border: 2px solid black;
-    padding: 2rem;
+    padding: var(--layout-gap-md);
     background: white;
 }
 
 .die {
-    width: 88px;
-    height: 88px;
+    width: var(--layout-chance-die);
+    height: var(--layout-chance-die);
     border: 2px solid black;
     background: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2.2rem;
+    font-size: calc(var(--layout-chance-die) * 0.4);
     font-weight: bold;
     user-select: none;
 }
 
 .panel {
-    width: 400px;
-    height: 500px;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
     box-sizing: border-box;
-    flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    gap: var(--layout-gap-sm);
 }
 
 .panel-top {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--layout-gap-sm);
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .event-header {
@@ -408,7 +415,8 @@ onBeforeUnmount(() => {
 .event-options {
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
+    gap: var(--layout-event-option-gap);
+    flex-shrink: 0;
 }
 
 .event-option {

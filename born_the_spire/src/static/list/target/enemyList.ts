@@ -483,30 +483,15 @@ export const enemyList:EnemyMap[] = [
         label: "疫孢菌母",
         key: "enemy_plague_mother",
         status: {
-            "max-health": 180,
-            "actions-per-turn": 1
+            "max-health": 90
         },
         organ: [
             "enemy_organ_spore_gland",
             "enemy_organ_parasitic_root",
-            "enemy_organ_corruption_armor",
+            { key: "enemy_organ_fungal_cap", level: 3, drop: false },
             "enemy_organ_toxic_core_boss",
             "enemy_organ_mycelial_network"
-        ],
-        trigger: [{
-            when: "after",
-            how: "take",
-            key: ["attack", "damage"],
-            action: "checkPhaseShift"
-        }],
-        reaction: {
-            checkPhaseShift: [{
-                key: "checkPhaseShift",
-                label: "相位转换",
-                targetType: "owner",
-                effect: [{ key: "organ_phaseShift", params: { threshold: 0.5, actions: 2 } }]
-            }]
-        }
+        ]
     },
 
     {

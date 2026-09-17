@@ -622,11 +622,22 @@ export const organList:OrganMap[] = [
     current: ["mass"],
     cards: ["enemy_card_harden"],
     upgrade: {
-        maxLevel: 2,
-        milestones: [{
-            level: 2,
-            effects: [{ key: "upgradeOrganCards" }]
-        }]
+        maxLevel: 3,
+        milestones: [
+            {
+                level: 2,
+                effects: [{ key: "upgradeOrganCards" }]
+            },
+            {
+                level: 3,
+                describe: ["改为获得 5 点", {$:"护甲"}],
+                effects: [{
+                    key: "setBaseStatus",
+                    params: { statusKey: "armor-gain", value: 5 },
+                    target: "eventMedium"
+                }]
+            }
+        ]
     },
     interaction: {
         work: {
@@ -1752,31 +1763,19 @@ export const organList:OrganMap[] = [
     }
 },
 
-// 寄生菌根：对手每累计受到8点伤害，持有者回复2点生命
+// 寄生菌丝：提供菌丝蔓延
 {
-    label: "寄生菌根",
+    label: "寄生菌丝",
     key: "enemy_organ_parasitic_root",
-    describe: ["对手每累计受到8点伤害，回复2点生命"],
     rarity: OrganRarity.Uncommon,
     part: OrganPartEnum.Nerve,
-    status: { "max-mass": 40, "lifeDrainAccum": 0 },
+    status: { "max-mass": 40 },
     current: ["mass"],
+    cards: ["boss2_card_mycelium_spread"],
     interaction: {
         possess: {
-            target: { key: "owner" },
-            effects: [{
-                key: "accumulateAndTrigger",
-                params: {
-                    pointKey: "lifeDrainAccum",
-                    on: { when: "after", how: "take", key: ["attack", "damage"] },
-                    triggerTarget: "allOpponents",
-                    gain: "$triggerEffect.params(value)",
-                    threshold: 8,
-                    consume: 8,
-                    targetType: "owner",
-                    effects: [{ key: "heal", params: { value: 2 } }]
-                }
-            }]
+            target: { key: "self" },
+            effects: []
         }
     }
 },
@@ -1843,33 +1842,88 @@ export const organList:OrganMap[] = [
     }
 },
 
-// 菌网根系：回合开始时给随机1个对手施加2层中毒
+// 菌网根系：加毒卡挂这里；对对手上毒时抽牌（每回合限次）
 {
     label: "菌网根系",
     key: "enemy_organ_mycelial_network",
-    describe: ["回合开始时，给随机1个对手施加2层", {$:"中毒"}],
+    effect: [
+        "对对手施加", {$:"中毒"}, "时抽 1 张牌（每回合",
+        { key: ["status", "used"] }, "/", { key: ["status", "maxUse"] }, "）"
+    ],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Nerve,
-    status: { "max-mass": 30 },
+    status: { "max-mass": 30, used: 0, maxUse: 3 },
     current: ["mass"],
+    cards: ["boss2_card_infection_strike"],
+    badges: [
+        { type: "counter", status: "used", maxStatus: "maxUse" }
+    ],
+    upgrade: {
+        maxLevel: 3,
+        milestones: [
+            {
+                level: 2,
+                describe: ["改为每回合 5 次"],
+                effects: [{
+                    key: "setBaseStatus",
+                    params: { statusKey: "maxUse", value: 5 },
+                    target: "eventMedium"
+                }]
+            },
+            {
+                level: 3,
+                effects: [{
+                    key: "upgradeOrganCards",
+                    params: { cardKey: "boss2_card_infection_strike" }
+                }]
+            }
+        ]
+    },
     interaction: {
-        possess: {
+        work: {
             target: { key: "self" },
             effects: [],
-            triggers: [{
-                when: "after",
-                how: "make",
-                key: "turnStart",
-                action: "mycelialSpread"
-            }]
+            triggers: [
+                {
+                    when: "after",
+                    how: "make",
+                    key: "applyState",
+                    condition: [
+                        "$triggerEffect.params(stateKey) == poison",
+                        "$item.status(used) < $item.status(maxUse)",
+                        "$target != $owner"
+                    ],
+                    action: "mycelialDraw"
+                },
+                {
+                    when: "before",
+                    how: "make",
+                    key: "turnStart",
+                    action: "mycelialReset"
+                }
+            ]
         }
     },
     reaction: {
-        mycelialSpread: [{
-            key: "mycelialSpread",
-            label: "菌网扩散：施加中毒",
-            targetType: "owner",
-            effect: [{ key: "organ_mycelialSpread", params: { stacks: 2 } }]
+        mycelialDraw: [
+            {
+                key: "mycelialDrawCard",
+                label: "菌网：上毒抽牌",
+                targetType: "owner",
+                effect: [{ key: "drawFromDrawPile", params: { value: 1 } }]
+            },
+            {
+                key: "mycelialCount",
+                label: "菌网：计数",
+                targetType: "item",
+                effect: [{ key: "incrementStatus", params: { statusKey: "used", amount: 1 } }]
+            }
+        ],
+        mycelialReset: [{
+            key: "mycelialReset",
+            label: "菌网：重置次数",
+            targetType: "item",
+            effect: [{ key: "setBaseStatus", params: { statusKey: "used", value: 0 } }]
         }]
     }
 },

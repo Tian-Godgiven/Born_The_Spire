@@ -1,6 +1,9 @@
 import type { AscensionConfig } from "@/core/types/AscensionConfig"
 import { createAscensionModifier } from "@/core/utils/ascensionHelper"
 
+/** 选人页 / 顶栏进阶 UI。引擎还在，先不对玩家开放。打开前改这里。 */
+export const ASCENSION_UI_ENABLED = false
+
 /**
  * 进阶配置列表
  *

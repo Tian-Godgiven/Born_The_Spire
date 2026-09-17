@@ -30,7 +30,7 @@
     <!-- 底部按钮 -->
     <div class="bottom-actions">
         <button class="action-btn secondary" @click="goBack">返回</button>
-        <div class="ascension-section">
+        <div v-if="ascensionUiEnabled" class="ascension-section">
             <div class="section-label">进阶</div>
             <div class="ascension-control">
                 <button class="arrow-btn" @click="prevAscension" :disabled="ascensionLevel <= 0">◀</button>
@@ -74,7 +74,7 @@ import {
     ORGAN_RARITY_COST,
     type MetaProgressSave
 } from '@/core/persistence/metaProgress'
-import { getAscensionConfig, getMaxAscensionLevel } from '@/static/list/system/ascensionList'
+import { getAscensionConfig, getMaxAscensionLevel, ASCENSION_UI_ENABLED } from '@/static/list/system/ascensionList'
 import { getLazyModule } from '@/core/utils/lazyLoader'
 import { Organ } from '@/core/objects/target/Organ'
 import { Player, type PlayerMap } from '@/core/objects/target/Player'
@@ -92,6 +92,7 @@ const HEART_KEY = 'original_organ_00001'
 const router = useRouter()
 
 // ========== 状态 ==========
+const ascensionUiEnabled = ASCENSION_UI_ENABLED
 const seed = ref('')
 const ascensionLevel = ref(0)
 const showSeedDialog = ref(false)
@@ -314,8 +315,8 @@ onMounted(async () => {
     width: 100%;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: var(--layout-gap-md);
-    >:nth-child(2){ flex: 1; }
 }
 
 .ascension-section {

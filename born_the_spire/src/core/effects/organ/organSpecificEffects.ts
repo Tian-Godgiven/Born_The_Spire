@@ -468,7 +468,7 @@ export const organ_mycelialSpread: EffectFunc = (event, effect) => {
     const battle = nowBattle.value
     if (!battle) return false
 
-    const stacks = Number(effect.params?.stacks ?? 2)
+    const stacks = Number(effect.params?.stacks ?? 1)
     const opponents = isEnemy(source) ? battle.getAlivePlayers() : battle.getAliveEnemies()
     if (opponents.length === 0) return false
 

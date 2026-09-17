@@ -15,7 +15,7 @@ import { addToPlayerTeam, nowPlayerTeam, nowBattle } from "@/core/objects/game/b
 import { gameOver } from "@/core/hooks/game";
 import { getOrganByKey } from "@/static/list/target/organList";
 import { gainOrgan } from "@/core/effects/item/gainItem";
-import { getAscensionConfig } from "@/static/list/system/ascensionList";
+import { getAscensionConfig, ASCENSION_UI_ENABLED } from "@/static/list/system/ascensionList";
 import { goToNextStep } from "@/core/hooks/step";
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier";
 
@@ -201,13 +201,14 @@ export async function startNewRun(seed?: string, ascensionLevel: number = 0, ini
     }
 
     // 应用进阶触发器
-    if (ascensionLevel > 0) {
-        const ascensionConfig = getAscensionConfig(ascensionLevel)
+    const runAscension = ASCENSION_UI_ENABLED ? ascensionLevel : 0
+    if (runAscension > 0) {
+        const ascensionConfig = getAscensionConfig(runAscension)
         if (ascensionConfig) {
             await nowGameRun.applyAscensionTriggers(ascensionConfig.triggers)
-            nowGameRun.towerFire = ascensionLevel
+            nowGameRun.towerFire = runAscension
         } else {
-            console.warn(`[startNewRun] 未找到进阶 ${ascensionLevel} 的配置`)
+            console.warn(`[startNewRun] 未找到进阶 ${runAscension} 的配置`)
         }
     }
 

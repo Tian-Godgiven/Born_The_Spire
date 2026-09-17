@@ -35,7 +35,7 @@ import { addStatusModifier, addMaxHealthAndHeal } from "@/core/effects/modifier/
 import { accumulateAndTrigger } from "@/core/effects/relic/accumulateAndTrigger"
 import { hungryBeast_registerInterceptor } from "@/core/effects/relic/hungryBeastInterceptor"
 import { exhaustRandomCardByTag } from "@/core/effects/card/exhaustRandomCardByTag"
-import { card_wasteHeatRecovery, card_unstableCharge, card_commandScreech, card_commandStrike, card_heatBlast, card_corrosiveBurst } from "@/core/effects/card/cardSpecificEffects"
+import { card_wasteHeatRecovery, card_unstableCharge, card_commandScreech, card_commandStrike, card_heatBlast, card_corrosiveBurst, card_myceliumSpread } from "@/core/effects/card/cardSpecificEffects"
 import { organ_heatTick, organ_rustySeparator, organ_emergencyBattery, organ_pheromoneGland, gainArmorPerAlly, organ_heatAccumulate, organ_poisonArmor, organ_toxicPulse, organ_armorBash, state_hardenAbsorb, card_strengthBite, organ_lifeSteal, organ_poisonAmplify, organ_corruptionArmor, organ_phaseShift, organ_mycelialSpread, organ_multiHitBonus, organ_powerAmplify } from "@/core/effects/organ/organSpecificEffects"
 import { stuffCard } from "@/core/effects/card/stuffCard"
 import { clearArmorEffect } from "@/core/effects/clearArmor"
@@ -481,6 +481,10 @@ export const effectMap:EffectData[] = [
     label:"腐蚀爆发：双面伤害+成长",
     key:"card_corrosiveBurst",
     effect:card_corrosiveBurst
+},{
+    label:"菌丝蔓延：伤/甲随目标菌丝成长",
+    key:"card_myceliumSpread",
+    effect:card_myceliumSpread
 },{
     label:"启用器官奖励动作",
     key:"enableOrganRewardAction",

@@ -468,7 +468,7 @@ export class BattleRoom extends Room {
             const organs = organModifier.getOrgans()
 
             organs.forEach(organ => {
-                if (organ.key) {
+                if (organ.key && organ.drop) {
                     allOrganKeys.add(organ.key)
                 }
             })

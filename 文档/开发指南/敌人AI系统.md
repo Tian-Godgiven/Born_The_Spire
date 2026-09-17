@@ -89,6 +89,8 @@ moves: {
 
 `patterns` 仍可插队（例如护甲≥40 改打爆发）。插队成功时本回合不走剧本，也不推进循环指针。不要写没有 condition 的 pattern，否则会永远挡住剧本。
 
+残血要打出多张：把常规招和狂暴招写在同一份 `list` 里，用 `selfHealth` 互斥。条件失败的招会被跳过，指针会落到第一招还能打的狂暴上。不要用 `organ_phaseShift` 去加 `actions-per-turn`——有 moves 时那条不生效，旧 pattern AI 还会把同一招评两遍。现行：疫孢菌母，`battleList` 里 `battle_f1_boss_plague_mother`。
+
 ---
 
 ## condition 条件

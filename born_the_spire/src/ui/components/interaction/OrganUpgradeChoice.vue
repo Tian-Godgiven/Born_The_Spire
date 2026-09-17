@@ -3,7 +3,7 @@
     <div class="header">
       <h2>选择要升级的器官</h2>
       <div class="material">物质：{{ currentMaterial }}</div>
-      <button class="close-btn" @click="handleCancel">返回</button>
+      <Button :click="handleCancel" label="返回" />
     </div>
 
     <div v-if="organs.length === 0" class="empty">
@@ -34,15 +34,16 @@
           </template>
         </Popover>
 
-        <button
-          class="cost-block"
-          :class="{ error: !canUpgrade(organ) }"
-          :disabled="!canUpgrade(organ)"
-          @click.stop="handleSelectOrgan(organ)"
-        >
-          <template v-if="canUpgrade(organ)">升级消耗 {{ getUpgradeCost(organ) }} 物质</template>
-          <template v-else>{{ getUpgradeError(organ) }}</template>
-        </button>
+        <div @click.stop>
+          <Button
+            :click="() => handleSelectOrgan(organ)"
+            :disabled="!canUpgrade(organ)"
+            :error="!canUpgrade(organ)"
+          >
+            <template v-if="canUpgrade(organ)">升级消耗 {{ getUpgradeCost(organ) }} 物质</template>
+            <template v-else>{{ getUpgradeError(organ) }}</template>
+          </Button>
+        </div>
       </div>
     </div>
   </div>
@@ -62,6 +63,7 @@ import { getCurrentValue } from '@/core/objects/system/Current/current'
 import { getStatusValue } from '@/core/objects/system/status/Status'
 import { getReserveModifier } from '@/core/objects/system/modifier/ReserveModifier'
 import Popover from '@/ui/components/global/Popover.vue'
+import Button from '@/ui/components/global/Button.vue'
 import OrganHoverContent, { organHoverMaxWidth } from '@/ui/components/interaction/OrganHoverContent.vue'
 
 const props = defineProps<{
@@ -162,19 +164,6 @@ function handleCancel() {
       font-weight: bold;
       white-space: nowrap;
     }
-
-    .close-btn {
-      flex-shrink: 0;
-      padding: 6px 12px;
-      border: 2px solid black;
-      background: white;
-      cursor: pointer;
-      font-size: 14px;
-
-      &:hover {
-        background: rgba(0, 0, 0, 0.05);
-      }
-    }
   }
 
   .empty {
@@ -198,6 +187,11 @@ function handleCancel() {
       gap: 12px;
       padding: 12px;
       border: 2px solid black;
+
+      > div:last-child {
+        flex-shrink: 0;
+        align-self: center;
+      }
     }
 
     :deep(.popover-trigger) {
@@ -222,29 +216,6 @@ function handleCancel() {
     .organ-name {
       font-size: 16px;
       font-weight: bold;
-    }
-
-    .cost-block {
-      flex-shrink: 0;
-      align-self: center;
-      border: 2px solid black;
-      background: black;
-      color: white;
-      padding: 8px 12px;
-      font-size: 13px;
-      white-space: nowrap;
-      cursor: pointer;
-
-      &:hover:not(:disabled) {
-        background: #222;
-      }
-
-      &:disabled,
-      &.error {
-        background: white;
-        color: red;
-        cursor: not-allowed;
-      }
     }
   }
 }

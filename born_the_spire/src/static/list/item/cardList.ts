@@ -977,15 +977,49 @@ export const cardList:CardMap[] = [{
     label: "感染打击",
     key: "boss2_card_infection_strike",
     tags: ["attack", "enemy"],
-    status: { cost: 1, damage: 8, poison: 2 },
+    status: { cost: 1, damage: 3, poison: 1 },
     describe: ["造成", {key: ["status", "damage"]}, "点伤害，施加", {key: ["status", "poison"]}, "层", {$:"中毒"}],
     interaction: {
         use: {
             target: { faction: "opponent" },
             effects: [
-                { key: "attack", params: { value: 8 } },
-                { key: "applyState", params: { stateKey: "poison", stacks: 2 } }
+                { key: "attack", params: { value: "$medium.status(damage)" } },
+                { key: "applyState", params: { stateKey: "poison", stacks: "$medium.status(poison)" } }
             ]
+        }
+    },
+    upgradeConfig: {
+        maxLevel: 1,
+        levelConfigs: {
+            1: { status: { cost: 0, poison: 2 } }
+        }
+    }
+},
+
+// 菌丝蔓延：寄生菌丝提供。先按目标已有菌丝结算，再叠 1 层
+{
+    label: "菌丝蔓延",
+    key: "boss2_card_mycelium_spread",
+    tags: ["attack", "enemy"],
+    status: { cost: 2, damage: 3, armor: 3, weakStacks: 1, perStacks: 5 },
+    describe: [
+        "造成", {key: ["status", "damage"]}, "点伤害，获得", {key: ["status", "armor"]}, "点", {$:"护甲"},
+        "，施加", {key: ["status", "weakStacks"]}, "层", {$:"虚弱"},
+        "。目标每有 1 层", {$:"菌丝"}, "，伤害和护甲各 +1；每", {key: ["status", "perStacks"]}, "层", {$:"虚弱"}, "+1。",
+        "打出后对目标施加 1 层", {$:"菌丝"}
+    ],
+    interaction: {
+        use: {
+            target: { faction: "opponent" },
+            effects: [{
+                key: "card_myceliumSpread",
+                params: {
+                    damage: "$medium.status(damage)",
+                    armor: "$medium.status(armor)",
+                    weak: "$medium.status(weakStacks)",
+                    perStacks: "$medium.status(perStacks)"
+                }
+            }]
         }
     }
 },
@@ -1010,8 +1044,8 @@ export const cardList:CardMap[] = [{
     label: "孢子",
     key: "boss2_card_spore",
     tags: ["skill"],
-    status: { cost: 4, stacks: 1 },
-    entry: ["card_void"],
+    status: { cost: 1, stacks: 1 },
+    entry: ["card_exhaust", "card_void"],
     describe: ["在手牌中时，回合结束施加", {key: ["status", "stacks"]}, "层", {$:"中毒"}],
     interaction: {
         use: {

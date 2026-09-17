@@ -68,6 +68,7 @@ export type OrganMap = ItemMap&TargetMap&{
     part?: OrganPart       // 部位（可选，不填表示不占据部位）
     absorbValue?: number   // 吞噬获取量（可选，不填则使用稀有度的默认值）
     tags?: string[]        // 标签列表（可选）
+    drop?: boolean         // 默认 true。false 时不进战斗同化池。写在敌人 organ 条目上只影响该敌人；写在器官表上则谁装着都不掉
 
     // 升级配置（可选）
     upgrade?: OrganUpgradeConfig
@@ -106,6 +107,7 @@ export class Organ extends Entity{
     public readonly absorbValue: number    // 吞噬获取量
     public readonly upgradeConfig?: OrganUpgradeConfig  // 升级配置（可选）
     public readonly tags: string[]         // 标签列表
+    public readonly drop: boolean          // 是否进入战斗同化池，默认 true
     public activeAbilities?: ActiveAbility[]  // 主动能力列表
     public badges?: BadgeConfig[]  // 角标配置
 
@@ -129,6 +131,7 @@ export class Organ extends Entity{
         // 初始化新属性
         this.rarity = map.rarity
         this.level = map.level ?? 1  // 默认等级为 1
+        this.drop = map.drop !== false
         this.part = map.part
         this.absorbValue = calculateAbsorbValue(map.rarity, map.absorbValue)
         this.upgradeConfig = map.upgrade  // 升级配置

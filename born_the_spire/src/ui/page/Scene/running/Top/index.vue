@@ -29,7 +29,7 @@
 
         <div class="gameRunData">
             <div>层数：{{ nowGameRun.towerLevel ?? 0 }}</div>
-            <div>进阶：{{ nowGameRun.towerFire ?? 0 }}</div>
+            <div v-if="ascensionUiEnabled">进阶：{{ nowGameRun.towerFire ?? 0 }}</div>
         </div>
         <div class="ability flex">
             <template v-for="ability in abilities" :key="ability.label">
@@ -64,6 +64,7 @@
     import { getCardModifier } from '@/core/objects/system/modifier/CardModifier';
     import { showRelicList } from '@/ui/interaction/relicList';
     import type { CardPileName } from '@/ui/animation/cardFlight';
+    import { ASCENSION_UI_ENABLED } from '@/static/list/system/ascensionList';
 
     // 打开地图（用于战斗中查看地图）
     function openMap() {
@@ -128,6 +129,7 @@
     })
 
     const showSettings = ref(false)
+    const ascensionUiEnabled = ASCENSION_UI_ENABLED
 
     const abilities: Array<{ label: string, click: () => void, pile?: CardPileName }> = [
         {label:"地图",click:()=>openMap()},
@@ -160,9 +162,9 @@
         align-items: center;
     }
     .gameRunData{
-        display: grid;
-        grid-template-columns: repeat(2,1fr);
+        display: flex;
         align-items: center;
+        gap: var(--layout-gap-md);
     }
 }
 .name{
@@ -178,6 +180,10 @@
     >div{
         flex-shrink: 0;
     }
+}
+.ability{
+    justify-content: flex-end;
+    gap: var(--layout-gap-sm);
 }
 .potions{
     gap: 10px;

@@ -231,3 +231,57 @@ export const card_corrosiveBurst: EffectFunc = (event, effect) => {
     newLog([source, `腐蚀度 +1（当前 ${corrosion + 1} 层）`])
     return true
 }
+
+/**
+ * 菌丝蔓延：先按目标已有菌丝结算伤害/护甲/虚弱，再给目标叠 1 层菌丝。
+ * params:
+ *   damage    基础伤害（默认 3）
+ *   armor     基础护甲（默认 3）
+ *   weak      基础虚弱（默认 1）
+ *   perStacks 每多少层菌丝额外 +1 虚弱（默认 5）
+ */
+export const card_myceliumSpread: EffectFunc = (event, effect) => {
+    const source = event.source
+    if (!isEntity(source)) return false
+    const target = Array.isArray(event.target) ? event.target[0] : event.target
+    if (!isEntity(target)) return false
+
+    const stacks = getStateModifier(target as any).getState("mycelium")?.stacks.find(s => s.key === "default")?.stack ?? 0
+    const baseDamage = Number(effect.params?.damage ?? 3)
+    const baseArmor = Number(effect.params?.armor ?? 3)
+    const baseWeak = Number(effect.params?.weak ?? 1)
+    const perStacks = Number(effect.params?.perStacks ?? 5)
+
+    doEvent({
+        key: "attack",
+        source,
+        medium: event.medium,
+        target,
+        effectUnits: [{ key: "attack", params: { value: baseDamage + stacks } }]
+    })
+    doEvent({
+        key: "gainArmor",
+        source,
+        medium: event.medium,
+        target: source,
+        effectUnits: [{ key: "gainArmor", params: { value: baseArmor + stacks } }]
+    })
+    doEvent({
+        key: "applyState",
+        source,
+        medium: event.medium,
+        target,
+        effectUnits: [{
+            key: "applyState",
+            params: { stateKey: "weak", stacks: baseWeak + Math.floor(stacks / perStacks) }
+        }]
+    })
+    doEvent({
+        key: "applyState",
+        source,
+        medium: event.medium,
+        target,
+        effectUnits: [{ key: "applyState", params: { stateKey: "mycelium", stacks: 1 } }]
+    })
+    return true
+}

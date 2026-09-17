@@ -65,6 +65,8 @@ html[data-layout="mobile"] {
     --layout-leave-font: 13px;
     --layout-store-buy-pad: 12px 24px;
     --layout-store-buy-font: 18px;
+    --layout-chance-board: min(200px, 52%);
+    --layout-chance-die: 52px;
     --layout-organ-popup-width: min(200px, calc((94vw - 48px) / 3));
 }
 
