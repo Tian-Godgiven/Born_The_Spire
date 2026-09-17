@@ -574,12 +574,12 @@ function getStatusDescribe(keys:string[],target:Record<string,any>){
             //成功访问到了其中的key属性值
             if(item.hasOwnProperty(key)){
                 const value = item[key]
-                if(typeof value == "object"){
-                    //消除代理
+                if(typeof value == "object" && value != null){
                     const rawValue = toRaw(value)
-                    // 使用 typeGuard 检查是否为 Status 对象
+                    // 类型判断要看原始 Status；数字必须走当前对象的 .value。
+                    // 卡面 preview 把力量/易伤叠在 Status 的 Proxy 上，toRaw 后再读会变回牌上的死值。
                     if(isStatus(rawValue)){
-                        result = toString(rawValue.value)
+                        result = toString(value.value)
                         break;
                     }
                     else{

@@ -1,16 +1,15 @@
 import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import { handleEventEntity } from "@/core/objects/system/ActionEvent"
 import { isEntity } from "@/core/utils/typeGuards"
-import { markBeastLoot } from "@/ui/hooks/interaction/rewardDisplay"
+import { markBeastLoot } from "@/ui/hooks/interaction/beastLoot"
 import { getGlobalRandom } from "@/core/hooks/random"
+import "@/ui/hooks/interaction/registerBeastLootAddon"
 
 /**
- * 小兽伙伴 - 战斗奖励标记
+ * 小兽伙伴：战斗奖励标记
  *
- * 挂在 owner (玩家) 的 after take beforeShowRewards 上：
- *   随机盯上一份战利品，战利品页用 🐕 标出
- *   未喂计数 ≥ 3 时强制占据（那一行不能领）
- *   玩家领走 → 未喂 +1；最终没领 → 好感度 +1、未喂清零（见 rewardDisplay）
+ * 挂在 owner 的 after take beforeShowRewards 上，随机盯上一份。
+ * UI 由战利品行插件 BeastLootAddon 负责，不写进 RewardModal。
  */
 export const hungryBeast_registerInterceptor: EffectFunc = (event, effect) => {
     const { target, medium } = event

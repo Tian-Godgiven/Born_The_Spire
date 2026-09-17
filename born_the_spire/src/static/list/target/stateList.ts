@@ -762,7 +762,7 @@ export const stateList: StateData[] = [
     repeate: "refresh"
 },
 // 点火：通用计数器状态，可被任何"逐步积累到阈值触发爆发"的敌人复用
-// Boss 1 炙渣王：攻击牌积累 ignition，达到 4 时释放重铸获得+4力量
+// Boss 1 自走焚烧炉：攻击牌积累 ignition，达到 4 时释放重铸获得+4力量
 {
     label: "点火",
     key: "ignition",

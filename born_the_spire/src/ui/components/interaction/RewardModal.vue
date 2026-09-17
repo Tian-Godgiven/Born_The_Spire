@@ -4,22 +4,15 @@
       <div class="modal-title">战利品</div>
 
       <div class="rewards-list">
-        <Popover
+        <div
           v-for="reward in rewards"
           :key="reward.__key"
-          placement="bottom"
-          align="start"
-          :disabled="reward.type === 'relic' || !showBeastMark(reward)"
+          class="reward-row"
+          :class="{
+            claimed: reward.isClaimed(),
+            locked: reward.isLocked()
+          }"
         >
-          <div
-            class="reward-row"
-            :class="{
-              claimed: reward.isClaimed(),
-              locked: reward.isLocked(),
-              'beast-wanted': showBeastMark(reward) && !isBeastForced(reward),
-              'beast-forced': showBeastMark(reward) && isBeastForced(reward)
-            }"
-          >
             <div class="reward-info">
               <span class="reward-icon">{{ reward.getDisplayIcon() }}</span>
               <div class="reward-text-col">
@@ -36,15 +29,19 @@
                   </template>
                 </Popover>
                 <span v-else class="reward-text">{{ reward.getDisplayTitle() }}</span>
-                <span v-if="showBeastMark(reward)" class="beast-caption">
-                  {{ isBeastForced(reward) ? '🐕 小兽霸占了这份' : '🐕 小兽想要这份' }}
-                </span>
+                <component
+                  v-for="addon in rewardRowAddons"
+                  :key="addon.key + '-info'"
+                  :is="addon.component"
+                  :reward="reward"
+                  area="info"
+                />
               </div>
             </div>
 
             <div class="reward-action">
               <button
-                v-if="reward.type === 'organSelect' && !reward.isClaimed() && !isBeastForced(reward)"
+                v-if="reward.type === 'organSelect' && canClaim(reward)"
                 class="action-btn"
                 @click="openOrganChoice(reward)"
               >
@@ -52,7 +49,7 @@
               </button>
 
               <button
-                v-else-if="reward.type === 'relicSelect' && !reward.isClaimed() && !isBeastForced(reward)"
+                v-else-if="reward.type === 'relicSelect' && canClaim(reward)"
                 class="action-btn"
                 @click="openRelicChoice(reward)"
               >
@@ -60,7 +57,7 @@
               </button>
 
               <button
-                v-else-if="reward.type === 'cardSelect' && !reward.isClaimed() && !isBeastForced(reward)"
+                v-else-if="reward.type === 'cardSelect' && canClaim(reward)"
                 class="action-btn"
                 @click="openCardChoice(reward)"
               >
@@ -68,24 +65,26 @@
               </button>
 
               <button
-                v-else-if="!reward.isClaimed() && !isBeastForced(reward)"
+                v-else-if="canClaim(reward)"
                 class="action-btn"
                 @click="claimReward(reward)"
               >
                 领取
               </button>
 
-              <span v-else-if="isBeastForced(reward) && !reward.isClaimed()" class="locked-text">小兽叼走了</span>
+              <component
+                v-for="addon in rewardRowAddons"
+                :key="addon.key + '-action'"
+                :is="addon.component"
+                :reward="reward"
+                area="action"
+              />
+
+              <span v-if="reward.isClaimBlocked() && !reward.isClaimed()" class="locked-text">{{ reward.claimBlockedLabel }}</span>
               <span v-else-if="reward.isLocked()" class="locked-text">已锁定</span>
-              <span v-else class="claimed-text">已领取</span>
+              <span v-else-if="reward.isClaimed()" class="claimed-text">已领取</span>
             </div>
-          </div>
-          <template #content>
-            <div class="beast-tip">
-              {{ isBeastForced(reward) ? '你的小兽伙伴霸占了这个战利品' : '你的小兽伙伴想要这个战利品' }}
-            </div>
-          </template>
-        </Popover>
+        </div>
       </div>
 
       <div class="modal-actions">
@@ -213,8 +212,9 @@
 
 <script setup lang="ts">
 import { ref, computed, markRaw, shallowRef, watch } from 'vue'
-import { currentRewards, showRewardUI, navigateOnProceed, handleExclusiveGroup, canProceed, requireAllRewards, hideRewardUI, releaseRewardWaiter, settlePendingRewards, isBeastMarked, isBeastForced, onRewardClaimedByPlayer } from '@/ui/hooks/interaction/rewardDisplay'
+import { currentRewards, showRewardUI, navigateOnProceed, handleExclusiveGroup, canProceed, requireAllRewards, hideRewardUI, releaseRewardWaiter, settlePendingRewards } from '@/ui/hooks/interaction/rewardDisplay'
 import { organRewardActionRegistry } from '@/static/registry/organRewardActionRegistry'
+import { rewardRowAddonRegistry } from '@/static/registry/rewardRowAddonRegistry'
 import { nowPlayer } from '@/core/objects/game/run'
 import { getOrganMilestones } from '@/static/list/target/organQuality'
 import { Organ } from '@/core/objects/target/Organ'
@@ -228,8 +228,10 @@ import type { Relic as RelicType } from '@/core/objects/item/Subclass/Relic'
 import Popover from '@/ui/components/global/Popover.vue'
 import OrganPopup from '@/ui/components/interaction/OrganPopup.vue'
 import OrganMilestoneTrack from '@/ui/components/interaction/OrganMilestoneTrack.vue'
+import type { Reward } from '@/core/objects/reward/Reward'
 const visible = computed(() => showRewardUI.value)
 const rewards = computed(() => currentRewards.value)
+const rewardRowAddons = computed(() => rewardRowAddonRegistry.list())
 const potionBarFullHint = ref(false)
 const relicPreviews = shallowRef<Record<string, RelicType>>({})
 let relicPreviewSeq = 0
@@ -252,8 +254,8 @@ watch(rewards, async (list) => {
   relicPreviews.value = Object.fromEntries(entries)
 }, { immediate: true })
 
-function showBeastMark(reward: any) {
-  return isBeastMarked(reward) && !reward.isClaimed()
+function canClaim(reward: Reward) {
+  return !reward.isClaimed() && !reward.isLocked() && !reward.isClaimBlocked()
 }
 
 watch(visible, (v) => {
@@ -306,7 +308,7 @@ async function executeOrganAction(actionKey: string) {
   reward.selectedActions = new Map([[selectedOrganKey.value, actionKey]])
   closeOrganReward()
   await reward.claim()
-  onRewardClaimedByPlayer(reward)
+  rewardRowAddonRegistry.notifyClaimed(reward)
   handleExclusiveGroup(reward)
 }
 
@@ -345,7 +347,7 @@ async function confirmRelicChoice() {
   const reward = currentChoiceReward.value
   reward.selectedRelics = [selectedRelicKey.value]
   await reward.claim()
-  onRewardClaimedByPlayer(reward)
+  rewardRowAddonRegistry.notifyClaimed(reward)
   handleExclusiveGroup(reward)
   closeRelicChoice()
 }
@@ -381,7 +383,7 @@ async function confirmCardChoice() {
   const reward = currentChoiceReward.value
   reward.selectedCards = [selectedCardKey.value]
   await reward.claim()
-  onRewardClaimedByPlayer(reward)
+  rewardRowAddonRegistry.notifyClaimed(reward)
   handleExclusiveGroup(reward)
   closeCardChoice()
 }
@@ -394,7 +396,7 @@ async function claimReward(reward: any) {
     potionBarFullHint.value = true
     return
   }
-  onRewardClaimedByPlayer(reward)
+  rewardRowAddonRegistry.notifyClaimed(reward)
   handleExclusiveGroup(reward)
 }
 
@@ -459,11 +461,7 @@ async function handleProceed() {
   gap: 0;
   border: 2px solid black;
 
-  :deep(.popover-trigger) {
-    display: block;
-  }
-
-  :deep(.popover-trigger:last-child) .reward-row {
+  .reward-row:last-child {
     border-bottom: none;
   }
 }
@@ -477,7 +475,7 @@ async function handleProceed() {
   background: white;
   transition: background 0.2s;
 
-  &:hover:not(.claimed):not(.beast-wanted):not(.beast-forced) {
+  &:hover:not(.claimed) {
     background: rgba(0, 0, 0, 0.02);
   }
 
@@ -488,21 +486,6 @@ async function handleProceed() {
   &.locked {
     opacity: 0.4;
     background: #f5f5f5;
-  }
-
-  &.beast-wanted,
-  &.beast-forced {
-    background: rgba(0, 0, 0, 0.05);
-    outline: 2px solid black;
-    outline-offset: -4px;
-
-    &:hover {
-      background: rgba(0, 0, 0, 0.08);
-    }
-  }
-
-  &.beast-forced {
-    outline-style: dashed;
   }
 }
 
@@ -534,23 +517,10 @@ async function handleProceed() {
   border-bottom: 1px solid black;
 }
 
-.beast-caption {
-  font-size: 13px;
-  font-weight: bold;
-  color: #333;
-}
-
-.beast-tip {
-  background: white;
-  border: 2px solid black;
-  padding: 8px 12px;
-  font-size: 14px;
-  color: #333;
-}
-
 .reward-action {
   display: flex;
   align-items: center;
+  gap: 8px;
 }
 
 .claimed-text {

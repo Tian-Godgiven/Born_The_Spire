@@ -246,8 +246,8 @@ export function evaluateCondition(
  * 获取兜底卡牌
  *
  * 当筛选器没有匹配到卡牌时，根据 selector 的 tags 返回兜底卡牌：
- * - tags 包含 "defence"：返回基础防御卡
- * - 其他情况（包括 "attack" 或无 tags）：返回基础打击卡
+ * - 只有 defence、没有 attack：返回基础防御卡
+ * - 其他情况（含 attack、attack+defence 混合、无 tags）：返回基础打击卡
  */
 async function getFallbackCard(availableCards: Card[], selector: CardSelector): Promise<Card | null> {
     // 指定了具体卡却没抽到：不要拿打击顶上，否则「没电池就不打重锤」会变成打出基础打击
@@ -256,9 +256,10 @@ async function getFallbackCard(availableCards: Card[], selector: CardSelector): 
     }
 
     const tags = selector.tags
+    const hasAttackTag = tags?.includes("attack")
     const hasDefenceTag = tags?.includes("defence")
 
-    const fallbackKey = hasDefenceTag ? "original_card_00014" : "original_card_00001"
+    const fallbackKey = hasDefenceTag && !hasAttackTag ? "original_card_00014" : "original_card_00001"
 
     // 优先从可用卡牌中找
     const fallbackCard = availableCards.find(card => card.key === fallbackKey)

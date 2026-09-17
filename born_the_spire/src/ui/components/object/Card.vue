@@ -25,6 +25,7 @@
         <DescribeText
             :describe="describeToShow"
             :target="enhancedCard"
+            :hoverTarget="hoverTarget"
             :glossary-anchor="cardRef"
             glossary-placement="right"
             glossary-align="trigger"

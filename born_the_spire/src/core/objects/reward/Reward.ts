@@ -35,6 +35,8 @@ export abstract class Reward {
     public readonly customData?: Record<string, any> // 自定义数据
     public readonly exclusiveGroup?: string // 互斥组标识
     public state: RewardState           // 奖励状态
+    /** 有值则不能领取，战利品行右侧显示这句话。行插件用来占住一份奖励。 */
+    public claimBlockedLabel: string | null = null
 
     constructor(config: RewardConfig) {
         this.__key = config.key || nanoid()
@@ -78,10 +80,24 @@ export abstract class Reward {
         return this.state === "locked"
     }
 
+    isClaimBlocked(): boolean {
+        return this.claimBlockedLabel != null && this.state === "available"
+    }
+
+    blockClaim(label: string): void {
+        if (this.state !== "available") return
+        this.claimBlockedLabel = label
+    }
+
+    clearClaimBlock(): void {
+        this.claimBlockedLabel = null
+    }
+
     /**
      * 标记为已领取（不执行 claim 逻辑）
      */
     markAsClaimed(): void {
+        this.claimBlockedLabel = null
         this.state = "claimed"
     }
 

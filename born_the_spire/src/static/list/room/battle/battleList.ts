@@ -524,11 +524,11 @@ export const battleList: BattleRoomConfig[] = [
 
     // ========== 第一层Boss战斗 ==========
 
-    // Boss 1：炙渣王 — 点火自锻+力量爆发
+    // Boss 1：自走焚烧炉 — 点火自锻+力量爆发
     {
         key: "battle_f1_boss_slag_king",
-        name: "炙渣王",
-        description: "废熔渣意志聚合体，被击打反而自我锻造得更强",
+        name: "自走焚烧炉",
+        description: "荒废垃圾场里仍在自动运转的焚烧炉",
         battleType: "boss",
         enemyConfigs: [
             {
@@ -551,13 +551,30 @@ export const battleList: BattleRoomConfig[] = [
                             describe: "点火≥4：重铸"
                         }
                     ],
+                    moves: {
+                        mode: "loop",
+                        list: [
+                            {
+                                cards: ["boss1_card_iron_spike"],
+                                intent: "attack",
+                                describe: "铁刺"
+                            },
+                            {
+                                cards: ["boss1_card_cast_strike"],
+                                intent: "attack",
+                                describe: "熔铸打击"
+                            },
+                            {
+                                cards: ["boss1_card_furnace_wall"],
+                                intent: "defend",
+                                describe: "高炉护壁"
+                            }
+                        ]
+                    },
                     fallback: {
-                        intent: "unknown",
-                        action: {
-                            selector: { tags: ["attack", "defence"] },
-                            mode: "random"
-                        },
-                        describe: "随机：铁刺/熔铸打击/高炉护壁"
+                        intent: "attack",
+                        action: { selector: { key: "boss1_card_cast_strike" }, mode: "random" },
+                        describe: "剧本筛空时：熔铸打击"
                     }
                 }
             }

@@ -465,7 +465,7 @@ export const enemyList:EnemyMap[] = [
     // ========== 第一层Boss ==========
 
     {
-        label: "炙渣王",
+        label: "自走焚烧炉",
         key: "enemy_slag_king",
         status: {
             "max-health": 220,

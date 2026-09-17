@@ -61,7 +61,8 @@ export const floorList: FloorConfig[] = [
             }
             // 第2步及之后使用默认的权重随机生成
         ],
-        nextFloors: ["floor_2"],
+        // Demo 只做到第一层：Boss 后进通关页，不进 floor_2
+        nextFloors: [],
         nextFloorSelectionMode: "auto"
     },
 

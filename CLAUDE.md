@@ -266,6 +266,7 @@ await completeAndGoNext()   // 完成当前房间，显示地图让玩家选择�
 - **`文档/参考/字段值枚举手册.md`** — rarity/tags/targetType/faction 等跨内容列表的魔法字符串清单，防止拼错或引入新变体
 - **`文档/子系统/UI/布局适配.md`** — PC / 横屏手机共用布局，两套 CSS 变量；`data-layout` 判定
 - **`文档/子系统/UI/浮层系统.md`** — Popover 属性表、定位基准选取、三种触发模式、triggerElement、DescribeText/CardRefText、层级约定与踩坑
+- **`文档/子系统/UI/战利品界面.md`** — RewardModal、行插件 `rewardRowAddonRegistry`、`Reward.blockClaim`；不要为某个遗物改战利品页
 - **`文档/开发指南/描述撰写手册.md`** — effect / describe、进度、术语、卡名引用、effectTiers；整理遗物时沉淀
 
 实现具体效果时的场景式教程（`文档/开发指南/场景手册/`）：
@@ -273,7 +274,7 @@ await completeAndGoNext()   // 完成当前房间，显示地图让玩家选择�
 - **`卡牌实现场景手册.md`** — 14 场景，简单攻击到 inHand 触发、动态数值
 - **`状态实现场景手册.md`** — 10 场景，debuff/buff/衰减/一次性/器官内部状态
 - **`器官实现场景手册.md`** — 12 场景，含对称原则、独立原则、无法舍弃；主动能力样板
-- **`遗物实现场景手册.md`** — 12 场景，累计触发/解锁行动/主动能力/获得时选择存id/池分配/每回合触发
+- **`遗物实现场景手册.md`** — 13 场景，累计触发/解锁行动/主动能力/获得时选择存id/池分配/每回合触发/物品失效
 - **`敌人实现场景手册.md`** — 10 场景，多阶段 Boss（血量阈值）、weighted/loop mode
 - **`词条实现场景手册.md`** — 3 场景横切手册：方法覆盖类 / 触发器挂载类 / status 语法糖类，含决策流程与常见坑
 - **`触发器实现场景手册.md`** — 10 场景横切手册：when/how/key 三维、跨方引用、condition 语法坑、accumulateAndTrigger/triggerTarget、UI 组件里挂触发器做表现层；附录 B 讲触发顺序三层规则（when → how → level）、TriggerLevel 档位表、赋值型效果为什么必须抢占端点

@@ -1,71 +1,9 @@
 import { ref } from 'vue'
 import { Reward } from '@/core/objects/reward/Reward'
 import { newLog } from '@/ui/hooks/global/log'
+import { rewardRowAddonRegistry } from '@/static/registry/rewardRowAddonRegistry'
 
 const SELECT_REWARD_TYPES = new Set(['organSelect', 'relicSelect', 'cardSelect'])
-
-export interface BeastLootMark {
-    reward: Reward
-    relic: any
-    forced: boolean
-}
-
-/** 小兽伙伴盯上的那份战利品；结算或抢走后清空 */
-export const beastLootMark = ref<BeastLootMark | null>(null)
-
-export function markBeastLoot(reward: Reward, relic: any, forced: boolean) {
-    beastLootMark.value = { reward, relic, forced }
-}
-
-export function isBeastMarked(reward: Reward): boolean {
-    return beastLootMark.value?.reward === reward
-}
-
-export function isBeastForced(reward: Reward): boolean {
-    return isBeastMarked(reward) && !!beastLootMark.value?.forced
-}
-
-function clearBeastLootMark() {
-    beastLootMark.value = null
-}
-
-function applyBeastGrab() {
-    const mark = beastLootMark.value
-    if (!mark) return
-    const refuseStatus = mark.relic.status?.["hungry-beast-refuse-count"]
-    if (refuseStatus) refuseStatus.setOriginalBaseValue((refuseStatus.value ?? 0) + 1)
-    newLog([`${mark.relic.label ?? "小兽伙伴"}：你抢走了它看上的战利品`])
-    clearBeastLootMark()
-}
-
-function applyBeastYield() {
-    const mark = beastLootMark.value
-    if (!mark) return
-    const refuseStatus = mark.relic.status?.["hungry-beast-refuse-count"]
-    const favorStatus = mark.relic.status?.["hungry-beast-favor"]
-    if (favorStatus) favorStatus.setOriginalBaseValue((favorStatus.value ?? 0) + 1)
-    if (refuseStatus) refuseStatus.setOriginalBaseValue(0)
-    newLog([`${mark.relic.label ?? "小兽伙伴"}：你把「${mark.reward.getDisplayTitle()}」让给了它（好感度 +1）`])
-    mark.reward.markAsClaimed()
-    clearBeastLootMark()
-}
-
-/** 玩家成功领走小兽盯上的那份 → 算抢 */
-export function onRewardClaimedByPlayer(reward: Reward) {
-    if (!isBeastMarked(reward)) return
-    applyBeastGrab()
-}
-
-/** 离开战利品时仍没领走那份 → 算喂给它，不发给玩家 */
-export function yieldBeastLootIfPending() {
-    const mark = beastLootMark.value
-    if (!mark) return
-    if (mark.reward.isClaimed()) {
-        applyBeastGrab()
-        return
-    }
-    applyBeastYield()
-}
 
 /**
  * 通用奖励展示系统
@@ -168,7 +106,7 @@ export function confirmRewards() {
     rewardTitle.value = ""
     rewardDescription.value = ""
     requireAllRewards.value = false
-    clearBeastLootMark()
+    rewardRowAddonRegistry.dismissAll()
 }
 
 /** 打开地图时先藏起奖励，不清空列表 */
@@ -192,9 +130,9 @@ export function releaseRewardWaiter() {
 }
 
 async function claimRemainingRewards() {
-    yieldBeastLootIfPending()
+    await rewardRowAddonRegistry.settleAll()
     for (const reward of currentRewards.value) {
-        if (reward.isClaimed() || reward.isLocked()) continue
+        if (reward.isClaimed() || reward.isLocked() || reward.isClaimBlocked()) continue
         if (SELECT_REWARD_TYPES.has(reward.type)) {
             reward.markAsClaimed()
             continue
@@ -224,7 +162,7 @@ export function clearRewards() {
     rewardDescription.value = ""
     requireAllRewards.value = false
     rewardResolver = null
-    clearBeastLootMark()
+    rewardRowAddonRegistry.dismissAll()
 }
 
 /**
@@ -232,7 +170,7 @@ export function clearRewards() {
  */
 export function areAllRewardsClaimed(): boolean {
     return currentRewards.value.every(reward =>
-        reward.isClaimed() || reward.isLocked() || isBeastForced(reward)
+        reward.isClaimed() || reward.isLocked() || reward.isClaimBlocked()
     )
 }
 

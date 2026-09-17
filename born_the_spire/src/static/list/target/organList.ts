@@ -1958,7 +1958,7 @@ export const organList:OrganMap[] = [
     }
 },
 
-// ========== 炙渣王器官 ==========
+// ========== 自走焚烧炉器官 ==========
 
 // 点火核：提供重铸卡牌；持有者每打出一张攻击牌获得1层点火
 {
@@ -1976,7 +1976,7 @@ export const organList:OrganMap[] = [
             effects: [],
             triggers: [{
                 when: "after",
-                how: "via",
+                how: "make",
                 key: "useCard",
                 action: "gainIgnition",
                 condition: "$triggerCard.hasTag(attack)"
