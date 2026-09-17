@@ -345,7 +345,7 @@ export const enemyList:EnemyMap[] = [
         status: { "max-health": 30 },
         organ: [
             "enemy_organ_poison_gland",
-            "enemy_organ_poison_skin",
+            "enemy_organ_toad_skin",
             "enemy_organ_sticky_tongue"
         ]
     },

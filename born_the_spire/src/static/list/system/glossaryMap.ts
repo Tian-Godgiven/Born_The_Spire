@@ -24,18 +24,17 @@ export const glossaryMap: Record<string, GlossaryEntry> = {
     // describe 里的 {$:"xxx"} 会自动去那些注册表查，不要在这里抄第二份。
     "护甲": {
         label: "护甲",
-        describe: ["抵挡伤害，回合开始时消失"],
-        style: {
-            color: "#3b82f6",
-            fontWeight: "bold"
-        }
-    },
-    "格挡": {
-        label: "格挡",
-        describe: ["抵挡伤害，回合结束时消失"],
+        describe: ["抵挡攻击伤害，回合开始时消失"],
         style: {
             color: "#06b6d4",
             fontWeight: "bold"
+        }
+    },
+    "毒素": {
+        label:"毒素",
+        describe:["一系列有毒生物施加的效果"],
+        style:{
+            color:"#18c23d"
         }
     },
     "临时": {

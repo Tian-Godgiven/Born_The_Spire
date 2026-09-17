@@ -28,30 +28,6 @@ export const battleList: BattleRoomConfig[] = [
         test: true,
         enemyConfigs: ["test_enemy_mouse"]
     },
-    {
-        key: "battle_elite_berserker",
-        name: "狂战士领地",
-        description: "强大的狂战士守护着这里",
-        battleType: "elite",
-        test: true,
-        enemyConfigs: ["test_enemy_berserker"]
-    },
-    {
-        key: "battle_elite_plus_berserker",
-        name: "染印狂战士领地",
-        description: "更危险的狂战士守护着印记试炼",
-        battleType: "elitePlus",
-        test: true,
-        enemyConfigs: ["test_enemy_berserker"]
-    },
-    {
-        key: "battle_elite_hydra",
-        name: "双头蛇巢穴",
-        description: "危险的双头蛇盘踞在此",
-        battleType: "elite",
-        test: true,
-        enemyConfigs: ["test_enemy_elite"]
-    },
 
     // ========== 第一层普通战斗 ==========
 
@@ -280,7 +256,8 @@ export const battleList: BattleRoomConfig[] = [
         battleType: "normal",
         enemyConfigs: [
             {
-                key: "enemy_spore_fungus"
+                key: "enemy_spore_fungus",
+                
             },
             {
                 key: "enemy_poison_toad",

@@ -1384,6 +1384,29 @@ export const cardList:CardMap[] = [{
             }]
         }]
     }
+},{
+    label: "可悲",
+    tags: ["curse"],
+    pool: ["exclusive"],
+    entry: ["card_inherent"],
+    status: { cost: 0, "cannot-play": 1 },
+    describe: [
+        "无法被打出。抽到此牌时，获得 1 层", {$: "易伤"}, "和 1 层", {$: "虚弱"}
+    ],
+    key: "card_miserable",
+    interaction: {
+        use: {
+            target: { key: "self" },
+            effects: []
+        },
+        inHand: {
+            target: { key: "self" },
+            effects: [
+                { key: "applyState", params: { stateKey: "vulnerable", stacks: 1 } },
+                { key: "applyState", params: { stateKey: "weak", stacks: 1 } }
+            ]
+        }
+    }
 }]
 
 export async function getCardByKey(key:string){

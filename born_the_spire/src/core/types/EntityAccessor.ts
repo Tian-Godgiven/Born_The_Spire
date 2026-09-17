@@ -87,6 +87,7 @@ const builtinAccessors = new Map<string, AccessorFunction>([
     ["hasRelic",    (arg, entity) => hasRelic(arg, entity)],
     ["hasCard",     (arg, entity) => hasCard(arg, entity)],
     ["hasTag",      (arg, entity) => hasTag(arg, entity)],
+    ["hasTrait",    (arg, entity) => hasTrait(arg, entity)],
     ["state",       (arg, entity) => state(arg, entity)],
     ["stateStack",  (arg, entity) => stateStack(arg, entity)],
     ["pileCount",   (arg, entity) => pileCount(arg, entity)],
@@ -210,6 +211,11 @@ function hasCard(key: string, entity: Entity): boolean {
 }
 
 function hasTag(key: string, entity: Entity): boolean {
+    const tags = (entity as any).tags
+    if (!Array.isArray(tags)) return false
+    return tags.includes(key)
+}
+function hasTrait(key: string, entity: Entity): boolean {
     const tags = (entity as any).tags
     if (!Array.isArray(tags)) return false
     return tags.includes(key)

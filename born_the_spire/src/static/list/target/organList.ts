@@ -688,20 +688,21 @@ export const organList:OrganMap[] = [
         }
     }
 },
-// ========== 毒皮 ==========
+// ========== 蟾蜍皮 ==========
 {
-    label: "毒皮",
-    key: "enemy_organ_poison_skin",
-    describe: ["受到伤害时对伤害来源施加", { key: ["status", "poison-reflect"] }, "层", {$:"中毒"}],
+    label: "蟾蜍皮",
+    key: "enemy_organ_toad_skin",
+    describe: ["你从", {$:"毒素"}, "状态的中受到的伤害减少",{key:["status","poison-decount"]}, "%"],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Skin,
     status: {
         "max-mass": 20,
-        "poison-reflect": 2
+        "poison-decount": 30,
+        "poison-decount-percent":-0.3
     },
     current: ["mass"],
     upgrade: {
-        maxLevel: 4,
+        maxLevel: 3,
         milestones: [
             {
                 level: 2,
@@ -709,17 +710,17 @@ export const organList:OrganMap[] = [
             },
             {
                 level: 3,
-                describe: ["改为施加 3 层", {$:"中毒"}],
+                describe: ["从", {$:"毒素"},"状态中受到的伤害减少50%"],
                 effects: [{
                     key: "setBaseStatus",
-                    params: { statusKey: "poison-reflect", value: 3 },
+                    params: { statusKey: "poison-reflect", value: 50 },
+                    target: "eventMedium"
+                },{
+                    key: "setBaseStatus",
+                    params: { statusKey: "poison-reflect-percent", value: -0.5 },
                     target: "eventMedium"
                 }]
             },
-            {
-                level: 4,
-                describe: ["无"]
-            }
         ]
     },
     interaction: {
@@ -727,21 +728,23 @@ export const organList:OrganMap[] = [
             target: { key: "self" },
             effects: [],
             triggers: [{
-                when: "after",
+                when: "before",
                 how: "take",
-                key: "attack",
-                action: "poisonAttacker"
+                key: "damage",
+                action: "decountPoison",
+                // 即伤害事件的Source（中毒state）是否具备toxic这个 traits(性质)
+                condition:"$event.source.hasTrait(toxic)"
             }]
         }
     },
     reaction: {
-        poisonAttacker: [{
-            key: "poison",
-            label: "毒皮：反弹中毒",
-            targetType: "eventSource",
+        decountPoison: [{
+            key: "modifyDamageByPercent",
+            label: "蟾蜍皮：减弱毒素",
+            targetType: "triggerEffect",
             effect: [{
-                key: "applyState",
-                params: { stateKey: "poison", stacks: "$owner.status(poison-reflect)" }
+                key:"modifyDamageByPercent",
+                params: { percent: "$owner.status(poison-decount-percent)" }
             }]
         }]
     }
@@ -1158,7 +1161,7 @@ export const organList:OrganMap[] = [
 {
     label: "过期隔板",
     key: "enemy_organ_rusty_separator",
-        describe: ["受到攻击时：30%完全抵消（本回合每抵消一次，概率-10%），20%失去所有", {$:"格挡"}],
+        describe: ["受到攻击时：30%完全抵消（本回合每抵消一次，概率-10%），20%失去所有", {$:"护甲"}],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Bone,
     status: {

@@ -47,15 +47,17 @@ export const stateList: StateData[] = [
         label: "中毒",
         key: "poison",
         category: "debuff",
-        describe: ["回合开始时受到伤害"],
+        describe: ["回合开始时受到等量于层数的伤害"],
         showType: "number",
         repeate: "stack",
+        // status:{toxic:true},
         // 衰减挂 after/take，take 整批在 make 之后，天然排在上面的扣血之后。
         // 不能用默认的 before——before 整批先于 after，会变成先掉层再结算，
         // 在自己回合里被挂上的毒（如毒皮反伤）会一次都没结算就白掉一层
         stackChange: [
             { timing: "turnStart", delta: -1, when: "after", level: TriggerLevel.LOW }
         ],
+        traits:{toxic:true},//毒素类
         interaction: {
             possess: {
                 triggers: [{

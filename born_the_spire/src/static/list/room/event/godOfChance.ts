@@ -7,6 +7,16 @@ export const GOD_OF_CHANCE_URGENCY = ["可以", "或许应该", "理应", "必�
 
 export const GOD_OF_CHANCE_MAX_ROUND = 6
 
+/** 赢只走中/大。按把：95/5、85/15、80/20、50/50、20/80、5/95 */
+export const GOD_OF_CHANCE_WIN_SIZE_WEIGHTS: ReadonlyArray<readonly [number, number]> = [
+    [95, 5],
+    [85, 15],
+    [80, 20],
+    [50, 50],
+    [20, 80],
+    [5, 95],
+]
+
 export function godOfChanceIsHouseFirst(round: number): boolean {
     return round <= 3
 }

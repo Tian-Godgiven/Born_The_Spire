@@ -69,6 +69,7 @@ export type StateInteractionData = {
 export type StateData = {
     label: string
     key: string
+    traits?: Record<string,any> //用于给状态添加额外的标签，例如中毒：毒素
     describe: Describe
     category?: "buff" | "debuff" | "neutral"  // 状态分类（默认 "neutral"）
     showType?: "number" | "bool"      // 状态显示类型
@@ -100,6 +101,7 @@ export class State implements EventParticipant {
     public __id: string = nanoid()
     public label: string
     public key: string
+    public traits: Record<string,any> = {} //用于给状态添加额外的标签，例如中毒：毒素
     public participantType: 'state' = 'state'
     public describe: Describe
     public showType: "number" | "bool" = "number"
@@ -125,6 +127,7 @@ export class State implements EventParticipant {
         this.checkExist = map.checkExist ?? defaultCheckExist
         this.stackChange = map.stackChange
         this.interaction = map.interaction ?? {}
+        this.traits = map.traits
 
         // 处理 stacks（支持简写）
         if (typeof map.stacks === "number") {

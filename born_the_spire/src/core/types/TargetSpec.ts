@@ -219,13 +219,14 @@ function toEntityList(value: unknown): Entity[] {
 export function getTargetValue(
     targetType: string,
     context: TargetContext
-): any {
+): EventParticipant | EventParticipant[] |  null{
     const { base, modifiers } = parseTargetPipeline(targetType)
     if (modifiers.length > 0) {
         let value = getTargetValue(base, context)
+        if(value === null) return null
         for (const modifier of modifiers) {
             value = applyModifier(value, modifier, context, base)
-            if (value === null || value === undefined) return value
+            if (value === null) return value
         }
         return value
     }
@@ -237,7 +238,7 @@ export function getTargetValue(
         if (!context.battle) throw new Error("[resolveTarget] battle 不存在，无法查询卡牌")
         const player = context.battle.getTeam("player")?.[0]
         const piles = (player as any)?.cardPiles
-        if (!piles) return undefined
+        if (!piles) return null
         const cards: Entity[] = []
         for (const pileName of ["handPile", "drawPile", "discardPile", "exhaustPile"]) {
             for (const card of (piles[pileName] || [])) {

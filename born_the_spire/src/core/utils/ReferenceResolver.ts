@@ -43,6 +43,8 @@ import { readEntityValue } from "@/core/types/EntityAccessor"
 import { getContextRandom } from "@/core/hooks/random"
 import { newError } from "@/ui/hooks/global/alert"
 import { isCard } from "@/core/utils/typeGuards"
+import type { State } from "../objects/system/State"
+import { readStateValue } from "../types/StateAccessor"
 
 // ==================== 类型定义 ====================
 
@@ -57,7 +59,7 @@ export interface ReferenceContext extends TargetContext {
  * 解析后的引用（内部使用）
  */
 interface ParsedReference {
-    type: "eventResult" | "eventInfo" | "triggerEffect" | "triggerEffectTarget" | "triggerCard" | "participant" | "unknown"
+    type: "eventResult" | "eventInfo" | "eventParticipant" | "triggerEffect" | "triggerEffectTarget" | "triggerCard" | "participant" | "unknown"
     participant?: string
     accessor?: string
     args?: string[]
@@ -169,12 +171,30 @@ export class ReferenceResolver {
         return readEntityValue(accessorPart, entity)
     }
 
+    // 在State上获取
+    resolveAccessorOnState(state:State, accessorPart:string): AccessorResult{
+        return readStateValue(accessorPart,state)
+    }
+
+    private resolveEventParticipant(parsed, context) {
+        const p = (context.event as any)?.[parsed.participant]
+        if (!p) return false
+        const argsStr = parsed.args?.length ? parsed.args.join(",") : ""
+        const accessorStr = `${parsed.accessor}(${argsStr})`
+        if ((p as any).participantType === "state") {
+            return this.resolveAccessorOnState(p as State, accessorStr)
+        }
+        return this.resolveAccessorOnEntity(p as Entity, accessorStr)
+    }
+
     // ==================== 内部解析方法 ====================
 
     private resolveReference(ref: string, context: ReferenceContext): any {
         const parsed = this.parseReference(ref)
 
         switch (parsed.type) {
+            case "eventParticipant":
+                return this.resolveEventParticipant(parsed, context)
             case "eventResult":
                 return this.resolveEventResult(parsed, context)
             case "eventInfo":
@@ -200,6 +220,19 @@ export class ReferenceResolver {
             return { type: "eventResult", args: [eventResultMatch[1]], raw: ref }
         }
 
+        // 事件的参与者
+        const eventParticipantMatch = ref.match(/^\$event\.(source|medium|target)\.(\w+)\(([^)]*)\)$/)
+        if (eventParticipantMatch) {
+            return {
+                type: "eventParticipant",
+                participant: eventParticipantMatch[1],
+                accessor: eventParticipantMatch[2],
+                args: eventParticipantMatch[3]
+                    ? eventParticipantMatch[3].split(",").map(s => s.trim())
+                    : [],
+                raw: ref
+            }
+        }
         // $event.info(key)
         const eventInfoMatch = ref.match(/^\$event\.info\(([^)]*)\)$/)
         if (eventInfoMatch) {
@@ -349,16 +382,26 @@ export class ReferenceResolver {
             ? entity.find(e => (e as any)?.participantType)
             : entity
 
-        if (!targetEntity || !(targetEntity as any)?.participantType) {
+        if (!targetEntity || !(targetEntity.participantType)){
             failRefResolve(`参与者 "${participant}" 不是有效实体: ${typeof entity}`, context)
             return undefined
         }
 
-        // 3. 构建 accessor 字符串，调用 EntityAccessor
+        // 3.1 构建 accessor 字符串，
         const argsStr = args && args.length > 0 ? args.join(",") : ""
         const accessorStr = `${accessor}(${argsStr})`
+
+        
+
+        //  对象是state而非entity
+        if(targetEntity.participantType == "state"){
+            return this.resolveAccessorOnState(targetEntity as State, accessorStr)
+        }
+        //  对象是entity调用 EntityAccessor
         return this.resolveAccessorOnEntity(targetEntity as Entity, accessorStr)
     }
+
+    
 
     // ==================== 通用引用解析 ====================
 

@@ -1,7 +1,7 @@
 import { ActionEvent, handleEventEntity } from "@/core/objects/system/ActionEvent"
 import { changeCurrentValue, getCurrentValue } from "@/core/objects/system/Current/current"
 import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
-import { isEntity } from "@/core/utils/typeGuards"
+import { isEntity, isPlayer } from "@/core/utils/typeGuards"
 import { newError } from "@/ui/hooks/global/alert"
 import { newLog } from "@/ui/hooks/global/log"
 import { nowBattle } from "@/core/objects/game/battle"
@@ -45,12 +45,14 @@ export const killTarget: EffectFunc = (event: ActionEvent, effect) => {
         // 将 isAlive 设置为 0
         changeCurrentValue(t, "isAlive", 0, event)
 
-        // 死亡时清理物品修饰器（器官/遗物等的副作用）
-        getItemModifier(t).then(modifier => {
-            modifier.clearAll()
-        }).catch(err => {
-            console.error("[killTarget] 清理物品修饰器失败:", err)
-        })
+        // 只清敌人：玩家死亡进失败/重试，器官和给牌必须留着
+        if (!isPlayer(t)) {
+            getItemModifier(t).then(modifier => {
+                modifier.clearAll()
+            }).catch(err => {
+                console.error("[killTarget] 清理物品修饰器失败:", err)
+            })
+        }
 
         // 检查战斗是否应该结束
         if (nowBattle.value && !nowBattle.value.isEnded) {
