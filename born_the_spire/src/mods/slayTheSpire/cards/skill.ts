@@ -257,7 +257,7 @@ export const deepBreathCard: CardMap = {
                 params: {}
             }, {
                 key: "drawFromDrawPile",
-                params: { value: 1 }
+                params: { value: "$medium.status(draw)" }
             }]
         }
     },
@@ -265,19 +265,7 @@ export const deepBreathCard: CardMap = {
         maxLevel: 1,
         levelConfigs: {
             1: {
-                status: { draw: 2 },
-                interaction: {
-                    use: {
-                        target: { faction: "player", key: "self" },
-                        effects: [{
-                            key: "shuffleDiscardIntoDraw",
-                            params: {}
-                        }, {
-                            key: "drawFromDrawPile",
-                            params: { value: 2 }
-                        }]
-                    }
-                }
+                status: { draw: 2 }
             }
         }
     }

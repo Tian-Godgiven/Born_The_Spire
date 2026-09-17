@@ -43,6 +43,21 @@
 
     <RelicBar v-if="relics.length > 0" :relics="relics" />
 
+    <Teleport to="body">
+        <div
+            v-if="showOptions"
+            class="option-overlay"
+            :style="{ zIndex: SHOW_POPUP_Z_INDEX }"
+            @click.self="showOptions = false"
+        >
+            <div class="option-bar">
+                <Button large :click="openSettingsFromOptions" label="设置"/>
+                <Button large :click="confirmEndRun" label="回到标题页"/>
+                <Button large :click="closeOptions" label="返回"/>
+            </div>
+        </div>
+    </Teleport>
+
     <SettingsModal v-if="showSettings" @close="showSettings = false" />
 </div>
 </template>
@@ -62,9 +77,10 @@
     import { markRegistry } from '@/static/registry/markRegistry';
     import { getShowMapCallback } from '@/core/hooks/step';
     import { getCardModifier } from '@/core/objects/system/modifier/CardModifier';
-    import { showRelicList } from '@/ui/interaction/relicList';
     import type { CardPileName } from '@/ui/animation/cardFlight';
     import { ASCENSION_UI_ENABLED } from '@/static/list/system/ascensionList';
+    import { SHOW_POPUP_Z_INDEX, dismissAllPopovers } from '@/ui/hooks/interaction/popoverHost';
+    import { showConfirm } from '@/ui/hooks/interaction/confirmModal';
 
     // 打开地图（用于战斗中查看地图）
     function openMap() {
@@ -129,14 +145,36 @@
     })
 
     const showSettings = ref(false)
+    const showOptions = ref(false)
     const ascensionUiEnabled = ASCENSION_UI_ENABLED
+
+    function openOptions() {
+        dismissAllPopovers()
+        showOptions.value = true
+    }
+
+    function closeOptions() {
+        showOptions.value = false
+    }
+
+    function openSettingsFromOptions() {
+        showOptions.value = false
+        showSettings.value = true
+    }
+
+    async function confirmEndRun() {
+        showOptions.value = false
+        const confirmed = await showConfirm(
+            "回到标题页",
+            "目前没有存档系统，回到标题页后本局进度会丢失。"
+        )
+        if (confirmed) endRun()
+    }
 
     const abilities: Array<{ label: string, click: () => void, pile?: CardPileName }> = [
         {label:"地图",click:()=>openMap()},
         {label:"卡组",click:()=>showDeck(), pile: "deck"},
-        {label:"遗物",click:()=>showRelicList()},
-        {label:"设置",click:()=>showSettings.value = true},
-        {label:"返回",click:()=>endRun()}
+        {label:"选项",click:()=>openOptions()}
     ]
 
     const relics = computed(() => nowPlayer?.getRelicsList() ?? [])
@@ -187,6 +225,33 @@
 }
 .potions{
     gap: 10px;
+}
+
+.option-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.option-bar {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--layout-gap-md);
+    width: min(420px, 80vw);
+
+    :deep(.game-btn) {
+        width: 100%;
+        font-size: 22px;
+
+        .game-btn-face {
+            background: #fff;
+            padding: 16px 28px;
+        }
+    }
 }
 
 /* 渐显动画 */

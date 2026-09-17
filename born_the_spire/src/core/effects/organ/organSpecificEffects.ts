@@ -103,14 +103,15 @@ export const organ_rustySeparator: EffectFunc = (event, effect) => {
 }
 
 /**
- * 急救营养液：受到伤害后，若生命低于阈值则自动回血，全局限用 N 次
+ * 急救营养液：受伤后若还活着且生命低于阈值，立即回血。charges 扣剩余，整局共用。
  *
- * 在 after take damage 触发，event.medium 是器官本身
- * 器官需声明 charges（剩余）和 max-charges（上限）两个 status，扣剩余不要改上限
+ * 这一下已经把生命打到 ≤0 则不触发。
+ * percent-threshold > 0 时按最大生命百分比（5 → 5%）；否则用点数阈值。
  *
  * params:
- *   threshold: number - 触发生命比例阈值（如 0.3 表示 30%）
- *   value: number     - 回血量
+ *   value: number            - 回血量
+ *   flatThreshold: number    - 点数阈值（生命低于此值）
+ *   percentThreshold: number - 百分比阈值，0 表示用点数
  */
 export const organ_emergencyBattery: EffectFunc = (event, effect) => {
     const organ = event.medium
@@ -122,13 +123,19 @@ export const organ_emergencyBattery: EffectFunc = (event, effect) => {
     const owner = organ.owner
     if (!isEntity(owner)) return false
 
-    const threshold = Number(effect.params.threshold ?? 0.3)
     const currentHealth = getCurrentValue(owner as any, "health")
-    const maxHealth = Number((owner as any).status["max-health"]?.value ?? currentHealth)
+    if (currentHealth <= 0) return false
 
-    if (currentHealth / maxHealth > threshold) return false
+    const percentThreshold = Number(effect.params.percentThreshold ?? 0)
+    if (percentThreshold > 0) {
+        const maxHealth = Number((owner as any).status["max-health"]?.value ?? currentHealth)
+        if (maxHealth <= 0 || currentHealth / maxHealth >= percentThreshold / 100) return false
+    } else {
+        const flatThreshold = Number(effect.params.flatThreshold ?? 5)
+        if (currentHealth >= flatThreshold) return false
+    }
 
-    const healAmount = Number(effect.params.value ?? 10)
+    const healAmount = Number(effect.params.value ?? 5)
     doEvent({
         key: "heal",
         source: organ,

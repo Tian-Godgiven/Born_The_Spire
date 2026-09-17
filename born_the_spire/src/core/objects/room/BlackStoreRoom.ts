@@ -54,6 +54,7 @@ export interface StoreItem {
     type: StoreItemType             // 商品类型
     name: string                    // 商品名称
     description?: string            // 商品描述
+    basePrice: number               // 未打折原价；shopDiscount 从这里重算
     price: number                   // 价格（金钱）
     data: OrganMap | RelicMap | PotionMap | CardMap  // 商品数据
     isPurchased: boolean            // 是否已购买
@@ -209,12 +210,14 @@ export class BlackStoreRoom extends Room {
             context: "blackStore:organ"
         }) as OrganMap[]
         organs.forEach((organ, index) => {
+            const price = this.calculateOrganPrice(organ)
             this.storeItems.push({
                 id: `organ_${index}`,
                 type: "organ",
                 name: organ.label,
                 description: getDescribe(composeOrganDescribe(organ, { preferPlayerCards: true }), organ) || undefined,
-                price: this.calculateOrganPrice(organ),
+                basePrice: price,
+                price,
                 data: organ,
                 isPurchased: false,
                 rarity: organ.rarity
@@ -224,12 +227,14 @@ export class BlackStoreRoom extends Room {
         // 生成遗物商品（按栏位配置逐个抽取）
         const relics = this.generateRelicsBySlots()
         relics.forEach((relic, index) => {
+            const price = this.calculateRelicPrice(relic)
             this.storeItems.push({
                 id: `relic_${index}`,
                 type: "relic",
                 name: relic.label,
                 description: relic.describe ? this.formatDescribe(relic.describe) : undefined,
-                price: this.calculateRelicPrice(relic),
+                basePrice: price,
+                price,
                 data: relic,
                 isPurchased: false,
                 rarity: relic.rarity
@@ -242,12 +247,14 @@ export class BlackStoreRoom extends Room {
             context: "blackStore:potion"
         }) as PotionMap[]
         potions.forEach((potion, index) => {
+            const price = this.calculatePotionPrice(potion)
             this.storeItems.push({
                 id: `potion_${index}`,
                 type: "potion",
                 name: potion.label,
                 description: potion.describe ? this.formatDescribe(potion.describe) : undefined,
-                price: this.calculatePotionPrice(potion),
+                basePrice: price,
+                price,
                 data: potion,
                 isPurchased: false,
                 rarity: undefined  // PotionMap 暂无 rarity 属性
@@ -261,12 +268,14 @@ export class BlackStoreRoom extends Room {
         }) as CardMap[]
         if (cards.length > 0) {
             cards.forEach((card, index) => {
+                const price = this.calculateCardPrice(card)
                 this.storeItems.push({
                     id: `card_${index}`,
                     type: "card",
                     name: card.label,
                     description: card.describe ? this.formatDescribe(card.describe) : undefined,
-                    price: this.calculateCardPrice(card),
+                    basePrice: price,
+                    price,
                     data: card,
                     isPurchased: false
                 })
@@ -353,15 +362,13 @@ export class BlackStoreRoom extends Room {
     }
 
     /**
-     * 应用商店折扣
-     * 读取玩家 shopDiscount 属性（初始值1，会员卡等通过乘法修饰器降低）
+     * 按当前 shopDiscount 从 basePrice 重算货架价。
+     * 进店时跑一次；买完也会跑，本店现买的会员卡能立刻改剩余商品。
      */
     private applyShopDiscount(): void {
         const multiplier = Number(getStatusValue(nowPlayer, "shopDiscount", 1))
-        if (multiplier >= 1) return
-
         for (const item of this.storeItems) {
-            item.price = Math.max(1, Math.floor(item.price * multiplier))
+            item.price = Math.max(1, Math.floor(item.basePrice * multiplier))
         }
     }
 
@@ -554,6 +561,7 @@ export class BlackStoreRoom extends Room {
         newLog([`购买了 ${item.name}，花费 ${item.price} 金钱`])
 
         item.isPurchased = true
+        this.applyShopDiscount()
         return true
     }
 

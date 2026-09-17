@@ -3,14 +3,13 @@
  */
 
 import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
-import { Player } from "@/core/objects/target/Player"
+import { getActingPlayer } from "@/core/utils/typeGuards"
 
 export const shuffleDiscardIntoDraw: EffectFunc = (event, effect) => {
-    const target = Array.isArray(event.target) ? event.target[0] : event.target
-    if (!(target instanceof Player)) return
+    const player = getActingPlayer(event.source, event.target)
+    if (!player) return
 
-    const discardPile = target.cardPiles.discardPile
-    if (discardPile.length === 0) return
+    if (player.cardPiles.discardPile.length === 0) return
 
-    target.fillDrawPile()
+    player.fillDrawPile()
 }

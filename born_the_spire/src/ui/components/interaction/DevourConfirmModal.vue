@@ -158,12 +158,12 @@ function handleCancel() {
   }
 
   &.primary {
-    background: #2d5016;
-    color: white;
-    border-color: #2d5016;
+    background: #000;
+    color: #fff;
+    border-color: #000;
 
     &:hover {
-      background: #3d6026;
+      background: #333;
     }
   }
 }

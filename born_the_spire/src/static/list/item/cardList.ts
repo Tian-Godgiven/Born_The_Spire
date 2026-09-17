@@ -748,13 +748,13 @@ export const cardList:CardMap[] = [{
     }
 },
 
-// 重击：故障机器的重锤
+// 重击：故障机器的重锤。基础 2/16，器官锻一次 3/24，再锻 4/36
 {
     label: "重击",
     tags: ["attack", "enemy"],
     status: {
-        damage: 23,
-        cost: 3
+        damage: 16,
+        cost: 2
     },
     describe: ["造成", {key: ["status", "damage"]}, "点伤害"],
     key: "enemy_card_heavy_strike",
@@ -767,9 +767,10 @@ export const cardList:CardMap[] = [{
         }
     },
     upgradeConfig: {
-        maxLevel: 1,
+        maxLevel: 2,
         levelConfigs: {
-            1: { status: { damage: 28 } }
+            1: { status: { damage: 24, cost: 3 } },
+            2: { status: { damage: 36, cost: 4 } }
         }
     }
 },

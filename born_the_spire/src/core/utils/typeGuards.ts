@@ -111,6 +111,17 @@ export function getPlayers(participants: EventParticipant | EventParticipant[]):
 }
 
 /**
+ * 该动手牌/牌堆的那个玩家。
+ * 打牌时 source 是打出者；遗物/器官/回合抽牌的 source 往往是物品，再看 target。
+ */
+export function getActingPlayer(
+    source: EventParticipant | EventParticipant[],
+    target: EventParticipant | EventParticipant[]
+): Player | undefined {
+    return getPlayers(source)[0] ?? getPlayers(target)[0]
+}
+
+/**
  * 检查对象是否为 Enemy 类型
  * 使用 targetType 标识而不是 instanceof 以避免循环依赖
  */

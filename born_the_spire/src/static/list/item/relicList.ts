@@ -1647,7 +1647,7 @@ export const relicList: RelicMap[] = [
                 {
                     targetType: "owner",
                     key: "embryoDamage",
-                    effect: [{ key: "damage", params: { value: "$medium.status(turn-count)" } }]
+                    effect: [{ key: "attack", params: { value: "$medium.status(turn-count)" } }]
                 }
             ],
             embryoTick: [{

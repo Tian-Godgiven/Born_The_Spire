@@ -952,7 +952,8 @@ export const organList:OrganMap[] = [
             },
             {
                 level: 3,
-                    describe: ["生效时", {$:"力量"}, " +2"]
+                describe: ["生效时", {$:"力量"}, " +2"],
+                effects: [{ key: "upgradeOrganCards" }]
             }
         ]
     },
@@ -1019,9 +1020,21 @@ export const organList:OrganMap[] = [
 {
     label: "急救营养液",
     key: "enemy_organ_emergency_battery",
-    describe: [
-        "生命低于30%时自动回血", { key: ["status", "heal-amount"] }, "点",
-        "，限用", { key: ["status", "charges"] }, "次"
+    effect: [
+        "受到伤害后自动回复", { key: ["status", "heal-amount"] }, "点。",
+        "若这一下会致死则不触发。限用", { key: ["status", "charges"] }, "次"
+    ],
+    effectTiers: [
+        {
+            statusKey: "flat-threshold",
+            min: 1,
+            describe: ["生命低于", { key: ["status", "flat-threshold"] }, "点时触发"]
+        },
+        {
+            statusKey: "percent-threshold",
+            min: 1,
+            describe: ["生命低于", { key: ["status", "percent-threshold"] }, "%时触发"]
+        }
     ],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Core,
@@ -1029,7 +1042,9 @@ export const organList:OrganMap[] = [
         "max-mass": 20,
         "charges": 2,
         "max-charges": 2,
-        "heal-amount": 20
+        "heal-amount": 5,
+        "flat-threshold": 5,
+        "percent-threshold": 0
     },
     current: ["mass"],
     badges: [{
@@ -1043,14 +1058,26 @@ export const organList:OrganMap[] = [
         milestones: [
             {
                 level: 2,
-                describe: ["无"]
+                describe: ["阈值改为生命低于 5%"],
+                effects: [
+                    {
+                        key: "setBaseStatus",
+                        params: { statusKey: "percent-threshold", value: 5 },
+                        target: "eventMedium"
+                    },
+                    {
+                        key: "setBaseStatus",
+                        params: { statusKey: "flat-threshold", value: 0 },
+                        target: "eventMedium"
+                    }
+                ]
             },
             {
                 level: 3,
-                describe: ["回血改为 35"],
+                describe: ["回血改为 7"],
                 effects: [{
                     key: "setBaseStatus",
-                    params: { statusKey: "heal-amount", value: 35 },
+                    params: { statusKey: "heal-amount", value: 7 },
                     target: "eventMedium"
                 }]
             }
@@ -1075,7 +1102,11 @@ export const organList:OrganMap[] = [
             targetType: "triggerOwner",
             effect: [{
                 key: "organ_emergencyBattery",
-                params: { threshold: 0.3, value: "$owner.status(heal-amount)" }
+                params: {
+                    value: "$owner.status(heal-amount)",
+                    flatThreshold: "$owner.status(flat-threshold)",
+                    percentThreshold: "$owner.status(percent-threshold)"
+                }
             }]
         }]
     }

@@ -112,7 +112,7 @@ export class PoolRoom extends Room {
     async enter(): Promise<void> {
         this.state = "active"
         newLog(["===== 进入水池 ====="])
-        newLog(["一个宁静的休息处..."])
+        newLog(["你在废墟中间发现了一处紫黑的水池，很熟悉的味道"])
     }
 
     /**

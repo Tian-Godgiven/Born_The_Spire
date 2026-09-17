@@ -5,9 +5,9 @@ import { handleEventEntity } from "@/core/objects/system/ActionEvent";
 import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import { Effect } from "@/core/objects/system/effect/Effect"
 import type { CardPiles } from "@/core/objects/target/Player"
-import { Player } from "@/core/objects/target/Player"
 import { cardMove } from ".";
 import { getStatusValue } from "@/core/objects/system/status/Status";
+import { getActingPlayer } from "@/core/utils/typeGuards";
 
 /**
  * 原子效果：抽取一张卡牌到手牌中
@@ -19,17 +19,13 @@ import { getStatusValue } from "@/core/objects/system/status/Status";
  * }
  */
 export const drawCard:EffectFunc = (event,effect)=>{
-    const {target} = event
-    //只有玩家对象具备卡牌
-    if(target instanceof Player == false) return;
-    //来源的牌堆存储在params中
+    const player = getActingPlayer(event.source, event.target)
+    if (!player) return
     const pileName = effect.params.sourcePileName as keyof CardPiles
-    const sourcePile = target.cardPiles[pileName]
-    //抽取的目标存储在params中
+    const sourcePile = player.cardPiles[pileName]
     const card = effect.params.card as Card|Card[]
     handleEventEntity(card,(e)=>{
-        //移动到手牌堆
-        cardMove(sourcePile,e,target.cardPiles.handPile,{handPile:target.cardPiles.handPile,owner:target})
+        cardMove(sourcePile,e,player.cardPiles.handPile,{handPile:player.cardPiles.handPile,owner:player})
     })
 }
 
@@ -43,13 +39,10 @@ export const drawCard:EffectFunc = (event,effect)=>{
  * }
  */
 export const drawFromDrawPile:EffectFunc = async (event,effect)=>{
-    const {target} = event
-    //只有玩家对象具备卡牌
-    if(target instanceof Player == false) return false;
-    const player = target
+    const player = getActingPlayer(event.source, event.target)
+    if (!player) return false
     const sourcePile = player.cardPiles.drawPile
 
-    //抽取数量 - 支持从属性读取
     let number: number
     const valueParam = effect.params.value
 
@@ -60,22 +53,17 @@ export const drawFromDrawPile:EffectFunc = async (event,effect)=>{
         number = valueParam as number
     }
 
-    // 支持额外抽牌数（由 addFirstTurnDraw 等效果通过 _addValue 追加）
     if (effect.params._addValue) {
         number += Number(effect.params._addValue)
     }
 
     const triggerLevel = event.triggerLevel || 0
 
-    // 逐张抽牌，处理牌堆耗尽时自动填充
     for(let i = 0; i < number; i++){
-        // 牌堆为空时，从弃牌堆填充
         if(sourcePile.length === 0){
             player.fillDrawPile()
-            // 填充后仍为空，无牌可抽
             if(sourcePile.length === 0) break
         }
-        // 对当前牌堆顶部的牌执行 drawCard 原子效果
         const card = sourcePile[0]
         const subEffect = new Effect({
             key:"drawCard",
