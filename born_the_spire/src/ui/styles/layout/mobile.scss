@@ -5,8 +5,12 @@ html[data-layout="mobile"] {
     --layout-hand-height: 22vh;
     --layout-hand-sink: calc(var(--layout-card-height) - var(--layout-hand-height) + 12px);
     --layout-hand-side-gap: 180px;
-    --layout-card-width: 100px;
-    --layout-card-height: 154px;
+    --layout-card-width: 112px;
+    --layout-card-height: 172px;
+    --layout-card-title-size: 14px;
+    --layout-card-body-size: 14px;
+    --layout-card-entry-size: 14px;
+    --layout-card-cost-size: 12px;
     --layout-chara-width: 180px;
     --layout-chara-height: 230px;
     --layout-pile-size: 0px;
@@ -65,6 +69,10 @@ html[data-layout="mobile"] {
     --layout-leave-font: 13px;
     --layout-store-buy-pad: 12px 24px;
     --layout-store-buy-font: 18px;
+    --layout-store-organ-min: 150px;
+    --layout-store-pad: 8px 10px;
+    --layout-store-gap: 8px;
+    --layout-store-item-gap: 6px;
     --layout-chance-board: min(200px, 52%);
     --layout-chance-die: 52px;
     --layout-organ-popup-width: min(200px, calc((94vw - 48px) / 3));
@@ -323,12 +331,7 @@ html[data-layout="mobile"] .blackstore-desc {
 
 html[data-layout="mobile"] .organs-row {
     flex-wrap: nowrap;
-}
-
-html[data-layout="mobile"] .organs-row .store-item {
-    flex: 1;
-    min-width: 0;
-    max-width: none;
+    overflow-x: auto;
 }
 
 html[data-layout="mobile"] .organ-detail-modal {

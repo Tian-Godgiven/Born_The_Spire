@@ -38,6 +38,9 @@ export const organDiscountRange = {
     max: 0.7    // 最高折扣 70%
 }
 
+/** 进店时随机开价收购的持有器官数量，不够就有几件列几件 */
+export const organSellOfferCount = 3
+
 /**
  * 物质出售配置
  */

@@ -14,7 +14,7 @@ import type { RelicMap } from "@/core/objects/item/Subclass/Relic"
 import type { PotionMap } from "@/core/objects/item/Subclass/Potion"
 import type { CardMap } from "@/core/objects/item/Subclass/Card"
 import { createRelic, createOrgan, createPotion, createCard } from "@/core/factories"
-import { randomFloatRange, randomWeightedChoice } from "@/core/hooks/random"
+import { getContextRandom, randomFloatRange, randomWeightedChoice } from "@/core/hooks/random"
 import { getOrganByKey } from "@/static/list/target/organList"
 import type { RarityWeights } from "@/static/list/room/blackStore/blackStoreItemPool"
 import { calculateBlackStorePrice } from "@/static/list/target/organQuality"
@@ -27,6 +27,7 @@ import {
     potionDefaultPrice,
     cardPriceConfig,
     organDiscountRange,
+    organSellOfferCount,
     materialSellConfig,
     healthSellConfig,
     defaultRelicSlots,
@@ -70,6 +71,11 @@ export interface SellableOrgan {
     discountPercent: string         // 折扣百分比显示（例如 "60%"）
 }
 
+/** 本店开价收购的一件器官；卖掉后 sold，不补货 */
+export interface OrganSellOffer extends SellableOrgan {
+    sold: boolean
+}
+
 /**
  * 黑市房间配置
  */
@@ -78,7 +84,7 @@ export interface BlackStoreRoomConfig extends RoomConfig {
     organCount?: number             // 器官数量（默认 5）
     relicSlots?: RelicSlotConfig[]  // 遗物栏位配置（默认使用 defaultRelicSlots）
     potionCount?: number            // 药水数量（默认 3）
-    cardCount?: number              // 卡牌数量（默认取卡牌池全部，池为空则不显示）
+    cardCount?: number              // 卡牌数量（默认 3，池为空则不显示）
     allowSellOrgan?: boolean        // 是否允许出售器官（默认 true）
     allowSellMaterial?: boolean     // 是否允许出售物质（默认 true）
     allowSellHealth?: boolean       // 是否允许出售生命值（默认 true）
@@ -149,6 +155,9 @@ export class BlackStoreRoom extends Room {
     // 器官折扣缓存（器官ID -> 折扣）
     private organDiscounts: Map<string, number> = new Map()
 
+    // 进店时抽定的收购名单，这趟店里不再换、不补货
+    private organSellOffers: OrganSellOffer[] = []
+
     // 展示用实例缓存（商品ID -> 实例）
     private previewInstances: Map<string, any> = new Map()
 
@@ -158,7 +167,7 @@ export class BlackStoreRoom extends Room {
         this.organCount = config.organCount ?? 5
         this.relicSlots = config.relicSlots ?? defaultRelicSlots
         this.potionCount = config.potionCount ?? 3
-        this.cardCount = config.cardCount ?? 999  // 默认取商店池中所有卡牌
+        this.cardCount = config.cardCount ?? 3
         this.allowSellOrgan = config.allowSellOrgan ?? true
         this.allowSellMaterial = config.allowSellMaterial ?? true
         this.allowSellHealth = config.allowSellHealth ?? true
@@ -182,6 +191,7 @@ export class BlackStoreRoom extends Room {
 
         // 生成商品列表
         this.generateStoreItems()
+        this.generateOrganSellOffers()
 
         // 应用商店折扣（来自玩家 shopDiscount 属性）
         this.applyShopDiscount()
@@ -262,6 +272,34 @@ export class BlackStoreRoom extends Room {
                 })
             })
         }
+    }
+
+    /**
+     * 进店时从可弃器官里抽收购名单。`cannot-remove` 的本来就不进。
+     */
+    private generateOrganSellOffers(): void {
+        this.organSellOffers = []
+        if (!this.allowSellOrgan) return
+
+        const removable = getOrganModifier(nowPlayer).getRemovableOrgans()
+        if (removable.length === 0) return
+
+        const picked = getContextRandom("blackStore:sellOffers")
+            .shuffle(removable)
+            .slice(0, organSellOfferCount)
+
+        this.organSellOffers = picked.map(organ => {
+            const basePrice = this.calculateOrganPrice(organ as any)
+            const discount = this.getOrganDiscount(organ)
+            return {
+                organ,
+                basePrice,
+                sellPrice: Math.floor(basePrice * discount),
+                discount,
+                discountPercent: `${Math.round(discount * 100)}%`,
+                sold: false
+            }
+        })
     }
 
     /**
@@ -537,6 +575,12 @@ export class BlackStoreRoom extends Room {
             return 0
         }
 
+        const offer = this.organSellOffers.find(o => o.organ === organ && !o.sold)
+        if (!offer) {
+            newLog(["这家店这次不收这个器官"])
+            return 0
+        }
+
         if (!canRemoveOrgan(organ)) {
             newLog([organ, "无法被舍弃"])
             return 0
@@ -553,6 +597,8 @@ export class BlackStoreRoom extends Room {
         // 给予金钱
         const reserveModifier = getReserveModifier(nowPlayer)
         reserveModifier.gainReserve("gold", price, nowPlayer)
+
+        offer.sold = true
 
         return price
     }
@@ -604,25 +650,21 @@ export class BlackStoreRoom extends Room {
     }
 
     /**
-     * 获取可出售的器官列表（带折扣信息）
+     * 本店开价的收购名单（含已卖掉的空位）
+     */
+    getOrganSellOffers(): OrganSellOffer[] {
+        const owned = getOrganModifier(nowPlayer).getOrgans()
+        return this.organSellOffers.map(offer => ({
+            ...offer,
+            sold: offer.sold || !owned.includes(offer.organ)
+        }))
+    }
+
+    /**
+     * 当前还能卖掉的收购器官
      */
     getSellableOrgans(): SellableOrgan[] {
-        const organModifier = getOrganModifier(nowPlayer)
-        const playerOrgans = organModifier.getRemovableOrgans()
-
-        return playerOrgans.map(organ => {
-            const basePrice = this.calculateOrganPrice(organ as any)
-            const discount = this.getOrganDiscount(organ)
-            const sellPrice = Math.floor(basePrice * discount)
-
-            return {
-                organ,
-                basePrice,
-                sellPrice,
-                discount,
-                discountPercent: `${Math.round(discount * 100)}%`
-            }
-        })
+        return this.getOrganSellOffers().filter(offer => !offer.sold)
     }
 
     /**

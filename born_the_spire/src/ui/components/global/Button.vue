@@ -2,7 +2,7 @@
     <button
         type="button"
         class="game-btn"
-        :class="{ error: error, 'is-disabled': disabled }"
+        :class="{ error: error, 'is-disabled': disabled, invert, large }"
         :disabled="disabled"
         :aria-label="label"
         @click="onClick"
@@ -19,6 +19,10 @@
         label?: string
         disabled?: boolean
         error?: boolean
+        /** 黑脸白字，强调成交（现行：黑市购买 / 出售） */
+        invert?: boolean
+        /** 房间操作钮尺寸，走 `--layout-store-buy-*` */
+        large?: boolean
     }>()
 
     function onClick() {
@@ -67,13 +71,39 @@ $inner-cut: 4px;
         @include chamfer($inner-cut);
     }
 
-    &:hover:not(:disabled):not(.error) .game-btn-face {
+    &:hover:not(:disabled):not(.error):not(.invert) .game-btn-face {
         background: #d8d8d8;
     }
 
-    &:active:not(:disabled):not(.error) .game-btn-face {
+    &:active:not(:disabled):not(.error):not(.invert) .game-btn-face {
         background: #d0d0d0;
         border-color: #9a9a9a #f3f3f3 #f3f3f3 #9a9a9a;
+    }
+
+    &.invert {
+        color: #fff;
+
+        .game-btn-face {
+            background: #000;
+            color: #fff;
+            border-color: #333 #000 #000 #333;
+        }
+
+        &:hover:not(:disabled):not(.error) .game-btn-face {
+            background: #222;
+        }
+
+        &:active:not(:disabled):not(.error) .game-btn-face {
+            background: #444;
+        }
+    }
+
+    &.large {
+        font-size: var(--layout-store-buy-font);
+
+        .game-btn-face {
+            padding: var(--layout-store-buy-pad);
+        }
     }
 
     &.is-disabled,

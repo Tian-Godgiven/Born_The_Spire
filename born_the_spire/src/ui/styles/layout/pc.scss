@@ -8,6 +8,10 @@ html[data-layout="pc"] {
     --layout-hand-side-gap: 400px;
     --layout-card-width: 130px;
     --layout-card-height: 200px;
+    --layout-card-title-size: 18px;
+    --layout-card-body-size: 14px;
+    --layout-card-entry-size: 16px;
+    --layout-card-cost-size: 15px;
     --layout-chara-width: 200px;
     --layout-chara-height: 300px;
     --layout-pile-size: 100px;
@@ -65,6 +69,10 @@ html[data-layout="pc"] {
     --layout-leave-font: 16px;
     --layout-store-buy-pad: 14px 32px;
     --layout-store-buy-font: 20px;
+    --layout-store-organ-min: 180px;
+    --layout-store-pad: 16px 24px;
+    --layout-store-gap: 24px;
+    --layout-store-item-gap: 12px;
     --layout-chance-board: 500px;
     --layout-chance-die: 88px;
     --layout-organ-popup-width: 270px;

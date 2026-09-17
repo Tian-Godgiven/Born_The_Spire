@@ -24,7 +24,7 @@
     import { hiddenHandCardIds } from '@/ui/animation/cardFlight';
     import { layoutMode } from '@/ui/hooks/global/layoutMode';
 
-    const CARD_WIDTH = computed(() => layoutMode.value === 'mobile' ? 100 : 130)
+    const CARD_WIDTH = computed(() => layoutMode.value === 'mobile' ? 112 : 130)
     const MAX_HAND_WIDTH = computed(() => layoutMode.value === 'mobile' ? 640 : 1000)
 
     const visibleHandPile = computed(()=>{

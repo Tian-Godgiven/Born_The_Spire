@@ -22,7 +22,7 @@ export const POPOVER_LAYER_CLASS = "popover-layer"
  * 11000 开发者控制台 — 盖过飞牌和游戏浮层
  * 10500 房间操作钮 — 黑市购买，盖过商品说明和离开钮
  * 10000 悬停 — 卡名/术语必须盖过检视
- * 9999  检视 — showPopUp / 卡牌详情
+ * 9999  检视 — showPopUp / 卡牌详情 / 确认弹窗
  * 9500  飞牌 — 战场之上、检视之下
  * 8999  选择 — showComponent / 水池升级
  */

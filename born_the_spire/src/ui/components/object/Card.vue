@@ -178,7 +178,7 @@ const cardRef = ref<HTMLElement>()
     }
 
     .cost{
-        font-size: 15px;
+        font-size: var(--layout-card-cost-size);
         display: flex;
         justify-content: center;
         align-items: center;
@@ -191,11 +191,9 @@ const cardRef = ref<HTMLElement>()
         top: -7px;
         background-color: white;
     }
-    // 费用圆圈右边缘落在 x=19，左右各留 20px 才能保持标题在整卡居中且不被压住。
-    // 剩余 90px 够放 5 个 18px 汉字；更长的卡名截断，绝不换行也绝不压到费用上
     .title{
         text-align: center;
-        font-size: 18px;
+        font-size: var(--layout-card-title-size);
         font-weight: bold;
         padding: 0 20px;
         white-space: nowrap;
@@ -217,7 +215,7 @@ const cardRef = ref<HTMLElement>()
 
         .entry-tag {
             display: inline-block;
-            font-size: 16px;
+            font-size: var(--layout-card-entry-size);
             color: #333;
         }
     }
@@ -234,6 +232,7 @@ const cardRef = ref<HTMLElement>()
     }
 
     .describe{
+        font-size: var(--layout-card-body-size);
         white-space: normal;
         overflow-wrap: anywhere;
         padding: 0 5px;

@@ -5,7 +5,7 @@
 
 import { roomRegistry } from "../roomRegistry"
 import { BlackStoreRoom } from "@/core/objects/room/BlackStoreRoom"
-import BlackStoreRoomComponent from "@/ui/page/Scene/running/BlackStoreRoom.vue"
+import BlackStoreRoomComponent from "@/ui/page/Scene/running/BlackStoreRoom/BlackStoreRoom.vue"
 
 /**
  * 初始化黑市房间

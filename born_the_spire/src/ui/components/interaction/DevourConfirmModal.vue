@@ -1,5 +1,10 @@
 <template>
-  <div class="confirm-overlay" v-if="visible">
+  <Teleport to="body">
+  <div
+    class="confirm-overlay"
+    v-if="visible"
+    :style="{ zIndex: SHOW_POPUP_Z_INDEX }"
+  >
     <div class="confirm-modal">
       <div class="confirm-title">{{ title }}</div>
 
@@ -22,6 +27,7 @@
       </div>
     </div>
   </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -35,6 +41,7 @@ import {
   confirmAction,
   cancelAction
 } from '@/ui/hooks/interaction/confirmModal'
+import { SHOW_POPUP_Z_INDEX } from '@/ui/hooks/interaction/popoverHost'
 
 const visible = computed(() => showConfirmModal.value)
 const title = computed(() => confirmTitle.value)
@@ -62,7 +69,6 @@ function handleCancel() {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000;
 }
 
 .confirm-modal {

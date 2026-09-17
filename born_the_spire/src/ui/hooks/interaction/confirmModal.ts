@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import type { Organ } from '@/core/objects/target/Organ'
+import { dismissAllPopovers } from '@/ui/hooks/interaction/popoverHost'
 
 /**
  * 确认弹窗状态
@@ -25,6 +26,7 @@ export function showConfirm(
   confirmMessage.value = message
   confirmOrgan.value = organ || null
   confirmMaterial.value = material || 0
+  dismissAllPopovers()
   showConfirmModal.value = true
 
   return new Promise<boolean>((resolve) => {
