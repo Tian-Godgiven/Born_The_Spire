@@ -15,7 +15,7 @@
 欢迎加入我们一同创作后续的内容（是的我完全不知道后面要怎么做，求你了来看看吧！）
 
 QQ 群：`782816134`  
-游玩地址：https://tian-godgiven.github.io/born_the_spire
+游玩地址：https://tian-godgiven.github.io/Born_The_Spire/#/
 （警告：我们还没有做对局存档所以退出页面=重开！！！）
 （警告2：在代码更新时的对局可能会因页面刷新而丢失所有内容，群内会通知更新时间！）
 
