@@ -23,7 +23,7 @@ export const pollutionSourceOrgan: OrganMap = {
     reaction: {
         countAndAddWound: [{
             key: 'count-and-add-wound',
-            targetType: 'triggerSource',
+            targetType: 'triggerCreator',
             mediumTargetType: 'triggerEventMedium',
             effect: [{
                 key: 'countAndTrigger',
@@ -32,7 +32,7 @@ export const pollutionSourceOrgan: OrganMap = {
                     threshold: 5,
                     onTrigger: {
                         key: 'add-wound',
-                        targetType: 'triggerOwner',
+                        targetType: 'creatorOwner',
                         effect: [{
                             key: 'addCardToHand',
                             params: { cardKey: 'original_card_00100', count: 2 }

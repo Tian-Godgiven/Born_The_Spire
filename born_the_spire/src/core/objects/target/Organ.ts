@@ -356,10 +356,9 @@ export class Organ extends Entity{
 
             // 使用 Trigger.ts 的 createTriggerByTriggerMap 创建触发器
             // source=this（器官本身），target=owner（器官拥有者）
-            const triggerObj = createTriggerByTriggerMap(this, owner, triggerDef as any)
-
             // 将触发器挂载到所有目标上
             for (const mt of mountTargets) {
+                const triggerObj = createTriggerByTriggerMap(this, owner, triggerDef as any, mt)
                 const { remove } = mt.trigger.appendTrigger(triggerObj)
                 removers.push(remove)
             }

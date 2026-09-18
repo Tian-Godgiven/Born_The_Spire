@@ -3,7 +3,19 @@
  * 支持 mod 制作者注册自定义命令
  */
 
-export type AddOutputFn = (text: string, type?: 'result' | 'error' | 'info' | 'example', clickable?: string, action?: () => void) => void
+export type CommandSuggestion = {
+    label: string
+    command: string
+    mode?: 'fill' | 'execute'
+}
+
+export type AddOutputFn = (
+    text: string,
+    type?: 'result' | 'error' | 'info' | 'example',
+    clickable?: string,
+    action?: () => void,
+    suggestions?: CommandSuggestion[]
+) => void
 
 export interface ConsoleCommand {
     /** 命令名称（即调用时的函数名） */

@@ -27,7 +27,7 @@ import { resolveTriggerMountTargets } from "@/core/utils/resolveTriggerMountTarg
  * - minGain:    gain 的最小值，低于此值不累积（可选）
  * - repeat:     是否在单次事件内循环触发直到低于阈值（默认 true）
  * - maxRepeat:  单次事件最多触发次数（默认不限）
- * - targetType: 触发效果的目标（默认 "owner"，可选 "triggerSource"、"eventTarget"、"eventSource"）
+ * - targetType: 触发效果的目标（默认 "creatorOwner"，可选 "triggerCreator"、"eventTarget"、"eventSource"）
  *
  * === 限流参数（可选）===
  * - usedKey:             记录已触发次数的 status key
@@ -56,7 +56,7 @@ export const accumulateAndTrigger: EffectFunc = (event, effect) => {
     const consumeParam = params.consume ?? 1
     const repeat = params.repeat !== false
     const maxRepeat = params.maxRepeat === undefined ? Infinity : Number(params.maxRepeat)
-    const targetType = String(params.targetType ?? "owner")
+    const targetType = String(params.targetType ?? "creatorOwner")
 
     // 限流参数
     const maxTriggerPerBattle = params.maxTriggerPerBattle !== undefined ? Number(params.maxTriggerPerBattle) : undefined

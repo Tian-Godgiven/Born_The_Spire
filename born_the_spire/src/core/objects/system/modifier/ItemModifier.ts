@@ -30,17 +30,20 @@ function buildConditionContext(
     item: Item,
     owner: Entity,
     triggerEvent: ActionEvent,
-    triggerEffect: Effect | null
+    triggerEffect: Effect | null,
+    triggerHost?: Entity
 ): ConditionContext {
     return {
         item: item as any,
-        owner,
+        declarationObject: item,
+        declarationOwner: owner,
         source: item as any,  // trigger source = 触发器所在的物品
         target: triggerEvent?.target as any,
         event: triggerEvent,
-        triggerSource: item as any,
-        triggerOwner: owner,
         triggerEffect: triggerEffect ?? undefined,
+        triggerCreator: item,
+        creatorOwner: owner,
+        triggerHost: triggerHost ?? owner,
         battle: nowBattle.value
     }
 }
@@ -53,14 +56,15 @@ function evaluateCondition(
     item: Item,
     owner: Entity,
     triggerEvent: ActionEvent,
-    triggerEffect: Effect | null
+    triggerEffect: Effect | null,
+    triggerHost?: Entity
 ): boolean {
     if (!condition) return true
 
     // 新格式：字符串/数组/ConditionGroup
     if (typeof condition === "string" || Array.isArray(condition) ||
         (typeof condition === "object" && ('and' in condition || 'or' in condition || 'not' in condition))) {
-        const ctx = buildConditionContext(item, owner, triggerEvent, triggerEffect)
+        const ctx = buildConditionContext(item, owner, triggerEvent, triggerEffect, triggerHost)
         return checkConditionExpr(condition as Condition, ctx)
     }
 
@@ -90,16 +94,16 @@ export async function executeItemReaction(params: {
     condition?: Condition | TriggerCondition,
     disableUntil?: string,
     unit?: ItemModifierUnit,
-    triggerMountTarget?: Entity,
+    triggerHost?: Entity,
     triggerDefKey?: string,
 }): Promise<void> {
-    const { item, reactionEvents, triggerEvent, owner, triggerEffect, condition, disableUntil, unit, triggerMountTarget, triggerDefKey } = params
+    const { item, reactionEvents, triggerEvent, owner, triggerEffect, condition, disableUntil, unit, triggerHost, triggerDefKey } = params
 
     // 检查物品是否被禁用
     if (item.isDisabled) return
 
     // 条件检查（新格式字符串/数组/ConditionGroup）
-    if (condition && !evaluateCondition(condition, item, owner, triggerEvent, triggerEffect)) return
+    if (condition && !evaluateCondition(condition, item, owner, triggerEvent, triggerEffect, triggerHost)) return
 
     const bindings: TargetContext = { pickedTargets: [] }
 
@@ -111,9 +115,9 @@ export async function executeItemReaction(params: {
         if (triggerEvent.simulate && eventConfig.targetType !== "triggerEffect") continue
 
         // 通用条件检查（新格式）
-        if (eventConfig.condition && !evaluateCondition(eventConfig.condition, item, owner, triggerEvent, triggerEffect)) continue
+        if (eventConfig.condition && !evaluateCondition(eventConfig.condition, item, owner, triggerEvent, triggerEffect, triggerHost)) continue
 
-        const resolveOpts = { allowNull: true, bindings }
+        const resolveOpts = { allowNull: true, bindings, triggerCreator: item, triggerHost: triggerHost ?? owner }
 
         // 解析 source
         const source = eventConfig.sourceTargetType
@@ -140,7 +144,10 @@ export async function executeItemReaction(params: {
             medium: (medium ?? item) as any,
             target: target as any,
             info: eventConfig.info || {},
-            effectUnits: eventConfig.effect ?? []
+            effectUnits: eventConfig.effect ?? [],
+            triggerContext: { creator: item, host: triggerHost ?? owner, triggerEvent },
+            declarationObject: item,
+            declarationOwner: owner
         })
 
         // 挂父事件引用：让 cancelCurrentEvent 能定位到触发本 reaction 的事件
@@ -148,11 +155,6 @@ export async function executeItemReaction(params: {
         newEvent.parentEvent = triggerEvent
 
         // 设置触发器上下文
-        newEvent.triggerContext = triggerEvent.triggerContext || {
-            source: item,
-            owner: triggerMountTarget ?? owner,
-        }
-
         // disableUntil：触发后禁用物品直到指定事件
         if (disableUntil && !item.isDisabled && unit) {
             item.isDisabled = true
@@ -314,6 +316,8 @@ export class ItemModifier {
             condition: triggerDef.condition,
             item,
             owner: this.owner,
+            triggerCreator: item,
+            triggerHost: triggerMountTarget,
             extraCheck: () => !item.isDisabled
         })?.preview
 
@@ -337,7 +341,7 @@ export class ItemModifier {
                     condition: triggerDef.condition,
                     disableUntil,
                     unit,
-                    triggerMountTarget,
+                    triggerHost: triggerMountTarget,
                     triggerDefKey: ('importantKey' in triggerDef ? triggerDef.importantKey : undefined) || triggerDef.key,
                 })
             }

@@ -80,13 +80,13 @@ export const wheelOfFateRelic: RelicMap = {
                 when: "after",
                 how: "make",
                 key: "drawCard",
-                condition: "$source.status(mode) == even",
+                condition: "$trigger.creator.status(mode) == even",
                 action: "countDrawAndGiveEffect"
             }, {
                 when: "after",
                 how: "make",
                 key: "turnStart",
-                condition: "$source.status(mode) == odd",
+                condition: "$trigger.creator.status(mode) == odd",
                 action: "disableOrgans"
             }]
         }

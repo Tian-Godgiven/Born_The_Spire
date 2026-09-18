@@ -1158,20 +1158,36 @@ export const cardList:CardMap[] = [{
 
 // ========== 第一层Boss 3：废铁战甲 ==========
 
-// 装甲组装：铁壁核心提供，使用者获甲+对手上易伤
+// 装甲组装：铁壁核心提供；锻造后才附加易伤。
 {
     label: "装甲组装",
     key: "boss3_card_armor_assembly",
     tags: ["skill", "enemy"],
-    status: { cost: 1, armor: 15, vulnerable: 1 },
-    describe: ["获得", { key: ["status", "armor"] }, "点", {$:"护甲"}, "，施加", { key: ["status", "vulnerable"] }, "层", {$:"易伤"}],
+    status: { cost: 2, armor: 15 },
+    describe: ["获得", { key: ["status", "armor"] }, "点", {$:"护甲"}],
     interaction: {
         use: {
             target: { faction: "opponent" },
             effects: [
-                { key: "gainArmor", params: { value: 15 }, target: "source" },
-                { key: "applyState", params: { stateKey: "vulnerable", stacks: 1 } }
+                { key: "gainArmor", params: { value: 15 }, target: "source" }
             ]
+        }
+    },
+    upgradeConfig: {
+        maxLevel: 1,
+        levelConfigs: {
+            1: {
+                describe: ["获得", { key: ["status", "armor"] }, "点", {$:"护甲"}, "，施加1层", {$:"易伤"}],
+                interaction: {
+                    use: {
+                        target: { faction: "opponent" },
+                        effects: [
+                            { key: "gainArmor", params: { value: 15 }, target: "source" },
+                            { key: "applyState", params: { stateKey: "vulnerable", stacks: 1 } }
+                        ]
+                    }
+                }
+            }
         }
     }
 },
@@ -1181,12 +1197,15 @@ export const cardList:CardMap[] = [{
     label: "过载屏障",
     key: "boss3_card_overload_barrier",
     tags: ["skill", "enemy"],
-    status: { cost: 1, forceFieldShield: 2 },
-    describe: ["获得", { key: ["status", "forceFieldShield"] }, "层", {$:"力场护盾"}],
+    status: { cost: 1, forceFieldShield: 1, heat: 1 },
+    describe: ["获得", { key: ["status", "forceFieldShield"] }, "层", {$:"力场护盾"}, "和", { key: ["status", "heat"] }, "层", {$:"热量"}],
     interaction: {
         use: {
             target: { key: "self" },
-            effects: [{ key: "applyState", params: { stateKey: "forceFieldShield", stacks: 2 } }]
+            effects: [
+                { key: "applyState", params: { stateKey: "forceFieldShield", stacks: "$medium.status(forceFieldShield)" } },
+                { key: "applyState", params: { stateKey: "heat", stacks: "$medium.status(heat)" } }
+            ]
         }
     }
 },
@@ -1195,18 +1214,24 @@ export const cardList:CardMap[] = [{
     label: "火力压制",
     key: "boss3_card_firepower_suppression",
     tags: ["attack", "multiHit", "enemy"],
-    status: { cost: 1, damage: 8, multiHit: 2 },
+    status: { cost: 1, damage: 2, multiHit: 4 },
     describe: [
-        "造成", { key: ["status", "damage"] }, "点伤害，重复",
-        { key: ["status", "multiHit"] }, "次"
+        "随机攻击", { key: ["status", "multiHit"] }, "次，每次造成",
+        { key: ["status", "damage"] }, "点伤害"
     ],
     interaction: {
         use: {
             target: { faction: "opponent" },
-            effects: [
-                { key: "damageTo", params: { value: 8 } },
-                { key: "damageTo", params: { value: 8 } }
-            ]
+            effects: [{
+                key: "card_randomOpponentMultiAttack",
+                params: { damage: "$medium.status(damage)", hits: "$medium.status(multiHit)" }
+            }]
+        }
+    },
+    upgradeConfig: {
+        maxLevel: 1,
+        levelConfigs: {
+            1: { status: { multiHit: 7 } }
         }
     }
 },
@@ -1215,17 +1240,12 @@ export const cardList:CardMap[] = [{
     label: "钢铁压碾",
     key: "boss3_card_steel_roll",
     tags: ["skill", "enemy"],
-    status: { cost: 2, damage: 25 },
-    describe: [
-        "造成", { key: ["status", "damage"] }, "点无视护甲伤害，自身护甲清零"
-    ],
+    status: { cost: 2 },
+    describe: ["清空所有", {$:"护甲"}, "，对所有敌人造成等量伤害"],
     interaction: {
         use: {
             target: { faction: "opponent" },
-            effects: [
-                { key: "damageIgnoreArmor", params: { value: 25 } },
-                { key: "clearArmorEffect", params: {}, target: "source" }
-            ]
+            effects: [{ key: "card_steelRoll", params: {} }]
         }
     }
 },{

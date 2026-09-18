@@ -42,6 +42,8 @@ type PreviewApplicatorParams = {
     condition?: Condition | TriggerCondition
     item: EventParticipant
     owner: Entity
+    triggerCreator?: EventParticipant
+    triggerHost?: Entity
     extraCheck?: () => boolean
 }
 
@@ -55,25 +57,36 @@ function conditionPasses(
     condition: Condition | TriggerCondition | undefined,
     item: EventParticipant,
     owner: Entity,
-    effect: Effect
+    effect: Effect,
+    triggerCreator: EventParticipant,
+    triggerHost: Entity
 ): boolean {
     if (!condition) return true
     if (!isDslCondition(condition)) return true
     const event = effect.actionEvent
     return checkCondition(condition, {
         item: item as any,
-        owner,
+        declarationObject: triggerCreator,
+        declarationOwner: owner,
         source: item as any,
         target: event.target as any,
         event,
-        triggerSource: item as any,
-        triggerOwner: owner,
         triggerEffect: effect,
+        triggerCreator,
+        creatorOwner: owner,
+        triggerHost,
         battle: nowBattle.value
     })
 }
 
-function applyParamModifier(previewed: Effect, unit: EffectUnit, item: EventParticipant) {
+function applyParamModifier(
+    previewed: Effect,
+    unit: EffectUnit,
+    item: EventParticipant,
+    owner: Entity,
+    triggerCreator: EventParticipant,
+    triggerHost: Entity
+) {
     if (!isPreviewParamModifier(unit.key)) return
     const effectMap = getLazyModule<any[]>("effectMap")
     const def = effectMap.find((entry: any) => entry.key === unit.key)
@@ -95,8 +108,12 @@ function applyParamModifier(previewed: Effect, unit: EffectUnit, item: EventPart
         target: previewed,
         owner: item as any,
         item: item as any,
+        declarationObject: triggerCreator,
+        declarationOwner: owner,
         event,
         triggerEffect: previewed,
+        triggerCreator,
+        triggerHost,
         lazyResolve: false,
         battle: nowBattle.value
     }
@@ -110,18 +127,18 @@ function applyParamModifier(previewed: Effect, unit: EffectUnit, item: EventPart
  * 给声明式触发器挂上预览折叠。真正结算仍走 callback / doEvent。
  */
 export function createPreviewApplicator(params: PreviewApplicatorParams): PreviewApplicator | undefined {
-    const { reactionEvents, condition, item, owner, extraCheck } = params
+    const { reactionEvents, condition, item, owner, triggerCreator = item, triggerHost = owner, extraCheck } = params
     if (!reactionHasPreviewableModifier(reactionEvents)) return undefined
 
     return {
         preview(effect: Effect) {
             if (extraCheck && !extraCheck()) return
-            if (!conditionPasses(condition, item, owner, effect)) return
+            if (!conditionPasses(condition, item, owner, effect, triggerCreator, triggerHost)) return
             for (const config of reactionEvents) {
                 if (config.targetType !== "triggerEffect") continue
-                if (config.condition && !conditionPasses(config.condition, item, owner, effect)) continue
+                if (config.condition && !conditionPasses(config.condition, item, owner, effect, triggerCreator, triggerHost)) continue
                 for (const unit of config.effect ?? []) {
-                    applyParamModifier(effect, unit, item)
+                    applyParamModifier(effect, unit, item, owner, triggerCreator, triggerHost)
                 }
             }
         }

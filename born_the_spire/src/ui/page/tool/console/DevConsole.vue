@@ -16,6 +16,14 @@
                 :class="['text', line.type, { clickable: !!(line.clickable || line.action) }]"
                 @click="line.action ? line.action() : (line.clickable ? fillInput(line.clickable) : undefined)"
             >{{ line.text }}</span>
+            <span v-if="line.suggestions?.length" class="suggestions">
+                <button
+                    v-for="suggestion in line.suggestions"
+                    :key="`${suggestion.label}:${suggestion.command}`"
+                    type="button"
+                    @click="applySuggestion(suggestion)"
+                >{{ suggestion.label }}</button>
+            </span>
         </div>
     </div>
     <div class="input-area">
@@ -34,7 +42,7 @@
 
 <script setup lang="ts">
 import { ref, nextTick, onMounted, onUnmounted } from 'vue'
-import { consoleCommandRegistry } from '@/core/utils/consoleCommandRegistry'
+import { consoleCommandRegistry, type CommandSuggestion } from '@/core/utils/consoleCommandRegistry'
 import { registerAllCommands } from './commands'
 import { DEV_CONSOLE_Z_INDEX } from '@/ui/hooks/interaction/popoverHost'
 import { CREATOR_EGG_LINES } from '@/ui/hooks/global/creatorEasterEgg'
@@ -44,6 +52,7 @@ interface OutputLine {
     text: string
     clickable?: string
     action?: () => void
+    suggestions?: CommandSuggestion[]
 }
 
 const isVisible = ref(false)
@@ -89,8 +98,14 @@ registerAllCommands()
 
 let suppressOutputScroll = false
 
-function addOutput(text: string, type: OutputLine['type'] = 'result', clickable?: string, action?: () => void) {
-    outputLines.value.push({ type, text, clickable, action })
+function addOutput(
+    text: string,
+    type: OutputLine['type'] = 'result',
+    clickable?: string,
+    action?: () => void,
+    suggestions?: CommandSuggestion[]
+) {
+    outputLines.value.push({ type, text, clickable, action, suggestions })
     if (suppressOutputScroll) return
     nextTick(() => {
         if (outputRef.value) {
@@ -102,6 +117,15 @@ function addOutput(text: string, type: OutputLine['type'] = 'result', clickable?
 function fillInput(command: string) {
     currentInput.value = command
     nextTick(() => inputRef.value?.focus())
+}
+
+async function applySuggestion(suggestion: CommandSuggestion) {
+    if (suggestion.mode === 'execute') {
+        currentInput.value = suggestion.command
+        await executeCommand()
+        return
+    }
+    fillInput(suggestion.command)
 }
 
 // ========== 命令解析 ==========
@@ -247,7 +271,7 @@ function showHelp(filter?: string) {
 
     try {
         if (!effectiveFilter) {
-            addOutput('=== 可用命令 ===  提示: 点击标题收起/展开，点击命令或例子填入输入栏', 'info')
+            addOutput('=== 可用命令 ===  提示: 点击标题收起/展开，使用操作按钮填入或执行命令', 'info')
             addOutput('可用区域: ' + grouped.map(g => g.group.key).join(' / '), 'info')
         }
         addOutput('', 'info')
@@ -262,10 +286,14 @@ function showHelp(filter?: string) {
 
             if (!isCollapsed || !!effectiveFilter || showAll) {
                 for (const cmd of commands) {
-                    addOutput(`  ${cmd.usage}  —  ${cmd.description}`, 'info', cmd.usage)
+                    addOutput(`  ${cmd.usage}  —  ${cmd.description}`, 'info', undefined, undefined, [
+                        { label: '填入', command: cmd.usage }
+                    ])
                     if (cmd.examples) {
                         for (const ex of cmd.examples) {
-                            addOutput(`   示例: ${ex}`, 'example', ex)
+                            addOutput(`   示例: ${ex}`, 'example', undefined, undefined, [
+                                { label: '填入', command: ex }
+                            ])
                         }
                     }
                 }
@@ -275,10 +303,10 @@ function showHelp(filter?: string) {
 
         if (!effectiveFilter) {
             addOutput('=== 控制台命令 ===', 'info')
-            addOutput('  clear  —  清空控制台', 'info', 'clear')
-            addOutput('  help  —  显示全部帮助', 'info', 'help')
+            addOutput('  clear  —  清空控制台', 'info', undefined, undefined, [{ label: '执行', command: 'clear', mode: 'execute' }])
+            addOutput('  help  —  显示全部帮助', 'info', undefined, undefined, [{ label: '执行', command: 'help', mode: 'execute' }])
             addOutput('  help --区域  —  只显示指定区域', 'info')
-            addOutput('  help --all  —  展开显示全部', 'info', 'help --all')
+            addOutput('  help --all  —  展开显示全部', 'info', undefined, undefined, [{ label: '执行', command: 'help --all', mode: 'execute' }])
             addOutput('', 'info')
             addOutput('提示: 使用 ↑↓ 键浏览历史命令（跨会话保留）', 'info')
         }
@@ -448,6 +476,28 @@ defineExpose({ open, close, toggle })
 
         .output-line {
             margin-bottom: 2px;
+
+            .suggestions {
+                display: inline-flex;
+                gap: 4px;
+                margin-left: 8px;
+
+                button {
+                    padding: 1px 6px;
+                    border: 1px solid #4a4a4a;
+                    background: #333;
+                    color: #9cdcfe;
+                    font: inherit;
+                    font-size: 12px;
+                    cursor: pointer;
+
+                    &:hover {
+                        border-color: #4ec9b0;
+                        color: #fff;
+                        background: #3f4d4a;
+                    }
+                }
+            }
 
             .prompt {
                 color: #4ec9b0;

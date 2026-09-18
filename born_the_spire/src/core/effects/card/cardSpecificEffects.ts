@@ -10,6 +10,60 @@ import { doEvent } from "@/core/objects/system/ActionEvent"
 import { getStateModifier } from "@/core/objects/system/modifier/StateModifier"
 import { gainStateStack } from "@/core/objects/system/State"
 
+/** 火力压制：每段独立随机选择一个存活对手并发起 attack。 */
+export const card_randomOpponentMultiAttack: EffectFunc = async (event, effect) => {
+    const source = event.source
+    if (!isEntity(source)) return false
+
+    const battle = nowBattle.value
+    if (!battle) return false
+
+    const damage = Number(effect.params.damage ?? 0)
+    const hits = Number(effect.params.hits ?? 0)
+    if (!Number.isFinite(damage) || !Number.isFinite(hits) || hits <= 0) return false
+
+    const opponents = isEnemy(source) ? battle.getAlivePlayers() : battle.getAliveEnemies()
+    const rng = getContextRandom(`randomOpponentMultiAttack:${event.medium.__id}`)
+    for (let i = 0; i < hits; i++) {
+        const alive = opponents.filter(target => target.current.isAlive?.value === 1)
+        if (alive.length === 0) break
+        const target = alive[rng.nextInt(0, alive.length - 1)]
+        await doEvent({
+            key: "attack",
+            source,
+            medium: event.medium,
+            target,
+            effectUnits: [{ key: "attack", params: { value: damage } }]
+        })
+    }
+    return true
+}
+
+/** 钢铁压碾：清空自身护甲，并将清空前的数值作为伤害攻击所有对手。 */
+export const card_steelRoll: EffectFunc = async (event) => {
+    const source = event.source
+    if (!isEntity(source)) return false
+
+    const armor = Number(source.current.armor?.value ?? 0)
+    if (source.current.armor) source.current.armor.value = 0
+
+    const battle = nowBattle.value
+    if (!battle || armor <= 0) return true
+
+    const opponents = isEnemy(source) ? battle.getAlivePlayers() : battle.getAliveEnemies()
+    for (const target of opponents) {
+        if (target.current.isAlive?.value !== 1) continue
+        await doEvent({
+            key: "attack",
+            source,
+            medium: event.medium,
+            target,
+            effectUnits: [{ key: "attack", params: { value: armor } }]
+        })
+    }
+    return true
+}
+
 /**
  * 余热回收：检查牌堆是否有指定标签的卡牌，若有则消耗一张并获得额外护甲
  * 专属于 enemy_waste_heat_recovery 和 player_waste_heat_recovery 卡牌

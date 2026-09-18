@@ -16,7 +16,9 @@ export const potionCommands: ConsoleCommand[] = [
                 }
                 addOutput(`共 ${potionList.length} 种药水:`, 'info')
                 for (const potion of potionList) {
-                    addOutput(`  ${potion.label} - ${potion.key}`, 'result', `gainPotion("${potion.key}")`)
+                    addOutput(`  ${potion.label} - ${potion.key}`, 'result', undefined, undefined, [
+                        { label: '获得', command: `gainPotion("${potion.key}")` }
+                    ])
                 }
             } catch (error: any) {
                 addOutput(`列出药水失败: ${error.message}`, 'error')

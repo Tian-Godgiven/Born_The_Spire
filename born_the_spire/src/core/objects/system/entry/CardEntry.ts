@@ -181,7 +181,7 @@ export const cardEntryDefinitions: Record<string, CardEntryDefinition> = {
             player.reaction.moveInherentToHand = [{
                 key: "moveInherentToHand",
                 label: "固有：将固有卡牌移入手牌",
-                targetType: "triggerOwner",
+                targetType: "creatorOwner",
                 effect: [{
                     key: "moveInherentToHand",
                     describe: ["固有：将固有卡牌移入手牌"],

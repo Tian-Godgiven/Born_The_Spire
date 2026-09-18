@@ -101,6 +101,7 @@ export class State implements EventParticipant {
     public __id: string = nanoid()
     public label: string
     public key: string
+    public owner?: Entity
     public traits: Record<string,any> = {} //用于给状态添加额外的标签，例如中毒：毒素
     public participantType: 'state' = 'state'
     public describe: Describe

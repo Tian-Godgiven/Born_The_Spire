@@ -22,7 +22,9 @@ export const relicCommands: ConsoleCommand[] = [
                 }
                 addOutput(`=== 当前拥有 ${relics.length} 个遗物 ===`, 'info')
                 for (const relic of relics) {
-                    addOutput(`  [${relic.rarity}] ${relic.label} (${relic.key}) __id: ${relic.__id}`, 'result')
+                    addOutput(`  [${relic.rarity}] ${relic.label} (${relic.key}) __id: ${relic.__id}`, 'result', undefined, undefined, [
+                        { label: '移除', command: `removeRelic("${relic.__id}")` }
+                    ])
                 }
                 addOutput('', 'info')
                 addOutput('使用 removeRelic("key") 移除遗物', 'info')
@@ -46,7 +48,9 @@ export const relicCommands: ConsoleCommand[] = [
                 }
                 addOutput(`=== 共有 ${allRelics.length} 个可用遗物 ===`, 'info')
                 for (const relic of allRelics) {
-                    addOutput(`  [${relic.rarity || 'common'}] ${relic.label} - ${relic.key}`, 'result')
+                    addOutput(`  [${relic.rarity || 'common'}] ${relic.label} - ${relic.key}`, 'result', undefined, undefined, [
+                        { label: '获得', command: `gainRelic("${relic.key}")` }
+                    ])
                 }
                 addOutput('', 'info')
                 addOutput('使用 gainRelic("key") 获得遗物', 'info')

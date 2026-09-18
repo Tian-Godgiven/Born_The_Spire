@@ -23,7 +23,7 @@ import type { Entity } from "@/core/objects/system/Entity"
  *         threshold: 5,
  *         onTrigger: {
  *             key: "effect-name",
- *             targetType: "triggerOwner",
+ *             targetType: "creatorOwner",
  *             mediumTargetType: "triggerEventMedium",
  *             effect: [{ key: "someEffect", params: {...} }]
  *         }
@@ -81,7 +81,7 @@ export const countAndTrigger: EffectFunc = (event, effect) => {
     if (!params.onTrigger || !(params.onTrigger as any).key) return
 
     const itemOwner = (source as any)?.owner ?? (medium as any)?.owner
-    const onTriggerTarget = event.triggerContext?.owner ?? itemOwner ?? event.target
+    const onTriggerTarget = (event.triggerContext?.creator as any)?.owner ?? itemOwner ?? event.target
     const onTriggerKey = String((params.onTrigger as any).key)
     const onTriggerInfo = (params.onTrigger as any).info ?? {}
     const onTriggerEffect = (params.onTrigger as any).effect ?? []

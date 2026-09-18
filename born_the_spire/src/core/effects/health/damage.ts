@@ -26,6 +26,10 @@ export const damageTo:EffectFunc = (event:ActionEvent,effect)=>{
     const baseValue = Number(effect.params.value)
     const multiplier = effect.params.multiplier !== undefined ? Number(effect.params.multiplier) : 1
     const value = baseValue * multiplier
+    if (!Number.isFinite(value)) {
+        newError(["伤害效果的 value 或 multiplier 必须是有限数字", effect.params])
+        return false
+    }
     const {target} = event
     handleEventEntity(target,(t)=>{
         // 伤害只能作用于实体对象

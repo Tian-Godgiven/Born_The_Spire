@@ -35,13 +35,13 @@ const DEFAULT_ENERGY_REACTION = {
         key: "turnStart_recoverEnergy",
         label: "回合开始时恢复能量",
         effect: [{ key: "refillEnergy", params: {} }],
-        targetType: "triggerOwner" as const,
+        targetType: "creatorOwner" as const,
     }],
     emptyEnergy: [{
         key: "turnEnd_emptyEnergy",
         label: "回合结束时清空能量",
         effect: [{ key: "emptyEnergy", params: {} }],
-        targetType: "triggerOwner" as const,
+        targetType: "creatorOwner" as const,
     }],
 }
 

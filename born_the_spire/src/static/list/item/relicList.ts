@@ -256,7 +256,7 @@ export const relicList: RelicMap[] = [
                         when: "after",
                         how: "make",
                         key: "turnStart",
-                        condition: "$source.status(cooldown) <= 0",
+                        condition: "$trigger.creator.status(cooldown) <= 0",
                         action: "damageAndReset"
                     }
                 ]
@@ -264,7 +264,7 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             decrementCooldown: [{
-                targetType: "triggerSource",
+                targetType: "triggerCreator",
                 key: "decrementCooldown",
                 effect: [{
                     key: "decrementStatus",
@@ -281,7 +281,7 @@ export const relicList: RelicMap[] = [
                     }]
                 },
                 {
-                    targetType: "triggerSource",
+                    targetType: "triggerCreator",
                     key: "resetCooldown",
                     effect: [{
                         key: "resetCooldown",
@@ -323,7 +323,7 @@ export const relicList: RelicMap[] = [
                         when: "after",
                         how: "make",
                         key: "turnStart",
-                        condition: "$source.status(cooldown) <= 0",
+                        condition: "$trigger.creator.status(cooldown) <= 0",
                         action: "harmAndHeal"
                     }
                 ]
@@ -331,7 +331,7 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             decrementCooldown: [{
-                targetType: "triggerSource",
+                targetType: "triggerCreator",
                 key: "decrementCooldown",
                 effect: [{
                     key: "decrementStatus",
@@ -356,7 +356,7 @@ export const relicList: RelicMap[] = [
                     }]
                 },
                 {
-                    targetType: "triggerSource",
+                    targetType: "triggerCreator",
                     key: "resetCooldown",
                     effect: [{
                         key: "resetCooldown",
@@ -568,7 +568,7 @@ export const relicList: RelicMap[] = [
                     when: "after",
                     how: "make",
                     key: "turnStart",
-                    condition: "$owner.current(health) <= 50%",
+                    condition: "$trigger.creator.owner.current(health) <= 50%",
                     action: "gainPower2"
                 }]
             }
@@ -994,8 +994,8 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             storeEnergy: [{
-                sourceTargetType: "triggerOwner",
-                targetType: "triggerSource",
+                sourceTargetType: "creatorOwner",
+                targetType: "triggerCreator",
                 key: "store",
                 effect: [{
                     key: "setBaseStatus",
@@ -1004,12 +1004,12 @@ export const relicList: RelicMap[] = [
             }],
             releaseEnergy: [
                 {
-                    targetType: "triggerOwner",
+                    targetType: "creatorOwner",
                     key: "release",
                     effect: [{ key: "gainEnergy", params: { value: "$item.status(storedEnergy)" } }]
                 },
                 {
-                    targetType: "triggerSource",
+                    targetType: "triggerCreator",
                     key: "reset",
                     effect: [{ key: "setBaseStatus", params: { statusKey: "storedEnergy", value: 0 } }]
                 }
@@ -1134,7 +1134,7 @@ export const relicList: RelicMap[] = [
                         when: "after",
                         how: "make",
                         key: "turnStart",
-                        condition: "$source.status(cooldown) <= 0",
+                        condition: "$trigger.creator.status(cooldown) <= 0",
                         action: "gainEnergyAndReset"
                     }
                 ]
@@ -1142,7 +1142,7 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             decrementCooldown: [{
-                targetType: "triggerSource",
+                targetType: "triggerCreator",
                 key: "decrementCooldown",
                 effect: [{
                     key: "decrementStatus",
@@ -1159,7 +1159,7 @@ export const relicList: RelicMap[] = [
                     }]
                 },
                 {
-                    targetType: "triggerSource",
+                    targetType: "triggerCreator",
                     key: "resetCooldown",
                     effect: [{
                         key: "resetCooldown",
@@ -1210,7 +1210,7 @@ export const relicList: RelicMap[] = [
                     when: "after",
                     how: "make",
                     key: "turnStart",
-                    condition: "$owner.hpPercent >= 1.0",
+                    condition: "$trigger.creator.owner.current(health) >= 100%",
                     action: "drawOnFullHp"
                 }]
             }
@@ -1247,8 +1247,8 @@ export const relicList: RelicMap[] = [
                     how: "take",
                     key: "dead",
                     condition: [
-                        "$item.status(used) == 0",
-                        "$owner.reserve(gold) >= 100"
+                        "$this.status(used) == 0",
+                        "$this.owner.reserve(gold) >= 100"
                     ],
                     action: "goldenSalvation"
                 }]
@@ -1257,17 +1257,17 @@ export const relicList: RelicMap[] = [
         reaction: {
             goldenSalvation: [
                 {
-                    targetType: "owner",
+                    targetType: "thisOwner",
                     key: "cancelDeath",
                     effect: [{ key: "cancelCurrentEvent" }]
                 },
                 {
-                    targetType: "owner",
+                    targetType: "thisOwner",
                     key: "healToHalf",
                     effect: [{ key: "heal", params: { percent: 0.5 } }]
                 },
                 {
-                    targetType: "owner",
+                    targetType: "thisOwner",
                     key: "payGold",
                     effect: [{
                         key: "spendReserve",
@@ -1275,7 +1275,7 @@ export const relicList: RelicMap[] = [
                     }]
                 },
                 {
-                    targetType: "triggerSource",
+                    targetType: "this",
                     key: "markUsed",
                     effect: [{
                         key: "setBaseStatus",
@@ -1315,7 +1315,7 @@ export const relicList: RelicMap[] = [
                         threshold: 5,
                         consume: "all",
                         maxRepeat: 1,
-                        targetType: "triggerSource",
+                        targetType: "triggerCreator",
                         effects: [{
                             key: "setBaseStatus",
                             params: { statusKey: "chargeReady", value: 1 }
@@ -1342,7 +1342,7 @@ export const relicList: RelicMap[] = [
                     }]
                 },
                 {
-                    targetType: "triggerSource",
+                    targetType: "triggerCreator",
                     key: "clearCharge",
                     effect: [{
                         key: "setBaseStatus",
@@ -1350,7 +1350,7 @@ export const relicList: RelicMap[] = [
                     }]
                 },
                 {
-                    targetType: "triggerSource",
+                    targetType: "triggerCreator",
                     key: "resetPoint",
                     effect: [{
                         key: "setBaseStatus",
@@ -1395,7 +1395,7 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             resetUsed: [{
-                targetType: "triggerSource",
+                targetType: "triggerCreator",
                 key: "resetUsed",
                 effect: [{
                     key: "setBaseStatus",
@@ -1412,7 +1412,7 @@ export const relicList: RelicMap[] = [
                     }]
                 },
                 {
-                    targetType: "triggerSource",
+                    targetType: "triggerCreator",
                     key: "markUsed",
                     effect: [{
                         key: "setBaseStatus",
@@ -1490,8 +1490,8 @@ export const relicList: RelicMap[] = [
                         key: "battleStart",
                         level: 1,
                         condition: [
-                            "$source.status(disabled) == 0",
-                            "$source.status(battles-done) < $source.status(maxBattles)"
+                            "$trigger.creator.status(disabled) == 0",
+                            "$trigger.creator.status(battles-done) < $trigger.creator.status(maxBattles)"
                         ],
                         action: "grantBlessing"
                     },
@@ -1500,7 +1500,7 @@ export const relicList: RelicMap[] = [
                         how: "take",
                         key: "battleStart",
                         level: 0,
-                        condition: "$source.status(battles-done) >= $source.status(maxBattles)",
+                        condition: "$trigger.creator.status(battles-done) >= $trigger.creator.status(maxBattles)",
                         action: "markDisabled"
                     }
                 ]
@@ -1517,7 +1517,7 @@ export const relicList: RelicMap[] = [
                     ]
                 },
                 {
-                    targetType: "triggerSource",
+                    targetType: "triggerCreator",
                     key: "incrementBattles",
                     effect: [{
                         key: "incrementStatus",
@@ -1526,7 +1526,7 @@ export const relicList: RelicMap[] = [
                 }
             ],
             markDisabled: [{
-                targetType: "triggerSource",
+                targetType: "triggerCreator",
                 key: "markDisabled",
                 effect: [{
                     key: "setBaseStatus",
@@ -1580,14 +1580,14 @@ export const relicList: RelicMap[] = [
                         how: "take",
                         key: "battleStart",
                         level: 10,
-                        condition: "$source.status(disabled) == 0",
+                        condition: "$trigger.creator.status(disabled) == 0",
                         action: "embryoBoost"
                     },
                     {
                         when: "after",
                         how: "take",
                         key: "turnEnd",
-                        condition: "$source.status(disabled) == 0",
+                        condition: "$trigger.creator.status(disabled) == 0",
                         action: "embryoDrain"
                     },
                     {
@@ -1595,7 +1595,7 @@ export const relicList: RelicMap[] = [
                         how: "take",
                         key: "battleEnd",
                         level: 10,
-                        condition: "$source.status(disabled) == 0",
+                        condition: "$trigger.creator.status(disabled) == 0",
                         action: "embryoTick"
                     },
                     {
@@ -1604,8 +1604,8 @@ export const relicList: RelicMap[] = [
                         key: "battleEnd",
                         level: 5,
                         condition: [
-                            "$source.status(disabled) == 0",
-                            "$source.status(battles-done) >= $source.status(maxBattles)",
+                            "$trigger.creator.status(disabled) == 0",
+                            "$trigger.creator.status(battles-done) >= $trigger.creator.status(maxBattles)",
                             "$source.status(damage-taken) <= 30"
                         ],
                         action: "hatchSymbiote"
@@ -1616,8 +1616,8 @@ export const relicList: RelicMap[] = [
                         key: "battleEnd",
                         level: 5,
                         condition: [
-                            "$source.status(disabled) == 0",
-                            "$source.status(battles-done) >= $source.status(maxBattles)",
+                            "$trigger.creator.status(disabled) == 0",
+                            "$trigger.creator.status(battles-done) >= $trigger.creator.status(maxBattles)",
                             "$source.status(damage-taken) > 30"
                         ],
                         action: "hatchHungry"
@@ -1633,14 +1633,14 @@ export const relicList: RelicMap[] = [
                     effect: [{ key: "applyState", params: { stateKey: "power", stacks: 2 } }]
                 },
                 {
-                    targetType: "triggerSource",
+                    targetType: "triggerCreator",
                     key: "resetTurnCount",
                     effect: [{ key: "setBaseStatus", params: { statusKey: "turn-count", value: 0 } }]
                 }
             ],
             embryoDrain: [
                 {
-                    targetType: "triggerSource",
+                    targetType: "triggerCreator",
                     key: "incrementTurnCount",
                     effect: [{ key: "addStatusBase", params: { statusKey: "turn-count", value: 1 } }]
                 },
@@ -1651,14 +1651,14 @@ export const relicList: RelicMap[] = [
                 }
             ],
             embryoTick: [{
-                targetType: "triggerSource",
+                targetType: "triggerCreator",
                 key: "incrementBattles",
                 effect: [{ key: "incrementStatus", params: { statusKey: "battles-done", amount: 1 } }]
             }],
             // 先 disable 再孵化：防止同事件栈内后续触发器再次进入
             hatchSymbiote: [
                 {
-                    targetType: "triggerSource",
+                    targetType: "triggerCreator",
                     key: "markDisabled",
                     effect: [{ key: "setBaseStatus", params: { statusKey: "disabled", value: 1 } }]
                 },
@@ -1675,7 +1675,7 @@ export const relicList: RelicMap[] = [
             ],
             hatchHungry: [
                 {
-                    targetType: "triggerSource",
+                    targetType: "triggerCreator",
                     key: "markDisabled",
                     effect: [{ key: "setBaseStatus", params: { statusKey: "disabled", value: 1 } }]
                 },
@@ -1805,7 +1805,7 @@ export const relicList: RelicMap[] = [
                         when: "after",
                         how: "make",
                         key: "turnStart",
-                        condition: "$source.status(disabled) == 0",
+                        condition: "$trigger.creator.status(disabled) == 0",
                         action: "drawExtra"
                     },
                     {
@@ -1813,7 +1813,7 @@ export const relicList: RelicMap[] = [
                         how: "take",
                         key: "battleEnd",
                         level: 10,
-                        condition: "$source.status(disabled) == 0",
+                        condition: "$trigger.creator.status(disabled) == 0",
                         action: "consumeBattle"
                     },
                     {
@@ -1821,7 +1821,7 @@ export const relicList: RelicMap[] = [
                         how: "take",
                         key: "battleEnd",
                         level: 0,
-                        condition: "$source.status(battles-done) >= $source.status(maxBattles)",
+                        condition: "$trigger.creator.status(battles-done) >= $trigger.creator.status(maxBattles)",
                         action: "markDisabled"
                     }
                 ]
@@ -1837,7 +1837,7 @@ export const relicList: RelicMap[] = [
                 }]
             }],
             consumeBattle: [{
-                targetType: "triggerSource",
+                targetType: "triggerCreator",
                 key: "incrementBattles",
                 effect: [{
                     key: "incrementStatus",
@@ -1845,7 +1845,7 @@ export const relicList: RelicMap[] = [
                 }]
             }],
             markDisabled: [{
-                targetType: "triggerSource",
+                targetType: "triggerCreator",
                 key: "markDisabled",
                 effect: [{
                     key: "setBaseStatus",
@@ -1901,8 +1901,8 @@ export const relicList: RelicMap[] = [
                         how: "take",
                         key: "restHeal",
                         condition: [
-                            "$source.status(disabled) == 0",
-                            "$source.status(hungry-beast-favor) >= 3"
+                            "$trigger.creator.status(disabled) == 0",
+                            "$trigger.creator.status(hungry-beast-favor) >= 3"
                         ],
                         action: "petHeal"
                     },
@@ -1911,8 +1911,8 @@ export const relicList: RelicMap[] = [
                         how: "take",
                         key: "turnEnd",
                         condition: [
-                            "$source.status(disabled) == 0",
-                            "$source.status(hungry-beast-favor) >= 6"
+                            "$trigger.creator.status(disabled) == 0",
+                            "$trigger.creator.status(hungry-beast-favor) >= 6"
                         ],
                         action: "coFightStrike"
                     },
@@ -1921,8 +1921,8 @@ export const relicList: RelicMap[] = [
                         how: "take",
                         key: "dead",
                         condition: [
-                            "$source.status(disabled) == 0",
-                            "$source.status(hungry-beast-favor) >= 9"
+                            "$trigger.creator.status(disabled) == 0",
+                            "$trigger.creator.status(hungry-beast-favor) >= 9"
                         ],
                         action: "petBlock"
                     }
@@ -1944,7 +1944,7 @@ export const relicList: RelicMap[] = [
                 { targetType: "owner", key: "cancelDeath", effect: [{ key: "cancelCurrentEvent" }] },
                 { targetType: "owner", key: "healOne", effect: [{ key: "heal", params: { value: 1 } }] },
                 {
-                    targetType: "triggerSource",
+                    targetType: "triggerCreator",
                     key: "markDisabled",
                     effect: [{
                         key: "setBaseStatus",

@@ -291,14 +291,14 @@ export const organList:OrganMap[] = [
         reaction:{
             damageAndEnergy:[{
                 key:"damage",
-                targetType:"triggerOwner",
+                targetType:"creatorOwner",
                 effect:[{
                     key:"damage",
                     params:{value:1}
                 }]
             },{
                 key:"gainEnergy",
-                targetType:"triggerOwner",
+                targetType:"creatorOwner",
                 effect:[{
                     key:"gainEnergy",
                     params:{value:1}
@@ -492,7 +492,7 @@ export const organList:OrganMap[] = [
         gainChargeOnTurnEnd: [{
             key: "applyState",
             label: "蓄力腺：回合结束蓄势",
-            targetType: "triggerOwner",
+            targetType: "creatorOwner",
             effect: [{
                 key: "applyState",
                 params: { stateKey: "momentum", stacks: "$owner.status(momentum-gain)" }
@@ -551,7 +551,7 @@ export const organList:OrganMap[] = [
         gainArmorOnTurnStart: [{
             key: "gainArmor",
             label: "节甲：回合开始获得护甲",
-            targetType: "triggerOwner",
+            targetType: "creatorOwner",
             effect: [{
                 key: "gainArmor",
                 params: { value: "$owner.status(armor-gain)" }
@@ -655,7 +655,7 @@ export const organList:OrganMap[] = [
         gainArmorOnTurnStart: [{
             key: "gainArmor",
             label: "菌盖：回合开始获得护甲",
-            targetType: "triggerOwner",
+            targetType: "creatorOwner",
             effect: [{
                 key: "gainArmor",
                 params: { value: "$owner.status(armor-gain)" }
@@ -845,13 +845,13 @@ export const organList:OrganMap[] = [
         openingFlight: [{
             key: "openingFlight",
             label: "薄翅：开局飞飘",
-            targetType: "triggerOwner",
+            targetType: "creatorOwner",
             effect: [{ key: "applyState", params: { stateKey: "flutter", stacks: "$owner.status(wingStacks)" } }]
         }],
         consumeWing: [{
             key: "consumeWing",
             label: "薄翅：挨打消耗层数",
-            targetType: "triggerSource",
+            targetType: "triggerCreator",
             effect: [{ key: "decrementStatus", params: { statusKey: "wingStacks" } }]
         }]
     }
@@ -1001,7 +1001,7 @@ export const organList:OrganMap[] = [
             {
                 key: "gainEnergy",
                 label: "不稳定电池：获得能量",
-                targetType: "triggerOwner",
+                targetType: "creatorOwner",
                 effect: [{
                     key: "gainEnergy",
                     params: { value: 1 }
@@ -1010,7 +1010,7 @@ export const organList:OrganMap[] = [
             {
                 key: "heatTick",
                 label: "不稳定电池：热量计时",
-                targetType: "triggerOwner",
+                targetType: "creatorOwner",
                 effect: [{
                     key: "organ_heatTick",
                     params: {}
@@ -1102,7 +1102,7 @@ export const organList:OrganMap[] = [
         emergencyHeal: [{
             key: "emergencyBattery",
             label: "急救营养液：紧急回血",
-            targetType: "triggerOwner",
+            targetType: "creatorOwner",
             effect: [{
                 key: "organ_emergencyBattery",
                 params: {
@@ -1193,7 +1193,7 @@ export const organList:OrganMap[] = [
             key: "rustySeparator",
             label: "过期隔板：伤害骰",
             targetType: "triggerEffect",
-            sourceTargetType: "triggerOwner",
+            sourceTargetType: "creatorOwner",
             effect: [{
                 key: "organ_rustySeparator",
                 params: {
@@ -1286,7 +1286,7 @@ export const organList:OrganMap[] = [
         pheromoneSpread: [{
             key: "pheromoneSpread",
             label: "信息素腺体：扩散指挥",
-            targetType: "triggerOwner",
+            targetType: "creatorOwner",
             effect: [{
                 key: "organ_pheromoneGland",
                 params: { stacks: "$owner.status(command-gain)" }
@@ -1319,7 +1319,6 @@ export const organList:OrganMap[] = [
     describe: ["每回合开始：每存活友军获得3", {$:"护甲"}],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Skin,
-    status: { "max-mass": 40 },
     current: ["mass"],
     interaction: {
         work: {
@@ -1337,7 +1336,7 @@ export const organList:OrganMap[] = [
         swarmShield: [{
             key: "swarmShield",
             label: "王室甲壳：蜂群护盾",
-            targetType: "triggerOwner",
+            targetType: "creatorOwner",
             effect: [{ key: "gainArmorPerAlly", params: { value: 3 } }]
         }]
     }
@@ -1418,7 +1417,7 @@ export const organList:OrganMap[] = [
         gainArmorOnTurnStart: [{
             key: "gainArmor",
             label: "壁垒甲壳：回合开始护甲",
-            targetType: "triggerOwner",
+            targetType: "creatorOwner",
             effect: [{
                 key: "gainArmor",
                 params: { value: "$owner.status(armor-gain)" }
@@ -1427,7 +1426,7 @@ export const organList:OrganMap[] = [
         openingArmor: [{
             key: "gainArmor",
             label: "壁垒甲壳：开局护甲",
-            targetType: "triggerOwner",
+            targetType: "creatorOwner",
             effect: [{
                 key: "gainArmor",
                 params: { value: "$owner.status(opening-armor)" }
@@ -1516,7 +1515,7 @@ export const organList:OrganMap[] = [
         gainArmorOnTurnStart: [{
             key: "gainArmor",
             label: "防御模块：回合开始护甲",
-            targetType: "triggerOwner",
+            targetType: "creatorOwner",
             effect: [{
                 key: "gainArmor",
                 params: { value: "$owner.status(armor-gain)" }
@@ -1593,13 +1592,13 @@ export const organList:OrganMap[] = [
         corruptionCost: [{
             key: "corruptionCost",
             label: "腐化腺：献血代价",
-            targetType: "triggerOwner",
+            targetType: "creatorOwner",
             effect: [{ key: "loseHp", params: { value: 8 } }]
         }],
         corruptionStrength: [{
             key: "corruptionStrength",
             label: "腐化腺：获得力量",
-            targetType: "triggerOwner",
+            targetType: "creatorOwner",
             effect: [{ key: "applyState", params: { stateKey: "power", stacks: 1 } }]
         }]
     }
@@ -1639,13 +1638,13 @@ export const organList:OrganMap[] = [
         initLifeStealBudget: [{
             key: "initLifeStealBudget",
             label: "腐食再生：初始化预算",
-            targetType: "triggerOwner",
+            targetType: "creatorOwner",
             effect: [{ key: "applyState", params: { stateKey: "lifeStealBudget", stacks: "$target.status(max-health)" } }]
         }],
         lifeStealHeal: [{
             key: "lifeStealHeal",
             label: "腐食再生：回血",
-            targetType: "triggerOwner",
+            targetType: "creatorOwner",
             effect: [{ key: "organ_lifeSteal", params: { coefficient: 0.3 } }]
         }]
     }
@@ -1693,7 +1692,7 @@ export const organList:OrganMap[] = [
         hardenTick: [{
             key: "hardenTick",
             label: "污秽厚皮：获得变硬",
-            targetType: "triggerOwner",
+            targetType: "creatorOwner",
             effect: [{ key: "applyState", params: { stateKey: "harden", stacks: 5 } }]
         }]
     }
@@ -1727,7 +1726,7 @@ export const organList:OrganMap[] = [
         toxicPulse: [{
             key: "toxicPulse",
             label: "毒素核心：毒素脉冲",
-            targetType: "triggerOwner",
+            targetType: "creatorOwner",
             effect: [{ key: "organ_toxicPulse", params: { stacks: 1 } }]
         }]
     }
@@ -1766,13 +1765,13 @@ export const organList:OrganMap[] = [
         poisonArmorGain: [{
             key: "poisonArmorGain",
             label: "毒素护甲：受击获甲",
-            targetType: "triggerOwner",
+            targetType: "creatorOwner",
             effect: [{ key: "organ_poisonArmor", params: { value: 3 } }]
         }],
         resetPoisonArmor: [{
             key: "resetPoisonArmor",
             label: "毒素护甲：重置标记",
-            targetType: "triggerOwner",
+            targetType: "creatorOwner",
             effect: [{ key: "removeState", params: { stateKey: "poisonArmorUsed" } }]
         }]
     }
@@ -2021,7 +2020,7 @@ export const organList:OrganMap[] = [
         gainIgnition: [{
             key: "gainIgnition",
             label: "点火核：积累点火",
-            targetType: "triggerOwner",
+            targetType: "creatorOwner",
             effect: [{ key: "applyState", params: { stateKey: "ignition", stacks: 1 } }]
         }]
     }
@@ -2053,7 +2052,7 @@ export const organList:OrganMap[] = [
         gainInitialPower: [{
             key: "gainInitialPower",
             label: "熔铸魂：开局力量",
-            targetType: "triggerOwner",
+            targetType: "creatorOwner",
             effect: [{ key: "applyState", params: { stateKey: "power", stacks: 2 } }]
         }]
     }
@@ -2125,16 +2124,28 @@ export const organList:OrganMap[] = [
 
 // ========== 第一层Boss 3：废铁战甲器官 ==========
 
-// 铁壁核心：提供装甲组装卡牌；战斗开始时+15甲
+// 铁壁核心：提供装甲组装；Lv.3 才在战斗开始时获得护甲。
 {
     label: "铁壁核心",
     key: "enemy_organ_iron_wall_core",
-    describe: [ "战斗开始时获得15点", {$:"护甲"}],
+    describe: ["提供", {$:"装甲组装"}],
     rarity: OrganRarity.Uncommon,
     part: OrganPartEnum.Core,
-    status: { "max-mass": 40 },
+    status: { "max-mass": 40, "opening-armor": 0 },
     current: ["mass"],
     cards: ["boss3_card_armor_assembly"],
+    upgrade: {
+        maxLevel: 3,
+        milestones: [{
+            level: 2,
+            describe: ["锻造提供的装甲组装"],
+            effects: [{ key: "upgradeOrganCards", params: { cardKey: "boss3_card_armor_assembly" } }]
+        }, {
+            level: 3,
+            describe: ["战斗开始时获得15点", {$:"护甲"}],
+            effects: [{ key: "setBaseStatus", params: { statusKey: "opening-armor", value: 1 }, target: "eventMedium" }]
+        }]
+    },
     interaction: {
         possess: {
             target: { key: "self" },
@@ -2143,7 +2154,8 @@ export const organList:OrganMap[] = [
                 when: "after",
                 how: "take",
                 key: "battleStart",
-                action: "openingArmor"
+                action: "openingArmor",
+                condition: "$item.status(opening-armor) > 0"
             }]
         }
     },
@@ -2151,7 +2163,7 @@ export const organList:OrganMap[] = [
         openingArmor: [{
             key: "openingArmor",
             label: "铁壁核心：开局护甲",
-            targetType: "triggerOwner",
+            targetType: "creatorOwner",
             effect: [{ key: "gainArmor", params: { value: 15 } }]
         }]
     }
@@ -2161,12 +2173,20 @@ export const organList:OrganMap[] = [
 {
     label: "过载核心",
     key: "enemy_organ_overload_core",
-    describe: [ "战斗开始时获得1层", {$:"力场护盾"}],
+    describe: ["过载屏障获得1层", {$:"力场护盾"}, "和1层", {$:"热量"}],
     rarity: OrganRarity.Rare,
     part: OrganPartEnum.Heart,
-    status: { "max-mass": 40 },
+    status: { "max-mass": 40, "opening-force-field": 0 },
     current: ["mass"],
     cards: ["boss3_card_overload_barrier"],
+    upgrade: {
+        maxLevel: 2,
+        milestones: [{
+            level: 2,
+            describe: ["战斗开始时获得1层", {$:"力场护盾"}],
+            effects: [{ key: "setBaseStatus", params: { statusKey: "opening-force-field", value: 1 }, target: "eventMedium" }]
+        }]
+    },
     interaction: {
         possess: {
             target: { key: "self" },
@@ -2175,7 +2195,8 @@ export const organList:OrganMap[] = [
                 when: "after",
                 how: "take",
                 key: "battleStart",
-                action: "openingForceField"
+                action: "openingForceField",
+                condition: "$item.status(opening-force-field) > 0"
             }]
         }
     },
@@ -2183,50 +2204,68 @@ export const organList:OrganMap[] = [
         openingForceField: [{
             key: "openingForceField",
             label: "过载核心：开局力场护盾",
-            targetType: "triggerOwner",
+            targetType: "creatorOwner",
             effect: [{ key: "applyState", params: { stateKey: "forceFieldShield", stacks: 1 } }]
         }]
     }
 },
 
-// 液压双管：提供火力压制卡牌；每回合首次攻击 +3 伤
+// 液压双管：战斗开始时获得活力；升级后锻造火力压制并在每回合开始补充活力
 {
     label: "液压双管",
     key: "enemy_organ_hydraulic_dual_gun",
-    describe: [ "每回合首次攻击伤害+3"],
+    describe: ["战斗开始时获得3层", {$:"活力"}],
     rarity: OrganRarity.Uncommon,
     part: OrganPartEnum.Muscle,
-    status: { "max-mass": 40 },
     current: ["mass"],
     cards: ["boss3_card_firepower_suppression"],
+    upgrade: {
+        maxLevel: 3,
+        milestones: [
+            {
+                level: 2,
+                describe: ["锻造提供的火力压制"],
+                effects: [{ key: "upgradeOrganCards", params: { cardKey: "boss3_card_firepower_suppression" } }]
+            },
+            {
+                level: 3,
+                describe: ["回合开始时获得1层", {$:"活力"}],
+                effects: [{ key: "setBaseStatus", params: { statusKey: "turn-vitality", value: 1 }, target: "eventMedium" }]
+            }
+        ]
+    },
+    status: { "max-mass": 40, "turn-vitality": 0 },
     interaction: {
         possess: {
             target: { key: "self" },
             effects: [],
             triggers: [{
-                when: "before",
-                how: "make",
-                key: "attack",
-                action: "hydraulicBoost",
-                condition: { not: "$item.hasState(hydraulicUsed)" }
+                when: "after",
+                how: "take",
+                key: "battleStart",
+                action: "openingVitality"
+            }, {
+                when: "after",
+                how: "take",
+                key: "turnStart",
+                action: "turnVitality",
+                condition: "$item.status(turn-vitality) > 0"
             }]
         }
     },
     reaction: {
-        hydraulicBoost: [
-            {
-                key: "hydraulicBoost_amp",
-                label: "液压双管：伤害+3",
-                targetType: "triggerEffect",
-                effect: [{ key: "modifyDamageValue", params: { delta: 3 } }]
-            },
-            {
-                key: "hydraulicBoost_flag",
-                label: "液压双管：标记本回合已释放",
-                targetType: "item",
-                effect: [{ key: "applyState", params: { stateKey: "hydraulicUsed", stacks: 1 } }]
-            }
-        ]
+        openingVitality: [{
+            key: "openingVitality",
+            label: "液压双管：开局活力",
+            targetType: "creatorOwner",
+            effect: [{ key: "applyState", params: { stateKey: "vitality", stacks: 3 } }]
+        }],
+        turnVitality: [{
+            key: "turnVitality",
+            label: "液压双管：回合活力",
+            targetType: "creatorOwner",
+            effect: [{ key: "applyState", params: { stateKey: "vitality", stacks: 1 } }]
+        }]
     }
 },
 
@@ -2240,6 +2279,11 @@ export const organList:OrganMap[] = [
     status: { "max-mass": 40 },
     current: ["mass"],
     cards: ["boss3_card_steel_roll"],
+    badges: [{
+        type: "indicator",
+        text: "免死",
+        showWhen: "$item.hasState(lethalGuardReady)"
+    }],
     interaction: {
         possess: {
             target: { key: "self" },
@@ -2250,7 +2294,7 @@ export const organList:OrganMap[] = [
                     action: "lethalGuardCharge"
                 },
                 {
-                    when: "on", how: "take", key: ["attack", "damage"],
+                    when: "on", how: "take", key: "attack",
                     level: -100,
                     action: "lethalGuardTrigger",
                     condition: "$item.hasState(lethalGuardReady)"

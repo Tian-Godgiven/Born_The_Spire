@@ -10,6 +10,7 @@ import { validateEffectParamsAndReport } from "@/core/effects/validateEffectPara
 import { getLazyModule } from "@/core/utils/lazyLoader";
 import { getCurrentExecutingEvent, setCurrentExecutingEvent } from "../ActionEvent";
 import { isArray } from "lodash";
+import { ReferenceResolver } from "@/core/utils/ReferenceResolver";
 
 // 重新导出 EffectFunc 供外部使用
 export type { EffectFunc, EffectParams }
@@ -66,12 +67,12 @@ export class Effect implements EventParticipant{
     }
 
     /**
-     * 解析参数中的 $ 语法
+     * 解析参数中的引用与随机语法。
      */
     private resolveParams() {
         for (const key in this.params) {
             const param = this.params[key]
-            if (typeof param === "string" && param.startsWith("$")) {
+            if (ReferenceResolver.getInstance().needsResolution(param)) {
                 const resolved = resolveEffectParams(param, this.actionEvent, this, this._owner)
                 if (resolved !== undefined) {
                     this.params[key] = resolved

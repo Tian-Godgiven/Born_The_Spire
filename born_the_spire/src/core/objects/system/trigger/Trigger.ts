@@ -123,17 +123,24 @@ export class Trigger{
 }
 
 //通过triggerMap生成触发器
-export function createTriggerByTriggerMap(source:Entity,target:Entity, item:TriggerMap[number]){
+export function createTriggerByTriggerMap(
+    creator: Entity,
+    creatorOwner: Entity,
+    item: TriggerMap[number],
+    host: Entity = creatorOwner
+){
     const {when ="before", how, key, level} = item
 
     const reactionEvents = (item as any).event
         ? (Array.isArray((item as any).event) ? (item as any).event : [(item as any).event])
-        : (source as any).reaction?.[(item as any).action]
+        : (creator as any).reaction?.[(item as any).action]
     const preview = createPreviewApplicator({
         reactionEvents: reactionEvents ?? [],
         condition: item.condition,
-        item: source,
-        owner: target
+        item: creator,
+        owner: creatorOwner,
+        triggerCreator: creator,
+        triggerHost: host
     })?.preview
 
     const callback:TriggerFunc = async(triggerEvent,triggerEffect,_triggerLevel)=>{
@@ -144,12 +151,13 @@ export function createTriggerByTriggerMap(source:Entity,target:Entity, item:Trig
         if ((item as any).event) {
             const eventConfigs = Array.isArray((item as any).event) ? (item as any).event : [(item as any).event]
             await executeItemReaction({
-                item: source as Item,
+                item: creator as Item,
                 reactionEvents: eventConfigs,
                 triggerEvent,
-                owner: target,
+                owner: creatorOwner,
                 triggerEffect,
-                condition: item.condition
+                condition: item.condition,
+                triggerHost: host
             })
             return
         }
@@ -160,10 +168,10 @@ export function createTriggerByTriggerMap(source:Entity,target:Entity, item:Trig
             newError([`触发器配置错误：需要 action 字段`, item])
             return
         }
-        const actionReactionEvents = (source as any).reaction?.[action]
+        const actionReactionEvents = (creator as any).reaction?.[action]
         if (!actionReactionEvents) {
-            const sourceInfo = (source as any).label || (source as any).key || source.constructor.name
-            const targetInfo = (target as any).label || (target as any).key || target.constructor.name
+            const sourceInfo = (creator as any).label || (creator as any).key || creator.constructor.name
+            const targetInfo = (creatorOwner as any).label || (creatorOwner as any).key || creatorOwner.constructor.name
             newError([
                 `触发器错误:`,
                 `  action: "${action}"`,
@@ -175,12 +183,13 @@ export function createTriggerByTriggerMap(source:Entity,target:Entity, item:Trig
             return
         }
         await executeItemReaction({
-            item: source as Item,
+            item: creator as Item,
             reactionEvents: actionReactionEvents,
             triggerEvent,
-            owner: target,
+            owner: creatorOwner,
             triggerEffect,
-            condition: item.condition
+            condition: item.condition,
+            triggerHost: host
         })
     }
     const importantKey = (item as any).importantKey

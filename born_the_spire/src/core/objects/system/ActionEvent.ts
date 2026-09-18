@@ -2,6 +2,7 @@ import type { Effect } from "./effect/Effect";
 import type { LogUnit, LogData } from "@/ui/hooks/global/log";
 import type { EffectUnit } from "./effect/EffectUnit";
 import type { EventParticipant } from "@/core/types/event/EventParticipant";
+import type { Entity } from "./Entity";
 import type { TriggerWhen } from "@/core/types/object/trigger";
 
 import { newLog } from "@/ui/hooks/global/log";
@@ -44,15 +45,20 @@ export class ActionEvent<
     private _cancelled:boolean = false
     //触发器上下文（保存触发器执行时的上下文信息）
     public triggerContext?: {
-        source: any,    // 触发器来源（如器官）
-        owner: any,     // 触发器持有者（如玩家）
+        creator: EventParticipant
+        host: EventParticipant
         triggerEvent?: ActionEvent  // 原始触发事件
     }
+    public declarationObject: EventParticipant
+    public declarationOwner?: Entity
     constructor(
         key:string,//触发key
         source:s,medium:m,target:t|t[],
         info:Record<string,any>,
-        effectUnits:EffectUnit[]
+        effectUnits:EffectUnit[],
+        triggerContext?: ActionEvent["triggerContext"],
+        declarationObject?: EventParticipant,
+        declarationOwner?: Entity
     ){
         this.key = key;
         this.uuId = nanoid()
@@ -60,9 +66,12 @@ export class ActionEvent<
         this.medium = medium;
         this.target = target;
         this.info = info;
+        this.triggerContext = triggerContext
+        this.declarationObject = declarationObject ?? medium
+        this.declarationOwner = declarationOwner
         //构建该事件所包含的效果对象
         for(let effectUnit of effectUnits){
-            const effect = createEffectByUnit(this, effectUnit, this.medium)
+            const effect = createEffectByUnit(this, effectUnit, this.declarationObject)
             this.effects.push(effect)
         }
     }
@@ -186,6 +195,9 @@ type DoEventType = {
     target:EventParticipant|EventParticipant[],
     info?:Record<string,any>,
     effectUnits?:EffectUnit[]
+    triggerContext?: ActionEvent["triggerContext"]
+    declarationObject?: EventParticipant
+    declarationOwner?: Entity
     doWhat?:()=>void,//可选，在事件执行时进行的函数
     onComplete?:(event:ActionEvent)=>void//可选，在事件执行完成后的回调
 }
@@ -195,11 +207,11 @@ type DoEventOptions = {
 }
 
 export async function doEvent(
-    {key,source,medium,target,info={},effectUnits=[],doWhat=()=>{},onComplete}:DoEventType,
+    {key,source,medium,target,info={},effectUnits=[],triggerContext,declarationObject,declarationOwner,doWhat=()=>{},onComplete}:DoEventType,
     options?: DoEventOptions
 ): Promise<ActionEvent> {
     //创建行为事件
-    const event = new ActionEvent(key,source,medium,target,info,effectUnits)
+    const event = new ActionEvent(key,source,medium,target,info,effectUnits,triggerContext,declarationObject,declarationOwner)
     if(onComplete){
         event.onComplete = onComplete
     }

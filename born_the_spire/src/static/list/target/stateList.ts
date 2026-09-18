@@ -71,7 +71,7 @@ export const stateList: StateData[] = [
                     poisonDamage: [{
                         key: "poisonDamage",
                         label: "中毒伤害",
-                        targetType: "triggerOwner",
+                        targetType: "creatorOwner",
                         effect: [{
                             key: "damage",
                             params: { value: "$source.stateStack()" }
@@ -215,7 +215,7 @@ export const stateList: StateData[] = [
                     momentumReset: [{
                         key: "momentumReset",
                         label: "蓄势清零",
-                        targetType: "triggerOwner",
+                        targetType: "creatorOwner",
                         effect: [{
                             key: "consumeStateAfterAttackPlay",
                             params: { stateKey: "momentum" }
@@ -333,7 +333,7 @@ export const stateList: StateData[] = [
                     removeTempDex: [{
                         key: "removeTempDex",
                         label: "移除临时敏捷",
-                        targetType: "triggerOwner",
+                        targetType: "creatorOwner",
                         effect: [{
                             key: "changeStateStack",
                             params: {
@@ -370,7 +370,7 @@ export const stateList: StateData[] = [
                     removeTempPower: [{
                         key: "removeTempPower",
                         label: "移除临时力量",
-                        targetType: "triggerOwner",
+                        targetType: "creatorOwner",
                         effect: [{
                             key: "changeStateStack",
                             params: {
@@ -488,7 +488,7 @@ export const stateList: StateData[] = [
                     metallicizeTick: [{
                         key: "metallicizeTick",
                         label: "金属化：获得护甲",
-                        targetType: "triggerOwner",
+                        targetType: "creatorOwner",
                         effect: [{ key: "gainArmor", params: { value: "$source.stateStack()" } }]
                     }]
                 }
@@ -516,7 +516,7 @@ export const stateList: StateData[] = [
                     malleableTick: [{
                         key: "malleableTick",
                         label: "柔韧：获得护甲",
-                        targetType: "triggerOwner",
+                        targetType: "creatorOwner",
                         effect: [{ key: "gainArmor", params: { value: "$source.stateStack()" } }]
                     }]
                 }
@@ -580,7 +580,7 @@ export const stateList: StateData[] = [
                     {
                         key: "hardenAbsorb_remove",
                         label: "变硬：消耗状态",
-                        targetType: "triggerOwner",
+                        targetType: "creatorOwner",
                         effect: [{ key: "removeState", params: { stateKey: "harden" } }]
                     }
                 ]
@@ -615,7 +615,7 @@ export const stateList: StateData[] = [
                     {
                         key: "flutter_consume",
                         label: "飞飘：消耗层数",
-                        targetType: "triggerOwner",
+                        targetType: "creatorOwner",
                         effect: [{ key: "changeStateStack", params: { stateKey: "flutter", delta: -1 } }]
                     }
                 ]
@@ -662,17 +662,17 @@ export const stateList: StateData[] = [
                     {
                         key: "flight_consume",
                         label: "飞行：消耗层数",
-                        targetType: "triggerOwner",
+                        targetType: "creatorOwner",
                         effect: [{ key: "changeStateStack", params: { stateKey: "flight", delta: -1 } }]
                     }
                 ],
                 flightRestore: [{
                     key: "flightRestore",
                     label: "飞行：回合开始恢复层数",
-                    targetType: "triggerOwner",
+                    targetType: "creatorOwner",
                     effect: [{
                         key: "setStateStack",
-                        params: { stateKey: "flight", stackKey: "default", value: "$owner.stateStack(flight.n)" }
+                        params: { stateKey: "flight", stackKey: "default", value: "$trigger.creator.owner.stateStack(flight.n)" }
                     }]
                 }]
             }
@@ -706,10 +706,47 @@ export const stateList: StateData[] = [
                     {
                         key: "forceFieldShield_consume",
                         label: "力场护盾：消耗层数",
-                        targetType: "triggerOwner",
+                        targetType: "creatorOwner",
                         effect: [{ key: "changeStateStack", params: { stateKey: "forceFieldShield", delta: -1 } }]
                     }
                 ]
+            }
+        }
+    }
+},
+// 活力：攻击牌结算期间为每段攻击加伤，整张攻击牌结算后消耗所有层数
+{
+    label: "活力",
+    key: "vitality",
+    category: "buff",
+    describe: ["攻击造成的伤害增加层数值；使用攻击牌后失去所有层数"],
+    showType: "number",
+    repeate: "stack",
+    interaction: {
+        possess: {
+            triggers: [
+                { when: "before", how: "make", key: "attack", action: "vitalityBoost" },
+                {
+                    when: "after",
+                    how: "make",
+                    key: "useCard",
+                    action: "vitalityConsume",
+                    condition: "$triggerCard.hasTag(attack)"
+                }
+            ],
+            reaction: {
+                vitalityBoost: [{
+                    key: "vitalityBoost",
+                    label: "活力增伤",
+                    targetType: "triggerEffect",
+                    effect: [{ key: "modifyDamageValue", params: { delta: "$source.stateStack()" } }]
+                }],
+                vitalityConsume: [{
+                    key: "vitalityConsume",
+                    label: "活力消耗",
+                    targetType: "creatorOwner",
+                    effect: [{ key: "removeState", params: { stateKey: "vitality" } }]
+                }]
             }
         }
     }

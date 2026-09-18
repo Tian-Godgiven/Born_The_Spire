@@ -83,7 +83,7 @@ function describeParticipant(p: unknown): string {
 }
 
 function dumpRefContext(context: ReferenceContext): Record<string, string> {
-    const slots = ["item", "owner", "source", "medium", "target", "triggerSource", "triggerOwner", "triggerEffect"] as const
+    const slots = ["item", "owner", "source", "medium", "target", "triggerCreator", "creatorOwner", "triggerHost", "triggerEffect"] as const
     const present = slots.filter(k => (context as any)[k] != null)
     const effect = context.triggerEffect as any
     const event = context.event as any
@@ -187,9 +187,62 @@ export class ReferenceResolver {
         return this.resolveAccessorOnEntity(p as Entity, accessorStr)
     }
 
+    /**
+     * 受限对象导航：仅暴露触发器 creator/host 与事件参与者，
+     * 并且只允许额外经过一层 owner 后调用 accessor。
+     */
+    private resolveContextObjectReference(ref: string, context: ReferenceContext): { matched: boolean, value?: any } {
+        const match = ref.match(/^\$(this|trigger\.(creator|host)|event\.(source|medium|target))(?:\.(owner))?(?:\.(\w+)\(([^)]*)\))?$/)
+        if (!match) return { matched: false }
+
+        const [, root, triggerPart, eventPart, ownerPart, accessor, argsStr = ""] = match
+        let participant: any
+        if (root === "this") {
+            participant = context.declarationObject
+        } else if (root.startsWith("trigger.")) {
+            participant = triggerPart === "creator"
+                ? context.triggerCreator
+                : context.triggerHost
+        } else {
+            participant = (context.event as any)?.[eventPart]
+        }
+
+        if (Array.isArray(participant)) {
+            failRefResolve(`引用 "${ref}" 指向多个参与者，当前不支持直接读取数组`, context)
+            return { matched: true }
+        }
+        if (!participant || !(participant as any).participantType) {
+            failRefResolve(`找不到引用 "${root}" 所指的参与者，无法解析 "${ref}"`, context)
+            return { matched: true }
+        }
+
+        if (ownerPart) {
+            participant = (participant as any).owner
+                ?? (participant === context.declarationObject
+                    ? context.declarationOwner ?? context.creatorOwner
+                    : undefined)
+            if (!participant || !(participant as any).participantType) {
+                failRefResolve(`引用 "${root}.owner" 没有有效持有者，无法解析 "${ref}"`, context)
+                return { matched: true }
+            }
+        }
+
+        if (!accessor) return { matched: true, value: participant }
+        const accessorStr = `${accessor}(${argsStr})`
+        return {
+            matched: true,
+            value: (participant as any).participantType === "state"
+                ? this.resolveAccessorOnState(participant as State, accessorStr)
+                : this.resolveAccessorOnEntity(participant as Entity, accessorStr)
+        }
+    }
+
     // ==================== 内部解析方法 ====================
 
     private resolveReference(ref: string, context: ReferenceContext): any {
+        const contextObject = this.resolveContextObjectReference(ref, context)
+        if (contextObject.matched) return contextObject.value
+
         const parsed = this.parseReference(ref)
 
         switch (parsed.type) {
@@ -480,7 +533,9 @@ export class ReferenceResolver {
             return undefined
         }
 
-        return readEntityValue(accessorPart, target as Entity)
+        return (target as any).participantType === "state"
+            ? this.resolveAccessorOnState(target as State, accessorPart)
+            : this.resolveAccessorOnEntity(target as Entity, accessorPart)
     }
 
     /**

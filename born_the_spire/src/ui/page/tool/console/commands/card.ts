@@ -22,7 +22,10 @@ export const cardCommands: ConsoleCommand[] = [
                 }
                 addOutput(`共 ${cards.length} 张卡牌:`, 'info')
                 for (const card of cards) {
-                    addOutput(`  ${card.label} - ${card.key}`, 'result', `addCard("${card.key}")`)
+                    addOutput(`  ${card.label} - ${card.key}`, 'result', undefined, undefined, [
+                        { label: '添加', command: `addCard("${card.key}")` },
+                        { label: '加入手牌', command: `addCardToHand("${card.key}")` }
+                    ])
                 }
             } catch (error: any) {
                 addOutput(`列出卡牌失败: ${error.message}`, 'error')

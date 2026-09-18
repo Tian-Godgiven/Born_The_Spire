@@ -2,6 +2,7 @@ import type { ActionEvent } from "../ActionEvent"
 import type { Effect } from "../effect/Effect"
 import type { Entity } from "../Entity"
 import type { Item } from "../../item/Item"
+import type { EventParticipant } from "@/core/types/event/EventParticipant"
 import type { TargetTypeString, TargetContext } from "@/core/types/TargetSpec"
 import { resolveTargetOptional } from "@/core/types/TargetSpec"
 import { nowBattle } from "@/core/objects/game/battle"
@@ -24,9 +25,14 @@ export function resolveTriggerEventTarget(
     targetType: TargetTypeString | Entity,
     triggerEvent: ActionEvent,
     triggerEffect: Effect | null,
-    item: Item,
+    item: Item | EventParticipant,
     owner: Entity,
-    options?: { allowNull?: boolean, bindings?: TargetContext }
+    options?: {
+        allowNull?: boolean
+        bindings?: TargetContext
+        triggerCreator?: EventParticipant
+        triggerHost?: Entity
+    }
 ): Entity | Entity[] | null {
     // 如果 targetType 直接就是一个 Entity，直接返回
     if (targetType && typeof targetType === "object" && (targetType as any).participantType) {
@@ -41,15 +47,17 @@ export function resolveTriggerEventTarget(
     const context: TargetContext = {
         ...(bindings ?? {}),
         item: item as Entity,
-        owner,
+        declarationObject: options?.triggerCreator ?? item,
+        declarationOwner: owner,
         source: triggerEvent.source as Entity,
         target: triggerEvent.target as Entity | Entity[],
         event: triggerEvent,
-        triggerSource: item as Entity,
-        triggerOwner: owner,
+        triggerCreator: options?.triggerCreator ?? item,
+        creatorOwner: owner,
+        triggerHost: options?.triggerHost ?? owner,
         triggerEffect: triggerEffect ?? undefined,
-        eventTriggerSource: (triggerEvent as any).triggerContext?.source,
-        eventTriggerOwner: (triggerEvent as any).triggerContext?.owner,
+        eventTriggerCreator: (triggerEvent as any).triggerContext?.creator,
+        eventTriggerHost: (triggerEvent as any).triggerContext?.host,
         battle: battle ?? undefined,
         pickedTargets,
     }

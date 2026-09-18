@@ -501,10 +501,37 @@ export const enemyList:EnemyMap[] = [
             "max-health": 180,
             "actions-per-turn": 1
         },
+        behavior: {
+            patterns: [
+                {
+                    priority: 50,
+                    intent: "attack",
+                    condition: {
+                        custom: (enemy) => Number((enemy as any).current?.armor?.value ?? 0) >= 40
+                    },
+                    action: { selector: { key: "boss3_card_steel_roll" }, mode: "random" },
+                    describe: "护甲≥40：钢铁压碾"
+                }
+            ],
+            fallback: {
+                action: {
+                    selector: {},
+                    mode: "loop",
+                    sequence: [
+                        "boss3_card_armor_assembly",
+                        "boss3_card_firepower_suppression",
+                        "boss3_card_armor_assembly",
+                        "boss3_card_firepower_suppression",
+                        "boss3_card_overload_barrier"
+                    ]
+                },
+                describe: "循环：装甲组装/火力压制/过载屏障"
+            }
+        },
         organ: [
             "enemy_organ_iron_wall_core",
-            "enemy_organ_overload_core",
-            "enemy_organ_hydraulic_dual_gun",
+            { key: "enemy_organ_overload_core", level: 2 },
+            { key: "enemy_organ_hydraulic_dual_gun", level: 2 },
             "enemy_organ_steel_will"
         ]
     },

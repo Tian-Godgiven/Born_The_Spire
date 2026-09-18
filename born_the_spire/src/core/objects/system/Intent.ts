@@ -267,6 +267,24 @@ async function computeIntentPart(
                 await collectHits(inner as EffectUnit[], repeats * times)
                 continue
             }
+            if (type === "attack" && unit.key === "card_randomOpponentMultiAttack") {
+                const resolved = previewEffect(unit, owner, card, simTarget)
+                const damage = resolved.params.damage
+                const count = Number(resolved.params.hits)
+                if (!Number.isFinite(count) || count <= 0 || damage == null) continue
+
+                // Reuse normal attack preview so attack modifiers remain visible in intent.
+                const simulated = previewEffect(
+                    { key: "attack", params: { value: damage } },
+                    owner,
+                    card,
+                    simTarget
+                )
+                const value = Number(simulated.params.value)
+                if (!Number.isFinite(value)) continue
+                for (let r = 0; r < repeats * count; r++) hits.push(value)
+                continue
+            }
             if (!effectKeys.includes(unit.key) || unit.params?.value == null) continue
             const simulated = previewEffect(unit, owner, card, simTarget)
             const base = Number(simulated.params.value)

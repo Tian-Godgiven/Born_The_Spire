@@ -32,7 +32,7 @@ export const playerList:Record<string,PlayerMap> = {
             drawCardOnTurnStart:[{
                 key:"turnStartDrawCard",
                 label:"回合开始时抽卡",
-                targetType:"triggerOwner",
+                targetType:"creatorOwner",
                 effect:[
                     {key:"drawFromDrawPile",params:{value:{fromStatus:"draw-per-turn"}}}
                 ]
@@ -40,7 +40,7 @@ export const playerList:Record<string,PlayerMap> = {
             discardOnTurnEnd:[{
                 key:"discardAllHandCard",
                 label:"回合结束时弃牌",
-                targetType:"triggerOwner",
+                targetType:"creatorOwner",
                 effect:[
                     {key:"discardHandOnTurnEnd",params:{}}
                 ]
@@ -49,13 +49,13 @@ export const playerList:Record<string,PlayerMap> = {
                 key:"turnStart_recoverEnergy",
                 label:"回合开始时恢复能量",
                 effect:[{key:"refillEnergy", params:{}}],
-                targetType:"triggerOwner",
+                targetType:"creatorOwner",
             }],
             emptyEnergy:[{
                 key:"turnEnd_emptyEnergy",
                 label:"回合结束时清空能量",
                 effect:[{key:"emptyEnergy", params:{}}],
-                targetType:"triggerOwner",
+                targetType:"creatorOwner",
             }]
         },
         potion:{

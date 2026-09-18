@@ -111,6 +111,7 @@ export class StateModifier {
             ...clonedStateData,
             stacks: resolveInitialStacks(clonedStateData, stacks)
         })
+        state.owner = this.owner
 
         // 创建 unit 管理副作用（同时添加到响应式 units 数组）
         const unit = new StateModifierUnit(state)
@@ -243,8 +244,9 @@ export class StateModifier {
                                 clonedEventConfig.targetType,
                                 event,
                                 effect,
-                                state as any,      // triggerSource: 状态本身（State 作为触发源）
-                                this.owner  // triggerOwner: 拥有者
+                                state as any,
+                                this.owner,
+                                { triggerCreator: state, triggerHost: this.owner }
                             )
 
                             // 使用 doEvent 创建事件，确保正确触发触发器
@@ -254,13 +256,18 @@ export class StateModifier {
                                 medium: state as any,
                                 target: target as any,  // 类型断言：resolveTriggerEventTarget 返回 Entity | Entity[]，需要转换为 EventParticipant
                                 info: {...clonedEventConfig.info},
-                                effectUnits: clonedEventConfig.effect || []
+                                effectUnits: clonedEventConfig.effect || [],
+                                triggerContext: { creator: state, host: this.owner, triggerEvent: event },
+                                declarationObject: state,
+                                declarationOwner: this.owner
                             })
                         },
                         preview: createPreviewApplicator({
                             reactionEvents: [clonedEventConfig],
                             item: state as any,
                             owner: this.owner,
+                            triggerCreator: state,
+                            triggerHost: this.owner,
                             extraCheck: () => !!this.getState(state.key)
                         })?.preview
                     })
@@ -304,6 +311,8 @@ export class StateModifier {
                         condition: (triggerDef as any).condition,
                         item: state as any,
                         owner: this.owner,
+                        triggerCreator: state,
+                        triggerHost: this.owner,
                         extraCheck: () => !!this.getState(state.key)
                     })?.preview,
                     callback: async (event, effect, _triggerLevel) => {
@@ -315,13 +324,14 @@ export class StateModifier {
                         if (triggerCondition) {
                             const ctx: ConditionContext = {
                                 item: state as any,
-                                owner: this.owner,
                                 source: state as any,
+                                declarationObject: state,
                                 target: event?.target as any,
                                 event,
-                                triggerSource: state as any,
-                                triggerOwner: this.owner,
                                 triggerEffect: effect ?? undefined,
+                                triggerCreator: state,
+                                creatorOwner: this.owner,
+                                triggerHost: this.owner,
                                 battle: nowBattle.value
                             }
                             if (!checkCondition(triggerCondition, ctx)) return
@@ -341,14 +351,16 @@ export class StateModifier {
                             // 获取目标（默认不允许 null）
                             const eventTarget = resolveTriggerEventTarget(
                                 targetType, event, effect,
-                                state as any, this.owner
+                                state as any, this.owner,
+                                { triggerCreator: state, triggerHost: this.owner }
                             )
 
                             // 确定事件的 medium（使用统一的 resolveTarget 系统）
-                            const mediumTarget = mediumTargetType || "owner"
+                            const mediumTarget = mediumTargetType || "creatorOwner"
                             const eventMedium = resolveTriggerEventTarget(
                                 mediumTarget, event, effect,
-                                state as any, this.owner
+                                state as any, this.owner,
+                                { triggerCreator: state, triggerHost: this.owner }
                             )
 
                             // 使用 doEvent 创建事件，source 设置为状态本身！
@@ -358,15 +370,13 @@ export class StateModifier {
                                 medium: isEntity(eventMedium) ? eventMedium : (state as any),
                                 target: eventTarget as any,
                                 info: info,
-                                effectUnits: effectUnit ?? []
+                                effectUnits: effectUnit ?? [],
+                                triggerContext: { creator: state, host: this.owner, triggerEvent: event },
+                                declarationObject: state,
+                                declarationOwner: this.owner
                             })
 
                             newEvent.parentEvent = event
-                            newEvent.triggerContext = event.triggerContext || {
-                                source: state as any,
-                                owner: this.owner,
-                                triggerEvent: event
-                            }
                         }
                     }
                 })
@@ -440,7 +450,10 @@ export class StateModifier {
                         medium: state as any,
                         target: this.owner,
                         info: { level: 0 },
-                        effectUnits: effectUnits
+                        effectUnits: effectUnits,
+                        triggerContext: { creator: state, host: mountTarget },
+                        declarationObject: state,
+                        declarationOwner: this.owner
                     })
                 }
             })
@@ -484,6 +497,8 @@ export class StateModifier {
                 })
             }
         }
+
+        state.owner = undefined
 
         this.emitStateChanged(stateKey)
         return true

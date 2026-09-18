@@ -75,7 +75,9 @@ export const battleCommands: ConsoleCommand[] = [
                 addOutput(`=== 共有 ${enemyList.length} 个可用敌人 ===`, 'info')
                 for (const enemy of enemyList) {
                     const maxHealth = enemy.status?.['max-health'] || '?'
-                    addOutput(`  [血量: ${maxHealth}] ${enemy.label} - ${enemy.key}`, 'result')
+                    addOutput(`  [血量: ${maxHealth}] ${enemy.label} - ${enemy.key}`, 'result', undefined, undefined, [
+                        { label: '填入战斗', command: `startBattle("${enemy.key}")` }
+                    ])
                 }
                 addOutput('', 'info')
                 addOutput('使用 startBattle("enemyKey") 开始战斗', 'info')

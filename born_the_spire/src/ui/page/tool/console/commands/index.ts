@@ -7,6 +7,7 @@ import { relicCommands } from './relic'
 import { organCommands } from './organ'
 import { debugCommands } from './debug'
 import { otherCommands } from './other'
+import { stateCommands } from './state'
 
 /** 注册所有内置控制台命令 */
 export function registerAllCommands() {
@@ -19,6 +20,7 @@ export function registerAllCommands() {
         { key: '器官', title: '器官系统命令' },
         { key: '卡牌', title: '卡牌命令' },
         { key: '药水', title: '药水命令' },
+        { key: '状态', title: '状态命令' },
         { key: '临时物品', title: '临时物品命令' },
         { key: '主动', title: '主动能力命令' },
         { key: '调试', title: '调试工具命令' },
@@ -36,5 +38,6 @@ export function registerAllCommands() {
         ...organCommands,
         ...debugCommands,
         ...otherCommands,
+        ...stateCommands,
     ])
 }

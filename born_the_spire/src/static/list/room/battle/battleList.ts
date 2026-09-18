@@ -632,34 +632,7 @@ export const battleList: BattleRoomConfig[] = [
         enemyConfigs: [
             {
                 key: "enemy_iron_war_machine",
-                uiSize: "big",
-                behavior: {
-                    patterns: [
-                        {
-                            priority: 50,
-                            intent: "attack",
-                            condition: {
-                                custom: (enemy) => Number((enemy as any).current?.armor?.value ?? 0) >= 40
-                            },
-                            action: { selector: { key: "boss3_card_steel_roll" }, mode: "random" },
-                            describe: "护甲≥40：钢铁压碾"
-                        }
-                    ],
-                    fallback: {
-                        action: {
-                            selector: {},
-                            mode: "loop",
-                            sequence: [
-                                "boss3_card_armor_assembly",
-                                "boss3_card_firepower_suppression",
-                                "boss3_card_armor_assembly",
-                                "boss3_card_firepower_suppression",
-                                "boss3_card_overload_barrier"
-                            ]
-                        },
-                        describe: "循环：装甲组装/火力压制/过载屏障"
-                    }
-                }
+                uiSize: "big"
             }
         ]
     },

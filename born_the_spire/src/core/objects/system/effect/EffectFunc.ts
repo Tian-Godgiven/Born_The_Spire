@@ -43,8 +43,12 @@ export function resolveEffectParams(param: EffectParams[string], event: ActionEv
         target: event.target,
         owner: definingItem,
         item: definingItem,
+        declarationObject: event.declarationObject,
+        declarationOwner: event.declarationOwner,
         event,
         triggerEffect: effect,
+        triggerCreator: event.triggerContext?.creator,
+        triggerHost: event.triggerContext?.host as any,
         lazyResolve: true,  // 效果构造时，$triggerEffect.params() 延迟解析
         battle: (window as any).nowBattle?.value
     }
@@ -105,6 +109,10 @@ export async function doEffectFunc(effect: Effect, override_event?:Partial<Actio
         target: event.target,
         event,
         triggerEffect: effect,
+        declarationObject: event.declarationObject,
+        declarationOwner: event.declarationOwner,
+        triggerCreator: event.triggerContext?.creator,
+        triggerHost: event.triggerContext?.host as any,
         lazyResolve: false,  // 现在真正解析
         battle: (window as any).nowBattle?.value
     }

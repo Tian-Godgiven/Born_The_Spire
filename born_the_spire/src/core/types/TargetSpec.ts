@@ -25,7 +25,9 @@ import { isEntity, isEffect, isEnemy } from "@/core/utils/typeGuards"
 export interface TargetContext {
     // 基础对象
     item?: Entity               // 物品自身（遗物/器官/卡牌）
-    owner?: Entity              // 物品拥有者（玩家/敌人）
+    owner?: Entity              // 非 Trigger 场景的拥有者
+    declarationObject?: EventParticipant // 当前声明式数据所属对象（$this）
+    declarationOwner?: Entity           // 声明对象的持有者（$this.owner）
     source?: Entity | EventParticipant      // 事件来源（可指代不同含义）
     medium?: Entity | EventParticipant      // 事件媒介（可指代不同含义）
     target?: Entity | Entity[] | EventParticipant | EventParticipant[]  // 事件目标
@@ -35,13 +37,14 @@ export interface TargetContext {
 
     // 触发器相关
     trigger?: TriggerMapItem    // 触发器定义
-    triggerSource?: Entity      // 触发器的 source（通常就是 item）
-    triggerOwner?: Entity       // 触发器的 owner（通常就是 owner）
     triggerEffect?: Effect      // 触发效果
+    triggerCreator?: EventParticipant // 定义触发逻辑的对象
+    creatorOwner?: Entity       // triggerCreator.owner 的受限 targetType 别名
+    triggerHost?: Entity        // 实际挂载 Trigger 的实体
 
     // 事件触发器上下文（来自 event.triggerContext）
-    eventTriggerSource?: Entity
-    eventTriggerOwner?: Entity
+    eventTriggerCreator?: EventParticipant
+    eventTriggerHost?: Entity
 
     // 战斗相关
     battle?: any
@@ -59,10 +62,10 @@ export interface TargetContext {
  * 支持的 targetType 字符串类型
  */
 export type TargetTypeString =
-    | "item" | "owner" | "source" | "target" | "effect"
+    | "item" | "owner" | "this" | "thisOwner" | "source" | "target" | "effect"
     | "eventSource" | "eventMedium" | "eventTarget"
-    | "trigger" | "triggerSource" | "triggerOwner"
-    | "eventTriggerSource" | "eventTriggerOwner"
+    | "trigger" | "triggerCreator" | "creatorOwner" | "triggerHost"
+    | "eventTriggerCreator" | "eventTriggerHost"
     | "battle" | "player"
     | "enemy" | "allEnemies" | "allAllies" | "allEntities"
     | "allOpponents" | "allTeammates"   // 相对持有者阵营
@@ -83,6 +86,8 @@ type TargetTypeMap = {
     // 单个 Entity
     "item": Entity
     "owner": Entity
+    "this": EventParticipant
+    "thisOwner": Entity
     "source": Entity
     "target": Entity
     "battle": any
@@ -104,12 +109,13 @@ type TargetTypeMap = {
 
     // 触发器相关
     "trigger": TriggerMapItem
-    "triggerSource": Entity
-    "triggerOwner": Entity
+    "triggerCreator": EventParticipant
+    "creatorOwner": Entity
+    "triggerHost": Entity
 
     // 事件触发器相关
-    "eventTriggerSource": Entity
-    "eventTriggerOwner": Entity
+    "eventTriggerCreator": EventParticipant
+    "eventTriggerHost": Entity
 }
 
 /**
@@ -252,6 +258,8 @@ export function getTargetValue(
         // 直接从 context 获取
         case "item": return context.item
         case "owner": return context.owner
+        case "this": return context.declarationObject
+        case "thisOwner": return (context.declarationObject as any)?.owner
         case "source": return context.source
         case "target": return context.target
 
@@ -261,13 +269,14 @@ export function getTargetValue(
         case "eventTarget": return context.event?.target as Entity | Entity[] | undefined
 
         // 触发器相关 - 直接从 context 获取
-        case "triggerSource": return context.triggerSource
-        case "triggerOwner": return context.triggerOwner
+        case "triggerCreator": return context.triggerCreator
+        case "creatorOwner": return context.creatorOwner
+        case "triggerHost": return context.triggerHost
         case "triggerEffect": return context.triggerEffect
 
         // 事件触发器相关（来自 event.triggerContext）
-        case "eventTriggerSource": return context.eventTriggerSource ?? context.event?.triggerContext?.source ?? context.triggerSource
-        case "eventTriggerOwner": return context.eventTriggerOwner ?? context.event?.triggerContext?.owner ?? context.triggerOwner
+        case "eventTriggerCreator": return context.eventTriggerCreator ?? context.event?.triggerContext?.creator
+        case "eventTriggerHost": return context.eventTriggerHost ?? context.event?.triggerContext?.host
 
         // 战斗相关
         case "battle": return context.battle
@@ -305,14 +314,14 @@ export function getTargetValue(
         // allEnemies/allAllies 是写死的玩家视角，只适合确定站在玩家一侧的内容
         case "allOpponents": {
             if (!context.battle) throw new Error("[resolveTarget] battle 不存在，无法获取 allOpponents")
-            const holder = context.owner ?? context.triggerOwner ?? context.source
-            if (!holder) throw new Error("[resolveTarget] context 中没有 owner/triggerOwner/source，无法判断 allOpponents 的阵营")
+            const holder = context.creatorOwner ?? context.owner ?? context.source
+            if (!holder) throw new Error("[resolveTarget] context 中没有 creatorOwner/owner/source，无法判断 allOpponents 的阵营")
             return isEnemy(holder) ? context.battle.getAlivePlayers() : context.battle.getAliveEnemies()
         }
         case "allTeammates": {
             if (!context.battle) throw new Error("[resolveTarget] battle 不存在，无法获取 allTeammates")
-            const holder = context.owner ?? context.triggerOwner ?? context.source
-            if (!holder) throw new Error("[resolveTarget] context 中没有 owner/triggerOwner/source，无法判断 allTeammates 的阵营")
+            const holder = context.creatorOwner ?? context.owner ?? context.source
+            if (!holder) throw new Error("[resolveTarget] context 中没有 creatorOwner/owner/source，无法判断 allTeammates 的阵营")
             return isEnemy(holder) ? context.battle.getAliveEnemies() : context.battle.getAlivePlayers()
         }
         case "allEntities":

@@ -130,7 +130,9 @@ export const roomCommands: ConsoleCommand[] = [
             }
             addOutput(`找到 ${events.length} 个事件:`, 'info')
             events.forEach(event => {
-                addOutput(`  ${event.key} - ${event.name || '(无名称)'}`, 'result', `enterEvent("${event.key}")`)
+                addOutput(`  ${event.key} - ${event.name || '(无名称)'}`, 'result', undefined, undefined, [
+                    { label: '填入事件', command: `enterEvent("${event.key}")` }
+                ])
             })
             addOutput('', 'info')
             addOutput('点击事件或使用 enterEvent("key") 进入事件', 'info')

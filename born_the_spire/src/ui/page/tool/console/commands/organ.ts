@@ -27,7 +27,10 @@ export const organCommands: ConsoleCommand[] = [
                     const level = `Lv.${organ.level}`
                     const rarity = organ.rarity
                     const part = organ.part ? `[${organ.part}]` : ''
-                    addOutput(`  ${status} ${level} [${rarity}]${part} ${organ.label} (${organ.key})`, 'result')
+                    addOutput(`  ${status} ${level} [${rarity}]${part} ${organ.label} (${organ.key})`, 'result', undefined, undefined, [
+                        { label: '升级', command: `upgradeOrgan("${organ.key}")` },
+                        { label: '移除', command: `removeOrgan("${organ.key}")` }
+                    ])
                 }
                 addOutput('', 'info')
                 addOutput('使用 addOrgan("key") 添加器官', 'info')
@@ -57,7 +60,9 @@ export const organCommands: ConsoleCommand[] = [
                 for (const organ of organList) {
                     const rarity = organ.rarity || 'common'
                     const part = organ.part ? `[${organ.part}]` : ''
-                    addOutput(`  [${rarity}]${part} ${organ.label} - ${organ.key}`, 'result')
+                    addOutput(`  [${rarity}]${part} ${organ.label} - ${organ.key}`, 'result', undefined, undefined, [
+                        { label: '添加', command: `addOrgan("${organ.key}")` }
+                    ])
                 }
                 addOutput('', 'info')
                 addOutput('使用 addOrgan("key") 添加器官到玩家', 'info')
