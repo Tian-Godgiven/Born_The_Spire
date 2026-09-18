@@ -1,5 +1,6 @@
 import type { Target } from "@/core/objects/target/Target";
 import { Item } from "@/core/objects/item/Item";
+import type { Interaction, InteractionData } from "@/core/objects/item/Item";
 import type { ItemMap } from "@/core/objects/item/Item";
 import { doEvent, ActionEvent } from "@/core/objects/system/ActionEvent";
 import { beginTransaction, endTransaction } from "@/core/objects/game/transaction";
@@ -66,6 +67,32 @@ export class Card extends Item{
     constructor(map:CardMap){
         super(map)
         this.tags = map.tags
+    }
+
+    /** Rebuild interactions when a card level overrides part of its interaction map. */
+    setInteractionMap(interactionMap: Record<string, InteractionData | InteractionData[]>) {
+        const interactions: Interaction[] = []
+        const useInteractions: Interaction[] = []
+        for (const key in interactionMap) {
+            const data = interactionMap[key]
+            if (key === "use") {
+                if (Array.isArray(data)) {
+                    data.forEach((use, index) => {
+                        const item = { key: `use_${index}`, ...use }
+                        interactions.push(item)
+                        useInteractions.push(item)
+                    })
+                } else if (data) {
+                    const item = { key: "use", ...data }
+                    interactions.push(item)
+                    useInteractions.push(item)
+                }
+            } else if (data && !Array.isArray(data)) {
+                interactions.push({ key, ...data })
+            }
+        }
+        this.interaction = interactions
+        this.useInteractions = useInteractions
     }
 
     /** 锻造后在名字后面加 +（多数牌只能锻一档） */

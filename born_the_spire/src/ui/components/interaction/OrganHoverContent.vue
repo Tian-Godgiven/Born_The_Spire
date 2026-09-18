@@ -36,14 +36,14 @@ withDefaults(defineProps<{
 <style scoped lang="scss">
 .organ-hover-stack {
     display: flex;
-    flex-direction: row;
+    flex-direction: var(--organ-hover-stack-direction, row);
     align-items: flex-start;
-    gap: 8px;
+    gap: var(--organ-hover-stack-gap, 8px);
     font-size: 14px;
     white-space: normal;
 
     &.reverse {
-        flex-direction: row-reverse;
+        flex-direction: var(--organ-hover-stack-reverse-direction, row-reverse);
     }
 
     :deep(.organ-popup) {

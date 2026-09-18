@@ -3,7 +3,7 @@ html[data-layout="mobile"] {
     --layout-page-padding: 0px;
     --layout-top-bar-height: 52px;
     --layout-hand-height: 22vh;
-    --layout-hand-sink: calc(var(--layout-card-height) - var(--layout-hand-height) + 12px);
+    --layout-hand-sink: 40%;
     --layout-hand-side-gap: 180px;
     --layout-card-width: 112px;
     --layout-card-height: 172px;
@@ -11,8 +11,17 @@ html[data-layout="mobile"] {
     --layout-card-body-size: 14px;
     --layout-card-entry-size: 14px;
     --layout-card-cost-size: 12px;
-    --layout-chara-width: 180px;
-    --layout-chara-height: 230px;
+    --layout-chara-width: 140px;
+    --layout-chara-height: 160px;
+    --layout-chara-font-size: 12px;
+    --layout-blood-line-height: 16px;
+    --layout-blood-line-outline: 1px;
+    --layout-blood-line-text-line-height: 0.8rem;
+    --layout-intent-main-padding: 4px 6px;
+    --layout-intent-main-min-width: 36px;
+    --layout-intent-icon-size: 14px;
+    --layout-intent-value-size: 12px;
+    --layout-intent-tooltip-size: 12px;
     --layout-pile-size: 0px;
     --layout-pile-font: 13px;
     --layout-draw-left: 8px;
@@ -33,10 +42,16 @@ html[data-layout="mobile"] {
     --layout-gap-md: 10px;
     --layout-gap-sm: 8px;
     --layout-setup-padding: 20px;
+    --layout-setup-organ-map-max-height: none;
+    --layout-setup-preview-max-height: none;
+    --layout-setup-preview-grow: 1;
+    --layout-setup-preview-align-self: flex-start;
+    --layout-setup-chara-margin-top: calc(20px + var(--layout-gap-sm) + var(--layout-gap-sm));
+    --layout-setup-center-align: stretch;
     --layout-organ-tile-min: 0px;
     --layout-organ-tile-pad: 6px;
     --layout-organ-grid-gap: 8px;
-    --layout-organ-cols: 5;
+    --layout-organ-cols: 4;
     --layout-organ-visible-rows: 3;
     --layout-modal-chrome-pad: 6px 12px;
     --layout-modal-title-size: 16px;
@@ -98,6 +113,26 @@ html[data-layout="mobile"] .top-container {
     height: 100%;
 }
 
+// 顶部地图、卡组、选项按钮不能被窄小的第三列裁掉。
+html[data-layout="mobile"] .top-main {
+    position: relative;
+}
+
+html[data-layout="mobile"] .top-main .ability {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    z-index: 20;
+    transform: translateY(-50%);
+    overflow: visible;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+html[data-layout="mobile"] .top-main .ability > * {
+    flex-shrink: 0;
+}
+
 html[data-layout="mobile"] .top-main .playerData,
 html[data-layout="mobile"] .top-main .gameRunData,
 html[data-layout="mobile"] .top-main .ability {
@@ -108,6 +143,8 @@ html[data-layout="mobile"] .top-main .ability {
 
 html[data-layout="mobile"] .top-main .ability {
     justify-content: flex-end;
+    overflow: visible;
+    white-space: nowrap;
 }
 
 html[data-layout="mobile"] .energy {
@@ -168,7 +205,7 @@ html[data-layout="mobile"] .chara-wrapper {
     width: var(--layout-chara-width);
     height: var(--layout-chara-height);
     max-height: 100%;
-    transform: translateY(-22px);
+    transform: translateY(-12px);
 }
 
 html[data-layout="mobile"] .intent-display {
@@ -282,6 +319,14 @@ html[data-layout="mobile"] .organ-reward-modal {
     overflow: hidden;
 }
 
+html[data-layout="mobile"] .organ-reward-option {
+    --organ-reward-option-height: 150px;
+}
+
+html[data-layout="mobile"] .organ-cards-row > .popover-trigger {
+    height: 150px;
+}
+
 html[data-layout="mobile"] .organ-cards-row {
     justify-content: center;
     gap: 8px;
@@ -321,12 +366,48 @@ html[data-layout="mobile"] .blackstore-header {
     padding: 10px 12px 10px;
 }
 
+// 遗物轨道悬在 Running 顶栏下方；黑市内容从轨道下缘开始，避免遮住操作。
+html[data-layout="mobile"] .blackstore-room {
+    padding-top: 44px;
+    box-sizing: border-box;
+    font-size: 12px;
+}
+
 html[data-layout="mobile"] .blackstore-title {
-    font-size: 1.1rem;
+    font-size: 16px;
 }
 
 html[data-layout="mobile"] .blackstore-desc {
     display: none;
+}
+
+html[data-layout="mobile"] .blackstore-room .page-tab {
+    padding: 4px 10px;
+    font-size: 12px;
+}
+
+html[data-layout="mobile"] .blackstore-room .section-title {
+    font-size: 14px;
+}
+
+html[data-layout="mobile"] .blackstore-room .item-name,
+html[data-layout="mobile"] .blackstore-room .resource-title {
+    font-size: 13px;
+}
+
+html[data-layout="mobile"] .blackstore-room .item-price,
+html[data-layout="mobile"] .blackstore-room .sell-detail,
+html[data-layout="mobile"] .blackstore-room .sell-button {
+    font-size: 12px;
+}
+
+html[data-layout="mobile"] .blackstore-room .tile-effect,
+html[data-layout="mobile"] .blackstore-room .sell-info {
+    font-size: 11px;
+}
+
+html[data-layout="mobile"] .blackstore-room .item-rarity {
+    font-size: 10px;
 }
 
 html[data-layout="mobile"] .organs-row {
@@ -334,7 +415,61 @@ html[data-layout="mobile"] .organs-row {
     overflow-x: auto;
 }
 
+html[data-layout="mobile"] .blackstore-room .sell-panel .organs-row {
+    justify-content: center;
+}
+
 html[data-layout="mobile"] .organ-detail-modal {
     width: min(420px, 92vw);
     max-height: calc(100% - 16px);
+}
+
+// 器官介绍、里程碑和术语板在手机上使用窄版，避免横向浮层遮住主要内容。
+html[data-layout="mobile"] .organ-hover-stack {
+    width: min(180px, calc(100vw - 32px));
+    max-height: 60vh;
+    --organ-hover-stack-direction: column;
+    --organ-hover-stack-reverse-direction: column;
+    --organ-hover-stack-gap: 6px;
+    overflow-y: auto;
+}
+
+html[data-layout="mobile"] .organ-hover-stack .organ-popup {
+    --organ-popup-width: 100%;
+    --organ-popup-padding: 8px;
+    --organ-popup-title-size: 14px;
+    --organ-popup-content-size: 12px;
+    --organ-popup-content-line-height: 1.5;
+}
+
+html[data-layout="mobile"] .milestone-track {
+    --milestone-track-width: 100%;
+    --milestone-track-font-size: 12px;
+    --milestone-row-padding: 6px;
+    --milestone-row-gap: 6px;
+    --milestone-level-gap: 2px;
+}
+
+html[data-layout="mobile"] .glossary-panel {
+    width: min(180px, calc(100vw - 32px));
+    --glossary-panel-min-width: 0px;
+    --glossary-panel-max-width: min(180px, calc(100vw - 32px));
+    --glossary-panel-padding: 6px;
+    --glossary-panel-item-gap: 6px;
+    --glossary-panel-term-size: 12px;
+    --glossary-panel-desc-size: 12px;
+    --glossary-panel-desc-line-height: 1.35;
+}
+
+html[data-layout="mobile"] .state-popover {
+    --state-popover-padding: 6px;
+    --state-popover-min-width: 0px;
+    --state-popover-max-width: min(180px, calc(100vw - 32px));
+    --state-popover-header-gap: 6px;
+    --state-popover-header-padding: 3px;
+    --state-popover-item-padding: 4px 0;
+    --state-popover-header-item-gap: 2px;
+    --state-popover-label-size: 12px;
+    --state-popover-description-size: 12px;
+    --state-popover-description-line-height: 1.35;
 }

@@ -1,15 +1,6 @@
 <template>
 <div class="start-page">
 
-    <!-- 顶部操作区 -->
-    <div class="header">
-        <div class="action-btn" @click="showSeedDialog = true">
-            点击输入种子:<span class="seed-value">{{ seed || '随机' }}</span>
-        </div>
-        <button class="action-btn secondary" @click="exportSave">导出存档</button>
-        <button class="action-btn secondary" @click="importSave">导入存档</button>
-    </div>
-
     <!-- 中间：左边选器官（hover 往右开），右边角色预览 -->
      <div class="center">
         <OrganMap
@@ -22,8 +13,10 @@
         />
 
         <div class="preview-panel">
-            <Chara v-if="previewPlayer" :target="previewPlayer" side='right' :key="previewPlayer.__id"></Chara>
-            <button class="deck-btn" @click="showDeckModal = true">查看卡组</button>
+            <div class="chara-container">
+                <Chara v-if="previewPlayer" :target="previewPlayer" side='right' :key="previewPlayer.__id"></Chara>
+            </div>
+            <Button class="deck-btn" :click="() => showDeckModal = true" label="卡组" />
         </div>
      </div>
 
@@ -47,17 +40,12 @@
         </button>
     </div>
 
-    <SeedDialog
-        v-if="showSeedDialog"
-        v-model:seed="seed"
-        @close="showSeedDialog = false"
-    />
-
     <DeckViewModal
         v-if="showDeckModal"
         :cards="playerCards"
         @close="showDeckModal = false"
     />
+
 </div>
 </template>
 
@@ -69,8 +57,6 @@ import { requestGameFullscreen } from '@/ui/hooks/global/layoutMode'
 import {
     loadMetaProgress,
     getInitialOrganBudget,
-    copySaveToClipboard,
-    importSaveFromClipboard,
     ORGAN_RARITY_COST,
     type MetaProgressSave
 } from '@/core/persistence/metaProgress'
@@ -80,7 +66,7 @@ import { Organ } from '@/core/objects/target/Organ'
 import { Player, type PlayerMap } from '@/core/objects/target/Player'
 import { getOrganModifier } from '@/core/objects/system/modifier/OrganModifier'
 import { createPlayer } from '@/core/factories'
-import SeedDialog from '@/ui/components/interaction/SeedDialog.vue'
+import Button from '@/ui/components/global/Button.vue'
 import OrganMap from './components/OrganMap.vue'
 import Chara from '@/ui/components/object/Target/Chara/Chara.vue'
 import DeckViewModal from '@/ui/components/interaction/DeckViewModal.vue'
@@ -93,9 +79,7 @@ const router = useRouter()
 
 // ========== 状态 ==========
 const ascensionUiEnabled = ASCENSION_UI_ENABLED
-const seed = ref('')
 const ascensionLevel = ref(0)
-const showSeedDialog = ref(false)
 const showDeckModal = ref(false)
 const selectedOrgans = ref<string[]>([HEART_KEY]) // 默认包含心脏
 const metaProgress = ref<MetaProgressSave>(loadMetaProgress())
@@ -231,20 +215,7 @@ async function startGame() {
     }
 
     requestGameFullscreen()
-    await startNewRun(seed.value || undefined, ascensionLevel.value, undefined, previewPlayer.value)
-}
-
-async function exportSave() {
-    const success = await copySaveToClipboard(metaProgress.value)
-    if (success) alert('存档已复制到剪贴板')
-}
-
-async function importSave() {
-    const success = await importSaveFromClipboard()
-    if (success) {
-        metaProgress.value = loadMetaProgress()
-        alert('存档导入成功')
-    }
+    await startNewRun(undefined, ascensionLevel.value, undefined, previewPlayer.value)
 }
 
 // 初始化
@@ -272,14 +243,9 @@ onMounted(async () => {
     box-sizing: border-box;
 }
 
-.header{
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--layout-gap-sm);
-}
-
 .center{
     display: flex;
+    align-items: var(--layout-setup-center-align);
     gap: var(--layout-gap-sm);
     flex-grow: 1;
     min-height: 0;
@@ -292,18 +258,27 @@ onMounted(async () => {
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
+        align-self: var(--layout-setup-preview-align-self);
+        position: relative;
+        flex-grow: var(--layout-setup-preview-grow);
+        max-height: var(--layout-setup-preview-max-height);
+        justify-content: flex-start;
         gap: var(--layout-gap-md);
 
-        .deck-btn {
-            padding: 10px 20px;
-            font-size: 16px;
-            border: 2px solid #000;
-            background: #fff;
-            cursor: pointer;
+        .chara-container {
+            margin-top: var(--layout-setup-chara-margin-top);
+            display: flex;
+            align-items: center;
+            gap: var(--layout-gap-md);
+        }
 
-            &:hover {
-                background: rgba(0, 0, 0, 0.05);
+        :deep(.deck-btn) {
+            position: absolute;
+            right: 0;
+            top: 0;
+
+            .game-btn-face {
+                background: #fff;
             }
         }
     }
@@ -382,4 +357,5 @@ onMounted(async () => {
         &:hover:not(:disabled) { background: #444; }
     }
 }
+
 </style>

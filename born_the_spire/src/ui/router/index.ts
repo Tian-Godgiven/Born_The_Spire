@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHashHistory } from 'vue-router';
 
 // 使用懒加载避免在 preload 之前加载组件
 const routes = [
@@ -20,7 +20,8 @@ const routes = [
 ];
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  // 分享和刷新不依赖服务器把 /setup、/running 回退到 index.html。
+  history: createWebHashHistory(import.meta.env.BASE_URL),
   routes
 });
 

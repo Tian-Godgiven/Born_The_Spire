@@ -41,6 +41,8 @@ export class Effect implements EventParticipant{
     private _cancelled:boolean = false
     /** 本次伤害被完全抵消（nullifyHurtEffect）。跳字看这个标记，不要给某个器官写特例 */
     public nullified: boolean = false
+    /** 多目标伤害中不应结算伤害的目标；用于只保护其中一个目标的受伤反应。 */
+    public ignoredHurtTargets = new Set<EventParticipant>()
     constructor({label="",key,effectFunc,params,describe=[],resultStoreAs,triggerEvent,owner}:EffectConstructor){
         this.label = label;
         this.key = key;
@@ -51,8 +53,8 @@ export class Effect implements EventParticipant{
         this.resultStoreAs = resultStoreAs
         this._owner = owner
 
-        // 立即解析参数中的 $ 语法
-        this.resolveParams()
+        // Prior effect results exist only when this event is executing.
+        this.resolveParams(true)
 
         // 可选：若效果在 effectMap 里声明了 paramsSchema 则执行校验
         try {
@@ -69,9 +71,11 @@ export class Effect implements EventParticipant{
     /**
      * 解析参数中的引用与随机语法。
      */
-    private resolveParams() {
+    resolveParams(deferEventResults: boolean = false) {
         for (const key in this.params) {
             const param = this.params[key]
+            // A prior Effect writes resultStoreAs only during this event's execution.
+            if (deferEventResults && typeof param === "string" && /^\$eventResult\([^)]*\)$/.test(param)) continue
             if (ReferenceResolver.getInstance().needsResolution(param)) {
                 const resolved = resolveEffectParams(param, this.actionEvent, this, this._owner)
                 if (resolved !== undefined) {
@@ -109,6 +113,7 @@ export class Effect implements EventParticipant{
         //记录原本的事件对象
         let event = this.actionEvent
         //将 override_event 传递给 doEffectFunc，而不是修改 actionEvent
+        this.resolveParams()
         const result = await doEffectFunc(this, override_event)
         //记录结果到原本的事件中
         if(this.resultStoreAs != null){

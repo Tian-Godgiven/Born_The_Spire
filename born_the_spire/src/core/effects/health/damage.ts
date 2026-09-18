@@ -2,6 +2,7 @@ import { ActionEvent, doEvent, handleEventEntity } from "@/core/objects/system/A
 import { changeCurrentValue, getCurrentValue } from "@/core/objects/system/Current/current";
 import type { Effect } from "@/core/objects/system/effect/Effect";
 import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc";
+import type { EventParticipant } from "@/core/types/event/EventParticipant";
 import { getStateModifier } from "@/core/objects/system/modifier/StateModifier";
 import { isEntity, isEffect } from "@/core/utils/typeGuards";
 import { newError } from "@/ui/hooks/global/alert";
@@ -21,6 +22,14 @@ export function nullifyHurtEffect(hurtEffect: Effect): void {
     if (prev > 0) hurtEffect.nullified = true
 }
 
+/**
+ * 仅抵消多目标 attack/damage 对某个目标的伤害。
+ * Effect 的数值在所有目标间共享，因此不能直接把 params.value 置零。
+ */
+export function nullifyHurtEffectForTarget(hurtEffect: Effect, target: EventParticipant): void {
+    hurtEffect.ignoredHurtTargets.add(target)
+}
+
 //对单个目标造成伤害
 export const damageTo:EffectFunc = (event:ActionEvent,effect)=>{
     const baseValue = Number(effect.params.value)
@@ -37,6 +46,7 @@ export const damageTo:EffectFunc = (event:ActionEvent,effect)=>{
             newError(["伤害效果只能作用于实体对象，当前目标类型:", t.participantType])
             return
         }
+        if (effect.ignoredHurtTargets.has(t)) return
         const oldValue = getCurrentValue(t,"health",0)
         changeCurrentValue(t,"health",oldValue-value,event)
     })

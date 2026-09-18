@@ -81,9 +81,9 @@ function resolveDynamicValue(part: any, _state: State): string {
 .state-popover {
     background: white;
     border: 2px solid black;
-    padding: 8px;
-    min-width: 180px;
-    max-width: 250px;
+    padding: var(--state-popover-padding, 8px);
+    min-width: var(--state-popover-min-width, 180px);
+    max-width: var(--state-popover-max-width, 250px);
     box-sizing: border-box;
 
     &.embedded {
@@ -96,14 +96,14 @@ function resolveDynamicValue(part: any, _state: State): string {
 
     .popover-header {
         font-weight: bold;
-        margin-bottom: 8px;
-        padding-bottom: 4px;
+        margin-bottom: var(--state-popover-header-gap, 8px);
+        padding-bottom: var(--state-popover-header-padding, 4px);
         border-bottom: 2px solid black;
     }
 
     .popover-content {
         .state-item {
-            padding: 6px 0;
+            padding: var(--state-popover-item-padding, 6px 0);
 
             &:not(:last-child) {
                 border-bottom: 1px solid #ccc;
@@ -113,10 +113,11 @@ function resolveDynamicValue(part: any, _state: State): string {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin-bottom: 4px;
+                margin-bottom: var(--state-popover-header-item-gap, 4px);
 
                 .state-label {
                     font-weight: bold;
+                    font-size: var(--state-popover-label-size, inherit);
                 }
 
                 .state-stack {
@@ -130,9 +131,9 @@ function resolveDynamicValue(part: any, _state: State): string {
             }
 
             .state-description {
-                font-size: 0.85em;
+                font-size: var(--state-popover-description-size, 0.85em);
                 color: #333;
-                line-height: 1.4;
+                line-height: var(--state-popover-description-line-height, 1.4);
 
                 .dynamic-value {
                     font-weight: bold;

@@ -34,7 +34,6 @@
                     <div class="organ-name">{{ isUnlocked(organ.key) ? organ.label : '???' }}</div>
                     <div class="organ-part" v-if="isUnlocked(organ.key) && organ.part">{{ getPartLabel(organ.part) }}</div>
                     <div class="organ-cost" v-if="isUnlocked(organ.key)">{{ getOrganCost(organ) }}</div>
-                    <div v-if="isMastered(organ.key)" class="mastery-badge">精通</div>
                     <div v-if="organ.key === HEART_KEY" class="lock-badge">🔒</div>
                 </div>
 
@@ -128,6 +127,8 @@ function toggleOrgan(organ: Organ) {
 }
 
 function isMastered(organKey: string): boolean {
+    // 0 级是默认难度，不是可展示的精通层级。
+    if (props.ascensionLevel <= 0) return false
     const masteryLevel = getOrganMasteryLevel(props.metaProgress, organKey)
     return masteryLevel >= props.ascensionLevel
 }
@@ -149,6 +150,7 @@ function closeOrganDetail() {
     flex-direction: column;
     min-height: 0;
     height: 100%;
+    max-height: var(--layout-setup-organ-map-max-height);
     padding: var(--layout-gap-sm);
     border: 2px solid black;
     box-sizing: border-box;
@@ -252,16 +254,6 @@ function closeOrganDetail() {
             font-size: 12px;
             color: #999;
             margin-top: 5px;
-        }
-
-        .mastery-badge {
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            background: #c80;
-            color: #fff;
-            font-size: 10px;
-            padding: 2px 4px;
         }
 
         .lock-badge {

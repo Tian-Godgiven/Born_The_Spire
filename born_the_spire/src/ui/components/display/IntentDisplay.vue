@@ -149,10 +149,10 @@ const visibilityHint = computed(() => {
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 6px 10px;
+    padding: var(--layout-intent-main-padding, 6px 10px);
     border: 2px solid black;
     background: white;
-    min-width: 50px;
+    min-width: var(--layout-intent-main-min-width, 50px);
     justify-content: center;
     cursor: pointer;
 
@@ -206,13 +206,13 @@ const visibilityHint = computed(() => {
     }
 
     .intent-icon {
-        font-size: 20px;
+        font-size: var(--layout-intent-icon-size, 20px);
         line-height: 1;
     }
 
     .intent-value {
         font-weight: bold;
-        font-size: 16px;
+        font-size: var(--layout-intent-value-size, 16px);
     }
 
     .intent-count {
@@ -241,7 +241,7 @@ const visibilityHint = computed(() => {
 }
 
 .tooltip-content {
-    font-size: 16px;
+    font-size: var(--layout-intent-tooltip-size, 16px);
     white-space: normal;
 
     .tooltip-card-list {

@@ -83,11 +83,6 @@
                         >
                             <div class="item-headline">
                                 <div class="item-name">{{ item.name }}</div>
-                                <div
-                                    v-if="item.rarity"
-                                    class="item-rarity"
-                                    :style="{ color: rarityColor(item.rarity) }"
-                                >{{ rarityLabel(item.rarity) }}</div>
                             </div>
                             <div class="item-price">{{ item.price }} 金币</div>
                             <div v-if="item.isPurchased" class="sold-overlay">已售出</div>
@@ -297,9 +292,8 @@ const selectedSellOffer = computed(() =>
 )
 
 const showDetail = computed(() => {
-    if (selectedSellOrgan.value) return true
     const item = selectedBuyItem.value
-    return !!item && item.type !== 'card'
+    return !!item && (item.type === 'relic' || item.type === 'potion')
 })
 
 function getPreview(itemId: string): any {
@@ -308,8 +302,9 @@ function getPreview(itemId: string): any {
 
 function getPotionDesc(itemId: string): string {
     const instance = getPreview(itemId)
-    if (!instance || !instance.describe) return ''
-    return getDescribe(instance.describe, instance)
+    if (!instance) return ''
+    const describe = instance.effect ?? instance.describe
+    return describe ? getDescribe(describe, instance) : ''
 }
 
 function isBuySelected(item: StoreItem) {
@@ -620,11 +615,6 @@ async function handleLeave() {
     font-size: 1rem;
     min-width: 0;
     overflow-wrap: anywhere;
-}
-
-.item-rarity {
-    flex-shrink: 0;
-    font-size: 0.75rem;
 }
 
 .item-price {

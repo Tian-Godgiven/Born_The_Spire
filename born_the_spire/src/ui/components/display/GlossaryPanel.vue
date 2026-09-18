@@ -24,13 +24,13 @@ defineProps<{
 .glossary-panel {
     background: white;
     border: 2px solid black;
-    padding: 8px;
-    min-width: 150px;
-    max-width: 250px;
+    padding: var(--glossary-panel-padding, 8px);
+    min-width: var(--glossary-panel-min-width, 150px);
+    max-width: var(--glossary-panel-max-width, 250px);
     box-sizing: border-box;
 
     .glossary-item {
-        margin-bottom: 8px;
+        margin-bottom: var(--glossary-panel-item-gap, 8px);
 
         &:last-child {
             margin-bottom: 0;
@@ -38,13 +38,13 @@ defineProps<{
 
         .glossary-term {
             font-weight: bold;
-            font-size: 13px;
+            font-size: var(--glossary-panel-term-size, 13px);
             margin-bottom: 2px;
         }
 
         .glossary-desc {
-            font-size: 12px;
-            line-height: 1.4;
+            font-size: var(--glossary-panel-desc-size, 12px);
+            line-height: var(--glossary-panel-desc-line-height, 1.4);
             color: #333;
         }
     }

@@ -40,6 +40,14 @@
             </div>
 
             <div class="reward-action">
+              <component
+                v-for="addon in rewardRowAddons"
+                :key="addon.key + '-action'"
+                :is="addon.component"
+                :reward="reward"
+                area="action"
+              />
+
               <button
                 v-if="reward.type === 'organSelect' && canClaim(reward)"
                 class="action-btn"
@@ -71,14 +79,6 @@
               >
                 领取
               </button>
-
-              <component
-                v-for="addon in rewardRowAddons"
-                :key="addon.key + '-action'"
-                :is="addon.component"
-                :reward="reward"
-                area="action"
-              />
 
               <span v-if="reward.isClaimBlocked() && !reward.isClaimed()" class="locked-text">{{ reward.claimBlockedLabel }}</span>
               <span v-else-if="reward.isLocked()" class="locked-text">已锁定</span>
@@ -137,7 +137,6 @@
             class="organ-action-btn"
             @click="executeOrganAction(action.key)"
           >
-            <span class="action-icon">{{ action.icon }}</span>
             <span class="action-label">{{ action.label }}</span>
             <span class="action-desc">{{ action.description }}</span>
           </button>
@@ -619,14 +618,23 @@ async function handleProceed() {
 }
 
 .organ-reward-option {
+  height: var(--organ-reward-option-height, auto);
   cursor: pointer;
 
-  &:hover :deep(.organ-popup) {
-    background: rgba(0, 0, 0, 0.02);
+  :deep(.organ-popup) {
+    height: 100%;
+    overflow-y: auto;
   }
 
   &.selected :deep(.organ-popup) {
-    background: rgba(0, 0, 0, 0.04);
+    --organ-popup-background: #000;
+    --organ-popup-color: #fff;
+
+    .popup-content,
+    .popup-entries,
+    .popup-states {
+      color: #fff;
+    }
   }
 }
 

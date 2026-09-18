@@ -193,16 +193,16 @@ function findCardPlayEvent(event: ActionEvent): ActionEvent | undefined {
 
 function isAttackCardPlay(playEvent: ActionEvent): boolean {
     if (playEvent.key === "useCard") {
-        return playEvent.effects.some(e => effectLooksLikeAttack(e.key, e.params))
+        if (playEvent.effects.some(e => effectLooksLikeAttack(e.key, e.params))) return true
     }
     const tags = (playEvent.medium as { tags?: string[] })?.tags
     return Array.isArray(tags) && tags.includes("attack")
 }
 
 /**
- * 打完一张攻击牌后清掉状态（蓄势：每段都加伤，整张牌打完才归零）
+ * 打完一张攻击牌后清掉状态（活力：每段都加伤，整张牌打完才归零）
  *
- * 反应会 spawn 一条独立事件（key 是 momentumReset 这类），不能拿这条的 event.key 去判断。
+ * 反应会 spawn 一条独立事件（key 是 vitalityReset 这类），不能拿这条的 event.key 去判断。
  * 要沿 parentEvent / triggerContext.triggerEvent 找到原来的 useCard / afterUseCard。
  *
  * 敌人：效果挂在 useCard 里，after useCard 时本事件已经打完所有段。

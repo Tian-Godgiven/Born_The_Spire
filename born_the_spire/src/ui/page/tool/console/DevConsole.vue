@@ -13,10 +13,10 @@
         <div v-for="(line, index) in outputLines" :key="index" class="output-line">
             <span v-if="line.type === 'command'" class="prompt">&gt; </span>
             <span
-                :class="['text', line.type, { clickable: !!(line.clickable || line.action) }]"
-                @click="line.action ? line.action() : (line.clickable ? fillInput(line.clickable) : undefined)"
+                :class="['text', line.type, { clickable: hasDirectLineAction(line) }]"
+                @click="activateLine(line)"
             >{{ line.text }}</span>
-            <span v-if="line.suggestions?.length" class="suggestions">
+            <span v-if="line.suggestions && line.suggestions.length > 1" class="suggestions">
                 <button
                     v-for="suggestion in line.suggestions"
                     :key="`${suggestion.label}:${suggestion.command}`"
@@ -126,6 +126,24 @@ async function applySuggestion(suggestion: CommandSuggestion) {
         return
     }
     fillInput(suggestion.command)
+}
+
+function hasDirectLineAction(line: OutputLine) {
+    return !!line.action || !!line.clickable || line.suggestions?.length === 1
+}
+
+async function activateLine(line: OutputLine) {
+    if (line.action) {
+        line.action()
+        return
+    }
+    if (line.clickable) {
+        fillInput(line.clickable)
+        return
+    }
+    if (line.suggestions?.length === 1) {
+        await applySuggestion(line.suggestions[0])
+    }
 }
 
 // ========== 命令解析 ==========
@@ -271,7 +289,7 @@ function showHelp(filter?: string) {
 
     try {
         if (!effectiveFilter) {
-            addOutput('=== 可用命令 ===  提示: 点击标题收起/展开，使用操作按钮填入或执行命令', 'info')
+            addOutput('=== 可用命令 ===  提示: 点击标题收起/展开；单个操作直接点击命令行，多项操作再点右侧按钮', 'info')
             addOutput('可用区域: ' + grouped.map(g => g.group.key).join(' / '), 'info')
         }
         addOutput('', 'info')

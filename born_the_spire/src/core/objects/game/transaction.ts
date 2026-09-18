@@ -137,6 +137,8 @@ export class Transaction{
         for (let effect of event.effects) {
             // 如果效果有独立目标，作为子事件执行
             if (effect.targetSpec) {
+                // Resolve prior effect results in the parent event before spawning a child event.
+                effect.resolveParams()
                 const target = resolveTarget(effect.targetSpec, {
                     source: event.source as any,
                     target: event.target as any,

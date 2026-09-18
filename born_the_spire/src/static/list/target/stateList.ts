@@ -181,10 +181,10 @@ export const stateList: StateData[] = [
             }
         }
     },
-    // 蓄势：每层+1伤害，打完这张攻击牌才清零（多段每段都加）；层数由蓄力腺在回合结束时增加
+    // 活力：每层+1伤害，打完这张攻击牌才清零（多段每段都加）；层数由蓄力腺在回合结束时增加
     {
-        label: "蓄势",
-        key: "momentum",
+        label: "活力",
+        key: "vitality",
         category: "buff",
         describe: ["攻击时每层+1伤害，打完这张攻击牌后消耗全部层数"],
         showType: "number",
@@ -195,42 +195,42 @@ export const stateList: StateData[] = [
                     when: "before",
                     how: "make",
                     key: "attack",
-                    action: "momentumBoost"
+                    action: "vitalityBoost"
                 }, {
                     when: "after",
                     how: "make",
                     key: ["useCard", "afterUseCard"],
-                    action: "momentumReset"
+                    action: "vitalityReset"
                 }],
                 reaction: {
-                    momentumBoost: [{
-                        key: "momentumDamage",
-                        label: "蓄势增伤",
+                    vitalityBoost: [{
+                        key: "vitalityDamage",
+                        label: "活力增伤",
                         targetType: "triggerEffect",
                         effect: [{
                             key: "modifyDamageValue",
                             params: { delta: "$source.stateStack()" }
                         }]
                     }],
-                    momentumReset: [{
-                        key: "momentumReset",
-                        label: "蓄势清零",
+                    vitalityReset: [{
+                        key: "vitalityReset",
+                        label: "活力清零",
                         targetType: "creatorOwner",
                         effect: [{
                             key: "consumeStateAfterAttackPlay",
-                            params: { stateKey: "momentum" }
+                            params: { stateKey: "vitality" }
                         }]
                     }]
                 }
             }
         }
     },
-    // 指挥：由蚁后信息素腺体每回合分发，指挥连击效果消耗层数
+    // 指挥：由蚁后信息素腺体每回合分发，用于强化指挥连击，不会被消耗
     {
         label: "指挥",
         key: "command",
         category: "buff",
-        describe: ["每2层使友军造成1次3点伤害"],
+          describe: ["进行指挥连击时，持有者每有2层对目标造成1次指挥连击伤害（基础3点）"],
         showType: "number",
         repeate: "stack",
     },
@@ -713,53 +713,6 @@ export const stateList: StateData[] = [
             }
         }
     }
-},
-// 活力：攻击牌结算期间为每段攻击加伤，整张攻击牌结算后消耗所有层数
-{
-    label: "活力",
-    key: "vitality",
-    category: "buff",
-    describe: ["攻击造成的伤害增加层数值；使用攻击牌后失去所有层数"],
-    showType: "number",
-    repeate: "stack",
-    interaction: {
-        possess: {
-            triggers: [
-                { when: "before", how: "make", key: "attack", action: "vitalityBoost" },
-                {
-                    when: "after",
-                    how: "make",
-                    key: "useCard",
-                    action: "vitalityConsume",
-                    condition: "$triggerCard.hasTag(attack)"
-                }
-            ],
-            reaction: {
-                vitalityBoost: [{
-                    key: "vitalityBoost",
-                    label: "活力增伤",
-                    targetType: "triggerEffect",
-                    effect: [{ key: "modifyDamageValue", params: { delta: "$source.stateStack()" } }]
-                }],
-                vitalityConsume: [{
-                    key: "vitalityConsume",
-                    label: "活力消耗",
-                    targetType: "creatorOwner",
-                    effect: [{ key: "removeState", params: { stateKey: "vitality" } }]
-                }]
-            }
-        }
-    }
-},
-// 液压已释放：液压双管器官的内部标记，本回合首次攻击后附加，turnEnd 清除
-{
-    label: "液压已释放",
-    key: "hydraulicUsed",
-    category: "buff",
-    describe: ["液压双管本回合首次攻击已释放"],
-    showType: "bool",
-    repeate: "refresh",
-    stackChange: [{ timing: "turnEnd", delta: "all" }]
 },
 // 隔板损耗：过期隔板器官的内部计数，每成功抵消一次 +1 层，回合结束清空
 {

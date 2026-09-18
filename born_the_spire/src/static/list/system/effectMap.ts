@@ -35,7 +35,7 @@ import { addStatusModifier, addMaxHealthAndHeal } from "@/core/effects/modifier/
 import { accumulateAndTrigger } from "@/core/effects/relic/accumulateAndTrigger"
 import { hungryBeast_registerInterceptor } from "@/core/effects/relic/hungryBeastInterceptor"
 import { exhaustRandomCardByTag } from "@/core/effects/card/exhaustRandomCardByTag"
-import { card_wasteHeatRecovery, card_unstableCharge, card_commandScreech, card_commandStrike, card_heatBlast, card_corrosiveBurst, card_myceliumSpread, card_randomOpponentMultiAttack, card_steelRoll } from "@/core/effects/card/cardSpecificEffects"
+import { card_wasteHeatRecovery, card_unstableCharge, card_commandScreech, card_commandStrike, card_heatBlast, card_corrosiveBurst, card_myceliumSpread, card_randomOpponentMultiAttack } from "@/core/effects/card/cardSpecificEffects"
 import { organ_heatTick, organ_rustySeparator, organ_emergencyBattery, organ_pheromoneGland, gainArmorPerAlly, organ_heatAccumulate, organ_poisonArmor, organ_toxicPulse, organ_armorBash, state_hardenAbsorb, card_strengthBite, organ_lifeSteal, organ_poisonAmplify, organ_corruptionArmor, organ_phaseShift, organ_mycelialSpread, organ_multiHitBonus, organ_powerAmplify } from "@/core/effects/organ/organSpecificEffects"
 import { stuffCard } from "@/core/effects/card/stuffCard"
 import { clearArmorEffect } from "@/core/effects/clearArmor"
@@ -466,7 +466,7 @@ export const effectMap:EffectData[] = [
     key:"clearArmorEffect",
     effect:clearArmorEffect
 },{
-    label:"指挥嘶鸣：给所有友军+指挥层",
+    label:"指挥嘶鸣：给持卡者所在阵营+指挥层",
     key:"card_commandScreech",
     effect:card_commandScreech
 },{
@@ -489,10 +489,6 @@ export const effectMap:EffectData[] = [
     label:"随机对手多段攻击",
     key:"card_randomOpponentMultiAttack",
     effect:card_randomOpponentMultiAttack
-},{
-    label:"钢铁压碾：护甲转化为全体攻击",
-    key:"card_steelRoll",
-    effect:card_steelRoll
 },{
     label:"启用器官奖励动作",
     key:"enableOrganRewardAction",

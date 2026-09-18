@@ -25,6 +25,22 @@
     </div>
     <div class="corner-right">v{{ GAME_VERSION }}</div>
 
+    <Teleport to="body">
+        <div
+            v-if="showOptions"
+            class="option-overlay"
+            :style="{ zIndex: SHOW_POPUP_Z_INDEX }"
+            @click.self="closeOptions"
+        >
+            <div class="option-bar">
+                <Button large :click="openSettingsFromOptions" label="设置" />
+                <Button large :click="exportSave" label="导出存档" />
+                <Button large :click="importSave" label="导入存档" />
+                <Button large :click="closeOptions" label="返回" />
+            </div>
+        </div>
+    </Teleport>
+
     <SettingsModal v-if="showSettings" @close="showSettings = false" />
 </div>
 </template>
@@ -34,20 +50,51 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import SettingsModal from '@/ui/components/interaction/SettingsModal.vue'
 import Popover from '@/ui/components/global/Popover.vue'
+import Button from '@/ui/components/global/Button.vue'
 import { GAME_VERSION, QQ_GROUP } from '@/ui/hooks/global/creatorEasterEgg'
 import { requestGameFullscreen } from '@/ui/hooks/global/layoutMode'
+import { copySaveToClipboard, importSaveFromClipboard, loadMetaProgress, type MetaProgressSave } from '@/core/persistence/metaProgress'
+import { SHOW_POPUP_Z_INDEX } from '@/ui/hooks/interaction/popoverHost'
 
 const router = useRouter()
 
 const showSettings = ref(false)
+const showOptions = ref(false)
+const metaProgress = ref<MetaProgressSave>(loadMetaProgress())
 
 const buttonList: { label: string, click: () => void }[] = [
     { label: "开始游戏", click: () => {
         requestGameFullscreen()
         router.push('/setup')
     } },
-    { label: "设置", click: () => showSettings.value = true }
+    { label: "选项", click: () => showOptions.value = true }
 ]
+
+function closeOptions() {
+    showOptions.value = false
+}
+
+function openSettingsFromOptions() {
+    closeOptions()
+    showSettings.value = true
+}
+
+async function exportSave() {
+    const success = await copySaveToClipboard(metaProgress.value)
+    if (success) {
+        closeOptions()
+        alert('存档已复制到剪贴板')
+    }
+}
+
+async function importSave() {
+    const success = await importSaveFromClipboard()
+    if (success) {
+        metaProgress.value = loadMetaProgress()
+        closeOptions()
+        alert('存档导入成功')
+    }
+}
 </script>
 
 <style scoped lang='scss'>
@@ -130,5 +177,32 @@ const buttonList: { label: string, click: () => void }[] = [
     font-size: 20px;
     font-weight: bold;
     user-select: all;
+}
+
+.option-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.option-bar {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--layout-gap-md);
+    width: min(420px, 80vw);
+
+    :deep(.game-btn) {
+        width: 100%;
+        font-size: 22px;
+
+        .game-btn-face {
+            background: #fff;
+            padding: 16px 28px;
+        }
+    }
 }
 </style>

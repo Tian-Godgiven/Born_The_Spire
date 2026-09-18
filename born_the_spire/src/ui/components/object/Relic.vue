@@ -167,6 +167,7 @@
     border: 2px solid black;
     padding: 8px;
     cursor: pointer;
+        background-color: white;
 
     &.has-abilities {
         border-color: #3b82f6;

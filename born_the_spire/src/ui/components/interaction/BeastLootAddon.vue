@@ -4,7 +4,7 @@
         class="beast-caption"
         :class="{ 'beast-loot-wanted': wanted, 'beast-loot-forced': forced }"
     >
-        {{ forced ? '🐕 小兽霸占了这份' : '🐕 小兽想要这份' }}
+        {{ forced ? '🐕 小兽霸占了这份战利品' : '🐕 小兽想要这份战利品' }}
     </span>
     <Button
         v-else-if="area === 'action' && wanted"
@@ -43,29 +43,13 @@ function feed() {
 }
 
 .beast-feed-btn {
-    opacity: 0;
-    pointer-events: none;
 }
 </style>
 
 <style lang="scss">
-.reward-row:hover .beast-feed-btn,
-.reward-row:focus-within .beast-feed-btn {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-@media (hover: none) {
-    .reward-row .beast-feed-btn {
-        opacity: 1;
-        pointer-events: auto;
-    }
-}
-
 .reward-row:has(.beast-loot-wanted),
 .reward-row:has(.beast-loot-forced) {
     background: rgba(0, 0, 0, 0.05);
-    outline: 2px solid black;
     outline-offset: -4px;
 }
 

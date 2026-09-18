@@ -19,9 +19,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, defineAsyncComponent } from 'vue';
+import { defineAsyncComponent } from 'vue';
 import { RouterView } from 'vue-router';
-import router from './ui/router';
 import { onMousemove } from './ui/hooks/global/mousePosition';
 import { initLayoutMode } from './ui/hooks/global/layoutMode';
 import './ui/styles/layout/pc.scss';
@@ -49,9 +48,6 @@ const DevConsole = defineAsyncComponent(() =>
   import('./ui/page/tool/console/DevConsole.vue')
 );
 
-onMounted(()=>{
-    router.replace("/")
-})
 </script>
 
 <style lang="scss">

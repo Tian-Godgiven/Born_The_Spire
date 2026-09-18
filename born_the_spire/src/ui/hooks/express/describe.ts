@@ -137,15 +137,48 @@ function provideCardCount(organ: any, preferPlayerCards?: boolean): number {
     return configProvideCount(organ, preferPlayerCards)
 }
 
-/** 「提供N张xx卡牌」——有 cards 就自动生成，不要写进器官 describe。 */
+function provideCardKeyAtIndex(organ: any, index: number, preferPlayerCards?: boolean): string | null {
+    if (organIsHeld(organ)) {
+        return getCardModifier(organ.owner).getCardsFromSource(organ)[index]?.key ?? null
+    }
+
+    const playerCards = organ?.cardsByOwner?.player
+    if (preferPlayerCards && Array.isArray(playerCards) && playerCards.length > 0) return playerCards[index] ?? null
+    if (preferPlayerCards && typeof playerCards === "string") return index === 0 ? playerCards : null
+    if (Array.isArray(organ?.cards) && organ.cards.length > 0) return organ.cards[index] ?? null
+
+    const enemyCards = organ?.cardsByOwner?.enemy
+    if (Array.isArray(enemyCards) && enemyCards.length > 0) return enemyCards[index] ?? null
+    if (typeof enemyCards === "string") return index === 0 ? enemyCards : null
+    if (Array.isArray(playerCards) && playerCards.length > 0) return playerCards[index] ?? null
+    return typeof playerCards === "string" && index === 0 ? playerCards : null
+}
+
+/** 「提供 xx、yyx2 卡牌」——重复卡牌的数量紧跟在卡名后，有 cards 就自动生成。 */
 export function provideCardsDescribe(organ: any, options?: { preferPlayerCards?: boolean }): Describe {
     const count = provideCardCount(organ, options?.preferPlayerCards)
     if (count <= 0) return []
-    const parts: Describe = [`提供${count}张`]
+
+    const groups: Array<{ firstIndex: number, count: number }> = []
+    const groupByCardKey = new Map<string, { firstIndex: number, count: number }>()
     for (let i = 0; i < count; i++) {
-        if (i > 0) parts.push(i === count - 1 ? "和" : "、")
-        parts.push({ "@": i })
+        const cardKey = provideCardKeyAtIndex(organ, i, options?.preferPlayerCards) ?? `index:${i}`
+        const group = groupByCardKey.get(cardKey)
+        if (group) {
+            group.count++
+        } else {
+            const nextGroup = { firstIndex: i, count: 1 }
+            groupByCardKey.set(cardKey, nextGroup)
+            groups.push(nextGroup)
+        }
     }
+
+    const parts: Describe = ["提供"]
+    groups.forEach((group, index) => {
+        if (index > 0) parts.push("、")
+        parts.push({ "@": group.firstIndex })
+        if (group.count > 1) parts.push(`x${group.count}`)
+    })
     parts.push("卡牌")
     return parts
 }

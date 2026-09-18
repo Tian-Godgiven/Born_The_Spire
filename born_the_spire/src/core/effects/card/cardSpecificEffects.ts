@@ -39,31 +39,6 @@ export const card_randomOpponentMultiAttack: EffectFunc = async (event, effect) 
     return true
 }
 
-/** 钢铁压碾：清空自身护甲，并将清空前的数值作为伤害攻击所有对手。 */
-export const card_steelRoll: EffectFunc = async (event) => {
-    const source = event.source
-    if (!isEntity(source)) return false
-
-    const armor = Number(source.current.armor?.value ?? 0)
-    if (source.current.armor) source.current.armor.value = 0
-
-    const battle = nowBattle.value
-    if (!battle || armor <= 0) return true
-
-    const opponents = isEnemy(source) ? battle.getAlivePlayers() : battle.getAliveEnemies()
-    for (const target of opponents) {
-        if (target.current.isAlive?.value !== 1) continue
-        await doEvent({
-            key: "attack",
-            source,
-            medium: event.medium,
-            target,
-            effectUnits: [{ key: "attack", params: { value: armor } }]
-        })
-    }
-    return true
-}
-
 /**
  * 余热回收：检查牌堆是否有指定标签的卡牌，若有则消耗一张并获得额外护甲
  * 专属于 enemy_waste_heat_recovery 和 player_waste_heat_recovery 卡牌
@@ -176,7 +151,12 @@ export const card_commandScreech: EffectFunc = (event, effect) => {
     if (!battle) return false
 
     const stacks = Number(effect.params?.stacks ?? 3)
-    for (const ally of battle.getAliveEnemies()) {
+    const holder = event.source
+    if (!isEntity(holder)) return false
+    const allies = isEnemy(holder)
+        ? battle.getAliveEnemies()
+        : (battle.getAlivePlayers() || [])
+    for (const ally of allies) {
         gainStateStack(ally, "command", stacks, event.medium as any)
     }
     newLog([`指挥嘶鸣：所有友军 +${stacks} 指挥层`])

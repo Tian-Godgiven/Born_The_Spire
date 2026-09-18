@@ -22,7 +22,7 @@
             <!-- 词条区域 -->
             <div v-if="organ.entry.length > 0" class="entries">
                 <div v-for="entryKey in organ.entry" :key="entryKey" class="entry-item">
-                    <span class="entry-label">【{{ entryKey }}】</span>
+                    <span class="entry-label">【{{ getEntryLabel(entryKey) }}】</span>
                     <span class="entry-desc">{{ getEntryDescription(entryKey) }}</span>
                 </div>
             </div>
@@ -92,6 +92,10 @@ const emit = defineEmits<{
 
 function close() {
     emit('close')
+}
+
+function getEntryLabel(entryKey: string): string {
+    return entryDefinitions[entryKey]?.label || entryKey
 }
 
 // 获取词条描述

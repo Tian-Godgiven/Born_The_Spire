@@ -857,12 +857,12 @@ export const cardList:CardMap[] = [{
     }
 },
 
-// 指挥嘶鸣：女王大颚提供，给所有友军+3指挥层
+// 指挥嘶鸣：女王大颚提供，给敌方全体+3指挥层
 {
     label: "指挥嘶鸣",
     tags: ["skill", "enemy"],
     status: { cost: 1, stacks: 3 },
-    describe: ["给所有友军施加", {key: ["status", "stacks"]}, "层", {$:"指挥"}],
+    describe: ["使所有敌人获得", {key: ["status", "stacks"]}, "层", {$:"指挥"}],
     key: "enemy_card_command_screech",
     interaction: {
         use: {
@@ -1044,7 +1044,9 @@ export const cardList:CardMap[] = [{
 {
     label: "孢子",
     key: "boss2_card_spore",
-    tags: ["skill"],
+    tags: ["status"],
+    // 只由孢子爆发指定生成，不能进入结茧等通用随机技能池。
+    pool: ["exclusive"],
     status: { cost: 1, stacks: 1 },
     entry: ["card_exhaust", "card_void"],
     describe: ["在手牌中时，回合结束施加", {key: ["status", "stacks"]}, "层", {$:"中毒"}],
@@ -1167,9 +1169,9 @@ export const cardList:CardMap[] = [{
     describe: ["获得", { key: ["status", "armor"] }, "点", {$:"护甲"}],
     interaction: {
         use: {
-            target: { faction: "opponent" },
+            target: { key: "self" },
             effects: [
-                { key: "gainArmor", params: { value: 15 }, target: "source" }
+                { key: "gainArmor", params: { value: 15 } }
             ]
         }
     },
@@ -1177,13 +1179,17 @@ export const cardList:CardMap[] = [{
         maxLevel: 1,
         levelConfigs: {
             1: {
-                describe: ["获得", { key: ["status", "armor"] }, "点", {$:"护甲"}, "，施加1层", {$:"易伤"}],
+                describe: ["获得", { key: ["status", "armor"] }, "点", {$:"护甲"}, "，随机施加1层", {$:"易伤"}],
                 interaction: {
                     use: {
-                        target: { faction: "opponent" },
+                        target: { key: "self" },
                         effects: [
-                            { key: "gainArmor", params: { value: 15 }, target: "source" },
-                            { key: "applyState", params: { stateKey: "vulnerable", stacks: 1 } }
+                            { key: "gainArmor", params: { value: 15 } },
+                            {
+                                key: "applyState",
+                                params: { stateKey: "vulnerable", stacks: 1 },
+                                target: "allOpponents.random"
+                            }
                         ]
                     }
                 }
@@ -1235,17 +1241,24 @@ export const cardList:CardMap[] = [{
         }
     }
 },
-// 钢铁压碾：钢铁意志提供，无视护甲伤害 + 自身护甲清零
+// 钢铁压碾：清空自身护甲，并将清空前的护甲值作为伤害攻击所有敌人。
 {
     label: "钢铁压碾",
     key: "boss3_card_steel_roll",
     tags: ["skill", "enemy"],
     status: { cost: 2 },
-    describe: ["清空所有", {$:"护甲"}, "，对所有敌人造成等量伤害"],
+    describe: ["清空自身所有", {$:"护甲"}, "，对所有敌人造成等量伤害"],
     interaction: {
         use: {
-            target: { faction: "opponent" },
-            effects: [{ key: "card_steelRoll", params: {} }]
+            target: { key: "self" },
+            effects: [
+                { key: "clearArmorEffect", params: {}, resultStoreAs: "clearedArmor" },
+                {
+                    key: "attack",
+                    params: { value: "$eventResult(clearedArmor)" },
+                    target: "allOpponents"
+                }
+            ]
         }
     }
 },{

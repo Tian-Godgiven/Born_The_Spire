@@ -43,6 +43,13 @@ export function applyCardLevel(card: Card, targetLevel: number): boolean {
         }
     }
 
+    // 1.5. Allow a forged card to replace selected interactions (for example,
+    // adding an effect to its use action) while retaining unspecified base ones.
+    const interactionMap = levelConfig.interaction
+        ? { ...cardData.interaction, ...levelConfig.interaction }
+        : cardData.interaction
+    card.setInteractionMap(interactionMap)
+
     // 2. 更新词条
     const entryModifier = getEntryModifier(card)
 

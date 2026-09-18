@@ -342,7 +342,7 @@ Mod 通过 `registerIntentValueSource(intentType, effectKeys)` 扩展或覆盖�
   `attack` 是挨打，`damage` 是中毒等非挨打；意图的攻击类会读这两种效果 key，但折叠按各自的 before / on 触发器算
   `multiplier` → 乘进单段数值（放电 `value: 3, multiplier: "$source.stateStack(charge)"`，2 层充能显示 6，不是 3）
   `repeatEffects` → 展开成段数，同值多段显示 `n × m`（群咬 3 点打 2 次显示 `3 × 2`）
-  模拟时 medium 必须是卡牌本身，`$owner.status(hits)` 才能解析
+  模拟时 medium 必须是卡牌本身，`$this.status(hits)` 才能解析
   多张行动牌各自算一段 `parts`，不再把两张牌的伤害加进同一个数字
 
 技术实现：`previewEffect` 只跑挂了 `preview` 的改参，护甲吸收没有 `preview`，不会扣格挡。

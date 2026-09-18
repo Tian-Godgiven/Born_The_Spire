@@ -1,5 +1,5 @@
 <template>
-<div class="running">
+<div v-if="hasActiveRun" class="running">
     <!-- 顶部内容 -->
     <Top class="top"></Top>
     <!-- 房间内容 -->
@@ -54,9 +54,14 @@ import CardGroupModal from '@/ui/components/interaction/CardGroupModal.vue'
 import GlobalMessage from '@/ui/components/display/GlobalMessage.vue'
 import CardFlightOverlay from '@/ui/animation/components/CardFlightOverlay.vue'
 import { nowGameRun } from '@/core/objects/game/run'
+import { nowPlayerTeam } from '@/core/objects/game/battle'
 import { getRoomComponent } from '@/ui/registry/roomComponentRegistry'
 import { setShowMapCallback } from '@/core/hooks/step'
 import { hideRewardUI } from '@/ui/hooks/interaction/rewardDisplay'
+import router from '@/ui/router'
+
+// 本局状态尚未持久化；刷新或分享 /running 时不能恢复战局。
+const hasActiveRun = nowPlayerTeam.length > 0
 
 // 获取当前房间对应的组件
 const currentRoomComponent = computed(() => {
@@ -110,6 +115,10 @@ const showBackToMapButton = computed(() => {
 
 // 注册显示地图的回调
 onMounted(() => {
+    if (!hasActiveRun) {
+        router.replace('/setup')
+        return
+    }
     setShowMapCallback(showMap)
 })
 

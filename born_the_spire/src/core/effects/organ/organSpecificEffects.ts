@@ -1,12 +1,13 @@
 import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
 import { isEntity, isEffect, isEnemy } from "@/core/utils/typeGuards"
-import { isHurtEffectKey, nullifyHurtEffect } from "@/core/effects/health/damage"
+import { isHurtEffectKey, nullifyHurtEffectForTarget } from "@/core/effects/health/damage"
 import { getStateModifier } from "@/core/objects/system/modifier/StateModifier"
 import { getContextRandom } from "@/core/hooks/random"
 import { doEvent } from "@/core/objects/system/ActionEvent"
 import { newLog } from "@/ui/hooks/global/log"
 import { changeCurrentValue, getCurrentValue } from "@/core/objects/system/Current/current"
 import { Organ } from "@/core/objects/target/Organ"
+import { breakOrgan } from "@/core/objects/target/Organ"
 import { nowBattle } from "@/core/objects/game/battle"
 import { stateList } from "@/static/list/target/stateList"
 import { gainStateStack } from "@/core/objects/system/State"
@@ -47,14 +48,16 @@ export const organ_heatTick: EffectFunc = (event, _effect) => {
 
 /**
  * 过期隔板：受到伤害时掷骰
- * 抵消概率 = blockChance - 本回合已抵消次数 × blockDecay，落在其后的 breakChance 区间则失去所有格挡
+ * 抵消概率 = blockChance - 本回合已抵消次数 × blockDecay，落在其后的 armorLossChance 区间则失去所有格挡，
+ * 再之后的 organBreakChance 区间则损坏这块器官。
  *
  * 在 before take damage 的 reaction 里触发，event.target 是 damage Effect，event.medium 是器官
  *
  * params:
  *   blockChance: number - 基础完全抵消概率 (default: 0.3)
  *   blockDecay: number  - 每抵消一次降低的概率 (default: 0.1)
- *   breakChance: number - 失去所有格挡的概率 (default: 0.2)
+ *   armorLossChance: number - 失去所有格挡的概率 (default: 0.2)
+ *   organBreakChance: number - 损坏此器官的概率 (default: 0.1)
  */
 export const organ_rustySeparator: EffectFunc = (event, effect) => {
     const damageEffect = Array.isArray(event.target) ? event.target[0] : event.target
@@ -68,7 +71,8 @@ export const organ_rustySeparator: EffectFunc = (event, effect) => {
 
     const blockChance = Number(effect.params.blockChance ?? 0.3)
     const blockDecay = Number(effect.params.blockDecay ?? 0.1)
-    const breakChance = Number(effect.params.breakChance ?? 0.2)
+    const armorLossChance = Number(effect.params.armorLossChance ?? 0.2)
+    const organBreakChance = Number(effect.params.organBreakChance ?? 0.1)
 
     // 两个计数都记在器官自己身上，同时装两块隔板时各算各的
     const stateModifier = getStateModifier(organ as any)
@@ -88,15 +92,18 @@ export const organ_rustySeparator: EffectFunc = (event, effect) => {
     const roll = rng.nextFloatRange(0, 1)
 
     if (roll < chance) {
-        nullifyHurtEffect(damageEffect)
+        nullifyHurtEffectForTarget(damageEffect, host)
         gainStateStack(organ as any, "separatorWear", 1, organ as any)
         newLog([host, `过期隔板：完全抵消伤害（本回合抵消概率降至 ${Math.round(Math.max(0, chance - blockDecay) * 100)}%）`])
-    } else if (roll < chance + breakChance) {
+    } else if (roll < chance + armorLossChance) {
         const currentArmor = getCurrentValue(host as any, "armor")
         if (currentArmor > 0) {
             changeCurrentValue(host as any, "armor", 0, event)
             newLog([host, "过期隔板：失去所有格挡"])
         }
+    } else if (roll < chance + armorLossChance + organBreakChance) {
+        breakOrgan(host, organ)
+        newLog([host, "过期隔板：器官损坏"])
     }
 
     return true

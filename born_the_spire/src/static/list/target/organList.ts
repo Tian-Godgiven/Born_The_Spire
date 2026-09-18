@@ -450,12 +450,12 @@ export const organList:OrganMap[] = [
 {
     label: "蓄力腺",
     key: "enemy_organ_ant_charge_gland",
-    describe: ["回合结束时获得", { key: ["status", "momentum-gain"] }, "层", {$:"蓄势"}],
+    describe: ["回合结束时获得", { key: ["status", "vitality-gain"] }, "层", {$:"活力"}],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Gland,
     status: {
         "max-mass": 15,
-        "momentum-gain": 1
+        "vitality-gain": 1
     },
     current: ["mass"],
     upgrade: {
@@ -467,10 +467,10 @@ export const organList:OrganMap[] = [
             },
             {
                 level: 3,
-                describe: ["改为获得 2 层", {$:"蓄势"}],
+                describe: ["改为获得 2 层", {$:"活力"}],
                 effects: [{
                     key: "setBaseStatus",
-                    params: { statusKey: "momentum-gain", value: 2 },
+                    params: { statusKey: "vitality-gain", value: 2 },
                     target: "eventMedium"
                 }]
             }
@@ -491,11 +491,11 @@ export const organList:OrganMap[] = [
     reaction: {
         gainChargeOnTurnEnd: [{
             key: "applyState",
-            label: "蓄力腺：回合结束蓄势",
+            label: "蓄力腺：回合结束活力",
             targetType: "creatorOwner",
             effect: [{
                 key: "applyState",
-                params: { stateKey: "momentum", stacks: "$owner.status(momentum-gain)" }
+                params: { stateKey: "vitality", stacks: "$owner.status(vitality-gain)" }
             }]
         }]
     }
@@ -1161,7 +1161,7 @@ export const organList:OrganMap[] = [
 {
     label: "过期隔板",
     key: "enemy_organ_rusty_separator",
-        describe: ["受到攻击时：30%完全抵消（本回合每抵消一次，概率-10%），20%失去所有", {$:"护甲"}],
+        describe: ["受到攻击时：30%抵消本次对自身的伤害（本回合每抵消一次，概率-10%），20%失去所有", {$:"护甲"}, "，10%概率损坏"],
     rarity: OrganRarity.Common,
     part: OrganPartEnum.Bone,
     status: {
@@ -1199,7 +1199,8 @@ export const organList:OrganMap[] = [
                 params: {
                     blockChance: 0.3,
                     blockDecay: 0.1,
-                    breakChance: 0.2
+                    armorLossChance: 0.2,
+                    organBreakChance: 0.1
                 }
             }]
         }]
@@ -1295,7 +1296,7 @@ export const organList:OrganMap[] = [
     }
 },
 
-// 女王大颚：提供女王蚀咬+指挥嘶鸣
+// 女王大颚：提供各一张女王蚀咬与指挥嘶鸣
 {
     label: "女王大颚",
     key: "enemy_organ_queen_mandible",
@@ -2128,7 +2129,6 @@ export const organList:OrganMap[] = [
 {
     label: "铁壁核心",
     key: "enemy_organ_iron_wall_core",
-    describe: ["提供", {$:"装甲组装"}],
     rarity: OrganRarity.Uncommon,
     part: OrganPartEnum.Core,
     status: { "max-mass": 40, "opening-armor": 0 },
@@ -2138,7 +2138,6 @@ export const organList:OrganMap[] = [
         maxLevel: 3,
         milestones: [{
             level: 2,
-            describe: ["锻造提供的装甲组装"],
             effects: [{ key: "upgradeOrganCards", params: { cardKey: "boss3_card_armor_assembly" } }]
         }, {
             level: 3,
@@ -2224,7 +2223,6 @@ export const organList:OrganMap[] = [
         milestones: [
             {
                 level: 2,
-                describe: ["锻造提供的火力压制"],
                 effects: [{ key: "upgradeOrganCards", params: { cardKey: "boss3_card_firepower_suppression" } }]
             },
             {

@@ -34,6 +34,12 @@ html[data-layout="pc"] {
     --layout-gap-md: 20px;
     --layout-gap-sm: 10px;
     --layout-setup-padding: 40px;
+    --layout-setup-organ-map-max-height: min(600px, calc(100vh - 180px));
+    --layout-setup-preview-max-height: min(100%, var(--layout-setup-organ-map-max-height));
+    --layout-setup-preview-grow: 1;
+    --layout-setup-preview-align-self: center;
+    --layout-setup-chara-margin-top: 0px;
+    --layout-setup-center-align: center;
     --layout-organ-tile-min: 120px;
     --layout-organ-tile-pad: 15px;
     --layout-organ-grid-gap: 10px;

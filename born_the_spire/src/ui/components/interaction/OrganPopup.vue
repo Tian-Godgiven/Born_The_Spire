@@ -54,10 +54,11 @@ function getEntryLabel(entryKey: string): string {
 
 <style scoped lang='scss'>
 .organ-popup {
-    background: white;
+    background: var(--organ-popup-background, white);
+    color: var(--organ-popup-color, inherit);
     border: 2px solid black;
-    padding: 12px;
-    width: var(--layout-organ-popup-width);
+    padding: var(--organ-popup-padding, 12px);
+    width: var(--organ-popup-width, var(--layout-organ-popup-width));
     box-sizing: border-box;
     max-width: 100%;
 
@@ -68,7 +69,7 @@ function getEntryLabel(entryKey: string): string {
         margin-bottom: 8px;
 
         .popup-organ-name {
-            font-size: 16px;
+            font-size: var(--organ-popup-title-size, 16px);
             font-weight: bold;
 
             .popup-organ-level {
@@ -109,8 +110,8 @@ function getEntryLabel(entryKey: string): string {
     }
 
     .popup-content {
-        line-height: 1.6;
-        font-size: 14px;
+        line-height: var(--organ-popup-content-line-height, 1.6);
+        font-size: var(--organ-popup-content-size, 14px);
         word-wrap: break-word;
         white-space: normal;
     }

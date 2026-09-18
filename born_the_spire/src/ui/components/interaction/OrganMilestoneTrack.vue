@@ -47,10 +47,10 @@ const rows = computed(() => {
 
 <style scoped lang="scss">
 .milestone-track {
-    width: 240px;
+    width: var(--milestone-track-width, 240px);
     box-sizing: border-box;
     flex-shrink: 0;
-    font-size: 14px;
+    font-size: var(--milestone-track-font-size, 14px);
     white-space: normal;
     background: white;
 
@@ -61,8 +61,8 @@ const rows = computed(() => {
 
     .milestone-row {
         border: 2px solid black;
-        padding: 8px;
-        margin-bottom: 8px;
+        padding: var(--milestone-row-padding, 8px);
+        margin-bottom: var(--milestone-row-gap, 8px);
 
         &:last-child {
             margin-bottom: 0;
@@ -70,7 +70,7 @@ const rows = computed(() => {
 
         .milestone-lv {
             font-weight: bold;
-            margin-bottom: 4px;
+            margin-bottom: var(--milestone-level-gap, 4px);
         }
 
         &.reached {
