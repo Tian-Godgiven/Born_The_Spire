@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang='ts'>
-    import { computed, shallowRef, markRaw } from 'vue'
+    import { computed, shallowRef, markRaw, watch } from 'vue'
     import Popover from '@/ui/components/global/Popover.vue'
     import Card from '@/ui/components/object/Card.vue'
     import { resolveCardFromSegment } from '@/ui/hooks/express/cardSegment'
@@ -62,12 +62,26 @@
     }>()
 
     const card = shallowRef<CardType | null>(null)
+    let resolveVersion = 0
+
+    // OrganPopup 在不同器官间切换时会复用同一段“提供的第 N 张卡”。
+    // 必须清掉旧卡，并忽略仍在路上的旧解析结果，避免预览串到新器官上。
+    watch(
+        () => [segment.cardRefType, segment.cardRef, organ?.__id, organ?.key, preferPlayerCards],
+        () => {
+            resolveVersion++
+            card.value = null
+        },
+        { flush: 'sync' }
+    )
 
     const label = computed(() => text ?? segment.text)
 
     async function resolveCard() {
         if (card.value) return card.value
+        const version = resolveVersion
         const resolved = await resolveCardFromSegment(segment, organ, { preferPlayerCards })
+        if (version !== resolveVersion) return null
         if (resolved) card.value = markRaw(resolved)
         return card.value
     }

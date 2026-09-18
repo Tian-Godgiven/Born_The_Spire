@@ -1,6 +1,17 @@
 import type { ConsoleCommand } from '@/core/utils/consoleCommandRegistry'
 import { nowGameRun, nowPlayer } from '@/core/objects/game/run'
 
+async function gainRelicThroughEffect(relicKey: string) {
+    const { doEvent } = await import('@/core/objects/system/ActionEvent')
+    await doEvent({
+        key: 'gainRelic',
+        source: nowPlayer,
+        medium: nowPlayer,
+        target: nowPlayer,
+        effectUnits: [{ key: 'gainRelic', params: { relicKey } }]
+    })
+}
+
 export const relicCommands: ConsoleCommand[] = [
     {
         name: 'listRelics',
@@ -72,7 +83,6 @@ export const relicCommands: ConsoleCommand[] = [
             try {
                 const { getAllRelics, getRelicByKey } = await import('@/static/list/item/relicList')
                 const { getRelicModifier } = await import('@/core/objects/system/modifier/RelicModifier')
-                const { getRelic } = await import('@/core/objects/item/Subclass/Relic')
                 const relicModifier = getRelicModifier(nowPlayer)
                 const allRelics = getAllRelics()
                 let gained = 0
@@ -85,7 +95,7 @@ export const relicCommands: ConsoleCommand[] = [
                     }
                     try {
                         const relic = await getRelicByKey(relicMap.key)
-                        getRelic(nowPlayer, nowPlayer, relic)
+                        await gainRelicThroughEffect(relicMap.key)
                         gained++
                         addOutput(`  [${relic.rarity || 'common'}] ${relic.label} (${relic.key})`, 'result')
                     } catch (error: any) {
@@ -118,9 +128,8 @@ export const relicCommands: ConsoleCommand[] = [
             }
             try {
                 const { getRelicByKey } = await import('@/static/list/item/relicList')
-                const { getRelic } = await import('@/core/objects/item/Subclass/Relic')
                 const relic = await getRelicByKey(relicKey)
-                getRelic(nowPlayer, nowPlayer, relic)
+                await gainRelicThroughEffect(relicKey)
                 addOutput(`✓ 成功获得遗物: ${relic.label} [${relic.rarity}]`, 'result')
             } catch (error: any) {
                 addOutput(`获得遗物失败: ${error.message}`, 'error')
@@ -172,7 +181,6 @@ export const relicCommands: ConsoleCommand[] = [
             try {
                 const { getAllRelics } = await import('@/static/list/item/relicList')
                 const { createRelic } = await import('@/core/factories')
-                const { getRelic } = await import('@/core/objects/item/Subclass/Relic')
                 const allRelics = getAllRelics()
                 if (allRelics.length === 0) {
                     addOutput('没有可用的遗物', 'error')
@@ -181,7 +189,7 @@ export const relicCommands: ConsoleCommand[] = [
                 const randomIndex = Math.floor(Math.random() * allRelics.length)
                 const relicMap = allRelics[randomIndex]
                 const relic = await createRelic(relicMap)
-                getRelic(nowPlayer, nowPlayer, relic)
+                await gainRelicThroughEffect(relicMap.key)
                 addOutput(`✓ 成功获得随机遗物: ${relic.label} [${relic.rarity}]`, 'result')
                 addOutput(`  key: ${relic.key}`, 'info')
             } catch (error: any) {

@@ -1,8 +1,74 @@
 import type { ConsoleCommand } from '@/core/utils/consoleCommandRegistry'
+import { consoleCommandRegistry } from '@/core/utils/consoleCommandRegistry'
 import { nowGameRun, nowPlayer } from '@/core/objects/game/run'
 import router from '@/ui/router'
+import { battleList } from '@/static/list/room/battle/battleList'
+
+function currentLayer(): number {
+    return nowGameRun?.currentRoom?.layer ?? nowGameRun?.towerLevel ?? 1
+}
 
 export const battleCommands: ConsoleCommand[] = [
+    {
+        name: 'startBattleRoom',
+        group: '战斗',
+        description: '开始指定的预设战斗房间',
+        usage: 'startBattleRoom("battleKey", layer?)',
+        examples: ['startBattleRoom("battle_elite_ant_queen")', 'startBattleRoom("battle_normal_mouse", 1)'],
+        execute: async (args, addOutput) => {
+            const [battleKey, layer] = args
+            if (typeof battleKey !== 'string' || !battleKey) {
+                addOutput('用法: startBattleRoom("battleKey", layer?)', 'error')
+                addOutput('使用 listBattles() 查看所有预设战斗', 'info')
+                return
+            }
+            if (!nowGameRun) {
+                addOutput('游戏未开始，请先点击“开始游戏”', 'error')
+                return
+            }
+            if (!battleList.some(battle => battle.key === battleKey)) {
+                addOutput(`未找到战斗房间: ${battleKey}`, 'error')
+                addOutput('使用 listBattles() 查看所有预设战斗', 'info')
+                return
+            }
+
+            const enterRoom = consoleCommandRegistry.getCommand('enterRoom')
+            if (!enterRoom) {
+                addOutput('进入房间命令未注册', 'error')
+                return
+            }
+            await enterRoom.execute([battleKey, typeof layer === 'number' ? layer : currentLayer()], addOutput)
+        }
+    },
+    {
+        name: 'listBattles',
+        group: '战斗',
+        description: '列出所有预设战斗房间',
+        usage: 'listBattles()',
+        execute: (_args, addOutput) => {
+            if (battleList.length === 0) {
+                addOutput('没有可用的预设战斗', 'info')
+                return
+            }
+            addOutput(`=== 共 ${battleList.length} 个预设战斗 ===`, 'info')
+            addOutput('点击战斗行可填入开始命令', 'info')
+            for (const battle of battleList) {
+                const typeLabel = {
+                    normal: '普通',
+                    elite: '精英',
+                    elitePlus: '强化精英',
+                    boss: 'Boss'
+                }[battle.battleType] ?? battle.battleType
+                addOutput(
+                    `  [${typeLabel}] ${battle.name} - ${battle.key}`,
+                    'result',
+                    undefined,
+                    undefined,
+                    [{ label: '填入战斗', command: `startBattleRoom("${battle.key}")` }]
+                )
+            }
+        }
+    },
     {
         name: 'startBattle',
         group: '战斗',

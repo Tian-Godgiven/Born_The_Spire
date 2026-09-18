@@ -1,7 +1,9 @@
 import type { Battle } from "./battle";
 import type { Enemy } from "@/core/objects/target/Enemy"
-import type { Player } from "@/core/objects/target/Player"
+import type { Companion } from "@/core/objects/target/Companion"
+import type { Chara } from "@/core/objects/target/Target"
 import { selectAction, selectTurnActions } from "@/core/objects/system/EnemyBehavior"
+import { isEnemy } from "@/core/utils/typeGuards"
 import { newLog } from "@/ui/hooks/global/log"
 import { startCharaTurn, endCharaTurn } from "@/core/effects/turn"
 
@@ -21,7 +23,7 @@ import { startCharaTurn, endCharaTurn } from "@/core/effects/turn"
  */
 export async function executeEnemyTurn(
     enemy: Enemy,
-    player: Player,
+    target: Chara,
     _turnCount: number,
     battle: Battle
 ) {
@@ -39,7 +41,7 @@ export async function executeEnemyTurn(
     if (enemy.hand.length === 0) {
         newLog([`${enemy.label} 手牌为空，跳过回合`])
     } else {
-        await enemy.executeHandInOrder(player)
+        await enemy.executeHandInOrder(target)
         enemy.clearHandAfterTurn()
     }
 
@@ -52,13 +54,47 @@ export async function executeEnemyTurn(
  */
 export async function executeAllEnemiesTurn(
     enemies: Enemy[],
-    player: Player,
     turnCount: number,
     battle: Battle
 ) {
     for (const enemy of enemies) {
         if (enemy.current.isAlive?.value !== 1) continue
-        await executeEnemyTurn(enemy, player, turnCount, battle)
+        const target = battle.getRandomAliveCombatant("player")
+        if (!target) return
+        await executeEnemyTurn(enemy, target, turnCount, battle)
+    }
+}
+
+/** 玩家回合结束后，友军召唤物按敌人的自动行动规则行动。 */
+export async function executeAllCompanionsTurn(
+    companions: Companion[],
+    turnCount: number,
+    battle: Battle
+) {
+    for (const companion of companions) {
+        if (!companion.autoAct) continue
+        if (companion.current.isAlive?.value !== 1) continue
+        const plannedTarget = companion._intentTarget
+        const target = isEnemy(plannedTarget) && plannedTarget.current.isAlive?.value === 1
+            ? plannedTarget
+            : battle.getRandomAliveCombatant("enemy")
+        if (!target) return
+        if (companion.hand.length === 0) {
+            await prepareEnemyIntents([companion], target, turnCount)
+        }
+        await executeEnemyTurn(companion, target, turnCount, battle)
+        // 自动单位的本回合意图已经消耗；showIntent 只决定 UI 是否可显示一个待执行意图。
+        companion.clearIntent()
+    }
+}
+
+/** 为友军召唤物预先选择行动，供玩家在自己的回合中查看。 */
+export async function prepareCompanionIntents(companions: Companion[], turnCount: number, battle: Battle) {
+    for (const companion of companions) {
+        if (!companion.autoAct || companion.hand.length > 0) continue
+        const target = battle.getRandomAliveCombatant("enemy")
+        if (!target) return
+        await prepareEnemyIntents([companion], target, turnCount)
     }
 }
 
@@ -73,7 +109,7 @@ export async function executeAllEnemiesTurn(
  */
 export async function prepareEnemyIntents(
     enemies: Enemy[],
-    player: Player,
+    target: Chara,
     turnCount: number
 ) {
     newLog(["准备敌人意图", `回合 ${turnCount}`])
@@ -93,7 +129,7 @@ export async function prepareEnemyIntents(
         // 2. 选本回合行动牌。有剧本 moves 时一回合只决定一招（可多张）；
         // 否则按 actions-per-turn 把 pattern 评 n 次。
         if (enemy.behavior.moves?.list?.length) {
-            const result = await selectTurnActions(enemy.behavior, enemy, player, turnCount)
+            const result = await selectTurnActions(enemy.behavior, enemy, target as any, turnCount)
             result.cards.forEach((card, order) => {
                 const intent = Array.isArray(result.intent) ? result.intent[order] : result.intent
                 enemy.drawPile.actions.push({ card, order, intent })
@@ -101,7 +137,7 @@ export async function prepareEnemyIntents(
         } else {
             const actionsPerTurn = Number(enemy.status["actions-per-turn"]?.value || 1)
             for (let order = 0; order < actionsPerTurn; order++) {
-                const result = await selectAction(enemy.behavior, enemy, player, turnCount)
+                const result = await selectAction(enemy.behavior, enemy, target as any, turnCount)
                 if (result.cards.length > 0) {
                     const intent = Array.isArray(result.intent) ? result.intent[0] : result.intent
                     enemy.drawPile.actions.push({
@@ -121,7 +157,7 @@ export async function prepareEnemyIntents(
             const intentCards = drawnActions.map(a => a.card)
             const declared = drawnActions.map(a => a.intent)
             const intentType = declared.some(type => type !== undefined) ? declared : undefined
-            await enemy.setIntent(intentCards, "card", intentType, player)
+            await enemy.setIntent(intentCards, "card", intentType, target)
         } else {
             enemy.clearIntent()
         }

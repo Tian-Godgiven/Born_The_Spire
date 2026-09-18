@@ -11,8 +11,8 @@
  *   $triggerEffect.params(key)             → 获取触发效果的参数（延迟解析）
  *   $triggerEffect.target.accessor(args)   → 获取触发效果的事件目标的属性
  *   $triggerCard.accessor(args)            → 触发事件的 medium 作为卡牌解读（非卡时静默 false）
- *   $owner.accessor(args)                  → 定义该 EffectUnit 的物品（卡牌/器官/遗物）自身属性
- *   $item.accessor(args)                   → 同上（效果参数里与 $owner 同一实体；条件里 $item 是物品、$owner 是持有者）
+ *   $this.accessor(args)                   → 当前声明所属对象（卡牌/器官/遗物/状态）的属性
+ *   $this.owner.accessor(args)             → 当前声明对象的持有者属性
  *   $participant.accessor(args)            → 从参与者获取属性值
  *   $event.info(key)                       → 获取触发事件的 info 字段值
  *   $scene                                 → 当前场景类型（combat/pool/event/...）
@@ -466,11 +466,17 @@ export class ReferenceResolver {
      *   $battle.turn / $battle.turnCount    → 战斗回合数
      *   $collection.any.accessor(args)      → 集合量词
      *   $collection.all.accessor(args)      → 集合量词
-     *   $target.accessor(args)              → 目标+访问器（通用形式）
-     *   $target                             → 仅解析目标对象
+     *   $event.target.accessor(args)        → 事件目标+访问器
+     *   $event.target                       → 仅解析事件目标对象
      */
     private resolveGeneralReference(ref: string, context: ReferenceContext): any {
         const expr = ref.slice(1) // 去掉 $
+
+        const deprecatedRoot = expr.match(/^(item|owner|source|target)(?:\.|$)/)?.[1]
+        if (deprecatedRoot) {
+            failRefResolve(`裸 \$${deprecatedRoot} 已移除；请改用 $this、$this.owner 或 $event.${deprecatedRoot}`, context)
+            return undefined
+        }
 
         // 全局值：$scene
         if (expr === "scene") {
@@ -494,7 +500,7 @@ export class ReferenceResolver {
             )
         }
 
-        // 目标 + 访问器：$owner.status(health)
+        // 目标 + 访问器：$this.status(health)
         const dotIndex = expr.indexOf(".")
         if (dotIndex !== -1) {
             const targetKey = expr.slice(0, dotIndex)
@@ -502,7 +508,7 @@ export class ReferenceResolver {
             return this.resolveTargetAccessor(targetKey, accessorPart, context, ref)
         }
 
-        // 仅目标（无访问器）：$owner
+        // 仅目标（无访问器）：$this
         const target = resolveTargetOptional(expr, context)
         if (target !== null) return target
 

@@ -36,9 +36,8 @@ export function resolveBadges(
     const results: BadgeRenderData[] = []
 
     const ctx: ConditionContext = {
-        item: entity,
-        owner,
-        source: entity,
+        declarationObject: entity,
+        declarationOwner: owner,
         ...context,
     }
 

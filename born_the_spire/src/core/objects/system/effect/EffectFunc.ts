@@ -1,7 +1,7 @@
 import type { ActionEvent } from "../ActionEvent";
 import type { Effect } from "./Effect";
 import type { EventParticipant } from "@/core/types/event/EventParticipant";
-import { isState, isEffect, isEntity } from "@/core/utils/typeGuards";
+import { isState, isEffect } from "@/core/utils/typeGuards";
 import { getStatusValue } from "../status/Status";
 import { getCurrentValue } from "../Current/current";
 import { newError } from "@/ui/hooks/global/alert";
@@ -27,22 +27,18 @@ export type EffectParams = {
  * 语法：
  * - $eventResult(key): 从事件结果获取
  * - $triggerEffect.params(key): 触发效果参数（延迟解析）
- * - $source.status(health): 从 source 获取属性值
- * - $target.current(energy): 从 target 获取当前值
- * - $source.stateStack(key): 从 source 获取状态层数（key 可选，默认 default）
+ * - $event.source.status(health): 从事件来源获取属性值
+ * - $event.target.current(energy): 从事件目标获取当前值
+ * - $event.source.stateStack(key): 从事件来源获取状态层数（key 可选，默认 default）
  * - random(min,max): 生成随机数（不带 $）
  */
-export function resolveEffectParams(param: EffectParams[string], event: ActionEvent, effect: Effect, owner?: EventParticipant) {
+export function resolveEffectParams(param: EffectParams[string], event: ActionEvent, effect: Effect, _owner?: EventParticipant) {
     // 构建解析上下文
-    // owner / item：定义该 EffectUnit 的物品（卡牌/器官/遗物）。效果参数里 $item 与 $owner 都指向它。
-    // 条件表达式里的 $owner 仍是持有者，由 Trigger 另建 context，不走这里。
-    const definingItem = isEntity(owner) ? owner : undefined
+    // 宣言对象只通过 $this 访问；事件参与者只通过 $event 访问。
     const context = {
         source: event.source,
         medium: event.medium,
         target: event.target,
-        owner: definingItem,
-        item: definingItem,
         declarationObject: event.declarationObject,
         declarationOwner: event.declarationOwner,
         event,

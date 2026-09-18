@@ -10,6 +10,7 @@ import { getRelicModifier } from "@/core/objects/system/modifier/RelicModifier"
 import { getOrganModifier } from "@/core/objects/system/modifier/OrganModifier"
 import { getLazyModule } from "@/core/utils/lazyLoader"
 import { isEntity } from "@/core/utils/typeGuards"
+import { nowGameRun } from "@/core/objects/game/run"
 import { Player } from "@/core/objects/target/Player"
 import { Enemy } from "@/core/objects/target/Enemy"
 import { createOrgan } from "@/core/factories"
@@ -147,6 +148,9 @@ export const gainRelic: EffectFunc = async (event, effect) => {
 
     const relicModifier = getRelicModifier(target)
     await relicModifier.acquireRelicsFromKeys([relicKey], target)
+
+    // 会员卡等遗物可修改 shopDiscount。通过控制台或事件获得时同样要
+    // 立即刷新当前黑市，而不能只等下一次购买触发重算。
 }
 
 /**

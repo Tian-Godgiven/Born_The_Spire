@@ -22,7 +22,7 @@ export const card_randomOpponentMultiAttack: EffectFunc = async (event, effect) 
     const hits = Number(effect.params.hits ?? 0)
     if (!Number.isFinite(damage) || !Number.isFinite(hits) || hits <= 0) return false
 
-    const opponents = isEnemy(source) ? battle.getAlivePlayers() : battle.getAliveEnemies()
+    const opponents = isEnemy(source) ? battle.getAlivePlayerTeam() : battle.getAliveEnemies()
     const rng = getContextRandom(`randomOpponentMultiAttack:${event.medium.__id}`)
     for (let i = 0; i < hits; i++) {
         const alive = opponents.filter(target => target.current.isAlive?.value === 1)
@@ -155,7 +155,7 @@ export const card_commandScreech: EffectFunc = (event, effect) => {
     if (!isEntity(holder)) return false
     const allies = isEnemy(holder)
         ? battle.getAliveEnemies()
-        : (battle.getAlivePlayers() || [])
+        : battle.getAlivePlayerTeam()
     for (const ally of allies) {
         gainStateStack(ally, "command", stacks, event.medium as any)
     }
@@ -182,7 +182,7 @@ export const card_commandStrike: EffectFunc = (event, effect) => {
     if (!isEntity(holder)) return false
     const allies = isEnemy(holder)
         ? battle.getAliveEnemies()
-        : (battle.getAlivePlayers() || [])
+        : battle.getAlivePlayerTeam()
 
     for (const ally of allies) {
         const stacks = getStateModifier(ally).getState("command")?.stacks.find(s => s.key === "default")?.stack ?? 0

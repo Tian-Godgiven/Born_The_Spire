@@ -148,14 +148,17 @@ export async function retryCurrentRoom() {
 /**
  * 重新开始一局新游戏
  *
- * 使用上一局的进阶等级开始新游戏
+ * 保留当前玩家，回到第一层开始下一轮。
+ *
+ * 这里必须复用 Player 实例：器官等级（包括无限升级）、遗物状态和药水
+ * 都属于本局进度，不能通过 key 重建，否则会丢失它们的运行时数据。
  */
 export async function restartRun() {
     newLog(["重新开始游戏"])
 
     const ascensionLevel = nowGameRun.towerFire
     const { startNewRun } = await import("@/core/objects/game/run")
-    await startNewRun(undefined, ascensionLevel)
+    await startNewRun(undefined, ascensionLevel, undefined, nowPlayer)
 }
 
 /**

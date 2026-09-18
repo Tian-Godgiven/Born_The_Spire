@@ -8,7 +8,6 @@ import { getCardModifier } from "../system/modifier/CardModifier";
 import { cardsToIntent } from "../system/Intent";
 import type { Intent, IntentType, IntentVisibility } from "../system/Intent";
 import { doEvent, ActionEvent } from "../system/ActionEvent";
-import type { Player } from "./Player";
 import { selectAction, selectTurnActions } from "../system/EnemyBehavior";
 import type { EnemyBehaviorConfig } from "../system/EnemyBehavior";
 import { isOrganDisabled } from "@/core/effects/organ/disableOrgan";
@@ -50,7 +49,7 @@ function hasCurrentKey(current: EnemyMap["current"], key: string) {
 }
 
 export class Enemy extends Chara{
-    public readonly targetType = 'enemy' as const  // 类型标识
+    public readonly targetType: 'enemy' | 'companion' = 'enemy'  // 类型标识
     public intent?: Intent  // 当前意图（下回合要执行的行动）
     public _intentType?: IntentType | (IntentType | undefined)[]  // 声明的意图类型（单招或多张各一）
     public _intentTarget?: any  // 意图的模拟目标（用于计算 target 端 buff）
@@ -168,7 +167,7 @@ export class Enemy extends Chara{
         cards: Card[],
         visibility: IntentVisibility = "card",
         intentType?: IntentType | (IntentType | undefined)[],
-        target?: Player
+        target?: Chara
     ) {
         this._intentType = intentType
         this._intentTarget = target
@@ -185,15 +184,15 @@ export class Enemy extends Chara{
      * @param player 玩家
      * @param turnCount 当前回合数
      */
-    async updateIntent(player: Player, turnCount: number) {
+    async updateIntent(player: Chara, turnCount: number) {
         if (!this.behavior) {
             console.warn(`[Enemy.updateIntent] 敌人 ${this.label} 没有行为配置`)
             return
         }
 
         const result = this.behavior.moves?.list?.length
-            ? await selectTurnActions(this.behavior, this, player, turnCount)
-            : await selectAction(this.behavior, this, player, turnCount)
+            ? await selectTurnActions(this.behavior, this, player as any, turnCount)
+            : await selectAction(this.behavior, this, player as any, turnCount)
 
         if (result.cards.length > 0) {
             newLog(["敌人改变意图", this.label])
@@ -233,7 +232,7 @@ export class Enemy extends Chara{
      *
      * @param target 目标（通常是玩家）
      */
-    async executeIntent(target: Player) {
+    async executeIntent(target: Chara) {
         if (!this.intent) {
             console.warn("[Enemy.executeIntent] 没有设置意图，无法执行")
             return
@@ -320,7 +319,7 @@ export class Enemy extends Chara{
      *
      * 有 use 交互的牌正常打出；无 use 交互的牌（A型垃圾）跳过。
      */
-    async executeHandInOrder(target: Player): Promise<void> {
+    async executeHandInOrder(target: Chara): Promise<void> {
         for (const card of this.hand) {
             await this.playCard(card, target)
         }
@@ -341,7 +340,7 @@ export class Enemy extends Chara{
      * @param card 要打出的卡牌
      * @param target 目标
      */
-    public async playCard(card: Card, target: Player) {
+    public async playCard(card: Card, target: Chara) {
         // 检查卡牌来源的器官是否被禁用
         if (card.source && (card.source as any).targetType === 'organ' && isOrganDisabled(card.source as any)) {
             newLog(["敌人使用卡牌被禁用", this.label, card.label])
@@ -405,7 +404,7 @@ export class Enemy extends Chara{
      * @param defaultTarget 默认目标（玩家）
      * @returns 目标数组
      */
-    private resolveTargets(targetConfig: any, defaultTarget: Player): any[] {
+    private resolveTargets(targetConfig: any, defaultTarget: Chara): any[] {
         // 如果没有配置，默认目标是玩家
         if (!targetConfig) {
             return [defaultTarget]
@@ -414,7 +413,7 @@ export class Enemy extends Chara{
         if (targetConfig.faction === "all") {
             const battle = nowBattle.value
             if (!battle) return [defaultTarget]
-            const players = battle.getAlivePlayers()
+            const players = battle.getAlivePlayerTeam()
             const enemies = battle.getAliveEnemies()
             if (targetConfig.number === "all") {
                 return [...players, ...enemies]

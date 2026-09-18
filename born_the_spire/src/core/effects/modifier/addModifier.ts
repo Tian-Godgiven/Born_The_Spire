@@ -2,11 +2,13 @@ import { handleEventEntity, doEvent, ActionEvent } from "@/core/objects/system/A
 import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc";
 import type { EventParticipant } from "@/core/types/event/EventParticipant";
 import { newError } from "@/ui/hooks/global/alert";
+import { nowGameRun, nowPlayer } from "@/core/objects/game/run";
 import { isEntity } from "@/core/utils/typeGuards";
 import { Effect } from "@/core/objects/system/effect/Effect";
 import { resolveTriggerEventTarget } from "@/core/objects/system/trigger/Trigger";
 import { Entity } from "@/core/objects/system/Entity";
 import { getCurrentValue, changeCurrentValue } from "@/core/objects/system/Current/current";
+import { ensureStatusExists } from "@/core/objects/system/status/Status";
 import type { TriggerWhen } from "@/core/types/object/trigger"
 
 /**
@@ -131,6 +133,10 @@ export const addStatusModifier: EffectFunc = (event, effect) => {
         if (onlyIfBoss && !(entity as any).isBoss) return;
 
         const statusKey = String(effect.params.statusKey);
+        if (!entity.status[statusKey] && effect.params.initialValue !== undefined) {
+            ensureStatusExists(entity, statusKey, Number(effect.params.initialValue));
+        }
+
         const status = entity.status[statusKey];
         if (!status) {
             console.warn(`[addStatusModifier] 实体 ${entity.label} 没有属性 ${statusKey}，跳过修饰器`);
@@ -147,6 +153,11 @@ export const addStatusModifier: EffectFunc = (event, effect) => {
         });
 
         // 收集副作用
+        if (statusKey === "shopDiscount" && entity === nowPlayer && nowGameRun.currentRoom?.type === "blackStore") {
+            const blackStore = nowGameRun.currentRoom as { refreshShopPrices?: () => void }
+            blackStore.refreshShopPrices?.()
+        }
+
         event.collectSideEffect(remover);
     });
 };

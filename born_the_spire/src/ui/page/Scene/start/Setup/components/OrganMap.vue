@@ -202,13 +202,19 @@ function closeOrganDetail() {
         height: 100%;
         box-sizing: border-box;
 
-        &:hover:not(.disabled):not(.locked) {
-            background: rgba(0, 0, 0, 0.05);
+        &:hover:not(.disabled):not(.locked):not(.selected) {
+            background: rgb(211, 211, 211);
         }
 
         &.selected {
-            background: rgba(0, 100, 0, 0.1);
-            border-color: #060;
+            background: black;
+            color:white;
+            .organ-part{
+                color: rgb(243, 243, 243);
+            }
+            .organ-cost{
+                color: rgb(243, 243, 243);
+            }
         }
 
         &.mastered {
@@ -221,12 +227,7 @@ function closeOrganDetail() {
         }
 
         &.locked {
-            background: rgba(0, 0, 0, 0.05);
             cursor: default;
-
-            &.selected {
-                background: rgba(0, 100, 0, 0.15);
-            }
         }
 
         &:not(.unlocked) {

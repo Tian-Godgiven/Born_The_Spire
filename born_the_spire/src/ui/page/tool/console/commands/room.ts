@@ -18,7 +18,7 @@ function currentLayer(): number {
 
 async function goToRunning() {
     if (router.currentRoute.value.path !== '/running') {
-        router.replace('/running')
+        await router.replace('/running')
     }
 }
 
@@ -28,6 +28,7 @@ async function enterCreatedRoom(room: NonNullable<ReturnType<typeof roomRegistry
     await room.process()
     addOutput(`✓ 成功进入${label}`, 'result')
     await goToRunning()
+    addOutput(`currentRoom: ${nowGameRun.currentRoom?.type ?? 'none'}`, 'info')
 }
 
 export const roomCommands: ConsoleCommand[] = [

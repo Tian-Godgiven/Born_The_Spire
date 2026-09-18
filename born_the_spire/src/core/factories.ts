@@ -23,6 +23,7 @@ import type { Potion as PotionType } from "./objects/item/Subclass/Potion"
 import type { Relic as RelicType } from "./objects/item/Subclass/Relic"
 import type { Player as PlayerType } from "./objects/target/Player"
 import type { Enemy as EnemyType } from "./objects/target/Enemy"
+import type { Companion as CompanionType } from "./objects/target/Companion"
 import type { Organ as OrganType } from "./objects/target/Organ"
 
 // ========== Entity 工厂 ==========
@@ -93,6 +94,14 @@ export async function createEnemy(map: any): Promise<EnemyType> {
     const enemy = new Enemy(map)
     await enemy.initialize()
     return enemy
+}
+
+/** 创建战斗内临时友军。 */
+export async function createCompanion(map: any): Promise<CompanionType> {
+    const { Companion } = await import("./objects/target/Companion")
+    const companion = new Companion(map)
+    await companion.initialize()
+    return companion
 }
 
 /**

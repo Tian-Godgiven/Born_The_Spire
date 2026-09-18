@@ -523,6 +523,7 @@ async function handleLeave() {
 }
 
 .organs-row {
+    justify-content: center;
     flex-wrap: nowrap;
     width: 100%;
     min-width: 0;

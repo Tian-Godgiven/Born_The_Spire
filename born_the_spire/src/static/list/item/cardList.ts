@@ -565,7 +565,7 @@ export const cardList:CardMap[] = [{
         use: {
             target: {faction: "opponent"},
             effects: [
-                { key: "repeatEffects", params: { times: "$owner.status(hits)", effects: [{ key: "attack", params: { value: 3 } }] } }
+                { key: "repeatEffects", params: { times: "$this.status(hits)", effects: [{ key: "attack", params: { value: 3 } }] } }
             ]
         }
     },
@@ -624,9 +624,9 @@ export const cardList:CardMap[] = [{
         use: {
             target: {faction: "opponent"},
             effects: [
-                { key: "attack", params: { value: "$owner.status(damage)" } },
-                { key: "heal", params: { value: "$owner.status(heal)" }, target: "source" },
-                { key: "applyState", params: { stateKey: "weak", stacks: "$owner.status(weakStacks)" } }
+                { key: "attack", params: { value: "$this.status(damage)" } },
+                { key: "heal", params: { value: "$this.status(heal)" }, target: "source" },
+                { key: "applyState", params: { stateKey: "weak", stacks: "$this.status(weakStacks)" } }
             ]
         }
     },
@@ -808,7 +808,7 @@ export const cardList:CardMap[] = [{
         use: {
             target: { faction: "opponent" },
             effects: [
-                { key: "attack", params: { value: 3, multiplier: "$source.stateStack(charge)" } },
+                { key: "attack", params: { value: 3, multiplier: "$event.source.stateStack(charge)" } },
                 // 卡牌 target 是对手，但充能在使用者自己身上，要用 target: "source" 把清除打回自己
                 { key: "removeState", params: { stateKey: "charge" }, target: "source" }
             ]
@@ -843,17 +843,21 @@ export const cardList:CardMap[] = [{
 {
     label: "女王蚀咬",
     tags: ["attack", "enemy"],
-    status: { cost: 1, damage: 10, vulnerable: 2 },
-    describe: ["造成", {key: ["status", "damage"]}, "点伤害，施加", {key: ["status", "vulnerable"]}, "层", {$:"易伤"}],
+    status: { cost: 2, damage: 10, vulnerable: 2 },
+    describe: ["施加", {key: ["status", "vulnerable"]}, "层", {$:"易伤"}, "，造成", {key: ["status", "damage"]}, "点伤害"],
     key: "enemy_card_queen_acid_bite",
     interaction: {
         use: {
             target: { faction: "opponent" },
             effects: [
-                { key: "attack", params: { value: 10 } },
-                { key: "applyState", params: { stateKey: "vulnerable", stacks: 2 } }
+                { key: "applyState", params: { stateKey: "vulnerable", stacks: 2 } },
+                { key: "attack", params: { value: 10 } }
             ]
         }
+    },
+    upgradeConfig: {
+        maxLevel: 1,
+        levelConfigs: { 1: { status: { cost: 1 } } }
     }
 },
 
@@ -868,6 +872,25 @@ export const cardList:CardMap[] = [{
         use: {
             target: { key: "self" },
             effects: [{ key: "card_commandScreech", params: { stacks: 3 } }]
+        }
+    }
+},
+
+// 孵化蚁兵：育幼囊提供，加入敌方队伍并从下一敌方回合开始行动
+{
+    label: "诱蚁信息素",
+    tags: ["skill", "enemy", "summon"],
+    entry: ["card_exhaust"],
+    status: { cost: 1, count: 1, duration: 4 },
+    describe: ["召唤", { key: ["status", "count"] }, "只蚁兵，持续", { key: ["status", "duration"] }, "回合"],
+    key: "enemy_card_lure_pheromone",
+    interaction: {
+        use: {
+            target: { key: "self" },
+            effects: [
+                { key: "summonEnemy", params: { enemyKey: "enemy_ant_soldier", count: 1, duration: 4 } },
+                { key: "applyState", params: { stateKey: "pheromoneLureUsed", stacks: 1 } }
+            ]
         }
     }
 },
@@ -1070,7 +1093,7 @@ export const cardList:CardMap[] = [{
         sporePoison: [{
             key: "sporePoison",
             label: "孢子毒素",
-            targetType: "owner",
+            targetType: "thisOwner",
             effect: [{ key: "applyState", params: { stateKey: "poison", stacks: 1 } }]
         }]
     }
@@ -1122,7 +1145,7 @@ export const cardList:CardMap[] = [{
         use: {
             target: { faction: "opponent" },
             effects: [
-                { key: "repeatEffects", params: { times: "$owner.status(hits)", effects: [{ key: "attack", params: { value: 4 } }] } }
+                { key: "repeatEffects", params: { times: "$this.status(hits)", effects: [{ key: "attack", params: { value: 4 } }] } }
             ]
         }
     }
@@ -1408,7 +1431,7 @@ export const cardList:CardMap[] = [{
     },
     reaction:{
         parasiteCurse:[{
-            targetType:"owner",
+            targetType:"thisOwner",
             key:"loseMaxHealth",
             effect:[{
                 key:"addMaxHealthAndHeal",
@@ -1438,6 +1461,53 @@ export const cardList:CardMap[] = [{
                 { key: "applyState", params: { stateKey: "vulnerable", stacks: 1 } },
                 { key: "applyState", params: { stateKey: "weak", stacks: 1 } }
             ]
+        }
+    }
+},{
+    label: "召唤小石怪",
+    tags: ["skill", "summon"],
+    pool: ["exclusive"],
+    entry: ["card_exhaust"],
+    status: { cost: 1 },
+    describe: ["召唤", { companion: "companion_stone_golem" }],
+    key: "original_card_summon_stone_golem",
+    interaction: {
+        use: {
+            target: { key: "self" },
+            effects: [{
+                key: "summonCompanion",
+                params: { companionKey: "companion_stone_golem" }
+            }]
+        }
+    }
+},{
+    label: "分化子体",
+    tags: ["skill", "summon"],
+    pool: ["exclusive"],
+    entry: ["card_exhaust"],
+    status: { cost: 1 },
+    describe: ["召唤", { companion: "companion_fission_offspring" }],
+    key: "original_card_fission_offspring",
+    interaction: {
+        use: {
+            target: { key: "self" },
+            effects: [{
+                key: "summonCompanion",
+                params: { companionKey: "companion_fission_offspring" }
+            }]
+        }
+    }
+},{
+    label: "打击（弱）",
+    tags: ["attack", "companion"],
+    pool: ["exclusive"],
+    status: { cost: 0, damage: 3 },
+    describe: ["造成", { key: ["status", "damage"] }, "点伤害"],
+    key: "companion_card_weak_strike",
+    interaction: {
+        use: {
+            target: { faction: "opponent" },
+            effects: [{ key: "attack", params: { value: 3 } }]
         }
     }
 }]

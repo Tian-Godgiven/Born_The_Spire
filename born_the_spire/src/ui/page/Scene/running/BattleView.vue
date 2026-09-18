@@ -10,13 +10,12 @@
         <Faction class="enemyTeam" faction-name="enemy" :charas="enemyTeam"/>
     </AllFactions>
 
-    <div
-        class="endTurn center"
-        :class="{ disabled: !isPlayerTurn }"
-        @click="endTurn"
-    >
-        结束回合
-    </div>
+    <Button
+        class="endTurn"
+        label="结束回合"
+        :click="endTurn"
+        :disabled="!isPlayerTurn"
+    />
 
     <div class="drawPile center"
         data-card-pile="draw"
@@ -49,6 +48,7 @@
     import Faction from '@/ui/components/object/Target/Faction.vue';
     import AllFactions from '@/ui/components/object/Target/AllFactions.vue';
     import HandCardSelector from '@/ui/components/interaction/HandCardSelector.vue';
+    import Button from '@/ui/components/global/Button.vue';
     import { handCardSelectorActive } from '@/ui/hooks/interaction/handCardSelector';
     import { waitForPlayFlightIdle } from '@/ui/animation/cardFlight';
 
@@ -145,30 +145,30 @@
     width: var(--layout-end-turn-width);
     min-width: max-content;
     height: var(--layout-end-turn-height);
-    padding: 0 12px;
+    padding: 2px;
     box-sizing: border-box;
     white-space: nowrap;
     position: absolute;
     right: var(--layout-end-turn-right);
     bottom: var(--layout-end-turn-bottom);
     z-index: 100;
-    background: #f0f0f0;
-    border: 2px solid black;
-    cursor: pointer;
     font-weight: bold;
     font-size: var(--layout-pile-font);
-    display: flex;
-    align-items: center;
-    justify-content: center;
 
-    &:hover:not(.disabled) {
-        background: #e0e0e0;
+    :deep(.game-btn-face) {
+        height: 100%;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 10px;
+        background: #fff;
     }
 
-    &.disabled {
-        cursor: not-allowed;
+    &:disabled :deep(.game-btn-face) {
         background: #999;
         color: #666;
+        border-color: #777;
     }
 }
 .hand-elevated {

@@ -29,7 +29,7 @@ export const clericFaceRelic: RelicMap = {
     },
     reaction: {
         gainMaxHealthOnBattleEnd: [{
-            targetType: "owner",
+            targetType: "thisOwner",
             key: "gainMaxHealth",
             effect: [{
                 key: "gainMaxHealth",
@@ -64,7 +64,7 @@ export const serpentHeadRelic: RelicMap = {
     },
     reaction: {
         gainGoldOnEventRoom: [{
-            targetType: "owner",
+            targetType: "thisOwner",
             key: "gainGold",
             effect: [{
                 key: "gainReserve",
@@ -117,7 +117,7 @@ export const gremlinFaceRelic: RelicMap = {
     },
     reaction: {
         applyWeakOnBattleStart: [{
-            targetType: "owner",
+            targetType: "thisOwner",
             key: "applyState",
             effect: [{
                 key: "applyState",
@@ -151,7 +151,7 @@ export const nlothFaceRelic: RelicMap = {
     },
     reaction: {
         emptyNextChest: [{
-            targetType: "owner",
+            targetType: "thisOwner",
             key: "emptyChest",
             effect: [{
                 key: "emptyChest",

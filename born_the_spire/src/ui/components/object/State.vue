@@ -12,7 +12,7 @@
         let string = `[${state.label}`
         //层数
         for(let stack of state.stacks){
-            if(stack.showType!="bool"){
+            if(state.showType !== "bool" && stack.showType !== "bool"){
                 string +=` ${stack.stack} `
             }
         }

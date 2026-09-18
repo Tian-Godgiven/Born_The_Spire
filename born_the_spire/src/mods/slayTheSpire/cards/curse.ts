@@ -33,10 +33,10 @@ export const regretCard: CardMap = {
         regretDamage: [{
             key: "regretDamage",
             label: "悔恨：失去生命",
-            targetType: "owner",
+            targetType: "thisOwner",
             effect: [{
                 key: "loseHealth",
-                params: { value: "$target.pileCount(hand)" }
+                params: { value: "$event.target.pileCount(hand)" }
             }]
         }]
     }
@@ -91,7 +91,7 @@ export const doubtCard: CardMap = {
         doubtWeaken: [{
             key: "doubtWeaken",
             label: "疑虑：施加虚弱",
-            targetType: "owner",
+            targetType: "thisOwner",
             effect: [{
                 key: "applyState",
                 params: { stateKey: "weak", stacks: 1 }

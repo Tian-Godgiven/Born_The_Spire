@@ -8,7 +8,7 @@ import { addCardMark, clearCardMarksFromSource, normalizeRelicKeys } from "@/cor
 
 /**
  * 弹卡牌选择框，把选中卡的 __id 记到 event.medium（通常是物品自身）的 status 上。
- * 后续可通过 $owner.status(storeKey) 读回。
+ * 后续可通过 $this.status(storeKey) 读回。
  * 若 storeKey 对应的 status 未预声明，会自动创建为隐藏的字符串型 status（不显示为徽章）。
  * 可选 markRelics：把遗物 key 记到选中牌上，只在卡组悬停时弹出遗物，不改卡牌描述。
  *

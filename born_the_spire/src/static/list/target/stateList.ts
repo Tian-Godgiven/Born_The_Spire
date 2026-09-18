@@ -26,7 +26,7 @@ export const stateList: StateData[] = [
                         targetType: "triggerEffect",
                         effect: [{
                             key: "modifyDamageValue",
-                            params: { delta: "$source.stateStack()" }
+                            params: { delta: "$this.stateStack()" }
                         }]
                     }]
                 }
@@ -74,7 +74,7 @@ export const stateList: StateData[] = [
                         targetType: "creatorOwner",
                         effect: [{
                             key: "damage",
-                            params: { value: "$source.stateStack()" }
+                            params: { value: "$this.stateStack()" }
                         }]
                     }]
                 }
@@ -209,7 +209,7 @@ export const stateList: StateData[] = [
                         targetType: "triggerEffect",
                         effect: [{
                             key: "modifyDamageValue",
-                            params: { delta: "$source.stateStack()" }
+                            params: { delta: "$this.stateStack()" }
                         }]
                     }],
                     vitalityReset: [{
@@ -306,7 +306,7 @@ export const stateList: StateData[] = [
                         targetType: "triggerEffect",
                         effect: [{
                             key: "modifyArmorValue",
-                            params: { delta: "$source.stateStack()" }
+                            params: { delta: "$this.stateStack()" }
                         }]
                     }]
                 }
@@ -338,7 +338,7 @@ export const stateList: StateData[] = [
                             key: "changeStateStack",
                             params: {
                                 stateKey: "dexterity",
-                                delta: "$source.stateStack()",
+                                delta: "$this.stateStack()",
                                 negate: true
                             }
                         }, {
@@ -375,7 +375,7 @@ export const stateList: StateData[] = [
                             key: "changeStateStack",
                             params: {
                                 stateKey: "power",
-                                delta: "$source.stateStack()",
+                                delta: "$this.stateStack()",
                                 negate: true
                             }
                         }, {
@@ -489,7 +489,7 @@ export const stateList: StateData[] = [
                         key: "metallicizeTick",
                         label: "金属化：获得护甲",
                         targetType: "creatorOwner",
-                        effect: [{ key: "gainArmor", params: { value: "$source.stateStack()" } }]
+                        effect: [{ key: "gainArmor", params: { value: "$this.stateStack()" } }]
                     }]
                 }
             }
@@ -517,7 +517,7 @@ export const stateList: StateData[] = [
                         key: "malleableTick",
                         label: "柔韧：获得护甲",
                         targetType: "creatorOwner",
-                        effect: [{ key: "gainArmor", params: { value: "$source.stateStack()" } }]
+                        effect: [{ key: "gainArmor", params: { value: "$this.stateStack()" } }]
                     }]
                 }
             }
@@ -546,7 +546,7 @@ export const stateList: StateData[] = [
                         targetType: "allEnemies",
                         effect: [{
                             key: "attack",
-                            params: { value: "$source.stateStack()" }
+                            params: { value: "$this.stateStack()" }
                         }]
                     }]
                 }
@@ -575,7 +575,7 @@ export const stateList: StateData[] = [
                         key: "hardenAbsorb_reduce",
                         label: "变硬：减少伤害",
                         targetType: "triggerEffect",
-                        effect: [{ key: "state_hardenAbsorb", params: { stacks: "$source.stateStack()" } }]
+                        effect: [{ key: "state_hardenAbsorb", params: { stacks: "$this.stateStack()" } }]
                     },
                     {
                         key: "hardenAbsorb_remove",
@@ -753,8 +753,75 @@ export const stateList: StateData[] = [
     showType: "number",
     repeate: "refresh"
 },
+// 召唤物：战斗限定单位的生命周期标记。离场不走死亡事件。
+{
+    label: "召唤物",
+    key: "summoned",
+    category: "buff",
+    describe: ["战斗结束时消灭自身"],
+    showType: "bool",
+    repeate: "none",
+    interaction: {
+        possess: {
+            triggers: [{
+                when: "after",
+                how: "take",
+                key: "battleEnd",
+                action: "despawnAtBattleEnd"
+            }],
+            reaction: {
+                despawnAtBattleEnd: [{
+                    key: "despawnAtBattleEnd",
+                    label: "召唤物离场",
+                    targetType: "creatorOwner",
+                    effect: [{ key: "removeSummonedCombatant", params: {} }]
+                }]
+            }
+        }
+    }
+},
 // 点火：通用计数器状态，可被任何"逐步积累到阈值触发爆发"的敌人复用
 // Boss 1 自走焚烧炉：攻击牌积累 ignition，达到 4 时释放重铸获得+4力量
+// 临时召唤物：在自身第 N 个回合结束时消灭，不触发死亡事件。
+{
+    label: "召唤持续时间",
+    key: "summonedDuration",
+    category: "buff",
+    describe: ["在自身回合结束后减少 1 层，归零时消灭自身"],
+    showType: "number",
+    repeate: "refresh",
+    hidden: true,
+    stackChange: [{ timing: "turnEnd", delta: -1 }],
+    interaction: {
+        possess: {
+            triggers: [{
+                when: "before",
+                how: "take",
+                key: "turnEnd",
+                condition: "$this.stateStack() <= 1",
+                action: "despawnAtDurationEnd"
+            }],
+            reaction: {
+                despawnAtDurationEnd: [{
+                    key: "despawnAtDurationEnd",
+                    label: "临时召唤物离场",
+                    targetType: "creatorOwner",
+                    effect: [{ key: "removeSummonedCombatant", params: {} }]
+                }]
+            }
+        }
+    }
+},
+// 蚁后本场已释放过诱蚁信息素的内部标记。
+{
+    label: "诱蚁信息素已使用",
+    key: "pheromoneLureUsed",
+    category: "neutral",
+    describe: ["本场战斗中已使用过诱蚁信息素"],
+    showType: "bool",
+    repeate: "none",
+    hidden: true
+},
 {
     label: "点火",
     key: "ignition",
@@ -787,10 +854,10 @@ export const stateList: StateData[] = [
                 rageGainBlock: [{
                     key: "rageGainBlock",
                     label: "愤怒格挡",
-                    targetType: "owner",
+                    targetType: "thisOwner",
                     effect: [{
                         key: "gainArmor",
-                        params: { value: "$source.stateStack()" }
+                        params: { value: "$this.stateStack()" }
                     }]
                 }]
             }

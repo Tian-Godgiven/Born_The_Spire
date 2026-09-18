@@ -18,7 +18,7 @@ export const temporaryCardRelic = {
                 how: "take",
                 key: "battleStart",
                 event: [{
-                    targetType: "owner",
+                    targetType: "thisOwner",
                     key: "addTemporaryCard",
                     effect: [{
                         key: "addTemporaryCard",

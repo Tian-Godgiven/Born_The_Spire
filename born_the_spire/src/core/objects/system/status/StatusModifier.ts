@@ -44,7 +44,9 @@ export class StatusModifier extends ModifierObj{
                 break;
 
             case "multiplicative":
-                if (modifier.applyMode === "snapshot" && modifier.snapshotBaseValue !== undefined) {
+                if (modifier.applyMode === "absolute") {
+                    return baseValue * modifier.value;
+                } else if (modifier.applyMode === "snapshot" && modifier.snapshotBaseValue !== undefined) {
                     // 差值计算: base = base + snapshotBaseValue * (multiplier - 1)
                     return baseValue + modifier.snapshotBaseValue * (modifier.value - 1);
                 }
@@ -71,7 +73,9 @@ export class StatusModifier extends ModifierObj{
                 break;
 
             case "multiplicative":
-                if (modifier.applyMode === "snapshot") {
+                if (modifier.applyMode === "absolute") {
+                    return currentValue * modifier.value;
+                } else if (modifier.applyMode === "snapshot") {
                     if (modifier.snapshotValue !== undefined) {
                         // 当前层差值计算: current = base + snapshotValue * (multiplier - 1)
                         return baseValue + modifier.snapshotValue * (modifier.value - 1);

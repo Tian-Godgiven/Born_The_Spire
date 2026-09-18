@@ -4,8 +4,8 @@
  * 使用统一的 $ 引用语法（复用 ReferenceResolver）
  *
  * 示例：
- *   "$owner.status(health) > 100"
- *   "$owner.current(health) <= 50%"
+ *   "$this.status(health) > 100"
+ *   "$this.owner.current(health) <= 50%"
  *   "$scene == combat"
  *   "$allEnemies.any.hasOrgan(heart)"
  */
@@ -17,13 +17,13 @@ import { referenceResolver } from "@/core/utils/ReferenceResolver"
 
 /**
  * 单个条件字符串
- * 例如："$owner.status(health) > 100"
+ * 例如："$this.status(health) > 100"
  */
 export type ConditionString = string
 
 /**
  * AND 组合（数组默认是 AND）
- * 例如：["$owner.status(health) > 50%", "$scene == combat"]
+ * 例如：["$this.status(health) > 50%", "$scene == combat"]
  */
 export type ConditionArray = (ConditionString | ConditionGroup)[]
 
@@ -69,8 +69,8 @@ export type ComparisonOp = typeof comparisonOps[number]
  * @returns 是否满足
  *
  * @example
- * checkCondition("$owner.status(health) > 100", context)
- * checkCondition(["$owner.status(health) > 50%", "$scene == combat"], context)
+ * checkCondition("$this.status(health) > 100", context)
+ * checkCondition(["$this.status(health) > 50%", "$scene == combat"], context)
  * checkCondition({ or: ["cond1", "cond2"] }, context)
  */
 export function checkCondition(
@@ -106,10 +106,10 @@ export function checkCondition(
 /**
  * 检查单个条件字符串
  *
- * 格式："$target.accessor op value"
+ * 格式："$event.target.accessor op value"
  * 示例：
- *   "$owner.status(health) > 100"
- *   "$owner.current(energy) <= 2"
+ *   "$this.status(health) > 100"
+ *   "$this.owner.current(energy) <= 2"
  *   "$scene == combat"
  *   "$allEnemies.any.hasOrgan(heart)"
  */
@@ -194,7 +194,7 @@ function evaluateExpression(expr: string, context: ConditionContext): any {
 
 /**
  * 从左侧表达式解析最大值（用于百分比比较）
- * 例如："$owner.current(health)" → 找到 owner.current.health.options.maxBy
+ * 例如："$this.current(health)" → 找到 this.current.health.options.maxBy
  *
  * 通过 ReferenceResolver 获取目标实体，然后访问 current 的 maxBy 配置
  */

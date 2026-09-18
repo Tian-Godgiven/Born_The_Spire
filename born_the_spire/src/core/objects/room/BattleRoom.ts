@@ -416,7 +416,9 @@ export class BattleRoom extends Room {
         }
 
         // 4. 显示奖励页面
-        await this.finalizeAndShowRewards(rewards, "Boss战斗胜利", "选择你的奖励")
+        // Boss 奖励确认后必须继续走楼层结算：当前进入 VictoryRoom，
+        // 之后则进入下一层。不能沿用普通奖励的“打开当前地图”行为。
+        await this.finalizeAndShowRewards(rewards, "Boss战斗胜利", "选择你的奖励", { navigate: false })
 
         // 5. 触发楼层选择
         await this.triggerFloorSelection()
@@ -427,7 +429,12 @@ export class BattleRoom extends Room {
      * 遗物可在事件的 after take 触发器里标记/改写 info.rewards（splice、push 或整体换引用）
      * 触发器可以是 async，因此显式开事务并 await
      */
-    private async finalizeAndShowRewards(rewards: any[], title: string, subtitle: string): Promise<void> {
+    private async finalizeAndShowRewards(
+        rewards: any[],
+        title: string,
+        subtitle: string,
+        options?: { navigate?: boolean }
+    ): Promise<void> {
         if (rewards.length === 0) return
 
         const rewardInfo = { rewards }
@@ -444,7 +451,7 @@ export class BattleRoom extends Room {
 
         if (rewardInfo.rewards.length === 0) return
         const { showRewards } = await import("@/ui/hooks/interaction/rewardDisplay")
-        await showRewards(rewardInfo.rewards, title, subtitle)
+        await showRewards(rewardInfo.rewards, title, subtitle, options)
     }
 
     /**

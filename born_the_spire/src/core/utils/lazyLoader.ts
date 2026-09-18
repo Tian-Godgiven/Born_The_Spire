@@ -172,6 +172,11 @@ export function initLazyModuleRegistrations(): void {
         return module.enemyList
     })
 
+    registerLazyModule('companionList', async () => {
+        const module = await import('@/static/list/target/companionList')
+        return module.companionList
+    })
+
     /**
      * 注册 playerList
      */

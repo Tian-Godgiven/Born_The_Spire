@@ -206,8 +206,6 @@ export class EventRoom extends Room {
                 // 字符串条件 ifAble：创建时检查一次，不满足则置灰
                 if (option.ifAble && !sceneAble) {
                     const context = {
-                        owner: nowPlayer,
-                        item: nowPlayer,
                         declarationObject: nowPlayer,
                         declarationOwner: nowPlayer,
                     } as any

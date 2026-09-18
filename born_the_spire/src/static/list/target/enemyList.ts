@@ -292,10 +292,20 @@ export const enemyList:EnemyMap[] = [
         label: "蚁兵",
         key: "enemy_ant_soldier",
         status: { "max-health": 15 },
+        uiSize: "small",
         organ: [
             { key: "enemy_organ_ant_mandible", level: 1 },
             "enemy_organ_ant_acid_gland"
-        ]
+        ],
+        behavior: {
+            moves: {
+                mode: "weighted",
+                list: [
+                    { cards: ["enemy_card_swarm_bite"], intent: "attack", weight: 3, describe: "群咬" },
+                    { cards: ["enemy_card_acid_bite"], intent: "debuff", weight: 1, describe: "蚀咬" }
+                ]
+            }
+        }
     },
 
     {
@@ -421,10 +431,11 @@ export const enemyList:EnemyMap[] = [
         key: "enemy_ant_queen",
         status: { "max-health": 70 },
         organ: [
-            "enemy_organ_pheromone_gland",
-            "enemy_organ_queen_mandible",
+            { key: "enemy_organ_pheromone_gland", level: 2 },
+            { key: "enemy_organ_queen_mandible", level: 1 },
             "enemy_organ_royal_carapace"
-        ]
+        ],
+        cards: ["original_card_00014"]
     },
 
     {

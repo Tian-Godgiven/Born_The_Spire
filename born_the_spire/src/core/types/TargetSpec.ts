@@ -62,7 +62,7 @@ export interface TargetContext {
  * 支持的 targetType 字符串类型
  */
 export type TargetTypeString =
-    | "item" | "owner" | "this" | "thisOwner" | "source" | "target" | "effect"
+    | "this" | "thisOwner" | "effect"
     | "eventSource" | "eventMedium" | "eventTarget"
     | "trigger" | "triggerCreator" | "creatorOwner" | "triggerHost"
     | "eventTriggerCreator" | "eventTriggerHost"
@@ -84,12 +84,8 @@ type TargetTypeMap = {
     "triggerEffect": Effect
 
     // 单个 Entity
-    "item": Entity
-    "owner": Entity
     "this": EventParticipant
     "thisOwner": Entity
-    "source": Entity
-    "target": Entity
     "battle": any
     "player": Entity
     "enemy": Entity
@@ -128,8 +124,8 @@ type TargetTypeMap = {
  *
  * @example
  * // 基础用法
- * resolveTarget("item", { item: relic })  // → relic (类型: Entity)
- * resolveTarget("owner", { owner: player })  // → player (类型: Entity)
+ * resolveTarget("this", { declarationObject: relic })  // → relic (类型: Entity)
+ * resolveTarget("thisOwner", { declarationObject: relic, declarationOwner: player })  // → player (类型: Entity)
  *
  * // Effect 相关
  * resolveTarget("effect", { effect: myEffect })  // → myEffect (类型: Effect)
@@ -256,12 +252,8 @@ export function getTargetValue(
 
     switch (targetType) {
         // 直接从 context 获取
-        case "item": return context.item
-        case "owner": return context.owner
         case "this": return context.declarationObject
-        case "thisOwner": return (context.declarationObject as any)?.owner
-        case "source": return context.source
-        case "target": return context.target
+        case "thisOwner": return context.declarationOwner ?? (context.declarationObject as any)?.owner
 
         // 事件相关 - 需要类型断言，因为 ActionEvent 的 source/medium/target 是 EventParticipant
         case "eventSource": return context.event?.source as Entity | undefined
@@ -316,13 +308,13 @@ export function getTargetValue(
             if (!context.battle) throw new Error("[resolveTarget] battle 不存在，无法获取 allOpponents")
             const holder = context.creatorOwner ?? context.owner ?? context.source
             if (!holder) throw new Error("[resolveTarget] context 中没有 creatorOwner/owner/source，无法判断 allOpponents 的阵营")
-            return isEnemy(holder) ? context.battle.getAlivePlayers() : context.battle.getAliveEnemies()
+            return isEnemy(holder) ? context.battle.getAlivePlayerTeam() : context.battle.getAliveEnemies()
         }
         case "allTeammates": {
             if (!context.battle) throw new Error("[resolveTarget] battle 不存在，无法获取 allTeammates")
             const holder = context.creatorOwner ?? context.owner ?? context.source
             if (!holder) throw new Error("[resolveTarget] context 中没有 creatorOwner/owner/source，无法判断 allTeammates 的阵营")
-            return isEnemy(holder) ? context.battle.getAliveEnemies() : context.battle.getAlivePlayers()
+            return isEnemy(holder) ? context.battle.getAliveEnemies() : context.battle.getAlivePlayerTeam()
         }
         case "allEntities":
             if (!context.battle) throw new Error("[resolveTarget] battle 不存在，无法获取 allEntities")

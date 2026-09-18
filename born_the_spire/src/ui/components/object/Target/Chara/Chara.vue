@@ -6,7 +6,7 @@
     <!-- 意图显示（仅敌人，死亡后隐藏）
          必须放在 Popover 触发区之外：它自己已经带了悬停详情，落在触发区里的话，
          鼠标划到意图上会连带把角色状态浮层也弹出来 -->
-    <div v-if="isEnemy && enemyIntent && !isDeadOrDying" class="intent-display">
+    <div v-if="shouldShowIntent && enemyIntent && !isDeadOrDying" class="intent-display">
         <IntentDisplay :intent="enemyIntent" />
     </div>
 
@@ -77,6 +77,7 @@
 <script setup lang='ts'>
     import { Chara } from '@/core/objects/target/Target';
     import { Enemy } from '@/core/objects/target/Enemy';
+    import { Companion } from '@/core/objects/target/Companion';
     import { computed, ref, shallowRef } from 'vue';
     import Organ from '@/ui/components/object/Organ.vue';
     import Target from "@/ui/components/interaction/chooseTarget/Target.vue";
@@ -171,7 +172,7 @@
     const showOrganDescribe = computed(() => settings.showOrganDescribe)
 
     // 判断是否是敌人
-    const isEnemy = computed(() => props.target instanceof Enemy)
+    const isEnemy = computed(() => props.target.targetType === 'enemy')
 
     // 敌人卡片尺寸来自这场战斗的实例配置；玩家固定 normal
     const uiSize = computed(() => {
@@ -186,6 +187,10 @@
         }
         return null
     })
+
+    const shouldShowIntent = computed(() =>
+        isEnemy.value || (props.target instanceof Companion && props.target.showIntent)
+    )
 </script>
 
 <style scoped lang='scss'>

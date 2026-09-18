@@ -28,7 +28,7 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             healOwner: [{
-                targetType: "owner",
+                targetType: "thisOwner",
                 key: "heal",
                 effect: [{
                     key: "heal",
@@ -82,7 +82,7 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             applyScholarDraw: [{
-                targetType: "owner",
+                targetType: "thisOwner",
                 key: "applyScholarDraw",
                 effect: [
                     { key: "addTurnDraw", params: { turn: 1, value: 2 } },
@@ -115,7 +115,7 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             applyFirstTurnDraw: [{
-                targetType: "owner",
+                targetType: "thisOwner",
                 key: "applyFirstTurnDraw",
                 effect: [{
                     key: "addTurnDraw",
@@ -189,7 +189,7 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             gainPower: [{
-                targetType: "owner",
+                targetType: "thisOwner",
                 key: "applyState",
                 effect: [{
                     key: "applyState",
@@ -344,7 +344,7 @@ export const relicList: RelicMap[] = [
                     key: "damage",
                     effect: [{
                         key: "attack",
-                        params: { value: "$item.status(damage)" }
+                        params: { value: "$this.status(damage)" }
                     }]
                 },
                 {
@@ -352,7 +352,7 @@ export const relicList: RelicMap[] = [
                     key: "heal",
                     effect: [{
                         key: "heal",
-                        params: { value: "$item.status(heal)" }
+                        params: { value: "$this.status(heal)" }
                     }]
                 },
                 {
@@ -401,7 +401,7 @@ export const relicList: RelicMap[] = [
                         threshold: 5,
                         consume: 5,
                         maxTriggerTotal: 5,
-                        targetType: "owner",
+                        targetType: "thisOwner",
                         effects: [{ key: "heal", params: { value: 1 } }]
                     }
                 }],
@@ -411,8 +411,8 @@ export const relicList: RelicMap[] = [
                     key: "attack",
                     level: -1000,
                     condition: [
-                        "$item.status(disabled) == 0",
-                        "$item.status(used) >= $item.status(maxUse)"
+                        "$this.status(disabled) == 0",
+                        "$this.status(used) >= $this.status(maxUse)"
                     ],
                     action: "hatchDonorCard"
                 }]
@@ -426,12 +426,12 @@ export const relicList: RelicMap[] = [
                     effect: [{ key: "setBaseStatus", params: { statusKey: "disabled", value: 1 } }]
                 },
                 {
-                    targetType: "owner",
+                    targetType: "thisOwner",
                     key: "gainDonorCard",
                     effect: [{ key: "gainRelic", params: { relicKey: "original_relic_blood_donor_cert" } }]
                 },
                 {
-                    targetType: "owner",
+                    targetType: "thisOwner",
                     key: "selfDestroy",
                     effect: [{ key: "removeRelicByKey", params: { relicKey: "original_relic_vampiric_badge" } }]
                 }
@@ -489,7 +489,7 @@ export const relicList: RelicMap[] = [
                         consume: "all",
                         repeat: false,
                         maxTriggerPerBattle: 1,
-                        targetType: "owner",
+                        targetType: "thisOwner",
                         effects: [{ key: "heal", params: { value: 4 } }]
                     }
                 }]
@@ -517,7 +517,7 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             gainPower3: [{
-                targetType: "owner",
+                targetType: "thisOwner",
                 key: "applyState",
                 effect: [{
                     key: "applyState",
@@ -546,7 +546,7 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             gainPowerOnDamage: [{
-                targetType: "owner",
+                targetType: "thisOwner",
                 key: "applyState",
                 effect: [{
                     key: "applyState",
@@ -575,7 +575,7 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             gainPower2: [{
-                targetType: "owner",
+                targetType: "thisOwner",
                 key: "applyState",
                 effect: [{
                     key: "applyState",
@@ -605,12 +605,12 @@ export const relicList: RelicMap[] = [
         reaction: {
             gainTempPower: [
                 {
-                    targetType: "owner",
+                    targetType: "thisOwner",
                     key: "applyState",
                     effect: [{ key: "applyState", params: { stateKey: "power", stacks: 3 } }]
                 },
                 {
-                    targetType: "owner",
+                    targetType: "thisOwner",
                     key: "applyState",
                     effect: [{ key: "applyState", params: { stateKey: "tempPower", stacks: 3 } }]
                 }
@@ -639,7 +639,7 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             gainArmorOnTurnStart: [{
-                targetType: "owner",
+                targetType: "thisOwner",
                 key: "gainArmor",
                 effect: [{
                     key: "gainArmor",
@@ -668,7 +668,7 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             drawOnPotionUsed: [{
-                targetType: "owner",
+                targetType: "thisOwner",
                 key: "drawFromDrawPile",
                 effect: [{
                     key: "drawFromDrawPile",
@@ -696,7 +696,7 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             gainCoinOnRoomEnter: [{
-                targetType: "owner",
+                targetType: "thisOwner",
                 key: "gainReserve",
                 effect: [{
                     key: "gainReserve",
@@ -752,7 +752,7 @@ export const relicList: RelicMap[] = [
                         how: "take",
                         key: "breakOrgan",
                         condition: [
-                            "$item.status(used) == 0",
+                            "$this.status(used) == 0",
                             { not: "$medium.isTemporary()" },
                             "$medium.hasStatus(max-mass)"
                         ],
@@ -811,7 +811,7 @@ export const relicList: RelicMap[] = [
                     key: "loseEnergy",
                     condition: [
                         "$battle.turn == 1",
-                        "$owner.current(energy) == 0"
+                        "$this.owner.current(energy) == 0"
                     ],
                     disableUntil: "battleEnd",
                     action: "grantEnergy"
@@ -820,7 +820,7 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             grantEnergy: [{
-                targetType: "owner",
+                targetType: "thisOwner",
                 key: "gainEnergy",
                 effect: [{
                     key: "gainEnergy",
@@ -869,13 +869,13 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             pullMarkedCard: [{
-                targetType: "owner",
+                targetType: "thisOwner",
                 key: "retrieveCardsToHand",
                 effect: [{
                     key: "retrieveCardsToHand",
                     params: {
                         sourcePile: "any",
-                        cardId: "$owner.status(markedCardId)"
+                        cardId: "$this.status(markedCardId)"
                     }
                 }]
             }]
@@ -907,7 +907,7 @@ export const relicList: RelicMap[] = [
                         gain: 1,
                         threshold: 6,
                         consume: 6,
-                        targetType: "owner",
+                        targetType: "thisOwner",
                         effects: [{ key: "drawFromDrawPile", params: { value: 1 } }]
                     }
                 }]
@@ -931,6 +931,7 @@ export const relicList: RelicMap[] = [
                     key: "addStatusModifier",
                     params: {
                         statusKey: "shopDiscount",
+                        initialValue: 1,
                         modifierValue: 0.5,
                         targetLayer: "base",
                         modifierType: "multiplicative"
@@ -967,7 +968,7 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             flamingHeartCost: [{
-                targetType: "owner",
+                targetType: "thisOwner",
                 key: "loseHealth",
                 effect: [{
                     key: "loseHealthTo",
@@ -999,14 +1000,14 @@ export const relicList: RelicMap[] = [
                 key: "store",
                 effect: [{
                     key: "setBaseStatus",
-                    params: { statusKey: "storedEnergy", value: "$source.current(energy)" }
+                    params: { statusKey: "storedEnergy", value: "$event.source.current(energy)" }
                 }]
             }],
             releaseEnergy: [
                 {
                     targetType: "creatorOwner",
                     key: "release",
-                    effect: [{ key: "gainEnergy", params: { value: "$item.status(storedEnergy)" } }]
+                    effect: [{ key: "gainEnergy", params: { value: "$this.status(storedEnergy)" } }]
                 },
                 {
                     targetType: "triggerCreator",
@@ -1099,7 +1100,7 @@ export const relicList: RelicMap[] = [
                         gain: 1,
                         threshold: 3,
                         consume: 3,
-                        targetType: "owner",
+                        targetType: "thisOwner",
                         effects: [{ key: "gainArmor", params: { value: 10 } }]
                     }
                 }]
@@ -1151,7 +1152,7 @@ export const relicList: RelicMap[] = [
             }],
             gainEnergyAndReset: [
                 {
-                    targetType: "owner",
+                    targetType: "thisOwner",
                     key: "gainEnergy",
                     effect: [{
                         key: "gainEnergy",
@@ -1188,7 +1189,7 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             gainGoldOnKill: [{
-                targetType: "owner",
+                targetType: "thisOwner",
                 key: "gainReserve",
                 effect: [{
                     key: "gainReserve",
@@ -1217,7 +1218,7 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             drawOnFullHp: [{
-                targetType: "owner",
+                targetType: "thisOwner",
                 key: "drawFromDrawPile",
                 effect: [{
                     key: "drawFromDrawPile",
@@ -1333,9 +1334,9 @@ export const relicList: RelicMap[] = [
         reaction: {
             consumeCharge: [
                 {
-                    targetType: "owner",
+                    targetType: "thisOwner",
                     key: "grantEnergy",
-                    condition: ["$item.status(chargeReady) == 1"],
+                    condition: ["$this.status(chargeReady) == 1"],
                     effect: [{
                         key: "gainEnergy",
                         params: { value: 1 }
@@ -1387,7 +1388,7 @@ export const relicList: RelicMap[] = [
                         when: "before",
                         how: "make",
                         key: "attack",
-                        condition: "$item.status(used) == 0",
+                        condition: "$this.status(used) == 0",
                         action: "firstAttackBoost"
                     }
                 ]
@@ -1441,7 +1442,7 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             prophecyChoose: [{
-                targetType: "owner",
+                targetType: "thisOwner",
                 key: "prophecyChoose",
                 effect: [{
                     key: "customCardChoice",
@@ -1509,7 +1510,7 @@ export const relicList: RelicMap[] = [
         reaction: {
             grantBlessing: [
                 {
-                    targetType: "owner",
+                    targetType: "thisOwner",
                     key: "gainPowerDexterity",
                     effect: [
                         { key: "applyState", params: { stateKey: "power", stacks: 3 } },
@@ -1571,6 +1572,7 @@ export const relicList: RelicMap[] = [
                         on: { when: "after", how: "take", key: ["attack", "damage"] },
                         gain: "$triggerEffect.params(value)",
                         threshold: 999999,
+                        allowEmptyEffects: true,
                         effects: []
                     }
                 }],
@@ -1606,7 +1608,7 @@ export const relicList: RelicMap[] = [
                         condition: [
                             "$trigger.creator.status(disabled) == 0",
                             "$trigger.creator.status(battles-done) >= $trigger.creator.status(maxBattles)",
-                            "$source.status(damage-taken) <= 30"
+                            "$this.status(damage-taken) <= 30"
                         ],
                         action: "hatchSymbiote"
                     },
@@ -1618,7 +1620,7 @@ export const relicList: RelicMap[] = [
                         condition: [
                             "$trigger.creator.status(disabled) == 0",
                             "$trigger.creator.status(battles-done) >= $trigger.creator.status(maxBattles)",
-                            "$source.status(damage-taken) > 30"
+                            "$this.status(damage-taken) > 30"
                         ],
                         action: "hatchHungry"
                     }
@@ -1628,7 +1630,7 @@ export const relicList: RelicMap[] = [
         reaction: {
             embryoBoost: [
                 {
-                    targetType: "owner",
+                    targetType: "thisOwner",
                     key: "applyState",
                     effect: [{ key: "applyState", params: { stateKey: "power", stacks: 2 } }]
                 },
@@ -1645,7 +1647,7 @@ export const relicList: RelicMap[] = [
                     effect: [{ key: "addStatusBase", params: { statusKey: "turn-count", value: 1 } }]
                 },
                 {
-                    targetType: "owner",
+                    targetType: "thisOwner",
                     key: "embryoDamage",
                     effect: [{ key: "attack", params: { value: "$medium.status(turn-count)" } }]
                 }
@@ -1663,12 +1665,12 @@ export const relicList: RelicMap[] = [
                     effect: [{ key: "setBaseStatus", params: { statusKey: "disabled", value: 1 } }]
                 },
                 {
-                    targetType: "owner",
+                    targetType: "thisOwner",
                     key: "hatchSymbiote",
                     effect: [{ key: "gainRelic", params: { relicKey: "event_relic_symbiote_seed" } }]
                 },
                 {
-                    targetType: "owner",
+                    targetType: "thisOwner",
                     key: "selfDestroy",
                     effect: [{ key: "removeRelicByKey", params: { relicKey: "event_relic_incubating_embryo" } }]
                 }
@@ -1680,12 +1682,12 @@ export const relicList: RelicMap[] = [
                     effect: [{ key: "setBaseStatus", params: { statusKey: "disabled", value: 1 } }]
                 },
                 {
-                    targetType: "owner",
+                    targetType: "thisOwner",
                     key: "hatchHungry",
                     effect: [{ key: "gainRelic", params: { relicKey: "event_relic_hungry_seed" } }]
                 },
                 {
-                    targetType: "owner",
+                    targetType: "thisOwner",
                     key: "selfDestroy",
                     effect: [{ key: "removeRelicByKey", params: { relicKey: "event_relic_incubating_embryo" } }]
                 }
@@ -1714,7 +1716,7 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             symbioteBoost: [{
-                targetType: "owner",
+                targetType: "thisOwner",
                 key: "applyState",
                 effect: [{
                     key: "applyState",
@@ -1753,7 +1755,7 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             hungrySeedWeak: [{
-                targetType: "owner",
+                targetType: "thisOwner",
                 key: "applyState",
                 effect: [{
                     key: "applyState",
@@ -1829,7 +1831,7 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             drawExtra: [{
-                targetType: "owner",
+                targetType: "thisOwner",
                 key: "drawFromDrawPile",
                 effect: [{
                     key: "drawFromDrawPile",
@@ -1931,7 +1933,7 @@ export const relicList: RelicMap[] = [
         },
         reaction: {
             petHeal: [{
-                targetType: "owner",
+                targetType: "thisOwner",
                 key: "heal",
                 effect: [{ key: "heal", params: { value: 10 } }]
             }],
@@ -1941,8 +1943,8 @@ export const relicList: RelicMap[] = [
                 effect: [{ key: "attack", params: { value: 5 } }]
             }],
             petBlock: [
-                { targetType: "owner", key: "cancelDeath", effect: [{ key: "cancelCurrentEvent" }] },
-                { targetType: "owner", key: "healOne", effect: [{ key: "heal", params: { value: 1 } }] },
+                { targetType: "thisOwner", key: "cancelDeath", effect: [{ key: "cancelCurrentEvent" }] },
+                { targetType: "thisOwner", key: "healOne", effect: [{ key: "heal", params: { value: 1 } }] },
                 {
                     targetType: "triggerCreator",
                     key: "markDisabled",

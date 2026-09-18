@@ -22,7 +22,7 @@
 
     <!-- 底部按钮 -->
     <div class="bottom-actions">
-        <button class="action-btn secondary" @click="goBack">返回</button>
+        <Button class="action-btn" :click="goBack" label="返回" />
         <div v-if="ascensionUiEnabled" class="ascension-section">
             <div class="section-label">进阶</div>
             <div class="ascension-control">
@@ -35,9 +35,7 @@
             </div>
             <div class="ascension-desc">{{ ascensionDesc }}</div>
         </div>
-        <button class="action-btn primary" @click="startGame" :disabled="!canStart">
-            开始游戏
-        </button>
+        <Button class="action-btn primary" invert :click="startGame" :disabled="!canStart" label="开始游戏" />
     </div>
 
     <DeckViewModal
@@ -341,20 +339,19 @@ onMounted(async () => {
 }
 
 .action-btn {
-    height: fit-content;
-    padding: 5px 20px;
     font-size: 16px;
-    border: 2px solid #000;
-    cursor: pointer;
-    background: #fff;
 
-    &:hover:not(:disabled) { background: rgba(0, 0, 0, 0.05); }
-    &:disabled { opacity: 0.4; cursor: not-allowed; }
+    &.game-btn {
+        padding: 1px;
+    }
 
-    &.primary {
-        background: #333;
-        color: #fff;
-        &:hover:not(:disabled) { background: #444; }
+    :deep(.game-btn-face) {
+        padding: 5px 20px;
+        line-height: normal;
+    }
+
+    &:not(.invert) :deep(.game-btn-face) {
+        background: #fff;
     }
 }
 

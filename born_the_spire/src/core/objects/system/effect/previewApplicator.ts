@@ -65,11 +65,11 @@ function conditionPasses(
     if (!isDslCondition(condition)) return true
     const event = effect.actionEvent
     return checkCondition(condition, {
-        item: item as any,
         declarationObject: triggerCreator,
         declarationOwner: owner,
-        source: item as any,
-        target: event.target as any,
+        source: event.source,
+        medium: event.medium,
+        target: event.target,
         event,
         triggerEffect: effect,
         triggerCreator,
@@ -106,8 +106,6 @@ function applyParamModifier(
         source: item,
         medium: item,
         target: previewed,
-        owner: item as any,
-        item: item as any,
         declarationObject: triggerCreator,
         declarationOwner: owner,
         event,

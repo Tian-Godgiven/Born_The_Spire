@@ -1,20 +1,22 @@
 import type { Enemy } from "@/core/objects/target/Enemy"
 import type { Player } from "@/core/objects/target/Player"
+import type { Companion } from "@/core/objects/target/Companion"
 import type { Chara } from "@/core/objects/target/Target"
 import { nanoid } from "nanoid"
 import { ref, shallowRef } from "vue"
 import { showDisplayMessage } from "@/ui/hooks/global/displayMessage"
 import { showBattleDefeat } from "@/ui/hooks/interaction/battleDefeat"
-import { isEnemy, isPlayer } from "@/core/utils/typeGuards"
+import { isCompanion, isEnemy, isPlayer } from "@/core/utils/typeGuards"
 import { nextTick } from "vue"
 import { newLog } from "@/ui/hooks/global/log"
 import { doEvent } from "../system/ActionEvent"
 import { nowPlayer } from "./run"
 import { endCharaTurn, startCharaTurn } from "@/core/effects/turn"
 
-import { prepareEnemyIntents, executeAllEnemiesTurn } from "./enemyTurn"
+import { prepareCompanionIntents, prepareEnemyIntents, executeAllCompanionsTurn, executeAllEnemiesTurn } from "./enemyTurn"
 import { cleanupAllDisabledOrgans } from "@/core/effects/organ/disableOrgan"
 import { getStateModifier } from "../system/modifier/StateModifier"
+import { randomWeightedChoice } from "@/core/hooks/random"
 
 
 
@@ -29,11 +31,20 @@ export class Battle {
     // 拦不住第二次调用，会让两条回合流程并发跑坏抽牌和弃牌
     public isTurnTransitioning: boolean = false
 
+    private playerTeam: Chara[]
+    private enemyTeam: Chara[]
+    private summonedCombatantIds = new Set<string>()
+    private targetSelectionCount = 0
+
     constructor(
         public turnNumber:number,
-        private playerTeam:Chara[],
-        private enemyTeam:Chara[]
-    ){}
+        playerTeam:Chara[],
+        enemyTeam:Chara[]
+    ) {
+        // 战斗可动态增减单位，不能直接修改局外队伍或存档中的数组。
+        this.playerTeam = [...playerTeam]
+        this.enemyTeam = [...enemyTeam]
+    }
 
     getTeam(name:"player"|"enemy"): Chara[] {
         if(name == "player")
@@ -63,6 +74,77 @@ export class Battle {
         return this.playerTeam.filter(chara =>
             isPlayer(chara) && chara.current.isAlive?.value === 1
         ) as Player[]
+    }
+
+    /** 玩家阵营中所有存活战斗单位，包含真实玩家和友方召唤物。 */
+    getAlivePlayerTeam(): Chara[] {
+        return this.playerTeam.filter(chara =>
+            (isPlayer(chara) || isCompanion(chara)) && chara.current.isAlive?.value === 1
+        )
+    }
+
+    getAliveCompanions(controllerId?: string): Companion[] {
+        return this.playerTeam.filter(chara =>
+            isCompanion(chara) && chara.current.isAlive?.value === 1 &&
+            (controllerId === undefined || chara.controllerId === controllerId)
+        ) as Companion[]
+    }
+
+    getRandomAliveCombatant(side: "player" | "enemy"): Chara | undefined {
+        const combatants = side === "player" ? this.getAlivePlayerTeam() : this.getAliveEnemies()
+        if (combatants.length === 0) return undefined
+
+        // 只有召唤物声明 targetWeight；真实玩家默认权重为 1。
+        const weights = combatants.map(combatant =>
+            isCompanion(combatant) ? combatant.targetWeight : 1)
+        if (weights.every(weight => weight <= 0)) return combatants[0]
+        return randomWeightedChoice(
+            combatants,
+            weights,
+            `battleTarget:${side}:${this.targetSelectionCount++}`
+        )
+    }
+
+    async addCompanion(companion: Companion) {
+        if (this.playerTeam.some(chara => chara.__id === companion.__id)) return false
+        this.playerTeam.push(companion)
+        this.summonedCombatantIds.add(companion.__id)
+        getStateModifier(companion).onStateChanged(() => this.refreshAllIntents())
+        await doEvent({
+            key: "battleStart",
+            source: companion,
+            medium: companion,
+            target: companion,
+            effectUnits: []
+        })
+        return true
+    }
+
+    async addSummonedEnemy(enemy: Enemy) {
+        if (this.enemyTeam.some(chara => chara.__id === enemy.__id)) return false
+        this.enemyTeam.push(enemy)
+        this.summonedCombatantIds.add(enemy.__id)
+        getStateModifier(enemy).onStateChanged(() => enemy.refreshIntent())
+        await doEvent({ key: "battleStart", source: enemy, medium: enemy, target: enemy, effectUnits: [] })
+        return true
+    }
+
+    getSummonedCombatants(): Chara[] {
+        return [...this.playerTeam, ...this.enemyTeam]
+            .filter(chara => this.summonedCombatantIds.has(chara.__id))
+    }
+
+    async prepareCompanionIntents() {
+        await prepareCompanionIntents(this.getAliveCompanions(), this.turnNumber, this)
+    }
+
+    removeCombatant(chara: Chara) {
+        const team = isEnemy(chara) ? this.enemyTeam : this.playerTeam
+        const index = team.findIndex(member => member.__id === chara.__id)
+        if (index < 0) return false
+        team.splice(index, 1)
+        this.summonedCombatantIds.delete(chara.__id)
+        return true
     }
 
     /**
@@ -108,14 +190,14 @@ export class Battle {
     }
 
     async startTurn(team:"player"|"enemy"){
-        const theTeam = team=="player"?this.playerTeam:this.enemyTeam
+        const theTeam = team=="player" ? this.getAlivePlayers() : this.enemyTeam
         for(let chara of theTeam){
             await startCharaTurn(chara,this)
         }
     }
 
     async endTurn(team:"player"|"enemy"){
-        const theTeam = team=="player"?this.playerTeam:this.enemyTeam
+        const theTeam = team=="player" ? this.getAlivePlayers() : this.enemyTeam
         for(let chara of theTeam){
             await endCharaTurn(chara,this)
         }
@@ -136,6 +218,9 @@ export class Battle {
             // 1. 结束玩家回合
             await this.endTurn("player")
 
+            // 玩家结束操作后，友军召唤物按各自配置自动行动。
+            await executeAllCompanionsTurn(this.getAliveCompanions(), this.turnNumber, this)
+
             // 2. 检查玩家是否死亡
             const battleResult = this.checkBattleEnd()
             if (battleResult === "player_lose") {
@@ -147,7 +232,7 @@ export class Battle {
             this.nowTurn = "enemy"
             newLog(["===== 敌人回合开始 ====="])
             const aliveEnemies = this.getAliveEnemies()
-            const player = this.getAlivePlayers()[0]  // 假设单个玩家
+            const player = this.getRandomAliveCombatant("player")
 
             if (player && aliveEnemies.length > 0) {
                 // 显示"敌人行动"提示（1.5秒），然后等待1.5秒
@@ -158,7 +243,7 @@ export class Battle {
                 const sortedEnemies = this.sortEnemiesByActionOrder(aliveEnemies)
 
                 // 执行所有敌人的回合
-                await executeAllEnemiesTurn(sortedEnemies, player, this.turnNumber, this)
+                await executeAllEnemiesTurn(sortedEnemies, this.turnNumber, this)
 
                 // 4. 检查战斗是否结束
                 const afterEnemyResult = this.checkBattleEnd()
@@ -176,9 +261,12 @@ export class Battle {
             this.turnNumber++
 
             // 6. 准备下回合敌人意图
-            if (player && aliveEnemies.length > 0) {
-                await prepareEnemyIntents(aliveEnemies, player, this.turnNumber)
+            const intentTarget = this.getRandomAliveCombatant("player")
+            if (intentTarget && aliveEnemies.length > 0) {
+                await prepareEnemyIntents(aliveEnemies, intentTarget, this.turnNumber)
             }
+
+            await this.prepareCompanionIntents()
 
             // 7. 切换到玩家回合
             this.nowTurn = "player"
@@ -209,6 +297,18 @@ export class Battle {
         if (this.isEnded) return
 
         this.isEnded = true
+
+        // 召唤物的离场由其“召唤”状态自行处理，而不是由 Battle 硬删除。
+        for (const companion of this.getSummonedCombatants()) {
+            void doEvent({
+                key: "battleEnd",
+                source: companion,
+                medium: companion,
+                target: companion,
+                info: { result: result === "player_win" ? "win" : "lose" },
+                effectUnits: []
+            })
+        }
 
         // 处理主动能力系统的战斗结束
         this.handleActiveAbilitiesBattleEnd()

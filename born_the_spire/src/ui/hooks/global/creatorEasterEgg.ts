@@ -1,4 +1,4 @@
-export const GAME_VERSION = "0.1.0"
+export const GAME_VERSION = "0.1.1"
 export const QQ_GROUP = "782816134"
 
 export const CREATOR_EGG_LINES = [

@@ -323,9 +323,10 @@ export class StateModifier {
                         const triggerCondition = (triggerDef as any).condition
                         if (triggerCondition) {
                             const ctx: ConditionContext = {
-                                item: state as any,
-                                source: state as any,
                                 declarationObject: state,
+                                declarationOwner: this.owner,
+                                source: event.source,
+                                medium: event.medium,
                                 target: event?.target as any,
                                 event,
                                 triggerEffect: effect ?? undefined,

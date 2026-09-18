@@ -13,6 +13,7 @@ import type { Card } from "@/core/objects/item/Subclass/Card"
 import type { Status } from "@/core/objects/system/status/Status"
 import type { Player } from "@/core/objects/target/Player"
 import type { Enemy } from "@/core/objects/target/Enemy"
+import type { Companion } from "@/core/objects/target/Companion"
 import type { Organ } from "@/core/objects/target/Organ"
 
 /**
@@ -133,6 +134,14 @@ export function isEnemy(participant: EventParticipant | EventParticipant[]): par
     return 'targetType' in participant && (participant as any).targetType === 'enemy'
 }
 
+/** 检查对象是否为玩家阵营的临时自动友军。 */
+export function isCompanion(participant: EventParticipant | EventParticipant[]): participant is Companion {
+    if (Array.isArray(participant)) {
+        return participant.every(p => isEntity(p) && (p as any).targetType === 'companion')
+    }
+    return isEntity(participant) && (participant as any).targetType === 'companion'
+}
+
 /**
  * 获取所有 Enemy 类型的对象
  * 返回满足 Enemy 类型的对象数组
@@ -167,13 +176,13 @@ export function getOrgans(participants: EventParticipant | EventParticipant[]): 
  * 检查对象是否为 Chara 类型（Player 或 Enemy）
  * 使用 targetType 标识而不是 instanceof 以避免循环依赖
  */
-export function isChara(participant: EventParticipant | EventParticipant[]): participant is Player | Enemy {
+export function isChara(participant: EventParticipant | EventParticipant[]): participant is Player | Enemy | Companion {
     if (Array.isArray(participant)) {
-        return participant.every(p => isEntity(p) && ((p as any).targetType === 'player' || (p as any).targetType === 'enemy'))
+        return participant.every(p => isEntity(p) && ((p as any).targetType === 'player' || (p as any).targetType === 'enemy' || (p as any).targetType === 'companion'))
     }
     if (!isEntity(participant)) return false
     const targetType = (participant as any).targetType
-    return targetType === 'player' || targetType === 'enemy'
+    return targetType === 'player' || targetType === 'enemy' || targetType === 'companion'
 }
 
 /**

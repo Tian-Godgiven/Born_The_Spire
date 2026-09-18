@@ -168,20 +168,20 @@ export const potionList: PotionMap[] = [
         reaction: {
             fairyRevive: [
                 {
-                    targetType: "owner",
+                    targetType: "thisOwner",
                     key: "cancelDeath",
                     effect: [{ key: "cancelCurrentEvent" }]
                 },
                 {
-                    targetType: "owner",
+                    targetType: "thisOwner",
                     key: "healFairy",
                     effect: [{
                         key: "heal",
-                        params: { value: "$item.status(reviveHealth)" }
+                        params: { value: "$this.status(reviveHealth)" }
                     }]
                 },
                 {
-                    targetType: "owner",
+                    targetType: "thisOwner",
                     key: "consumeFairy",
                     effect: [{
                         key: "losePotion",

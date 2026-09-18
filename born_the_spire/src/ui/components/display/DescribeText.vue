@@ -27,6 +27,13 @@
             :placement="refPlacement"
             :align="refAlign"
         />
+        <CompanionRefText
+            v-else-if="segment.type === 'companion' && segment.companionKey"
+            :companion-key="segment.companionKey"
+            :anchor="anchorEl"
+            :placement="refPlacement"
+            :align="refAlign"
+        />
         <DescribeFxText
             v-else-if="segment.type === 'fx'"
             :text="segment.text"
@@ -61,6 +68,7 @@
     import CardRefText from '@/ui/components/display/CardRefText.vue'
     import OrganRefText from '@/ui/components/display/OrganRefText.vue'
     import RelicRefText from '@/ui/components/display/RelicRefText.vue'
+    import CompanionRefText from '@/ui/components/display/CompanionRefText.vue'
     import DescribeFxText from '@/ui/components/display/DescribeFxText.vue'
     import GlossaryPanel from '@/ui/components/display/GlossaryPanel.vue'
     import Popover from '@/ui/components/global/Popover.vue'

@@ -34,11 +34,11 @@ function buildConditionContext(
     triggerHost?: Entity
 ): ConditionContext {
     return {
-        item: item as any,
         declarationObject: item,
         declarationOwner: owner,
-        source: item as any,  // trigger source = 触发器所在的物品
-        target: triggerEvent?.target as any,
+        source: triggerEvent.source,
+        medium: triggerEvent.medium,
+        target: triggerEvent.target,
         event: triggerEvent,
         triggerEffect: triggerEffect ?? undefined,
         triggerCreator: item,
@@ -98,7 +98,6 @@ export async function executeItemReaction(params: {
     triggerDefKey?: string,
 }): Promise<void> {
     const { item, reactionEvents, triggerEvent, owner, triggerEffect, condition, disableUntil, unit, triggerHost, triggerDefKey } = params
-
     // 检查物品是否被禁用
     if (item.isDisabled) return
 

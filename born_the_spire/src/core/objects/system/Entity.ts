@@ -18,6 +18,8 @@ import { markRaw } from "vue";
 // 实体（entity）是Target和Item的基类
 export class Entity implements EventParticipant{
     public __id:string = nanoid()
+    /** 配置标识；__id 才是单个运行时实例的唯一标识。 */
+    public readonly key:string
     public label:string
     public participantType: 'entity' = 'entity'
     //属性值:相对静态的，受修饰器管理的值
@@ -41,6 +43,7 @@ export class Entity implements EventParticipant{
     public _beforeCurrentInit?: (this: Entity) => void
 
     constructor(map:EntityMap, beforeCurrentInit?: (this: Entity) => void){
+        this.key = map.key
         this.label = map.label
         //初始化实体自带的触发器,并创建自带的触发器
         this.trigger = new Trigger()

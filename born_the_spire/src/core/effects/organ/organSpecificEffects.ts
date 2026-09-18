@@ -158,7 +158,7 @@ export const organ_emergencyBattery: EffectFunc = (event, effect) => {
 }
 
 /**
- * 信息素腺体：每回合给所有存活友军（含自身）+N层指挥
+ * 信息素腺体：回合结束时给所有非自身存活友军 +N 层指挥。
  * params:
  *   stacks: number - 每回合指挥层数 (default: 1)
  */
@@ -172,8 +172,9 @@ export const organ_pheromoneGland: EffectFunc = (event, effect) => {
     const stacks = Number(effect.params?.stacks ?? 1)
     const allies = isEnemy(holder)
         ? battle.getAliveEnemies()
-        : (battle.getAlivePlayers() || [])
+        : battle.getAlivePlayerTeam()
     for (const ally of allies) {
+        if (ally === holder) continue
         gainStateStack(ally, "command", stacks, event.medium as any)
     }
     newLog([`信息素扩散：所有友军 +${stacks} 指挥层`])
@@ -234,7 +235,7 @@ export const organ_heatAccumulate: EffectFunc = (event, effect) => {
 
         const battle = nowBattle.value
         if (battle) {
-            for (const player of battle.getAlivePlayers()) {
+            for (const player of battle.getAlivePlayerTeam()) {
             doEvent({
                 key: "attack",
                 source: target,
@@ -304,7 +305,7 @@ export const organ_toxicPulse: EffectFunc = (event, effect) => {
             effectUnits: [{ key: "applyState", params: { stateKey: "poison", stacks } }]
         })
     }
-    for (const player of battle.getAlivePlayers()) {
+    for (const player of battle.getAlivePlayerTeam()) {
         doEvent({
             key: "applyState",
             source: event.medium,
@@ -418,7 +419,7 @@ export const organ_corruptionArmor: EffectFunc = (event, effect) => {
     const armorPerDebuffOpponent = Number(effect.params?.value ?? 3)
 
     // 对手列表：持有者是敌人→玩家；持有者是玩家→敌人
-    const opponents = isEnemy(target) ? battle.getAlivePlayers() : battle.getAliveEnemies()
+    const opponents = isEnemy(target) ? battle.getAlivePlayerTeam() : battle.getAliveEnemies()
 
     let debuffCount = 0
     for (const opponent of opponents) {
@@ -483,7 +484,7 @@ export const organ_mycelialSpread: EffectFunc = (event, effect) => {
     if (!battle) return false
 
     const stacks = Number(effect.params?.stacks ?? 1)
-    const opponents = isEnemy(source) ? battle.getAlivePlayers() : battle.getAliveEnemies()
+    const opponents = isEnemy(source) ? battle.getAlivePlayerTeam() : battle.getAliveEnemies()
     if (opponents.length === 0) return false
 
     const rng = getContextRandom("mycelialSpread")

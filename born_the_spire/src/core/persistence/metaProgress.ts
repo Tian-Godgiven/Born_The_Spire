@@ -29,6 +29,12 @@ export const ORGAN_RARITY_COST: Record<string, number> = {
     unique: 4
 }
 
+const DEFAULT_UNLOCKED_ORGANS: Record<string, true> = {
+    "original_organ_00001": true,
+    "original_organ_fission_sac": true,
+    "original_organ_00003": true
+}
+
 // ========== 类型定义 ==========
 
 /**
@@ -78,7 +84,7 @@ export function loadMetaProgress(): MetaProgressSave {
         // 补全可能缺失的字段
         return {
             version: CURRENT_VERSION,
-            unlockedOrgans: parsed.unlockedOrgans ?? {},
+            unlockedOrgans: { ...DEFAULT_UNLOCKED_ORGANS, ...(parsed.unlockedOrgans ?? {}) },
             organAscensionMastery: parsed.organAscensionMastery ?? {},
             defeatedEliteTypes: parsed.defeatedEliteTypes ?? {}
         }
@@ -107,10 +113,7 @@ export function saveMetaProgress(data: MetaProgressSave): void {
 export function createDefaultSave(): MetaProgressSave {
     return {
         version: CURRENT_VERSION,
-        unlockedOrgans: {
-            "original_organ_00001": true,  // 默认解锁心脏器官
-            "original_organ_00003": true   // 默认解锁石肤器官
-        },
+        unlockedOrgans: { ...DEFAULT_UNLOCKED_ORGANS },
         organAscensionMastery: {},
         defeatedEliteTypes: {}
     }

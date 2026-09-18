@@ -5,6 +5,8 @@
 
 import type { BattleRoomType } from "@/core/objects/room/Room"
 import type { EnemyInstanceConfig } from "@/core/objects/room/BattleRoom"
+import { nowBattle } from "@/core/objects/game/battle"
+import { getStateModifier } from "@/core/objects/system/modifier/StateModifier"
 
 export interface BattleRoomConfig {
     key: string
@@ -378,11 +380,11 @@ export const battleList: BattleRoomConfig[] = [
 
     // ========== 第一层精英战斗 ==========
 
-    // 精英1：蚁后阵线 — 蚁后+蚁兵×2，指挥层成长
+    // 精英1：蚁后阵线 — 开场两只蚁兵，缺员时可用一次信息素补充。
     {
         key: "battle_elite_ant_queen",
         name: "蚁后阵线",
-        description: "蚁后的信息素指挥着两只蚁兵",
+        description: "蚁后以信息素指挥蚁兵，并会在缺员时补充一次兵力",
         battleType: "elite",
         enemyConfigs: [
             {
@@ -390,56 +392,33 @@ export const battleList: BattleRoomConfig[] = [
                 behavior: {
                     patterns: [
                         {
-                            priority: 10,
+                            priority: 20,
                             intent: "unknown",
-                            condition: { turn: { mod: [3, 0] } },
-                            action: { selector: { key: "enemy_card_command_screech" }, mode: "random" },
-                            describe: "每3回合：指挥嘶鸣"
+                            condition: {
+                                custom: (queen) => {
+                                    const battle = nowBattle.value
+                                    const antCount = battle?.getAliveEnemies()
+                                        .filter(enemy => enemy.key === "enemy_ant_soldier").length ?? 0
+                                    return antCount < 2 && !getStateModifier(queen).getState("pheromoneLureUsed")
+                                }
+                            },
+                            action: { selector: { key: "enemy_card_lure_pheromone" }, mode: "random" },
+                            describe: "蚁兵少于两只：诱蚁信息素（每场一次）"
                         }
                     ],
-                    fallback: {
-                        intent: "attack",
-                        action: {
-                            selector: { tags: ["attack"] },
-                            mode: "weighted",
-                            weights: { "enemy_card_command_strike": 2, "enemy_card_queen_acid_bite": 1 }
-                        },
-                        describe: "偏好指挥连击"
+                    moves: {
+                        mode: "loop",
+                        list: [
+                            { cards: ["enemy_card_queen_acid_bite"], intent: "attack", describe: "女王蚀咬" },
+                            { cards: ["original_card_00014"], intent: "defend", describe: "防御" },
+                            { cards: ["enemy_card_command_strike"], intent: "attack", describe: "指挥连击" },
+                            { cards: ["original_card_00014"], intent: "defend", describe: "防御" }
+                        ]
                     }
                 }
             },
-            {
-                key: "enemy_ant_soldier",
-                uiSize: "small",
-                behavior: {
-                    patterns: [],
-                    fallback: {
-                        intent: "attack",
-                        action: {
-                            selector: { tags: ["attack"] },
-                            mode: "weighted",
-                            weights: { "enemy_card_swarm_bite": 3, "enemy_card_acid_bite": 1 }
-                        },
-                        describe: "群咬为主"
-                    }
-                }
-            },
-            {
-                key: "enemy_ant_soldier",
-                uiSize: "small",
-                behavior: {
-                    patterns: [],
-                    fallback: {
-                        intent: "attack",
-                        action: {
-                            selector: { tags: ["attack"] },
-                            mode: "weighted",
-                            weights: { "enemy_card_acid_bite": 3, "enemy_card_swarm_bite": 1 }
-                        },
-                        describe: "蚀咬为主"
-                    }
-                }
-            }
+            { key: "enemy_ant_soldier", uiSize: "small" },
+            { key: "enemy_ant_soldier", uiSize: "small" }
         ]
     },
 

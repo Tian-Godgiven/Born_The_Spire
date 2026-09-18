@@ -23,7 +23,10 @@
             </template>
         </Popover>
     </div>
-    <div class="corner-right">v{{ GAME_VERSION }}</div>
+    <div class="corner-right">
+        <Button class="changelog-btn" :click="() => showChangelog = true" label="更新日志" />
+        <div class="game-version">v{{ GAME_VERSION }}</div>
+    </div>
 
     <Teleport to="body">
         <div
@@ -42,6 +45,7 @@
     </Teleport>
 
     <SettingsModal v-if="showSettings" @close="showSettings = false" />
+    <ChangelogModal v-if="showChangelog" @close="showChangelog = false" />
 </div>
 </template>
 
@@ -49,6 +53,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import SettingsModal from '@/ui/components/interaction/SettingsModal.vue'
+import ChangelogModal from '@/ui/components/interaction/ChangelogModal.vue'
 import Popover from '@/ui/components/global/Popover.vue'
 import Button from '@/ui/components/global/Button.vue'
 import { GAME_VERSION, QQ_GROUP } from '@/ui/hooks/global/creatorEasterEgg'
@@ -60,6 +65,7 @@ const router = useRouter()
 
 const showSettings = ref(false)
 const showOptions = ref(false)
+const showChangelog = ref(false)
 const metaProgress = ref<MetaProgressSave>(loadMetaProgress())
 
 const buttonList: { label: string, click: () => void }[] = [
@@ -150,7 +156,18 @@ async function importSave() {
 
 .corner-right {
     right: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+.game-version {
     font-size: 16px;
+}
+
+.changelog-btn {
+    font-size: 13px;
 }
 
 .about-btn {

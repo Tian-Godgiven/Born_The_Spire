@@ -150,56 +150,48 @@ const visibilityHint = computed(() => {
     align-items: center;
     gap: 4px;
     padding: var(--layout-intent-main-padding, 6px 10px);
-    border: 2px solid black;
     background: white;
     min-width: var(--layout-intent-main-min-width, 50px);
     justify-content: center;
     cursor: pointer;
 
     &.intent-attack {
-        border-color: #d32f2f;
         .intent-icon {
             color: #d32f2f;
         }
     }
 
     &.intent-defend {
-        border-color: #1976d2;
         .intent-icon {
             color: #1976d2;
         }
     }
 
     &.intent-buff {
-        border-color: #388e3c;
         .intent-icon {
             color: #388e3c;
         }
     }
 
     &.intent-debuff {
-        border-color: #f57c00;
         .intent-icon {
             color: #f57c00;
         }
     }
 
     &.intent-special {
-        border-color: #7b1fa2;
         .intent-icon {
             color: #7b1fa2;
         }
     }
 
     &.intent-heal {
-        border-color: #44cc44;
         .intent-icon {
             color: #44cc44;
         }
     }
 
     &.intent-unknown {
-        border-color: #616161;
         .intent-icon {
             color: #616161;
         }

@@ -15,7 +15,7 @@ import { addStatusBase, addStatusCurrent, multiplyStatusBase, setCurrentToMax, s
 import { addCurrent, addStatusBaseCurrentValue } from "@/core/effects/current/changeCurrent"
 import { gainReserve, spendReserve, modifyReserveByPercent } from "@/core/effects/reserve/reserve"
 import { killTarget, reviveTarget, loseHp } from "@/core/effects/life/lifeControl"
-import { replaceOrgan, chooseOrganRemove, damageOrgan, healOrgan, modifyOrganCardStatus, repairOrgan, upgradeOrganCards } from "@/core/effects/organ/organEffects"
+import { replaceOrgan, chooseOrganRemove, damageOrgan, healOrgan, modifyOrganCardStatus, repairOrgan, upgradeOrganCards, addOrganCards } from "@/core/effects/organ/organEffects"
 import { removeOrganEffect } from "@/core/effects/organ/organRemoveEffect"
 import { upgradeCardEffect } from "@/core/effects/card/cardUpgradeEffect"
 import { removeCardEffect } from "@/core/effects/card/cardRemoveEffect"
@@ -56,6 +56,7 @@ import { emptyChest } from "@/core/effects/chest/emptyChest"
 import { modifyRepeat } from "@/core/effects/card/repeatCard"
 import { shuffleDiscardIntoDraw } from "@/core/effects/card/shuffleDiscardIntoDraw"
 import { addRandomCardsToPile } from "@/core/effects/card/addRandomCardsToPile"
+import { removeCompanion, removeSummonedCombatant, summonCompanion, summonEnemy } from "@/core/effects/companion/summonCompanion"
 import type { EffectParamsSchema } from "@/core/effects/validateEffectParams"
 
 type EffectData = {
@@ -426,6 +427,10 @@ export const effectMap:EffectData[] = [
     key:"upgradeOrganCards",
     effect:upgradeOrganCards
 },{
+    label:"添加器官提供的卡牌",
+    key:"addOrganCards",
+    effect:addOrganCards
+},{
     label:"热量计时",
     key:"organ_heatTick",
     effect:organ_heatTick
@@ -650,6 +655,22 @@ export const effectMap:EffectData[] = [
     label:"直接扣除生命值（绕过护甲）",
     key:"loseHp",
     effect:loseHp
+},{
+    label:"召唤友军",
+    key:"summonCompanion",
+    effect:summonCompanion
+},{
+    label:"消灭召唤物",
+    key:"removeCompanion",
+    effect:removeCompanion
+},{
+    label:"召唤敌人",
+    key:"summonEnemy",
+    effect:summonEnemy
+},{
+    label:"消灭战斗召唤物",
+    key:"removeSummonedCombatant",
+    effect:removeSummonedCombatant
 },{
     label:"变硬：按层数百分比减少本次伤害",
     key:"state_hardenAbsorb",

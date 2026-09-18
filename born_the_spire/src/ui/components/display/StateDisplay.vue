@@ -45,11 +45,12 @@ const hasStates = computed(() => states.value.length > 0)
 
 // 检查状态是否有可见的层数
 function hasVisibleStack(state: State): boolean {
-    return state.stacks.some(stack => stack.showType !== "bool")
+    return state.showType !== "bool" && state.stacks.some(stack => stack.showType !== "bool")
 }
 
 // 获取层数显示
 function getStackDisplay(state: State): string {
+    if (state.showType === "bool") return ''
     const visibleStacks = state.stacks.filter(stack => stack.showType !== "bool")
     if (visibleStacks.length === 0) return ''
     if (visibleStacks.length === 1) {

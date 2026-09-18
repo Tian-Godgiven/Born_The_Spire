@@ -281,7 +281,7 @@ export const eventList: EventMap[] = [
                         title: "给他20金币",
                         description: "获得一瓶随机药水",
                         icon: "🧪",
-                        ifAble: "$owner.reserve(gold) >= 20",
+                        ifAble: "$this.reserve(gold) >= 20",
                         nextScene: "result_potion",
                         effects: [
                             { key: "loseGold", params: { amount: 20 } },
@@ -292,7 +292,7 @@ export const eventList: EventMap[] = [
                         title: "给他60金币",
                         description: "获得一个随机遗物",
                         icon: "💎",
-                        ifAble: "$owner.reserve(gold) >= 60",
+                        ifAble: "$this.reserve(gold) >= 60",
                         nextScene: "result_relic",
                         effects: [
                             { key: "loseGold", params: { amount: 60 } },
@@ -432,7 +432,7 @@ export const eventList: EventMap[] = [
                         title: "浸泡",
                         description: "从你的牌组中选择一张卡牌将其移除",
                         icon: "✨",
-                        ifAble: "$owner.cardCount() >= 1",
+                        ifAble: "$this.cardCount() >= 1",
                         nextScene: "result_soak",
                         effects: [
                             { key: "removeCard", params: { count: 1, minCount: 1 } }
@@ -475,7 +475,7 @@ export const eventList: EventMap[] = [
                         title: "丢入一张卡牌",
                         description: "将一张卡牌投入湖中",
                         icon: "🃏",
-                        ifAble: "$owner.cardCount() >= 1",
+                        ifAble: "$this.cardCount() >= 1",
                         nextScene: "scene2",
                         customCallback: async (data) => {
                             if (!await lakeOfferCard(data)) return "scene1"
@@ -485,7 +485,7 @@ export const eventList: EventMap[] = [
                         title: "丢入一个器官",
                         description: "将一个器官投入湖中",
                         icon: "🫀",
-                        ifAble: "$owner.removableOrganCount() >= 1",
+                        ifAble: "$this.removableOrganCount() >= 1",
                         nextScene: "scene2",
                         customCallback: async (data) => {
                             if (!await lakeOfferOrgan(data)) return "scene1"
@@ -805,7 +805,7 @@ export const eventList: EventMap[] = [
                             ? ["失去器官", { organ: data.pickedOrgan.key }, "，获得金币"]
                             : "失去器官",
                         ifShow: (data) => !!data.pickedOrgan,
-                        ifAble: "$owner.removableOrganCount() >= 1",
+                        ifAble: "$this.removableOrganCount() >= 1",
                         customCallback: async (data) => {
                             if (!data.pickedOrgan) return
                             collectorRollPay(data, false)
@@ -817,7 +817,7 @@ export const eventList: EventMap[] = [
                         key: "haggle",
                         title: "讨价还价",
                         ifShow: (data) => !!data.pickedOrgan,
-                        ifAble: "$owner.removableOrganCount() >= 1",
+                        ifAble: "$this.removableOrganCount() >= 1",
                         customCallback: async (data) => {
                             if (!data.pickedOrgan) return "haggle_lose"
                             if (!randomChance(0.5, "collectorHaggle")) return "haggle_lose"
@@ -912,8 +912,8 @@ export const eventList: EventMap[] = [
                         title: "接受",
                         description: "失去 5% 最大生命的当前生命，将一个器官提供的卡牌移植到另一个器官上",
                         ifAble: [
-                            "$owner.organCount() >= 2",
-                            "$owner.organsWithCardsCount() >= 1"
+                            "$this.organCount() >= 2",
+                            "$this.organsWithCardsCount() >= 1"
                         ],
                         effects: [
                             { key: "loseHealthPercent", params: { percent: 5, notLethal: true } }
@@ -1117,7 +1117,7 @@ export const eventList: EventMap[] = [
                         key: "sacrifice_organ",
                         title: "献上器官",
                         description: ["失去一个器官，获得", { relic: "original_relic_shallow_taste" }],
-                        ifAble: "$owner.removableOrganCount() >= 1",
+                        ifAble: "$this.removableOrganCount() >= 1",
                         effects: [
                             { key: "removeOrgan", params: { count: 1, minCount: 1 } },
                             { key: "gainRelic", params: { relicKey: "original_relic_shallow_taste" } }

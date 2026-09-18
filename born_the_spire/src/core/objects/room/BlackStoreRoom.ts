@@ -195,7 +195,7 @@ export class BlackStoreRoom extends Room {
         this.generateOrganSellOffers()
 
         // 应用商店折扣（来自玩家 shopDiscount 属性）
-        this.applyShopDiscount()
+        this.refreshShopPrices()
     }
 
     /**
@@ -365,7 +365,7 @@ export class BlackStoreRoom extends Room {
      * 按当前 shopDiscount 从 basePrice 重算货架价。
      * 进店时跑一次；买完也会跑，本店现买的会员卡能立刻改剩余商品。
      */
-    private applyShopDiscount(): void {
+    refreshShopPrices(): void {
         const multiplier = Number(getStatusValue(nowPlayer, "shopDiscount", 1))
         for (const item of this.storeItems) {
             item.price = Math.max(1, Math.floor(item.basePrice * multiplier))
@@ -561,7 +561,7 @@ export class BlackStoreRoom extends Room {
         newLog([`购买了 ${item.name}，花费 ${item.price} 金钱`])
 
         item.isPurchased = true
-        this.applyShopDiscount()
+        this.refreshShopPrices()
         return true
     }
 

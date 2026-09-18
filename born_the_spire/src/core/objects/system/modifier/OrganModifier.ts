@@ -396,7 +396,7 @@ export class OrganModifier extends ItemModifier {
                     breakTarget = battle.getAliveEnemies()
                 } else if (targetCfg.faction === "opponent") {
                     breakTarget = isEnemy(this.owner)
-                        ? (battle.getAlivePlayers() || [])
+                        ? battle.getAlivePlayerTeam()
                         : battle.getAliveEnemies()
                 } else if (targetCfg.faction === "all") {
                     breakTarget = [...(battle.getTeam("player") || []), ...battle.getAliveEnemies()]

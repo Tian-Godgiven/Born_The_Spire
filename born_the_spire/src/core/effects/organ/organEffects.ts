@@ -329,3 +329,14 @@ export const upgradeOrganCards: EffectFunc = (event, effect) => {
     }
     return any
 }
+
+/** Add cards whose source remains the organ that granted them. */
+export const addOrganCards: EffectFunc = async (event, effect) => {
+    const organ = event.medium
+    const owner = Array.isArray(event.target) ? event.target[0] : event.target
+    const cardKeys = Array.isArray(effect.params?.cardKeys) ? effect.params.cardKeys : []
+    if (!(organ instanceof Organ) || !isEntity(owner) || cardKeys.length === 0) return false
+
+    await getCardModifier(owner as Chara).addCardsFromSource(organ, cardKeys)
+    return true
+}

@@ -71,7 +71,7 @@ export const accumulateAndTrigger: EffectFunc = (event, effect) => {
         console.error("[accumulateAndTrigger] 缺少 on.key 参数")
         return
     }
-    if (effects.length === 0) {
+    if (effects.length === 0 && params.allowEmptyEffects !== true) {
         console.warn("[accumulateAndTrigger] effects 为空，将不会触发任何效果")
     }
     if (hasTriggerCap && !usedKey) {
@@ -86,7 +86,7 @@ export const accumulateAndTrigger: EffectFunc = (event, effect) => {
         return
     }
 
-    // 构建触发回调，owner 通过闭包传入（用于 targetType: "owner" 解析）
+    // 构建触发回调，owner 通过闭包传入（用于 targetType: "thisOwner" 解析）
     const makeCallback = (owner: any) => (triggerEvent: ActionEvent, triggerEffect: any) => {
         let gainAmount: number
         if (typeof gain === "string" && gain.startsWith("$triggerEffect")) {

@@ -23,11 +23,11 @@
  * 固定文字：
  *   badges: [{ type: "indicator", text: "稀有" }]
  *
- * 引用 owner 的属性：
- *   badges: [{ type: "counter", value: "$owner.stateStack(power)" }]
+ * 引用自身的属性：
+ *   badges: [{ type: "counter", value: "$this.stateStack(power)" }]
  *
- * 引用自身挂着的状态层数（$item 是器官/遗物本体，$owner 是持有它的角色）：
- *   badges: [{ type: "counter", value: "$item.stateStack(separatorWear)", showWhen: "$item.stateStack(separatorWear) > 0", position: "bottom-right" }]
+ * 引用自身挂着的状态层数：
+ *   badges: [{ type: "counter", value: "$this.stateStack(separatorWear)", showWhen: "$this.stateStack(separatorWear) > 0", position: "bottom-right" }]
  *
  * 条件显示：
  *   badges: [{ type: "cooldown", status: "cooldown", showWhen: "$scene == combat" }]
@@ -51,7 +51,7 @@ export interface BadgeConfig {
     // === 数据来源（选一个） ===
     status?: string        // 从自身 entity.status[key] 读值
     maxStatus?: string     // counter 类型的分母，从自身 status 读
-    value?: string         // 通用引用表达式（$ 语法），如 "$owner.stateStack(power)"
+    value?: string         // 通用引用表达式（$ 语法），如 "$this.stateStack(power)"
     maxValue?: string | number  // counter 的分母，支持引用或固定数字
     text?: string          // 固定文字
 

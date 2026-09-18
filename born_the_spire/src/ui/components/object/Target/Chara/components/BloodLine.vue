@@ -1,5 +1,5 @@
 <template>
-<div class="bloodLine">
+<div class="bloodLine" :class="size">
     <div class="white">
         <div>{{ blood.now +"/"+blood.max }}</div>
     </div>
@@ -13,7 +13,7 @@ import { Chara } from '@/core/objects/target/Target';
 import gsap from 'gsap';
 import { toNumber } from 'lodash';
 import { computed, useTemplateRef, watch, onMounted, onBeforeUnmount } from 'vue';
-    const {target} = defineProps<{target:Chara}>()
+    const {target, size = 'normal'} = defineProps<{target:Chara, size?: 'small'|'normal'}>()
 
     const blackRef = useTemplateRef("blackRef")
 
@@ -79,6 +79,12 @@ import { computed, useTemplateRef, watch, onMounted, onBeforeUnmount } from 'vue
     .white{
         background-color: white;
         color: black;
+    }
+    &.small {
+        width: 76%;
+        height: 14px;
+        font-size: 12px;
+        outline-width: 1px;
     }
 }
 </style>

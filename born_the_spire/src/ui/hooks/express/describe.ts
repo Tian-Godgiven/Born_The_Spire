@@ -28,6 +28,8 @@ export type Describe = (
 }|{
     relic:string //遗物 key 预览
 }|{
+    companion:string //召唤物 key 预览
+}|{
     markedCard:string //遗物 status 里记下的卡牌实例 id；未选显示「一张牌」，选完变成可预览的 {"@": id}
 }|{
     text:string //这段要演出的正文
@@ -43,13 +45,14 @@ export const DEFAULT_BEAT_CHAR = 0.08
  */
 export type DescribeSegment = {
     text: string
-    type: 'plain' | 'value' | 'glossary' | 'card' | 'break' | 'organ' | 'relic' | 'fx'
+    type: 'plain' | 'value' | 'glossary' | 'card' | 'break' | 'organ' | 'relic' | 'companion' | 'fx'
     glossaryKey?: string  // 如果是glossary类型
     cardRef?: string | number  // 如果是card类型（实例ID、key或索引）
     cardRefType?: 'instance' | 'key'  // card引用类型
     organKey?: string
     evolutionRounds?: number
     relicKey?: string
+    companionKey?: string
     fxKeys?: string[]
     beatStart?: number
     beatChar?: number
@@ -380,6 +383,15 @@ export function getDescribe(describe:Describe|undefined,target?:Object){
                     text += `【${listItemLabel("relicList", relicKey, "遗物")}】`
                 }
             }
+            else if("companion" in value){
+                const companionKey = value.companion
+                try {
+                    const list = getLazyModule<{ key: string, label?: string }[]>('companionList')
+                    text += list.find(item => item.key === companionKey)?.label ?? "[召唤物]"
+                } catch {
+                    text += "[召唤物]"
+                }
+            }
             else if("markedCard" in value){
                 const cardId = markedCardIdFromTarget(target, value.markedCard)
                 text += cardId ? "[卡牌]" : "一张牌"
@@ -522,6 +534,15 @@ export function getDescribeStructured(describe:Describe|undefined,target?:Object
                         relicKey
                     })
                 }
+            }
+            else if("companion" in value){
+                const companionKey = value.companion
+                let text = "[召唤物]"
+                try {
+                    const list = getLazyModule<{ key: string, label?: string }[]>('companionList')
+                    text = list.find(item => item.key === companionKey)?.label ?? text
+                } catch { /* list unavailable */ }
+                segments.push({ text, type: 'companion', companionKey })
             }
             else if("markedCard" in value){
                 const cardId = markedCardIdFromTarget(target, value.markedCard)
