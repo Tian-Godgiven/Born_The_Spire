@@ -732,7 +732,6 @@ export const stateList: StateData[] = [
     describe: ["本回合过期隔板已判定的次数"],
     showType: "number",
     repeate: "stack",
-    hidden: true,
     stackChange: [{ timing: "turnEnd", delta: "all" }]
 },
 // 钢铁意志充能：致命保命器官的内部标记，战斗开始时附加，触发后消耗
@@ -782,15 +781,14 @@ export const stateList: StateData[] = [
 },
 // 点火：通用计数器状态，可被任何"逐步积累到阈值触发爆发"的敌人复用
 // Boss 1 自走焚烧炉：攻击牌积累 ignition，达到 4 时释放重铸获得+4力量
-// 临时召唤物：在自身第 N 个回合结束时消灭，不触发死亡事件。
+// 临时召唤物：战斗结束清理，并在自身第 N 个回合结束时消灭，不触发死亡事件。
 {
-    label: "召唤持续时间",
-    key: "summonedDuration",
+    label: "临时召唤",
+    key: "temporarySummon",
     category: "buff",
-    describe: ["在自身回合结束后减少 1 层，归零时消灭自身"],
+    describe: ["战斗结束时消灭自身；在自身回合结束后减少 1 层，归零时消灭自身"],
     showType: "number",
     repeate: "refresh",
-    hidden: true,
     stackChange: [{ timing: "turnEnd", delta: -1 }],
     interaction: {
         possess: {
@@ -799,12 +797,23 @@ export const stateList: StateData[] = [
                 how: "take",
                 key: "turnEnd",
                 condition: "$this.stateStack() <= 1",
-                action: "despawnAtDurationEnd"
+                action: "despawnAtTemporarySummonEnd"
+            }, {
+                when: "after",
+                how: "take",
+                key: "battleEnd",
+                action: "despawnAtTemporarySummonBattleEnd"
             }],
             reaction: {
-                despawnAtDurationEnd: [{
-                    key: "despawnAtDurationEnd",
-                    label: "临时召唤物离场",
+                despawnAtTemporarySummonEnd: [{
+                    key: "despawnAtTemporarySummonEnd",
+                    label: "临时召唤离场",
+                    targetType: "creatorOwner",
+                    effect: [{ key: "removeSummonedCombatant", params: {} }]
+                }],
+                despawnAtTemporarySummonBattleEnd: [{
+                    key: "despawnAtTemporarySummonBattleEnd",
+                    label: "临时召唤战斗结束离场",
                     targetType: "creatorOwner",
                     effect: [{ key: "removeSummonedCombatant", params: {} }]
                 }]

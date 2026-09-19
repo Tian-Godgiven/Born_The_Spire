@@ -556,6 +556,13 @@ export async function getEnemyByKey(key:string){
     return reactive(enemy) as unknown as Enemy
 }
 
+/** 获取敌人定义，供统一 summon effect 在玩家侧创建同源 Companion。 */
+export function getEnemyMapByKey(key: string): EnemyMap {
+    const data = enemyList.find(value => value.key === key)
+    if (!data) throw new Error("没有指定的敌人存在")
+    return data
+}
+
 /**
  * 检查敌人是否存在（不创建实例）
  */

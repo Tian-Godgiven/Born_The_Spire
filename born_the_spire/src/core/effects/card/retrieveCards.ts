@@ -3,7 +3,7 @@
  */
 
 import type { EffectFunc } from "@/core/objects/system/effect/EffectFunc"
-import { isPlayer } from "@/core/utils/typeGuards"
+import { isEnemy, isPlayer } from "@/core/utils/typeGuards"
 import { getStatusValue } from "@/core/objects/system/status/Status"
 import { cardMove } from "."
 import { newLog } from "@/ui/hooks/global/log"
@@ -19,10 +19,25 @@ import { newLog } from "@/ui/hooks/global/log"
  */
 export const retrieveCardsToHand: EffectFunc = (event, effect) => {
     const target = Array.isArray(event.target) ? event.target[0] : event.target
-    if (!isPlayer(target)) return false
-
     const sourcePileName = effect.params.sourcePile as string
     if (!sourcePileName) return false
+
+    if (isEnemy(target)) {
+        if (sourcePileName !== "exhaustPile" && sourcePileName !== "any") return false
+        const exhaustPile = target.exhaustPile
+        const costFilter = effect.params.cost as number | undefined
+        const cardIdFilter = effect.params.cardId as string | undefined
+        const selected = exhaustPile.filter(card =>
+            (cardIdFilter === undefined || card.__id === cardIdFilter) &&
+            (costFilter === undefined || getStatusValue(card, "cost", undefined) === costFilter)
+        )
+        if (selected.length === 0) return false
+        for (const card of selected) target.retrieveFromExhaust(card)
+        newLog([target, `从消耗堆取回了${selected.length}张卡牌`])
+        return true
+    }
+
+    if (!isPlayer(target)) return false
 
     const piles = (target as any).cardPiles
     const handPile = piles?.handPile

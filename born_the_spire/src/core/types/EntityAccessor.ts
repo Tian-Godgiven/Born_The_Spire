@@ -27,6 +27,16 @@ import { canRemoveOrgan } from "@/core/objects/target/canRemoveOrgan"
 
 export type AccessorResult = number | string | boolean
 
+// 仅允许显式声明的稳定基础属性通过无括号语法暴露。
+// 动态状态仍应使用 status(...) / current(...)，复杂对象不会直接暴露给表达式。
+const directPropertyAccessors = new Set([
+    "level",
+    "rarity",
+    "itemType",
+    "key",
+    "label",
+])
+
 /**
  * 解析访问器字符串，从实体上读取值
  *
@@ -51,10 +61,18 @@ export function readEntityValue(accessor: string, entity: Entity): AccessorResul
         return callAccessorFunction(funcName, arg, entity)
     }
 
-    // 无括号的直接属性访问（未来扩展用）
+    // 允许访问白名单中的基础属性（如 Organ.level）。
+    // 仅返回基础值，不暴露方法、复杂对象或任意未声明字段。
+    if (/^\w+$/.test(accessor) && directPropertyAccessors.has(accessor)) {
+        const value = (entity as any)[accessor]
+        if (typeof value === "number" || typeof value === "string" || typeof value === "boolean") {
+            return value
+        }
+    }
+
     throw new Error(
         `[EntityAccessor] 无法解析访问器: "${accessor}"。` +
-        `支持的格式: status(key), current(key), hasStatus(key), hasState(key), hasOrgan(key), hasRelic(key), hasCard(key), hasTag(key), state(key), stateStack(key?)`
+        `支持的格式: status(key), current(key), hasStatus(key), hasState(key), hasOrgan(key), hasRelic(key), hasCard(key), hasTag(key), state(key), stateStack(key?)；直接属性: ${Array.from(directPropertyAccessors).join(", ")}`
     )
 }
 

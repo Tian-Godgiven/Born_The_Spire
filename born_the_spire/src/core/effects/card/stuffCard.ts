@@ -32,7 +32,10 @@ export const stuffCard: EffectFunc = async (event, effect) => {
     } else if (target instanceof Enemy) {
         for (let i = 0; i < count; i++) {
             const card = await getCardByKey(cardKey)
-            card.owner = target
+            // 敌人也要注册卡牌词条（如 card_void / card_exhaust）。
+            // 词条中面向玩家的触发器会因持有者类型不匹配而跳过，
+            // 但词条本身仍由敌人牌组在回合结算时解释。
+            card.setOwner(target, entries)
             target.drawPile.junk.push(card)
         }
     }

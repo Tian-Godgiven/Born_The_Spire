@@ -64,6 +64,8 @@ export class Enemy extends Chara{
         junk: Card[]
     } = { actions: [], junk: [] }
     public hand: Card[] = []
+    /** 敌人没有弃牌循环；消耗牌保存在这里，取回后重新可用。 */
+    public exhaustPile: Card[] = []
     constructor(
         map:EnemyMap
     ){
@@ -129,6 +131,7 @@ export class Enemy extends Chara{
 
         // 过滤掉被禁用器官提供的卡牌
         const availableCards = allCards.filter(card => {
+            if (this.exhaustPile.includes(card)) return false
             // 如果卡牌没有 source，认为是专属卡牌，允许使用
             if (!card.source) return true
             // 检查卡牌来源是否被禁用
@@ -247,9 +250,15 @@ export class Enemy extends Chara{
 
         newLog(["敌人执行意图", this.label, `${cards.length}张卡牌`])
 
+        const playedCards = new Set<Card>()
         // 依次执行每张卡牌
         for (const card of cards) {
-            await this.playCard(card, target)
+            if (await this.playCard(card, target)) playedCards.add(card)
+        }
+
+        // 脚本意图可能绕过 hand 执行，但消耗语义仍须一致。
+        for (const card of playedCards) {
+            if (card.hasEntry("card_exhaust")) this.exhaustCard(card)
         }
 
         // 执行完成后清除意图
@@ -320,8 +329,16 @@ export class Enemy extends Chara{
      * 有 use 交互的牌正常打出；无 use 交互的牌（A型垃圾）跳过。
      */
     async executeHandInOrder(target: Chara): Promise<void> {
+        const playedCards = new Set<Card>()
         for (const card of this.hand) {
-            await this.playCard(card, target)
+            if (await this.playCard(card, target)) playedCards.add(card)
+        }
+
+        for (const card of this.hand) {
+            if ((playedCards.has(card) && card.hasEntry("card_exhaust")) ||
+                (!playedCards.has(card) && card.hasEntry("card_void"))) {
+                this.exhaustCard(card)
+            }
         }
     }
 
@@ -332,6 +349,19 @@ export class Enemy extends Chara{
         this.hand = []
     }
 
+    exhaustCard(card: Card): boolean {
+        if (this.exhaustPile.includes(card)) return false
+        this.exhaustPile.push(card)
+        return true
+    }
+
+    retrieveFromExhaust(card: Card): boolean {
+        const index = this.exhaustPile.indexOf(card)
+        if (index < 0) return false
+        this.exhaustPile.splice(index, 1)
+        return true
+    }
+
     /**
      * 敌人打出一张卡牌
      *
@@ -340,23 +370,23 @@ export class Enemy extends Chara{
      * @param card 要打出的卡牌
      * @param target 目标
      */
-    public async playCard(card: Card, target: Chara) {
+    public async playCard(card: Card, target: Chara): Promise<boolean> {
         // 检查卡牌来源的器官是否被禁用
         if (card.source && (card.source as any).targetType === 'organ' && isOrganDisabled(card.source as any)) {
             newLog(["敌人使用卡牌被禁用", this.label, card.label])
-            return
+            return false
         }
 
         const cardUse = card.getInteraction("use")
         if (!cardUse) {
             console.warn(`[Enemy.playCard] 卡牌 ${card.label} 没有使用效果`)
-            return
+            return false
         }
 
         const cardEffects = cardUse.effects
         if (!cardEffects || cardEffects.length === 0) {
             console.warn(`[Enemy.playCard] 卡牌 ${card.label} 没有效果`)
-            return
+            return false
         }
 
         const cardCost = getStatusValue(card, "cost") ?? 0
@@ -379,7 +409,7 @@ export class Enemy extends Chara{
         await endTransaction()
         if (!payEvent.getEventResult("payEnergyResult")) {
             newLog([this, "能量不足，无法打出", card])
-            return
+            return false
         }
 
         newLog(["敌人使用卡牌", this.label, card.label])
@@ -393,6 +423,8 @@ export class Enemy extends Chara{
             target: targets,
             effectUnits: cardEffects
         })
+
+        return true
     }
 
     /**

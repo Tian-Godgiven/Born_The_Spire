@@ -56,7 +56,7 @@ import { emptyChest } from "@/core/effects/chest/emptyChest"
 import { modifyRepeat } from "@/core/effects/card/repeatCard"
 import { shuffleDiscardIntoDraw } from "@/core/effects/card/shuffleDiscardIntoDraw"
 import { addRandomCardsToPile } from "@/core/effects/card/addRandomCardsToPile"
-import { removeCompanion, removeSummonedCombatant, summonCompanion, summonEnemy } from "@/core/effects/companion/summonCompanion"
+import { removeCompanion, removeSummonedCombatant, summon } from "@/core/effects/companion/summonCompanion"
 import type { EffectParamsSchema } from "@/core/effects/validateEffectParams"
 
 type EffectData = {
@@ -656,17 +656,13 @@ export const effectMap:EffectData[] = [
     key:"loseHp",
     effect:loseHp
 },{
-    label:"召唤友军",
-    key:"summonCompanion",
-    effect:summonCompanion
-},{
     label:"消灭召唤物",
     key:"removeCompanion",
     effect:removeCompanion
 },{
-    label:"召唤敌人",
-    key:"summonEnemy",
-    effect:summonEnemy
+    label:"召唤",
+    key:"summon",
+    effect:summon
 },{
     label:"消灭战斗召唤物",
     key:"removeSummonedCombatant",

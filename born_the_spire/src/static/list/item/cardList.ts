@@ -888,8 +888,14 @@ export const cardList:CardMap[] = [{
         use: {
             target: { key: "self" },
             effects: [
-                { key: "summonEnemy", params: { enemyKey: "enemy_ant_soldier", count: 1, duration: 4 } },
-                { key: "applyState", params: { stateKey: "pheromoneLureUsed", stacks: 1 } }
+                {
+                    key: "summon",
+                    params: {
+                        summonKey: "enemy_ant_soldier",
+                        count: 1,
+                        duration: 4
+                    }
+                }
             ]
         }
     }
@@ -1475,7 +1481,7 @@ export const cardList:CardMap[] = [{
         use: {
             target: { key: "self" },
             effects: [{
-                key: "summonCompanion",
+                key: "summon",
                 params: { companionKey: "companion_stone_golem" }
             }]
         }
@@ -1492,7 +1498,7 @@ export const cardList:CardMap[] = [{
         use: {
             target: { key: "self" },
             effects: [{
-                key: "summonCompanion",
+                key: "summon",
                 params: { companionKey: "companion_fission_offspring" }
             }]
         }

@@ -1285,7 +1285,7 @@ export const organList:OrganMap[] = [
             }, {
                 when: "after",
                 how: "make",
-                key: "summonEnemy",
+                key: "summon",
                 condition: "$this.level >= 3",
                 action: "pheromoneSummonCommand"
             }]
@@ -1300,11 +1300,17 @@ export const organList:OrganMap[] = [
                 key: "organ_pheromoneGland",
                 params: { stacks: "$this.status(command-gain)" }
             }],
-        }, {
+        }],
+        pheromoneSummonCommand: [{
             key: "pheromoneSummonCommand",
             label: "信息素腺体：召唤指挥",
             targetType: "eventTarget",
             effect: [{ key: "applyState", params: { stateKey: "command", stacks: 2 } }]
+        }, {
+            key: "pheromoneSummonUsed",
+            label: "信息素腺体：记录诱蚁信息素",
+            targetType: "creatorOwner",
+            effect: [{ key: "applyState", params: { stateKey: "pheromoneLureUsed", stacks: 1 } }]
         }]
     }
 },

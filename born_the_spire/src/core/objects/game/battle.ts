@@ -47,11 +47,9 @@ export class Battle {
     }
 
     getTeam(name:"player"|"enemy"): Chara[] {
-        if(name == "player")
-        return this.playerTeam
-        else if(name == "enemy")
-        return this.enemyTeam
-        return []
+        const team = name === "player" ? this.playerTeam : this.enemyTeam
+        // 死亡单位仍保留在底层数组，供死亡事件和清理流程使用；对外队伍视图只暴露存活单位。
+        return team.filter(chara => chara.current.isAlive?.value === 1)
     }
 
     getSelf(){
